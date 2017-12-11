@@ -3,6 +3,7 @@ package day11;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -12,6 +13,9 @@ import org.junit.Test;
 
 import utils.Utils;
 
+/**
+ * https://www.redblobgames.com/grids/hexagons/
+ */
 public class Day11 {
 
     private String getPuzzleInput() throws IOException {
@@ -19,7 +23,16 @@ public class Day11 {
                 "day11/input.txt");
     }
 
-    class Position {
+    enum Direction {
+        nw,
+        ne,
+        sw,
+        se,
+        n,
+        s
+    }
+
+    static class Position {
         int x = 0;
         int y = 0;
 
@@ -52,23 +65,33 @@ public class Day11 {
             return String.format("(%d,%d)", x, y);
         }
 
-        public Position move(String dir) {
+        public static void move(Position pos, Direction dir) {
             switch (dir) {
-            case "n":
-                return new Position(x, y - 2);
-            case "ne":
-                return new Position(x + 1, y - 1);
-            case "se":
-                return new Position(x + 1, y + 1);
-            case "s":
-                return new Position(x, y + 2);
-            case "sw":
-                return new Position(x - 1, y + 1);
-            case "nw":
-                return new Position(x - 1, y - 1);
+            case n:
+                pos.y -= 2;
+                break;
+            case ne:
+                pos.x++;
+                pos.y--;
+                break;
+            case se:
+                pos.x++;
+                pos.y++;
+                break;
+            case s:
+                pos.y += 2;
+                break;
+            case sw:
+                pos.x--;
+                pos.y++;
+                break;
+            case nw:
+                pos.y--;
+                pos.x--;
+                break;
             default:
                 fail("unknown direction " + dir);
-                return null;
+                return;
             }
         }
     }
@@ -77,7 +100,7 @@ public class Day11 {
         Position pos = new Position();
 
         for (String dir : turns.split(",")) {
-            pos = pos.move(dir);
+            Position.move(pos, Direction.valueOf(dir));
         }
 
         System.out.format("Final position: %s%n", pos);
@@ -92,14 +115,16 @@ public class Day11 {
      */
     private int computeDistanceTo(Position pos) {
         Set<Position> visited = new HashSet<>();
-        String[] directions = "n,ne,se,s,sw,nw".split(",");
+        Direction[] directions = Arrays.stream("n,ne,se,s,sw,nw".split(","))
+                .map(s -> Direction.valueOf(s)).toArray(n -> new Direction[n]);
 
         Set<Position> tovisit = new HashSet<>();
         tovisit.add(new Position());
         int dist = 0;
 
         while (true) {
-            System.out.format("Checking %d positions at distance %s%n", tovisit.size(), dist);
+            System.out.format("Checking %d positions at distance %s%n",
+                    tovisit.size(), dist);
 
             for (Position visit : tovisit) {
                 if (visit.equals(pos)) {
@@ -113,8 +138,10 @@ public class Day11 {
             tovisit.clear();
 
             for (Position p : visited) {
-                for (String dir : directions) {
-                    Position newpos = p.move(dir);
+                for (Direction dir : directions) {
+
+                    Position newpos = new Position(p);
+                    Position.move(newpos, dir);
 
                     // Skip positions which are in the wrong direction
                     if ((newpos.x > p.x && pos.x < p.x)
@@ -125,7 +152,7 @@ public class Day11 {
                     }
 
                     if (!visited.contains(newpos)) {
-                        tovisit.add(p.move(dir));
+                        tovisit.add(newpos);
                     }
                 }
             }
