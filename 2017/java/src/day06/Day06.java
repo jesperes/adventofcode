@@ -79,173 +79,173 @@ import org.junit.Test;
  */
 public class Day06 {
 
-	int[] PUZZLE_INPUT = Arrays
-			.stream("2   8   8   5   4   2   3   1   5   5   1   2   15  13  5   14"
-					.split(" +"))
-			.mapToInt(Integer::valueOf).toArray();
+    int[] PUZZLE_INPUT = Arrays.stream(
+            "2   8   8   5   4   2   3   1   5   5   1   2   15  13  5   14"
+                    .split(" +"))
+            .mapToInt(Integer::valueOf).toArray();
 
-	private int getStartBank(int[] banks) {
-		int max = Integer.MIN_VALUE;
-		int startBank = -1;
-		for (int i = 0; i < banks.length; i++) {
-			if (banks[i] > max) {
-				startBank = i;
-				max = banks[i];
-			}
-		}
-		return startBank;
-	}
+    private int getStartBank(int[] banks) {
+        int max = Integer.MIN_VALUE;
+        int startBank = -1;
+        for (int i = 0; i < banks.length; i++) {
+            if (banks[i] > max) {
+                startBank = i;
+                max = banks[i];
+            }
+        }
+        return startBank;
+    }
 
-	/**
-	 * Run one redistrubition pass on the memory banks.
-	 * 
-	 * @param banks
-	 */
-	private void redistribute(int[] banks) {
-		int bankIdx = getStartBank(banks);
-		int bankSize = banks[bankIdx];
+    /**
+     * Run one redistrubition pass on the memory banks.
+     * 
+     * @param banks
+     */
+    private void redistribute(int[] banks) {
+        int bankIdx = getStartBank(banks);
+        int bankSize = banks[bankIdx];
 
-		// Empty the start bank
-		banks[bankIdx] = 0;
+        // Empty the start bank
+        banks[bankIdx] = 0;
 
-		// Distribute the memory blocks one-by-one, starting with
-		// the bank next to the start bank.
-		while (bankSize > 0) {
-			bankIdx = (bankIdx + 1) % banks.length;
-			banks[bankIdx]++;
-			bankSize--;
-		}
-	}
+        // Distribute the memory blocks one-by-one, starting with
+        // the bank next to the start bank.
+        while (bankSize > 0) {
+            bankIdx = (bankIdx + 1) % banks.length;
+            banks[bankIdx]++;
+            bankSize--;
+        }
+    }
 
-	private int redistributeUntilDone(int[] banks) {
+    private int redistributeUntilDone(int[] banks) {
 
-		Set<String> seenBanks = new HashSet<>();
-		int passes = 0;
-		while (true) {
-			/*
-			 * Store arrays as strings, so that we can put them in a set. We
-			 * can't put the arrays themselves into the set because they do not
-			 * have proper hashCode/equals semantics (different arrays do not
-			 * compare equal).
-			 */
-			String str = Arrays.toString(banks);
+        Set<String> seenBanks = new HashSet<>();
+        int passes = 0;
+        while (true) {
+            /*
+             * Store arrays as strings, so that we can put them in a set. We
+             * can't put the arrays themselves into the set because they do not
+             * have proper hashCode/equals semantics (different arrays do not
+             * compare equal).
+             */
+            String str = Arrays.toString(banks);
 
-			if (seenBanks.contains(str)) {
-				return passes;
-			} else {
-				seenBanks.add(str);
-				redistribute(banks);
-				passes++;
-			}
-		}
-	}
+            if (seenBanks.contains(str)) {
+                return passes;
+            } else {
+                seenBanks.add(str);
+                redistribute(banks);
+                passes++;
+            }
+        }
+    }
 
-	/**
-	 * Same as {@link #redistributeUntilDone(int[])}, but returns the size of
-	 * the loop, how manyu
-	 * 
-	 */
-	private int redistributeUntilDone_Part2(int[] banks) {
-		/*
-		 * Instead of a set, we keep a map from the array (as a string). As
-		 * value we put the pass when we saw the configuration. This allows us
-		 * to compute the size of the loop.
-		 */
+    /**
+     * Same as {@link #redistributeUntilDone(int[])}, but returns the size of
+     * the loop, how manyu
+     * 
+     */
+    private int redistributeUntilDone_Part2(int[] banks) {
+        /*
+         * Instead of a set, we keep a map from the array (as a string). As
+         * value we put the pass when we saw the configuration. This allows us
+         * to compute the size of the loop.
+         */
 
-		Map<String, Integer> seenBanks = new HashMap<>();
-		int passes = 0;
-		while (true) {
-			String str = Arrays.toString(banks);
+        Map<String, Integer> seenBanks = new HashMap<>();
+        int passes = 0;
+        while (true) {
+            String str = Arrays.toString(banks);
 
-			if (seenBanks.containsKey(str)) {
-				int firstSeenPass = seenBanks.get(str);
-				return passes - firstSeenPass;
-			} else {
-				seenBanks.put(str, passes);
-				redistribute(banks);
-				passes++;
-			}
-		}
-	}
+            if (seenBanks.containsKey(str)) {
+                int firstSeenPass = seenBanks.get(str);
+                return passes - firstSeenPass;
+            } else {
+                seenBanks.put(str, passes);
+                redistribute(banks);
+                passes++;
+            }
+        }
+    }
 
-	@Test
-	public void testPuzzleInput() throws Exception {
-		assertEquals(16, PUZZLE_INPUT.length);
-	}
+    @Test
+    public void testPuzzleInput() throws Exception {
+        assertEquals(16, PUZZLE_INPUT.length);
+    }
 
-	@Test
-	public void testGetStartBank() throws Exception {
-		// Ensure that we handle equal-sized banks correctly.
-		assertEquals(0, getStartBank(new int[] { 3, 1, 2, 3 }));
-		assertEquals(2, getStartBank(new int[] { 0, 2, 7, 0 }));
-	}
+    @Test
+    public void testGetStartBank() throws Exception {
+        // Ensure that we handle equal-sized banks correctly.
+        assertEquals(0, getStartBank(new int[] { 3, 1, 2, 3 }));
+        assertEquals(2, getStartBank(new int[] { 0, 2, 7, 0 }));
+    }
 
-	@Test
-	public void testPart1_OnePass() throws Exception {
-		int[] banks = new int[] { 0, 2, 7, 0 };
-		redistribute(banks);
-		assertArrayEquals(new int[] { 2, 4, 1, 2 }, banks);
-	}
+    @Test
+    public void testPart1_OnePass() throws Exception {
+        int[] banks = new int[] { 0, 2, 7, 0 };
+        redistribute(banks);
+        assertArrayEquals(new int[] { 2, 4, 1, 2 }, banks);
+    }
 
-	@Test
-	public void testPart1_TwoPasses() throws Exception {
-		int[] banks = new int[] { 0, 2, 7, 0 };
-		redistribute(banks);
-		redistribute(banks);
-		assertArrayEquals(new int[] { 3, 1, 2, 3 }, banks);
-	}
+    @Test
+    public void testPart1_TwoPasses() throws Exception {
+        int[] banks = new int[] { 0, 2, 7, 0 };
+        redistribute(banks);
+        redistribute(banks);
+        assertArrayEquals(new int[] { 3, 1, 2, 3 }, banks);
+    }
 
-	@Test
-	public void testPart1_ThreePasses() throws Exception {
-		int[] banks = new int[] { 0, 2, 7, 0 };
-		redistribute(banks);
-		redistribute(banks);
-		redistribute(banks);
-		assertArrayEquals(new int[] { 0, 2, 3, 4 }, banks);
-	}
+    @Test
+    public void testPart1_ThreePasses() throws Exception {
+        int[] banks = new int[] { 0, 2, 7, 0 };
+        redistribute(banks);
+        redistribute(banks);
+        redistribute(banks);
+        assertArrayEquals(new int[] { 0, 2, 3, 4 }, banks);
+    }
 
-	@Test
-	public void testPart1_FourPasses() throws Exception {
-		int[] banks = new int[] { 0, 2, 7, 0 };
-		redistribute(banks);
-		redistribute(banks);
-		redistribute(banks);
-		redistribute(banks);
-		assertArrayEquals(new int[] { 1, 3, 4, 1 }, banks);
-	}
+    @Test
+    public void testPart1_FourPasses() throws Exception {
+        int[] banks = new int[] { 0, 2, 7, 0 };
+        redistribute(banks);
+        redistribute(banks);
+        redistribute(banks);
+        redistribute(banks);
+        assertArrayEquals(new int[] { 1, 3, 4, 1 }, banks);
+    }
 
-	@Test
-	public void testPart1_FivePasses() throws Exception {
-		int[] banks = new int[] { 0, 2, 7, 0 };
-		redistribute(banks);
-		redistribute(banks);
-		redistribute(banks);
-		redistribute(banks);
-		redistribute(banks);
-		assertArrayEquals(new int[] { 2, 4, 1, 2 }, banks);
-	}
+    @Test
+    public void testPart1_FivePasses() throws Exception {
+        int[] banks = new int[] { 0, 2, 7, 0 };
+        redistribute(banks);
+        redistribute(banks);
+        redistribute(banks);
+        redistribute(banks);
+        redistribute(banks);
+        assertArrayEquals(new int[] { 2, 4, 1, 2 }, banks);
+    }
 
-	@Test
-	public void testPart1_UntilDone() throws Exception {
-		int[] banks = new int[] { 0, 2, 7, 0 };
-		int passes = redistributeUntilDone(banks);
-		assertEquals(5, passes);
-	}
+    @Test
+    public void testPart1_UntilDone() throws Exception {
+        int[] banks = new int[] { 0, 2, 7, 0 };
+        int passes = redistributeUntilDone(banks);
+        assertEquals(5, passes);
+    }
 
-	@Test
-	public void testPart1_full() throws Exception {
-		System.out.println("[Day06]: Number of cycles: "
-				+ redistributeUntilDone(PUZZLE_INPUT));
-	}
+    @Test
+    public void testPart1_full() throws Exception {
+        System.out.println("[Day06]: Number of cycles: "
+                + redistributeUntilDone(PUZZLE_INPUT));
+    }
 
-	@Test
-	public void testPart2_short() throws Exception {
-		assertEquals(4, redistributeUntilDone_Part2(new int[] { 0, 2, 7, 0 }));
-	}
+    @Test
+    public void testPart2_short() throws Exception {
+        assertEquals(4, redistributeUntilDone_Part2(new int[] { 0, 2, 7, 0 }));
+    }
 
-	@Test
-	public void testPart2_full() throws Exception {
-		System.out.println("[Day06]: Number of cycles (part 2): "
-				+ redistributeUntilDone_Part2(PUZZLE_INPUT));
-	}
+    @Test
+    public void testPart2_full() throws Exception {
+        System.out.println("[Day06]: Number of cycles (part 2): "
+                + redistributeUntilDone_Part2(PUZZLE_INPUT));
+    }
 }
