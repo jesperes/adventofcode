@@ -19,7 +19,7 @@ public class Utils {
             String name) throws IOException {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(
                 cls.getClassLoader().getResourceAsStream(name)))) {
-            return reader.lines().collect(Collectors.joining());
+            return reader.lines().collect(Collectors.joining("\n"));
         }
     }
 }
