@@ -1,6 +1,6 @@
 package day01;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.Assert.*;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -9,7 +9,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 /**
  * --- Day 1: No Time for a Taxicab ---
