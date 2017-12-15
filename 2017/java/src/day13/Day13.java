@@ -49,6 +49,10 @@ public class Day13 {
         }
 
         public boolean isAtTop(int time) {
+            /*
+             * Is the scanner at top? It will be at the top every ((range * 2) -
+             * 2) steps.
+             */
             return time % ((range * 2) - 2) == 0;
         }
 
@@ -133,6 +137,8 @@ public class Day13 {
      *            a null element.
      * @param maxDepth
      *            The maximum depth of the firewalls
+     * @param maxRange
+     *            The maximum range of any firewall.
      * @param delay
      *            The delay before starting to travel through the firewall.
      * @param onlyCollisions
