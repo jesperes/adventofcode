@@ -4,6 +4,8 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
+import utils.Utils;
+
 public class Day19 {
 
 	String[] smallDiagram = { //
@@ -101,6 +103,12 @@ public class Day19 {
 			fail("Nowhere to go!");
 			return null;
 		}
+
+		@Override
+		public String toString() {
+			return "Point [row=" + row + ", col=" + col + "]";
+		}
+
 	}
 
 	static void printDiagram(String[] diagram, Point pos, Direction dir) {
@@ -140,24 +148,28 @@ public class Day19 {
 		System.out.println("-------------------------------------------------");
 	}
 
-	private String followTube(String[] input) {
+	private int followTube(String[] input, StringBuilder builder) {
 		String first = input[0];
 
 		int row = 0;
 		int col = first.indexOf('|');
 		Point p = new Point(row, col);
 		Direction dir = Direction.South;
-		StringBuilder builder = new StringBuilder();
+		int steps = 0;
 
-		while (p.inside(input)) {
+		while (true) {
+			if (!p.inside(input))
+				return steps;
 
 			char c = p.getChar(input);
+			if (c == ' ')
+				return steps;
 
-			// printDiagram(input, p, dir);
+			// All non-space chars on the diagram are counted as steps.
+			steps++;
 
 			if (Character.isLetter(c)) {
 				// Collect character and continue in the same direction
-				System.out.println("Collecting char: " + c);
 				builder.append(c);
 				p = p.getPosition(dir);
 				continue;
@@ -165,7 +177,6 @@ public class Day19 {
 
 			if (c == '+') {
 				dir = p.turn(dir, input);
-				System.out.println("Turned to new direction: " + dir);
 				p = p.getPosition(dir);
 				continue;
 			}
@@ -175,17 +186,28 @@ public class Day19 {
 				continue;
 			}
 
-			fail("Unexpected char: " + c);
 		}
-
-		return builder.toString();
 	}
 
 	@Test
-	public void testDiagram() throws Exception {
+	public void testSmall() throws Exception {
 		String[] input = smallDiagram;
-		String letters = followTube(input);
-		assertEquals("ABCDEF", letters);
+		StringBuilder builder = new StringBuilder();
+		int steps = followTube(input, builder);
+		assertEquals("ABCDEF", builder.toString());
+		assertEquals(38, steps);
 	}
 
+	@Test
+	public void testLarge() throws Exception {
+		StringBuilder builder = new StringBuilder();
+		String[] input = Utils
+				.readFileFromClassPathAsLines(getClass(), "day19/input.txt")
+				.toArray(n -> new String[n]);
+		int steps = followTube(input, builder);
+		assertEquals("EPYDUXANIT", builder.toString());
+		assertEquals(17544, steps);
+		System.out.println("Day19: letters = " + builder.toString());
+		System.out.println("Day19 (part 2): steps = " + steps);
+	}
 }
