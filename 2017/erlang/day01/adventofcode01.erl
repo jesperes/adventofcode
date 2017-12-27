@@ -1,4 +1,4 @@
-s-module(adventofcode01).
+-module(adventofcode01).
 -export([captcha/1, captcha/0]).
 -include_lib("eunit/include/eunit.hrl").
 
