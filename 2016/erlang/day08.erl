@@ -4,6 +4,7 @@
 
 %%% Prints the display using ?debugFmt.
 print_display([]) ->
+    ?debugMsg("===================================="),
     true;
 print_display([Row|Rows]) ->
     ?debugFmt("~s", [Row]),
@@ -39,12 +40,14 @@ decode_instr_test() ->
 		   "rotate column x=3 by 2"]).
 
 rotate(X, N) ->
-    {L1, L2} = lists:split(length(X) - N, X),
+    {L1, L2} = lists:split(length(X) - (N rem length(X)), X),
     L2 ++ L1.
 
 rotate_test() ->    
     "34512" = rotate("12345", 3),
-    "7123456" = rotate("1234567", 1).
+    "7123456" = rotate("1234567", 1),
+    "1234567" = rotate("1234567", 7),
+    "5671234" = rotate("1234567", 10).
 
 %%% Replace a member in a list
 replace_list_member([], _, _) ->
@@ -91,20 +94,26 @@ replace_nth_column_test() ->
 %%% ----------------------------------------------------------------------
 execute_single_instr({rect, Width, Height}, Display) ->
     %% Fill WidthxHeight rectangle from top-left corner.
-    lists:map(fun(Row) ->
-		      replace_prefix(Width, $#, Row)
-	      end, lists:sublist(Display, Height))
-	++ lists:sublist(Display, Height, length(Display) - Height);
+    NewDisplay = lists:map(fun(Row) ->
+				   replace_prefix(Width, $#, Row)
+			   end, lists:sublist(Display, Height))
+	++ lists:sublist(Display, Height + 1, length(Display) - Height),
+    ?assert(length(NewDisplay) == length(Display)),
+    NewDisplay;
 execute_single_instr({rotate, row, {y, Row}, Steps}, Display) ->
     %% Rotate Row by the given number of Steps.
     RowToRotate = lists:nth(Row + 1, Display),
     RotatedRow = rotate(RowToRotate, Steps),
-    replace_list_member(Display, Row, RotatedRow);
+    NewDisplay = replace_list_member(Display, Row, RotatedRow),
+    ?assert(length(NewDisplay) == length(Display)),
+    NewDisplay;
 execute_single_instr({rotate, column, {x, Col}, Steps}, Display) ->
     %% Rotate Col by the given number of Steps.    
     ColumnToRotate = nth_column(Display, Col),
     RotatedColumn = rotate(ColumnToRotate, Steps),
-    replace_nth_column(Display, RotatedColumn, Col).
+    NewDisplay = replace_nth_column(Display, RotatedColumn, Col),
+    ?assert(length(NewDisplay) == length(Display)),
+    NewDisplay.
 
 execute_single_instr_test() ->
     Display = execute_single_instr({rect, 3, 3}, generate_display(4, 4)),
@@ -117,22 +126,53 @@ execute_single_instr_test() ->
     ["###.",
      "#.#.",
      "###.",
-     ".#.."] = Display0.
+     ".#.."] = Display0,
 
-%%print_display(Display0).
-
+    Display1 = execute_single_instr({rotate, row, {y, 1}, 2}, Display),
+    ["###.",
+     "#.##",
+     "###.",
+     "...."] = Display1.
 
 %%% Execute a list of instructions on the given display. Returns the
 %%% modified display.
 execute_instr([], Display) ->
     Display;
-execute_instr([Instr|Rest], Display) ->
+execute_instr([Instr|Rest], Display) -> 
+    %%?debugFmt("==[ ~w ]==", [Instr]),
     NewDisplay = execute_single_instr(Instr, Display),
+    %%print_display(NewDisplay),
     execute_instr(Rest, NewDisplay).
 
 execute_instr(InstrList, Width, Height) ->
     Display = generate_display(Width, Height),
+    %% ?debugMsg("==[ Initial display ]=="),
+    %% print_display(Display),
     execute_instr(InstrList, Display).
+
+%%% Regression tests to reproduce a bug causing the pixel count to be
+%%% incorrect.
+bug_execute_instr_test() ->
+    Display = execute_instr([{rect, 1, 1},
+			     {rotate, row, {y, 0}, 5},
+			     {rect, 1, 1}], 
+			    generate_display(50, 6)),
+    ["#....#............................................",
+     "..................................................",
+     "..................................................",
+     "..................................................",
+     "..................................................",
+     ".................................................."] = Display.
+
+bug_execute_instr_2_test() ->
+    Display = execute_instr(
+		[{rect, 1, 1}],
+		["...#...",
+		 "......."]),
+    
+    ["#..#...",
+     "......."] = Display.
+			    
 
 count_pixels([]) ->
     0;
@@ -156,5 +196,6 @@ large_input_test() ->
     InstrList = lists:map(fun decode_instr/1, utils:read_file_lines("input08.txt")),
     Display = execute_instr(InstrList, 50, 6),
     6 = length(Display),
-    ?debugFmt("Number of pixels: ~w", [count_pixels(Display)]).
+    ?debugFmt("Number of pixels: ~w", [count_pixels(Display)]),
+    print_display(Display).
 
