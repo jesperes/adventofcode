@@ -66,8 +66,14 @@ get_low_and_high(X, Y) ->
     {Y, X}.
 
 
+check_output(Value, output, Dest) when (Dest >= 0) and (Dest =< 2) ->
+    ?debugFmt("~w written to output ~w", [Value, Dest]);
+check_output(_, _, _) ->
+    true.
+
 send_to(Value, Type, Dest, Map) ->
     Key = {Type, Dest},
+    check_output(Value, Type, Dest),
     maps:put(Key, [Value|maps:get(Key, Map, [])], Map).
 
 %%% Run a pass over all bot instructions
@@ -138,3 +144,8 @@ real_input_test() ->
     List = parse_input(utils:read_file_lines("input10.txt"), []),
     Map = insert_initial_bot_values(List, maps:new()),
     ?assertEqual(161, find_target_values(List, Map, {17, 61}, 10)).
+
+real_input_part2_test() ->
+    List = parse_input(utils:read_file_lines("input10.txt"), []),
+    Map = insert_initial_bot_values(List, maps:new()),
+    find_target_values(List, Map, {-1, -1}, 50).
