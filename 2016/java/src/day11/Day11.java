@@ -11,13 +11,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import org.junit.Test;
 
@@ -98,8 +96,14 @@ public class Day11 {
          * @return
          */
         boolean willFry(Component other) {
-            return type == Type.RTG && other.type == Type.Microchip
-                    && compatibility != other.compatibility;
+            boolean fry = (type == Type.RTG && other.type == Type.Microchip
+                    && compatibility != other.compatibility);
+            // if (fry) {
+            // System.out.format("%s fries %s%n", this, other);
+            // } else {
+            // System.out.format("%s does not fry %s%n", this, other);
+            // }
+            return fry;
         }
 
         @Override
@@ -271,13 +275,13 @@ public class Day11 {
             List<Component> movableComponents = null;
 
             for (Entry<Component, Integer> e : components.entrySet()) {
-                if (e.getValue() != elevator)
+                if (!e.getValue().equals(elevator))
                     continue;
 
                 if (movableComponents == null) {
                     movableComponents = new ArrayList<>();
-                    movableComponents.add(e.getKey());
                 }
+                movableComponents.add(e.getKey());
             }
 
             List<Move> moves = new ArrayList<>();
@@ -291,8 +295,8 @@ public class Day11 {
                 });
             }
 
-            System.out.println("Possible moves from\n" + this);
-            System.out.println(moves);
+            // System.out.println("Possible moves from\n" + this);
+            // moves.stream().forEach(System.out::println);
             return moves;
         }
 
@@ -300,38 +304,34 @@ public class Day11 {
          * Returns true/false if any of the given components will be fried at
          * the given floor.
          */
-        public boolean willAnyComponentBeFriedAt(Integer floor,
+        public boolean willAnyComponentBeFriedAt(int floor,
                 List<Component> componentsToMove) {
 
-            Set<Substance> rtgs = components.entrySet().stream().filter(
-                    e -> e.getValue() == floor && e.getKey().type == Type.RTG)
-                    .map(e -> e.getKey().compatibility)
-                    .collect(Collectors.toSet());
-
-            Set<Substance> chipsToMove = componentsToMove.stream()
-                    .filter(c -> c.type == Type.Microchip)
-                    .map(c -> c.compatibility).collect(Collectors.toSet());
-
             // Make sure that all the chips at this floor are shielded.
-            for (Substance chip : chipsToMove) {
-                boolean isShielded = false;
-                boolean needsShielding = false;
+            for (Component tomove : componentsToMove) {
+                for (Entry<Component, Integer> atfloor : components
+                        .entrySet()) {
+                    if (!atfloor.getValue().equals(floor))
+                        continue;
 
-                for (Substance rtg : rtgs) {
-                    if (rtg.equals(chip)) {
-                        // ok, chip is shielded from this rtg
-                        isShielded = true;
-                    } else {
-                        // not ok, chip is not shielded from other rtg.
-                        needsShielding = true;
+                    if (atfloor.getKey().willFry(tomove)) {
+                        System.out.format("%s will fry %s at floor %d%n",
+                                atfloor.getKey(), tomove, floor);
+                        return true;
+                    }
+
+                    if (tomove.willFry(atfloor.getKey())) {
+                        System.out.format("%s will fry %s at floor %d%n",
+                                tomove, atfloor.getKey(), floor);
                     }
                 }
-
-                if (needsShielding && !isShielded)
-                    return true;
             }
 
+            System.out.format("No components of %s will be fried at floor %s%n",
+                    componentsToMove, floor);
+
             return false;
+
         }
 
         public boolean isSolution() {
@@ -339,6 +339,7 @@ public class Day11 {
             return components.entrySet().stream()
                     .allMatch(e -> e.getValue().equals(highestFloor));
         }
+
     }
 
     @Test
@@ -426,7 +427,6 @@ public class Day11 {
                     while (step != null) {
                         if (step.move != null)
                             moves.add(step.move);
-                        // System.out.println("Move: " + step.move);
                         step = step.parent;
                     }
                     Collections.reverse(moves);
@@ -441,6 +441,8 @@ public class Day11 {
                     return b.isSolution();
                 }, (b) -> b.parent);
 
-        System.out.println(solution);
+        assertTrue(solution.isPresent());
+
+        solution.get().stream().forEach(System.out::println);
     }
 }
