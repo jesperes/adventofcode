@@ -53,16 +53,16 @@ public class Day11 {
 
         List<List<T>> list = new ArrayList<>();
 
-        for (T elem : collection) {
-            list.add(Arrays.asList(elem));
-        }
-
         for (T a : collection) {
             for (T b : collection) {
                 if (a.compareTo(b) < 0) {
                     list.add(Arrays.asList(a, b));
                 }
             }
+        }
+
+        for (T elem : collection) {
+            list.add(Arrays.asList(elem));
         }
 
         return list;
@@ -272,15 +272,12 @@ public class Day11 {
          */
         List<Move> getMoves() {
 
-            List<Component> movableComponents = null;
+            List<Component> movableComponents = new ArrayList<>();
 
             for (Entry<Component, Integer> e : components.entrySet()) {
                 if (!e.getValue().equals(elevator))
                     continue;
 
-                if (movableComponents == null) {
-                    movableComponents = new ArrayList<>();
-                }
                 movableComponents.add(e.getKey());
             }
 
@@ -289,8 +286,10 @@ public class Day11 {
             for (List<Component> complist : getAllTwoCombinations(
                     movableComponents)) {
                 forAdjacentFloors(elevator, (adj) -> {
-                    if (!willAnyComponentBeFriedAt(adj, complist)) {
-                        moves.add(new Move(elevator, adj, complist));
+                    Move move = new Move(elevator, adj, complist);
+                    Building b = applyMove(move);
+                    if (b.isValid()) {
+                        moves.add(move);
                     }
                 });
             }
@@ -298,6 +297,10 @@ public class Day11 {
             // System.out.println("Possible moves from\n" + this);
             // moves.stream().forEach(System.out::println);
             return moves;
+        }
+
+        private boolean isValid() {
+            for (Component c: )
         }
 
         /**
@@ -323,6 +326,7 @@ public class Day11 {
                     if (tomove.willFry(atfloor.getKey())) {
                         System.out.format("%s will fry %s at floor %d%n",
                                 tomove, atfloor.getKey(), floor);
+                        return true;
                     }
                 }
             }
@@ -371,6 +375,10 @@ public class Day11 {
         assertTrue(building.willAnyComponentBeFriedAt(2, Arrays
                 .asList(new Component(Substance.Lithium, Type.Microchip))));
 
+        // The Lithium RTG will fry the hydrogen microhip at floor 1.
+        assertTrue(building.willAnyComponentBeFriedAt(1,
+                Arrays.asList(new Component(Substance.Lithium, Type.RTG))));
+
         // Moving to the third floor is ok, because there is only a lithium RTG
         // there.
         assertFalse(building.willAnyComponentBeFriedAt(3, Arrays
@@ -403,8 +411,34 @@ public class Day11 {
     }
 
     @Test
+    public void testSolve1() throws Exception {
+        Building building = new Building(1, 4);
+        building.elevator = 3;
+        building.addComponent(new Component(Substance.Hydrogen, Type.Microchip),
+                3);
+        building.addComponent(new Component(Substance.Lithium, Type.Microchip),
+                3);
+        building.addComponent(new Component(Substance.Hydrogen, Type.RTG), 4);
+        building.addComponent(new Component(Substance.Lithium, Type.RTG), 4);
+
+        List<Move> moves = building.getMoves();
+        moves.stream().forEach(System.out::println);
+        System.out.println();
+    }
+
+    @Test
     public void testSolve() throws Exception {
-        Building building = getTestInput();
+
+        Building building = new Building(1, 4);
+        building.elevator = 3;
+        building.addComponent(new Component(Substance.Hydrogen, Type.Microchip),
+                3);
+        building.addComponent(new Component(Substance.Lithium, Type.Microchip),
+                3);
+        building.addComponent(new Component(Substance.Hydrogen, Type.RTG), 4);
+        building.addComponent(new Component(Substance.Lithium, Type.RTG), 4);
+
+        // Building building = getTestInput();
         AtomicInteger counter = new AtomicInteger();
         long start = System.nanoTime();
 
