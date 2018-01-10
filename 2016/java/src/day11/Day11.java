@@ -5,14 +5,23 @@ import static org.junit.Assert.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.junit.Test;
+
+import utils.SearchAlgorithms;
 
 /**
  * Rules:
@@ -41,6 +50,9 @@ public class Day11 {
 
     static <T extends Comparable<T>> List<List<T>> getAllTwoCombinations(
             Collection<T> collection) {
+        if (collection.isEmpty())
+            return Collections.emptyList();
+
         List<List<T>> list = new ArrayList<>();
 
         for (T elem : collection) {
@@ -70,6 +82,12 @@ public class Day11 {
         public Component(Substance compatibility, Type type) {
             this.compatibility = compatibility;
             this.type = type;
+        }
+
+        public String shortName() {
+            return String.format("%s%s",
+                    Character.toUpperCase(compatibility.toString().charAt(0)),
+                    type == Type.RTG ? "G" : "M");
         }
 
         /**
@@ -154,18 +172,83 @@ public class Day11 {
     }
 
     static class Building {
+        Building parent = null;
+        Move move = null; // The move used to obtain this state
         Map<Component, Integer> components = new HashMap<>();
         int elevator = 1;
         final int lowestFloor;
         final int highestFloor;
+
+        int depth = 0; // track search depth
 
         public Building(int low, int high) {
             this.lowestFloor = low;
             this.highestFloor = high;
         }
 
+        public Building(Building other) {
+            this.lowestFloor = other.lowestFloor;
+            this.highestFloor = other.highestFloor;
+            this.elevator = other.elevator;
+            this.components = new HashMap<>(other.components);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            Building other = (Building) obj;
+            return elevator == other.elevator
+                    && components.equals(other.components);
+        }
+
+        public int hashCode() {
+            return Integer.hashCode(elevator) * components.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+
+            SortedSet<Component> set = new TreeSet<>(components.keySet());
+
+            for (int i = highestFloor; i >= lowestFloor; i--) {
+                sb.append(String.format("F%d %-2s", i,
+                        (i == elevator) ? "E" : "."));
+
+                for (Component c : set) {
+                    sb.append(String.format("%-3s",
+                            components.get(c).equals(i) ? c.shortName() : "."));
+                }
+
+                sb.append("\n");
+            }
+            return sb.toString();
+        }
+
         void addComponent(Component c, int floorNum) {
             components.put(c, floorNum);
+        }
+
+        Building applyMove(Move move) {
+            Building newBuilding = new Building(this);
+            if (newBuilding.elevator != move.from) {
+                throw new IllegalArgumentException(
+                        "Illegal move: elevator is not in this floor");
+            }
+
+            if (move.components.size() > 2) {
+                throw new IllegalArgumentException(
+                        "Illegal move: elevator cannot move more than 2 components at a time.");
+            }
+
+            for (Component c : move.components) {
+                newBuilding.components.put(c, move.to);
+            }
+
+            newBuilding.elevator = move.to;
+            newBuilding.parent = this;
+            newBuilding.depth = depth + 1;
+            newBuilding.move = move;
+            return newBuilding;
         }
 
         void forAdjacentFloors(int floorNum, Consumer<Integer> fun) {
@@ -184,20 +267,32 @@ public class Day11 {
          * @return
          */
         List<Move> getMoves() {
-            List<Component> movableComponents = components.entrySet().stream()
-                    .filter(e -> e.getValue() == elevator).map(e -> e.getKey())
-                    .collect(Collectors.toList());
+
+            List<Component> movableComponents = null;
+
+            for (Entry<Component, Integer> e : components.entrySet()) {
+                if (e.getValue() != elevator)
+                    continue;
+
+                if (movableComponents == null) {
+                    movableComponents = new ArrayList<>();
+                    movableComponents.add(e.getKey());
+                }
+            }
 
             List<Move> moves = new ArrayList<>();
 
-            getAllTwoCombinations(movableComponents).stream().forEach(c -> {
+            for (List<Component> complist : getAllTwoCombinations(
+                    movableComponents)) {
                 forAdjacentFloors(elevator, (adj) -> {
-                    if (!willAnyComponentBeFriedAt(adj, c)) {
-                        moves.add(new Move(elevator, adj, c));
+                    if (!willAnyComponentBeFriedAt(adj, complist)) {
+                        moves.add(new Move(elevator, adj, complist));
                     }
                 });
-            });
+            }
 
+            System.out.println("Possible moves from\n" + this);
+            System.out.println(moves);
             return moves;
         }
 
@@ -238,6 +333,12 @@ public class Day11 {
 
             return false;
         }
+
+        public boolean isSolution() {
+            // System.out.println("Day11.Building.isSolution():\n" + this);
+            return components.entrySet().stream()
+                    .allMatch(e -> e.getValue().equals(highestFloor));
+        }
     }
 
     @Test
@@ -256,6 +357,7 @@ public class Day11 {
                 move.components);
         assertEquals(1, move.from);
         assertEquals(2, move.to);
+
     }
 
     @Test
@@ -272,5 +374,73 @@ public class Day11 {
         // there.
         assertFalse(building.willAnyComponentBeFriedAt(3, Arrays
                 .asList(new Component(Substance.Lithium, Type.Microchip))));
+    }
+
+    @Test
+    public void testApplyMove() throws Exception {
+        Building building = getTestInput();
+        System.out.println("Initial state:\n" + building);
+
+        List<Move> moves = building.getMoves();
+        Move move = moves.get(0);
+
+        System.out.println("Executing " + move);
+
+        Building newBuilding = building.applyMove(move);
+
+        // Check that the elevator has moved
+        assertEquals(move.to, newBuilding.elevator);
+
+        // Check that all the components have been moved
+        move.components.stream()
+                .allMatch(c -> newBuilding.components.get(c).equals(move.to));
+
+        System.out.println("Resulting state:\n" + newBuilding);
+
+        List<Move> moves2 = newBuilding.getMoves();
+        System.out.println("Moves available from second state: " + moves2);
+    }
+
+    @Test
+    public void testSolve() throws Exception {
+        Building building = getTestInput();
+        AtomicInteger counter = new AtomicInteger();
+        long start = System.nanoTime();
+
+        Optional<List<Building>> solution = SearchAlgorithms.breadthFirstSearch(
+                building, Building::getMoves, Building::applyMove, (b) -> {
+                    int x = counter.incrementAndGet();
+                    if (x % 1000 == 0) {
+                        long elapsed = System.nanoTime() - start;
+                        long elapsedPerSolution = elapsed / x;
+                        System.out.format(
+                                "Number of solutions checked: %d (%d usecs/per solution)%n",
+                                x, TimeUnit.NANOSECONDS
+                                        .toMicros(elapsedPerSolution));
+
+                    }
+
+                    System.out.println("\n===== Start state:\n" + building);
+                    List<Move> moves = new ArrayList<>();
+                    Building step = b;
+                    while (step != null) {
+                        if (step.move != null)
+                            moves.add(step.move);
+                        // System.out.println("Move: " + step.move);
+                        step = step.parent;
+                    }
+                    Collections.reverse(moves);
+                    moves.stream().forEach(System.out::println);
+                    System.out.println("====== End state:\n" + b);
+                    System.out.println("===================================");
+                    // There is supposed to be a solution with 11 steps.
+                    if (b.depth > 12)
+                        throw new AssertionError(
+                                "Maximum expected depth exceeded");
+
+                    return b.isSolution();
+                }, (b) -> b.parent);
+
+        System.out.println(solution);
     }
 }
