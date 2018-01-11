@@ -13,9 +13,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import org.junit.Test;
 
@@ -72,6 +70,10 @@ public class Day11 {
         final Substance compatibility;
         final Type type;
 
+        public static Component of(Substance compat, Type type) {
+            return new Component(compat, type);
+        }
+
         @Override
         public String toString() {
             return String.format("%s %s", compatibility, type);
@@ -88,58 +90,20 @@ public class Day11 {
                     type == Type.RTG ? "G" : "M");
         }
 
-        /**
-         * Return true/false if this component will fry the component specified
-         * in the first argument.
-         * 
-         * @param components
-         * @return
-         */
-        boolean willFry(Component other) {
-            boolean fry = (type == Type.RTG && other.type == Type.Microchip
-                    && compatibility != other.compatibility);
-            // if (fry) {
-            // System.out.format("%s fries %s%n", this, other);
-            // } else {
-            // System.out.format("%s does not fry %s%n", this, other);
-            // }
-            return fry;
-        }
-
         @Override
         public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result
-                    + ((compatibility == null) ? 0 : compatibility.hashCode());
-            result = prime * result + ((type == null) ? 0 : type.hashCode());
-            return result;
+            return compatibility.hashCode() * type.hashCode();
         }
 
         @Override
         public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
             Component other = (Component) obj;
-            if (compatibility != other.compatibility)
-                return false;
-            if (type != other.type)
-                return false;
-            return true;
+            return other.compatibility == compatibility && other.type == type;
         }
 
         @Override
         public int compareTo(Component o) {
-            int x = compatibility.compareTo(o.compatibility);
-            if (x != 0)
-                return x;
-            else {
-                return type.compareTo(o.type);
-            }
+            return shortName().compareTo(o.shortName());
         }
     }
 
@@ -155,29 +119,9 @@ public class Day11 {
         return building;
     }
 
-    static class Move {
-        int from;
-        int to;
-        List<Component> components = new ArrayList<>();
-
-        public Move(int from, int to, List<Component> components) {
-            super();
-            this.from = from;
-            this.to = to;
-            this.components = components;
-        }
-
-        @Override
-        public String toString() {
-            return String.format("move %s from floor %d to floor %d",
-                    components, from, to);
-        }
-
-    }
-
     static class Building {
+
         Building parent = null;
-        Move move = null; // The move used to obtain this state
         Map<Component, Integer> components = new HashMap<>();
         int elevator = 1;
         final int lowestFloor;
@@ -200,8 +144,7 @@ public class Day11 {
         @Override
         public boolean equals(Object obj) {
             Building other = (Building) obj;
-            return elevator == other.elevator
-                    && components.equals(other.components);
+            return components.equals(other.components);
         }
 
         public int hashCode() {
@@ -211,6 +154,7 @@ public class Day11 {
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();
+            sb.append("\n");
 
             SortedSet<Component> set = new TreeSet<>(components.keySet());
 
@@ -232,248 +176,206 @@ public class Day11 {
             components.put(c, floorNum);
         }
 
-        Building applyMove(Move move) {
-            Building newBuilding = new Building(this);
-            if (newBuilding.elevator != move.from) {
-                throw new IllegalArgumentException(
-                        "Illegal move: elevator is not in this floor");
-            }
-
-            if (move.components.size() > 2) {
-                throw new IllegalArgumentException(
-                        "Illegal move: elevator cannot move more than 2 components at a time.");
-            }
-
-            for (Component c : move.components) {
-                newBuilding.components.put(c, move.to);
-            }
-
-            newBuilding.elevator = move.to;
-            newBuilding.parent = this;
-            newBuilding.depth = depth + 1;
-            newBuilding.move = move;
-            return newBuilding;
-        }
-
-        void forAdjacentFloors(int floorNum, Consumer<Integer> fun) {
-            int upper = floorNum + 1;
-            if (upper <= highestFloor)
-                fun.accept(upper);
-
-            int lower = floorNum - 1;
-            if (lower >= lowestFloor)
-                fun.accept(lower);
-        }
+        int[] floorDeltas = new int[] { 1, -1 };
 
         /**
-         * Return the valid set of moves.
+         * Return all possible buildings which can be reached from this point.
          * 
          * @return
          */
-        List<Move> getMoves() {
+        public List<Building> getChildren() {
 
-            List<Component> movableComponents = new ArrayList<>();
+            List<Building> children = new ArrayList<>();
 
-            for (Entry<Component, Integer> e : components.entrySet()) {
-                if (!e.getValue().equals(elevator))
-                    continue;
+            // Collect all the components on the same floor as the elevator.
+            List<Component> movableComponents = components.keySet().stream()
+                    .filter(c -> components.get(c).intValue() == elevator)
+                    .collect(Collectors.toList());
 
-                movableComponents.add(e.getKey());
-            }
+            List<List<Component>> combinations = getAllTwoCombinations(
+                    movableComponents);
+            for (List<Component> complist : combinations) {
 
-            List<Move> moves = new ArrayList<>();
+                for (int delta : floorDeltas) {
+                    int dest = elevator + delta;
+                    if (dest <= highestFloor && dest >= lowestFloor) {
+                        // Move components to a higher floor.
+                        Building newstate = new Building(this);
+                        newstate.elevator = dest;
+                        for (Component componentToMove : complist) {
+                            newstate.components.put(componentToMove, dest);
+                        }
 
-            for (List<Component> complist : getAllTwoCombinations(
-                    movableComponents)) {
-                forAdjacentFloors(elevator, (adj) -> {
-                    Move move = new Move(elevator, adj, complist);
-                    Building b = applyMove(move);
-                    if (b.isValid()) {
-                        moves.add(move);
-                    }
-                });
-            }
-
-            // System.out.println("Possible moves from\n" + this);
-            // moves.stream().forEach(System.out::println);
-            return moves;
-        }
-
-        private boolean isValid() {
-            for (Component c: )
-        }
-
-        /**
-         * Returns true/false if any of the given components will be fried at
-         * the given floor.
-         */
-        public boolean willAnyComponentBeFriedAt(int floor,
-                List<Component> componentsToMove) {
-
-            // Make sure that all the chips at this floor are shielded.
-            for (Component tomove : componentsToMove) {
-                for (Entry<Component, Integer> atfloor : components
-                        .entrySet()) {
-                    if (!atfloor.getValue().equals(floor))
-                        continue;
-
-                    if (atfloor.getKey().willFry(tomove)) {
-                        System.out.format("%s will fry %s at floor %d%n",
-                                atfloor.getKey(), tomove, floor);
-                        return true;
-                    }
-
-                    if (tomove.willFry(atfloor.getKey())) {
-                        System.out.format("%s will fry %s at floor %d%n",
-                                tomove, atfloor.getKey(), floor);
-                        return true;
+                        // Check if the resulting configuration is valid.
+                        if (newstate.isValid()) {
+                            children.add(newstate);
+                        }
                     }
                 }
             }
 
-            System.out.format("No components of %s will be fried at floor %s%n",
-                    componentsToMove, floor);
+            System.out.println("== Children list ==");
+            System.out.println("Parent state: " + this);
+            children.stream().forEach(System.out::println);
+            System.out.println("== End children list ==");
 
-            return false;
+            return children;
+        }
 
+        public boolean isValid() {
+            for (Entry<Component, Integer> e : components.entrySet()) {
+
+                // For all RTGs
+                if (e.getKey().type == Type.RTG) {
+                    for (Entry<Component, Integer> e1 : components.entrySet()) {
+
+                        if (
+                        // If it is a microchip...
+                        e1.getKey().type == Type.Microchip
+
+                                // on the same floor as the RTG...
+                                && e1.getValue().equals(e.getValue())
+
+                                // and is not compatible with the RTG...
+                                && e1.getKey().compatibility != e
+                                        .getKey().compatibility
+
+                                // and is not shielded by its own RTG...
+                                && components.get(Component.of(
+                                        e1.getKey().compatibility, Type.RTG))
+                                        .intValue() != e1.getValue()
+                                                .intValue()) {
+
+                            // then it is fried, and the state is invalid.
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            return true;
         }
 
         public boolean isSolution() {
-            // System.out.println("Day11.Building.isSolution():\n" + this);
             return components.entrySet().stream()
                     .allMatch(e -> e.getValue().equals(highestFloor));
+        }
+    }
+
+    class BuildingSearchAdapter
+            implements SearchAlgorithms.BreadthFirstSearch<Building> {
+
+        @Override
+        public List<Building> getChildren(Building node) {
+            return node.getChildren();
+        }
+
+        @Override
+        public boolean isSolution(Building node) {
+            System.out.println("Checking solution: " + node);
+            return node.isSolution();
+        }
+
+        @Override
+        public Building getParent(Building node) {
+            return node.parent;
         }
 
     }
 
     @Test
-    public void testGetMoves() throws Exception {
-        Building building = getTestInput();
-        List<Move> moves = building.getMoves();
-        moves.stream().forEach(System.out::println);
+    public void testGetChildren() throws Exception {
 
-        // There is only one move we can do in the initial configuration,
-        // and that is to move the hydrogen chip to the second floor.
-        assertEquals(1, moves.size());
-        Move move = moves.get(0);
-        assertEquals(
-                Arrays.asList(
-                        new Component(Substance.Hydrogen, Type.Microchip)),
-                move.components);
-        assertEquals(1, move.from);
-        assertEquals(2, move.to);
+        // From the initial state there is only one possible move.
+        {
+            Building building = getTestInput();
+            Building expected = new Building(building);
+            expected.components
+                    .put(Component.of(Substance.Hydrogen, Type.Microchip), 2);
+            assertTrue(expected.isValid());
 
+            List<Building> children = building.getChildren();
+            assertEquals(1, children.size());
+
+            assertEquals(expected, children.get(0));
+        }
     }
 
     @Test
-    public void testFrying() throws Exception {
+    public void testGetChildren2() throws Exception {
+        // This state is one move away from a solution.
         Building building = getTestInput();
+        building.elevator = 3;
+        building.components
+                .put(Component.of(Substance.Hydrogen, Type.Microchip), 3);
+        building.components.put(Component.of(Substance.Lithium, Type.Microchip),
+                3);
+        building.components.put(Component.of(Substance.Hydrogen, Type.RTG), 4);
+        building.components.put(Component.of(Substance.Lithium, Type.RTG), 4);
 
-        // Moving the lithium microchip (in the initial configuration)
-        // to floor 2 will fry it, since there is a hydrogen RTG but
-        // no litium RTG.
-        assertTrue(building.willAnyComponentBeFriedAt(2, Arrays
-                .asList(new Component(Substance.Lithium, Type.Microchip))));
+        Building solution = new Building(building);
+        solution.components
+                .put(Component.of(Substance.Hydrogen, Type.Microchip), 4);
+        solution.components.put(Component.of(Substance.Lithium, Type.Microchip),
+                4);
+        solution.components.put(Component.of(Substance.Hydrogen, Type.RTG), 4);
+        solution.components.put(Component.of(Substance.Lithium, Type.RTG), 4);
+        assertTrue(solution.isValid());
+        assertTrue(solution.isSolution());
 
-        // The Lithium RTG will fry the hydrogen microhip at floor 1.
-        assertTrue(building.willAnyComponentBeFriedAt(1,
-                Arrays.asList(new Component(Substance.Lithium, Type.RTG))));
+        List<Building> children = building.getChildren();
 
-        // Moving to the third floor is ok, because there is only a lithium RTG
-        // there.
-        assertFalse(building.willAnyComponentBeFriedAt(3, Arrays
-                .asList(new Component(Substance.Lithium, Type.Microchip))));
+        // Check that the solution state is among the children.
+        assertTrue(children.stream().anyMatch(b -> b.equals(solution)));
     }
 
     @Test
-    public void testApplyMove() throws Exception {
-        Building building = getTestInput();
-        System.out.println("Initial state:\n" + building);
+    public void testIsValid() throws Exception {
+        {
+            Building building = getTestInput();
+            assertTrue(building.isValid());
+        }
 
-        List<Move> moves = building.getMoves();
-        Move move = moves.get(0);
+        {
+            Building building = new Building(1, 4);
+            building.addComponent(
+                    new Component(Substance.Hydrogen, Type.Microchip), 3);
+            building.addComponent(
+                    new Component(Substance.Lithium, Type.Microchip), 3);
+            building.addComponent(new Component(Substance.Hydrogen, Type.RTG),
+                    4);
+            building.addComponent(new Component(Substance.Lithium, Type.RTG),
+                    4);
+            assertTrue(building.isValid());
+        }
 
-        System.out.println("Executing " + move);
-
-        Building newBuilding = building.applyMove(move);
-
-        // Check that the elevator has moved
-        assertEquals(move.to, newBuilding.elevator);
-
-        // Check that all the components have been moved
-        move.components.stream()
-                .allMatch(c -> newBuilding.components.get(c).equals(move.to));
-
-        System.out.println("Resulting state:\n" + newBuilding);
-
-        List<Move> moves2 = newBuilding.getMoves();
-        System.out.println("Moves available from second state: " + moves2);
+        {
+            Building building = new Building(1, 4);
+            building.addComponent(
+                    new Component(Substance.Hydrogen, Type.Microchip), 4);
+            building.addComponent(
+                    new Component(Substance.Lithium, Type.Microchip), 3);
+            building.addComponent(new Component(Substance.Hydrogen, Type.RTG),
+                    3);
+            building.addComponent(new Component(Substance.Lithium, Type.RTG),
+                    4);
+            assertFalse(building.isValid());
+        }
     }
 
     @Test
     public void testSolve1() throws Exception {
-        Building building = new Building(1, 4);
+        Building building = getTestInput();
         building.elevator = 3;
-        building.addComponent(new Component(Substance.Hydrogen, Type.Microchip),
+        building.components
+                .put(Component.of(Substance.Hydrogen, Type.Microchip), 3);
+        building.components.put(Component.of(Substance.Lithium, Type.Microchip),
                 3);
-        building.addComponent(new Component(Substance.Lithium, Type.Microchip),
-                3);
-        building.addComponent(new Component(Substance.Hydrogen, Type.RTG), 4);
-        building.addComponent(new Component(Substance.Lithium, Type.RTG), 4);
+        building.components.put(Component.of(Substance.Hydrogen, Type.RTG), 4);
+        building.components.put(Component.of(Substance.Lithium, Type.RTG), 4);
 
-        List<Move> moves = building.getMoves();
-        moves.stream().forEach(System.out::println);
-        System.out.println();
-    }
-
-    @Test
-    public void testSolve() throws Exception {
-
-        Building building = new Building(1, 4);
-        building.elevator = 3;
-        building.addComponent(new Component(Substance.Hydrogen, Type.Microchip),
-                3);
-        building.addComponent(new Component(Substance.Lithium, Type.Microchip),
-                3);
-        building.addComponent(new Component(Substance.Hydrogen, Type.RTG), 4);
-        building.addComponent(new Component(Substance.Lithium, Type.RTG), 4);
-
-        // Building building = getTestInput();
-        AtomicInteger counter = new AtomicInteger();
-        long start = System.nanoTime();
-
-        Optional<List<Building>> solution = SearchAlgorithms.breadthFirstSearch(
-                building, Building::getMoves, Building::applyMove, (b) -> {
-                    int x = counter.incrementAndGet();
-                    if (x % 1000 == 0) {
-                        long elapsed = System.nanoTime() - start;
-                        long elapsedPerSolution = elapsed / x;
-                        System.out.format(
-                                "Number of solutions checked: %d (%d usecs/per solution)%n",
-                                x, TimeUnit.NANOSECONDS
-                                        .toMicros(elapsedPerSolution));
-
-                    }
-
-                    System.out.println("\n===== Start state:\n" + building);
-                    List<Move> moves = new ArrayList<>();
-                    Building step = b;
-                    while (step != null) {
-                        if (step.move != null)
-                            moves.add(step.move);
-                        step = step.parent;
-                    }
-                    Collections.reverse(moves);
-                    moves.stream().forEach(System.out::println);
-                    System.out.println("====== End state:\n" + b);
-                    System.out.println("===================================");
-                    // There is supposed to be a solution with 11 steps.
-                    if (b.depth > 12)
-                        throw new AssertionError(
-                                "Maximum expected depth exceeded");
-
-                    return b.isSolution();
-                }, (b) -> b.parent);
+        Optional<List<Building>> solution = SearchAlgorithms
+                .breadthFirstSearch(building, new BuildingSearchAdapter());
 
         assertTrue(solution.isPresent());
 

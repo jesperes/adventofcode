@@ -1,54 +1,32 @@
 package utils;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
-import java.util.function.Function;
 
 public class SearchAlgorithms {
 
-    @FunctionalInterface
-    public interface NodeFactory<Node, Action> {
-        Node createChildNode(Node parent, Action action);
+    public interface BreadthFirstSearch<Node> {
+        List<Node> getChildren(Node node);
+
+        boolean isSolution(Node node);
+
+        Node getParent(Node node);
     }
 
     /**
-     * Somewhat fancy breadth-first search where child nodes are computed
-     * dynamically on demand, and where moves are represented explicitly.
+     * Breadth-first search. Assumes that the graph is a tree, i.e. any node is
+     * reachable through a unique path.
      * 
      * @param root
-     *            The initial state to start searching from.
-     * @param actionProvider
-     *            Function which computes the possible set of actions available
-     *            from a node.
-     * @param nodeFactory
-     *            Function which computes child nodes given a parent node and an
-     *            action.
-     * @param solutionChecker
-     *            Function which checks if a given state is a solution.
-     * @param parentFunction
-     *            Maps nodes to their parents. This is necessary to be able to
-     *            reconstruct the path to the solution node.
-     * @param <Node>
-     *            The node/state type. Ensure that this type has a correctly
-     *            implemented equals/hashCode method.
-     * @param <Action>
-     *            The type used to describe actions going from one state to
-     *            another (i.e. "moves" in a game search).
-     * @return The list of nodes leading from the root to the solution. The
-     *         first element of this list is the root node, and the last is the
-     *         solution.
+     * @param data
+     * @return
      */
-    public static <Node, Action> Optional<List<Node>> breadthFirstSearch(
-            Node root, //
-            Function<Node, Collection<Action>> actionProvider,
-            NodeFactory<Node, Action> nodeFactory,
-            Function<Node, Boolean> solutionChecker,
-            Function<Node, Node> parentFunction) {
+    public static <Node> Optional<List<Node>> breadthFirstSearch(Node root,
+            BreadthFirstSearch<Node> data) {
 
         // The frontier along which we are searching.
         Queue<Node> openSet = new LinkedList<Node>();
@@ -60,29 +38,32 @@ public class SearchAlgorithms {
         while (!openSet.isEmpty()) {
             Node node = openSet.remove();
 
+            System.out.println("Picking node from queue: " + node);
+
             /*
              * Check if this is a solution, and if so return.
              */
-            boolean isSolution = solutionChecker.apply(node);
+            boolean isSolution = data.isSolution(node);
             if (isSolution) {
-                return Optional.of(constructSolutionList(node, parentFunction));
+                System.out.println("Found solution: " + node);
+                return Optional.of(constructSolutionList(node, data));
             }
 
-            /*
-             * Compute child nodes and recurse.
-             */
-            Collection<Action> actions = actionProvider.apply(node);
-            for (Action action : actions) {
-                Node child = nodeFactory.createChildNode(node, action);
+            for (Node child : data.getChildren(node)) {
+
+                System.out.println("Checking child: " + child);
 
                 if (closedSet.contains(child)) {
                     // We have already visited this state.
+                    System.out.println("Already visited: " + child);
                     continue;
                 }
 
                 // If we already have this state in our list of states
                 // to check, do not add it again.
                 if (!openSet.contains(child)) {
+                    System.out
+                            .println("Unchecked node, add to queue: " + child);
                     openSet.add(child);
                 }
             }
@@ -94,11 +75,11 @@ public class SearchAlgorithms {
     }
 
     private static <Node> List<Node> constructSolutionList(Node node,
-            Function<Node, Node> parentFunction) {
+            BreadthFirstSearch<Node> data) {
         LinkedList<Node> list = new LinkedList<>();
         Node current = node;
         list.add(current);
-        while ((current = parentFunction.apply(current)) != null) {
+        while ((current = data.getParent(current)) != null) {
             list.add(0, current);
         }
         return list;
