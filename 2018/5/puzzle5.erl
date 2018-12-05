@@ -69,5 +69,26 @@ do_react([X,Y|Rest]) ->
             end
     end.
 
-start2() ->
+%% Removes all occurrences of c/C from the polymer, reacts it and
+%% returns a tuple {C, length(P)} where P is the polymer after
+%% reaction.
+remove_and_react(C, Polymer) ->
+    io:format("Removing ~p and reacting...~n", [[C]]),
+    ReducedPolymer = 
+        lists:filter(fun(X) -> 
+                             (X /= C) and (X /= (C + 32))
+                     end, Polymer),
+    ReactedPolymer = react(ReducedPolymer),
+    {C, length(ReactedPolymer)}.
     
+start2() ->
+    %% Polymer = testdata(),
+    Polymer = input(),
+    List = [ remove_and_react(C, Polymer) || C <- lists:seq($A, $Z)],
+    
+    lists:foldl(fun({_C,Len}, Min) when Len < Min ->
+                        Len;
+                   (_, Min) ->
+                        Min
+                end, length(Polymer), List).
+
