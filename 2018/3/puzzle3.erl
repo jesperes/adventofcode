@@ -56,6 +56,10 @@ display_fabric(W, H, Map) ->
                 || Y <- lists:seq(0, H - 1)]]).
 
 start2() ->
+    %% TestData = ["#1 @ 1,3: 4x4",
+    %%             "#2 @ 3,1: 4x4",
+    %%             "#3 @ 5,5: 2x2"],
+
     Input = read_file_lines("input.txt"),
     Areas = lists:map(fun parse_line/1, Input),
     ClaimedAreas = count_claims(Areas, #{}),
@@ -63,7 +67,6 @@ start2() ->
     AllIds = lists:map(fun({Id, _, _, _, _}) ->
                                Id
                        end, Areas),
-
     %% Find the id which does not share any square in with any other
     %% id.
     [N] = lists:filter(fun(Id) ->
