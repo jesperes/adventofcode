@@ -49,11 +49,11 @@ claim_area(Id, L, T, W, H, Map) ->
                                          end, [Id], AccIn)
                 end, Map, Coords).
 
-display_fabric(W, H, Map) ->
-    io:format("~p~n", 
-              [[[maps:get({X,Y},Map,[])
-                 || X <- lists:seq(0, W - 1)]
-                || Y <- lists:seq(0, H - 1)]]).
+%% display_fabric(W, H, Map) ->
+%%     io:format("~p~n", 
+%%               [[[maps:get({X,Y},Map,[])
+%%                  || X <- lists:seq(0, W - 1)]
+%%                 || Y <- lists:seq(0, H - 1)]]).
 
 start2() ->
     %% TestData = ["#1 @ 1,3: 4x4",

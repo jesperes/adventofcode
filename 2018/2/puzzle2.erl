@@ -75,7 +75,7 @@ start1() ->
                          end
                  end, List)),
     
-    {XCount, YCount, XCount * YCount}.
+    XCount * YCount.
 
 
 number_of_different_chars([], []) ->
@@ -105,5 +105,3 @@ start2() ->
                       false
               end
       end, DiffList).
-
-%% number_of_different_chars("abcd", "a111").

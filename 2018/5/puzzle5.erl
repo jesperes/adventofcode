@@ -7,8 +7,8 @@ start1() ->
     ReactedPolymer = react(Polymer),
     length(ReactedPolymer).
 
-testdata() ->
-    "dabAcCaCBAcCcaDA".
+%% testdata() ->
+%%     "dabAcCaCBAcCcaDA".
 
 input() ->
     {ok, Binary} = file:read_file("input.txt"),
@@ -73,7 +73,7 @@ do_react([X,Y|Rest]) ->
 %% returns a tuple {C, length(P)} where P is the polymer after
 %% reaction.
 remove_and_react(C, Polymer) ->
-    io:format("Removing ~p and reacting...~n", [[C]]),
+    %% io:format("Removing ~p and reacting...~n", [[C]]),
     ReducedPolymer = 
         lists:filter(fun(X) -> 
                              (X /= C) and (X /= (C + 32))

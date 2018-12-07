@@ -33,25 +33,25 @@ input() ->
     {ok, Binary} = file:read_file("input.txt"),
     lists:sort(string:tokens(binary_to_list(Binary), "\n")).
 
-testdata() ->
-    lists:sort(
-      ["[1518-11-01 00:00] Guard #10 begins shift",
-       "[1518-11-01 00:05] falls asleep",
-       "[1518-11-01 00:25] wakes up",
-       "[1518-11-01 00:30] falls asleep",
-       "[1518-11-01 00:55] wakes up",
-       "[1518-11-01 23:58] Guard #99 begins shift",
-       "[1518-11-02 00:40] falls asleep",
-       "[1518-11-02 00:50] wakes up",
-       "[1518-11-03 00:05] Guard #10 begins shift",
-       "[1518-11-03 00:24] falls asleep",
-       "[1518-11-03 00:29] wakes up",
-       "[1518-11-04 00:02] Guard #99 begins shift",
-       "[1518-11-04 00:36] falls asleep",
-       "[1518-11-04 00:46] wakes up",
-       "[1518-11-05 00:03] Guard #99 begins shift",
-       "[1518-11-05 00:45] falls asleep",
-       "[1518-11-05 00:55] wakes up]"]).
+%% testdata() ->
+%%     lists:sort(
+%%       ["[1518-11-01 00:00] Guard #10 begins shift",
+%%        "[1518-11-01 00:05] falls asleep",
+%%        "[1518-11-01 00:25] wakes up",
+%%        "[1518-11-01 00:30] falls asleep",
+%%        "[1518-11-01 00:55] wakes up",
+%%        "[1518-11-01 23:58] Guard #99 begins shift",
+%%        "[1518-11-02 00:40] falls asleep",
+%%        "[1518-11-02 00:50] wakes up",
+%%        "[1518-11-03 00:05] Guard #10 begins shift",
+%%        "[1518-11-03 00:24] falls asleep",
+%%        "[1518-11-03 00:29] wakes up",
+%%        "[1518-11-04 00:02] Guard #99 begins shift",
+%%        "[1518-11-04 00:36] falls asleep",
+%%        "[1518-11-04 00:46] wakes up",
+%%        "[1518-11-05 00:03] Guard #99 begins shift",
+%%        "[1518-11-05 00:45] falls asleep",
+%%        "[1518-11-05 00:55] wakes up]"]).
 
 int(N) ->
     list_to_integer(N).
@@ -151,7 +151,7 @@ start2() ->
                     end, #{}, lists:seq(0, 59)),
     
     %% Find the larges value in the map
-    {GuardId, SleepiestMinute, NumSleeps} = 
+    {GuardId, SleepiestMinute, _NumSleeps} = 
         maps:fold(fun({Guard, Minute} = _Key, NumSleeps = _Value, 
                       {_CurrGuard, _CurrMinute, Max}) when NumSleeps > Max ->
                           {Guard, Minute, NumSleeps}; %% we have a new max, at 'Minute'
@@ -160,9 +160,7 @@ start2() ->
                   end, {undefined, undefined, 0}, Map),
     
     [$#|GuardNum] = atom_to_list(GuardId),
-    {GuardId, SleepiestMinute, NumSleeps, list_to_integer(GuardNum) * SleepiestMinute}.
-    
-                          
+    list_to_integer(GuardNum) * SleepiestMinute.
 
 %% Update a map with which guards are asleep at which minute
 guards_asleep_at(SleepRanges, Minute, Map) ->
