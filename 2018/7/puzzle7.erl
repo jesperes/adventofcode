@@ -137,10 +137,7 @@ find_step_order2(Edges, Workers, Duration) ->
     find_step_order2(0, [], get_nodes(Edges), Edges, Workers, Duration).
 
 find_step_order2(Second, CompletedNodes, [], _, _, _) ->
-    Order = lists:flatten(lists:map(fun atom_to_list/1, CompletedNodes)),
-    {Second - 1, Order};
-%% find_step_order2(Second, _, _, _, _, _) when Second >= 5 ->
-%%     Second;
+    Second - 1;
 find_step_order2(Second, CompletedNodes, Remaining, Edges, Workers, Duration) ->
     %% Second is the current second we are on. CompletedNodes,
     %% Remaining, Edges are as before. Workers is a list of workers
@@ -148,10 +145,6 @@ find_step_order2(Second, CompletedNodes, Remaining, Edges, Workers, Duration) ->
     %% describing which node the worker is working on, and when it is
     %% expected to finish.  Duration is the base-duration of each
     %% step.
-    
-    %% io:format("Second ~w, CompletedNodes = ~w, Remaining = ~w, Workers = ~w~n", 
-    %%           [Second, CompletedNodes, Remaining, Workers]),
-    
     FinishedWork = 
         lists:filtermap(fun({Task, FinishedAt}) 
                               when (FinishedAt =< Second) and (Task /= '.') ->
@@ -206,4 +199,3 @@ work_duration(N, BaseDur) ->
 
 test() ->
     61 = work_duration('A', 60).
-
