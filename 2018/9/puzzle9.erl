@@ -3,8 +3,8 @@
 
 start1() ->
     %% start(419, 72164).
-    test(),
-    start(419, 72164).
+    test().
+%% start(419, 72164).
 
 start2() ->
     test(),
@@ -14,8 +14,9 @@ start(NumPlayers, LastMarble) ->
     {Time, Value} =
         timer:tc(
           fun() ->
-                  Scores = #{},
-                  NewScores = marble_game(1, [0], 0, NumPlayers, LastMarble, Scores),
+                  NewScores = marble_game(1, 
+                                          queue:from_list([0]),
+                                          NumPlayers, LastMarble, #{}),
                   find_max_value(NewScores)
           end),
     {Time / (1000 * 1000), Value}.
@@ -33,40 +34,41 @@ score(Player, Marble, Scores) ->
                              end, Marble, Scores).
 
 test() ->
-    {_, 8317} = start(10, 1618).
+    {_, 32} = start(9, 25).
 
-marble_game(N, _, _CurrentPos, _NumPlayers, LastMarble, Scores) when N > LastMarble ->
+marble_game(N, _, _NumPlayers, LastMarble, Scores) when N > LastMarble ->
     Scores;
 
-marble_game(N, Ring, CurrentPos, NumPlayers, LastMarble, Scores) when (N rem 23 == 0) ->
-    Len = length(Ring),
-    Player = N rem NumPlayers,
-    MarbleToRemove = ((CurrentPos - 7) + Len) rem Len,
-    {L1, [Removed|L2]} = lists:split(MarbleToRemove, Ring),
-    NewScores = score(Player, N + Removed, Scores),
-    {NewRing, NewCurrentPos} = 
-        case L2 of
-            [] -> 
-                {L1, 0};
-            _ ->
-                {L1 ++ L2, MarbleToRemove}
-        end,
-    marble_game(N + 1, NewRing, NewCurrentPos, NumPlayers, LastMarble, NewScores);
-
-marble_game(N, Ring, CurrentPos, NumPlayers, LastMarble, Scores) ->
+marble_game(N, Ring, NumPlayers, LastMarble, Scores) when (N rem 23 == 0) ->
+    erlang:display(queue:to_list(Ring)),
     progress(N),
-    Len = length(Ring),
-    {NewRing, NewCurrentPos} = 
-        case (CurrentPos + 2) rem Len of
-            0 ->
-                {Ring ++ [N], Len};
-            P ->
-                {L1, L2} = lists:split(P, Ring),
-                {L1 ++ [N|L2], P}
-        end,
-    marble_game(N + 1, NewRing, NewCurrentPos, NumPlayers, LastMarble, Scores).
+    R1 = rotateCCW(
+           rotateCCW(
+             rotateCCW(
+               rotateCCW(
+                 rotateCCW(
+                   rotateCCW(
+                     rotateCCW(Ring))))))),
+    {{value, Removed},NewRing} = queue:out(R1),
+    NewScores = score(N rem NumPlayers, Removed + N, Scores),
+    marble_game(N + 1, NewRing, NumPlayers, LastMarble, NewScores);
+
+marble_game(N, Ring, NumPlayers, LastMarble, Scores) ->
+    erlang:display(queue:to_list(Ring)),
+    progress(N),
+    R1 = rotateCW(rotateCW(Ring)),
+    R2 = queue:in(N, R1),
+    marble_game(N + 1, R2, NumPlayers, LastMarble, Scores).
 
 progress(N) when N rem 1000 == 0 ->
     io:format("Placing marble ~w...~n", [N]);
 progress(_) ->
     ok.
+
+rotateCW(Queue) ->
+    {{value, Head},Q0} = queue:out(Queue),
+    queue:in_r(Head, Q0).
+
+rotateCCW(Queue) ->
+    {{value, Tail},Q0} = queue:out_r(Queue),
+    queue:in(Tail, Q0).
