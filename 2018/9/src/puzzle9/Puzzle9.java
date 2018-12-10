@@ -19,47 +19,48 @@ public class Puzzle9 {
 		// System.out.println(Arrays.toString(array));
 
 		assertEquals(32, marbleGameQueue(9, 25));
-		assertEquals(8317, marbleGameQueue(10, 1618));
-		assertEquals(423717, marbleGameQueue(419, 72164));
-		marbleGameQueue(419, 72164 * 100);
+		// assertEquals(8317, marbleGameQueue(10, 1618));
+		// assertEquals(423717, marbleGameQueue(419, 72164));
+		// marbleGameQueue(419, 72164 * 100);
 	}
-//
-//	static int marbleGame(int numPlayers, int lastMarble) {
-//		long t0 = System.nanoTime();
-//		List<Integer> ring = new ArrayList<>();
-//		ring.add(0);
-//		Map<Integer, Integer> scores = new HashMap<>();
-//		int currentPos = 0;
-//
-//		for (int n = 1; n <= lastMarble; n++) {
-//
-////			if (n % 100000 == 0) {
-////				double progress = ((double) n) / lastMarble;
-////				System.out.format("Progress %g%%%n", progress * 100);
-////			}
-//			if (n % 23 == 0) {
-//				int player = n % numPlayers;
-//				int removalPos = ((currentPos - 7) + ring.size()) % ring.size();
-//				int removed = ring.remove(removalPos);
-//				int score = n + removed;
-//				scores.compute(player, (k, v) -> v == null ? score : v + score);
-//				currentPos = removalPos;
-//				if (currentPos >= ring.size())
-//					currentPos = 0; // wrap around
-//			} else {
-//				int insertionPos = (currentPos + 2) % ring.size();
-//				ring.add(insertionPos, n);
-//				currentPos = insertionPos;
-//			}
-//		}
-//
-//		int max = scores.values().stream().mapToInt(v -> v).max().getAsInt();
-//		long elapsed = System.nanoTime() - t0;
-//
-//		System.out.format("Max score for %d players, last marble value %d, time = %d ms%n", numPlayers, lastMarble,
-//				TimeUnit.NANOSECONDS.toMillis(elapsed));
-//		return max;
-//	}
+	//
+	// static int marbleGame(int numPlayers, int lastMarble) {
+	// long t0 = System.nanoTime();
+	// List<Integer> ring = new ArrayList<>();
+	// ring.add(0);
+	// Map<Integer, Integer> scores = new HashMap<>();
+	// int currentPos = 0;
+	//
+	// for (int n = 1; n <= lastMarble; n++) {
+	//
+	//// if (n % 100000 == 0) {
+	//// double progress = ((double) n) / lastMarble;
+	//// System.out.format("Progress %g%%%n", progress * 100);
+	//// }
+	// if (n % 23 == 0) {
+	// int player = n % numPlayers;
+	// int removalPos = ((currentPos - 7) + ring.size()) % ring.size();
+	// int removed = ring.remove(removalPos);
+	// int score = n + removed;
+	// scores.compute(player, (k, v) -> v == null ? score : v + score);
+	// currentPos = removalPos;
+	// if (currentPos >= ring.size())
+	// currentPos = 0; // wrap around
+	// } else {
+	// int insertionPos = (currentPos + 2) % ring.size();
+	// ring.add(insertionPos, n);
+	// currentPos = insertionPos;
+	// }
+	// }
+	//
+	// int max = scores.values().stream().mapToInt(v -> v).max().getAsInt();
+	// long elapsed = System.nanoTime() - t0;
+	//
+	// System.out.format("Max score for %d players, last marble value %d, time = %d
+	// ms%n", numPlayers, lastMarble,
+	// TimeUnit.NANOSECONDS.toMillis(elapsed));
+	// return max;
+	// }
 
 	static <T> void rotateCW(Deque<T> ring, int n) {
 		for (int i = 0; i < n; i++) {
@@ -89,12 +90,14 @@ public class Puzzle9 {
 				}
 				int removed = ring.removeFirst();
 				scores[n % numPlayers] += n + removed;
+				System.out.format("Removed %d at %d%n", removed, n);
 			} else {
 				// rotate two steps so that the inserted marble ends up in the right location
 				ring.addLast(ring.removeFirst());
 				ring.addLast(ring.removeFirst());
 				ring.addFirst(n);
 			}
+			System.out.format("%d: %s%n", n, ring);
 		}
 
 		long max = 0;
