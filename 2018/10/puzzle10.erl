@@ -27,8 +27,13 @@ do_steps(Points, Sec) ->
     P1 = step_points(Points),
     W1 = get_width(Points),
     W2 = get_width(P1),
+    %% When the width of the bounding box starts to expand, we are
+    %% done. This assumes that all points converge to form the
+    %% message, and the message appear when the points are closest
+    %% together.
     IsExpanding = abs(W2) > abs(W1),
     if IsExpanding ->
+            io:format("Found message after ~w seconds.~n", [Sec]),
             print_display(Points);
        true ->
             do_steps(P1, Sec + 1)
