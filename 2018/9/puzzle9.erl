@@ -14,16 +14,13 @@ start(NumPlayers, LastMarble) ->
     find_max_value(NewScores).
         
 find_max_value(Map) ->
-    maps:fold(fun(_,V,Max) when V > Max ->
-                      V;
-                 (_,_,Max) ->
-                      Max
+    maps:fold(fun(_,V,Max) when V > Max -> V;
+                 (_,_,Max) -> Max
               end, 0, Map).
 
 score(Player, Marble, Scores) ->
-    maps:update_with(Player, fun(V) ->
-                                     V + Marble
-                             end, Marble, Scores).
+    maps:update_with(Player, fun(V) -> V + Marble end, 
+                     Marble, Scores).
 
 marble_game(N, _, _NumPlayers, LastMarble, Scores) when N > LastMarble ->
     Scores;
@@ -46,16 +43,22 @@ pop(Queue) ->
 push(Queue, Value) ->
     queue:in(Value, Queue).
 
+rotate_ccw(Queue) ->
+    {{value, Head}, Q0} = queue:out(Queue),
+    queue:in(Head, Q0).
+
 rotate_ccw(Queue, N) ->
     lists:foldl(
       fun(_, Q) ->
-              {{value, Head}, Q0} = queue:out(Q),
-              queue:in(Head, Q0)
+              rotate_ccw(Q)
       end, Queue, lists:seq(1, N)).
+
+rotate_cw(Queue) ->
+    {{value, Head}, Q0} = queue:out_r(Queue),
+    queue:in_r(Head, Q0).
 
 rotate_cw(Queue, N) ->
     lists:foldl(
       fun(_, Q) ->
-              {{value, Head}, Q0} = queue:out_r(Q),
-              queue:in_r(Head, Q0)
+              rotate_cw(Q)
       end, Queue, lists:seq(1, N)).
