@@ -211,9 +211,10 @@ move_cart(Pos, Cart, Tracks, NewCarts) ->
             %% In part 1, we just throw here.
             %% throw({collision, NewPos});
             
-            %% For part 2, we obliterate the colliding carts and
-            %% continue until the is only one cart left.
-            erlang:display({obliterating, NewPos}),
+            %% For part 2, we obliterate the colliding carts (by
+            %% removing the cart which was already there and not
+            %% adding the new one) and continue until the is only one
+            %% cart left.
             maps:remove(NewPos, NewCarts);
         _ ->
             maps:put(NewPos, NewCart, NewCarts)
