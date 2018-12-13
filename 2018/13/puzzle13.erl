@@ -101,7 +101,7 @@ direction($<) -> 3.
 dir_to_char(0) -> $^;
 dir_to_char(1) -> $>;
 dir_to_char(2) -> $v;
-dir_to_char(3) -> $^.
+dir_to_char(3) -> $<.
 
 put_track_char(K, C, TM, CM) ->
     case is_cart(C) of
