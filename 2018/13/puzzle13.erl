@@ -11,6 +11,10 @@
 
 %% 23,71 is wrong answer for part 2
 %% 23,72 is wrong answer for part 2
+%% 104,51 is wrong answer for part 2
+%% 53,75 is wrong answer for part 2
+%% 146,90
+%% 73,88
 
 start1() ->
     %% {Tracks,Carts} = parse(testdata2()),
@@ -19,14 +23,14 @@ start1() ->
     catch lists:foldl(fun(_, CartsIn) ->
                               Carts0 = do_step(CartsIn, Tracks),
                               %% print_track(Tracks, Carts0),
-                              case maps:size(CartsIn) of
+                              case maps:size(Carts0) of
                                   1 ->
                                       [LastCartPos] = maps:keys(Carts0),
                                       throw({last_cart_left, LastCartPos});
                                   _ ->
                                       Carts0
                               end
-                      end, Carts, lists:seq(1, 10000)).
+                      end, Carts, lists:seq(1, 1000000)).
 
 realdata() ->
     {ok, Binary} = file:read_file("input.txt"),
@@ -41,7 +45,7 @@ testdata() ->
   \\------/   ".
 
 testdata2() ->
-    "/>-<\\  
+    "/><-\\  
 |   |  
 | /<+-\\
 | | | v
@@ -138,11 +142,29 @@ track_to_str(TM, CM, W, H) ->
      || Y <- lists:seq(0, H)].
 
 do_step(Carts, Tracks) ->
-    maps:fold(fun(Pos, Cart, Carts0) ->
-                      move_cart(Pos, Cart, Tracks, Carts0)
-              end, #{}, Carts).
+    SortedCarts = 
+        lists:sort(fun({Pos1,_},{Pos2,_}) ->
+                           Pos1 =< Pos2
+                   end, maps:to_list(Carts)),
+    
+    lists:foldl(
+      fun({Pos, Cart}, Carts0) ->
+              move_cart(Pos, Cart, Tracks, Carts0, Carts)
+              %% remove_swaps(Carts0, Carts1, Tracks)
+      end, #{}, SortedCarts).
 
 
+is_facing(0 = _Old, 2 = _New) ->
+    true;
+is_facing(1 = _Old, 3 = _New) ->
+    true;
+is_facing(2 = _Old, 0 = _New) ->
+    true;
+is_facing(3 = _Old, 1 = _New) ->
+    true;
+is_facing(_, _) ->
+    false.
+  
 move({X,Y}, 0) ->
     {X,Y-1};
 move({X,Y}, 1) ->
@@ -192,33 +214,51 @@ follow_track(3, $-) -> %% west going straight
 follow_track(3, $\\) -> %% west turning right
     0.
 
-move_cart(Pos, Cart, Tracks, NewCarts) ->
+move_cart(Pos, Cart, Tracks, NewCarts, OldCarts) ->
     {Dir, Turn} = Cart,
     
+    NewPos = move(Pos, Dir),
+    
     NewCart = {NewDir, _} =
-        case is_at_intersection(Pos, Tracks) of
+        case is_at_intersection(NewPos, Tracks) of
             true ->
+                %% Turn in the specified direction, and compute what
+                %% to do in the next turn
                 {turn(Dir, Turn), next_dir(Turn)};
             _ ->
-                Track = maps:get(Pos, Tracks),
+                %% Otherwise, check if the track turns at the new
+                %% position and turn accordingly to follow
+                Track = maps:get(NewPos, Tracks),
                 {follow_track(Dir, Track), Turn}
         end,
     
-    NewPos = move(Pos, NewDir),
-    
-    case maps:is_key(NewPos, NewCarts) of
+    %% Check for collisions.
+
+    %% Case 1: There is an existing (not yet moved) cart in the
+    %% position we are about to move this cart into. If they are
+    %% facing our way, we have a collision. If they are facing the
+    %% other way, they will move out of the way and everything is
+    %% fine.
+    OldCartAtNewPos = maps:get(NewPos, OldCarts, none),
+    Coll1 = 
+        case OldCartAtNewPos of
+            none ->
+                false;
+            {D1, _} ->
+                is_facing(D1, NewDir)
+        end,
+
+    Coll2 = maps:is_key(NewPos, NewCarts),
+
+    IsCollision = Coll1 or Coll2,
+
+    case IsCollision of
         true ->
             %% In part 1, we just throw here.
             %% throw({collision, NewPos});
             
-            %% For part 2, we obliterate the colliding carts (by
-            %% removing the cart which was already there and not
-            %% adding the new one) and continue until the is only one
-            %% cart left.
+            %% For part 2, we obliterate the colliding carts
             maps:remove(NewPos, NewCarts);
         _ ->
             maps:put(NewPos, NewCart, NewCarts)
     end.
-
-
-    
