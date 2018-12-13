@@ -6,8 +6,9 @@
 %%% Created : 13 Dec 2018 by Jesper Eskilson <>
 
 -module(puzzle13).
+%% -include_lib("eunit/include/eunit.hrl").
 
--export([start1/0]).
+-export([start1/0, test/0]).
 
 %% 23,71 is wrong answer for part 2
 %% 23,72 is wrong answer for part 2
@@ -15,18 +16,33 @@
 %% 53,75 is wrong answer for part 2
 %% 146,90
 %% 73,88
+%% 64,50
+
+-define(VARIANT, {part2,real}).
 
 start1() ->
-    %% {Tracks,Carts} = parse(testdata2()),
-    {Tracks,Carts} = parse(realdata()),
-    %% print_track(Tracks, Carts),
+    {Tracks, Carts} = 
+        case ?VARIANT of
+            {part1, test} ->
+                parse(testdata());
+            {part1, real} -> 
+                parse(realdata());
+            {part2, test} ->
+                parse(testdata2());
+            {part2, real} ->
+                parse(realdata())
+        end,
+    
+    print_track(Tracks, Carts),
     catch lists:foldl(fun(_, CartsIn) ->
                               Carts0 = do_step(CartsIn, Tracks),
-                              %% print_track(Tracks, Carts0),
+                              print_track(Tracks, Carts0),
                               case maps:size(Carts0) of
                                   1 ->
                                       [LastCartPos] = maps:keys(Carts0),
                                       throw({last_cart_left, LastCartPos});
+                                  0 ->
+                                      throw(no_carts_left);
                                   _ ->
                                       Carts0
                               end
@@ -45,18 +61,28 @@ testdata() ->
   \\------/   ".
 
 testdata2() ->
-    "/><-\\  
-|   |  
-| /<+-\\
+    "\
+/<--\\  
+|   v  
+^ />+-\\
 | | | v
 \\>+</ |
   |   ^
-  \\<->/".
+  \\<->/
+".
+
 
 print_track(Tracks, Carts) ->
-    lists:foreach(fun(S) ->
-                          io:format("~s~n", [S])
-                  end, track_to_str(Tracks, Carts, 15, 8)).
+    case ?VARIANT of 
+        {_, test} ->
+            lists:foreach(fun(S) ->
+                                  %% erlang:display(S)
+                                  io:format("~s~n", [S])
+                          end, track_to_str(Tracks, Carts, 12, 7));
+        _ ->
+            ok
+    end.
+                
 
 parse(Str) ->
     %% Parse all track segments into a map of {X,Y} -> Char.
@@ -143,14 +169,19 @@ track_to_str(TM, CM, W, H) ->
 
 do_step(Carts, Tracks) ->
     SortedCarts = 
-        lists:sort(fun({Pos1,_},{Pos2,_}) ->
-                           Pos1 =< Pos2
+        lists:sort(fun({{X1,Y1},_},{{X2,Y2},_}) ->
+                           if Y1 < Y2 ->
+                                   true;
+                              Y1 == Y2 ->
+                                   X1 =< X2;
+                              true ->
+                                   false
+                           end
                    end, maps:to_list(Carts)),
     
     lists:foldl(
       fun({Pos, Cart}, Carts0) ->
               move_cart(Pos, Cart, Tracks, Carts0, Carts)
-              %% remove_swaps(Carts0, Carts1, Tracks)
       end, #{}, SortedCarts).
 
 
@@ -217,6 +248,8 @@ follow_track(3, $\\) -> %% west turning right
 move_cart(Pos, Cart, Tracks, NewCarts, OldCarts) ->
     {Dir, Turn} = Cart,
     
+    %% erlang:display({moving, Pos, Cart}),
+
     NewPos = move(Pos, Dir),
     
     NewCart = {NewDir, _} =
@@ -245,20 +278,82 @@ move_cart(Pos, Cart, Tracks, NewCarts, OldCarts) ->
             none ->
                 false;
             {D1, _} ->
-                is_facing(D1, NewDir)
+                is_facing(D1, Dir)
         end,
 
+    %% Case 2: If we already have placed a cart in this position, 
+    %% we have a collision.
     Coll2 = maps:is_key(NewPos, NewCarts),
 
     IsCollision = Coll1 or Coll2,
 
     case IsCollision of
         true ->
-            %% In part 1, we just throw here.
-            %% throw({collision, NewPos});
-            
-            %% For part 2, we obliterate the colliding carts
-            maps:remove(NewPos, NewCarts);
+            case ?VARIANT of
+                {part1, _} ->
+                    throw({collision, NewPos});
+                {part2, _} ->
+                    erlang:display({removing, NewPos}),
+                    maps:remove(NewPos, NewCarts)
+            end;
         _ ->
             maps:put(NewPos, NewCart, NewCarts)
     end.
+
+
+s(L) ->
+    lists:flatten(lists:join("\n", L)).
+
+ensure_collision(Str) ->
+    {Tracks, Carts} = 
+        parse(Str),
+    print_track(Tracks, Carts),
+
+    C0 = do_step(Carts, Tracks),
+    print_track(Tracks, C0),
+    
+    C1 = do_step(C0, Tracks),
+    print_track(Tracks, C1).
+
+
+test() ->
+    %% ensure_collision(
+    %%   s(["/<--\\",
+    %%      "|   |",
+    %%      "^   |",
+    %%      "\\---/"])),
+    
+    %% ensure_collision(
+    %%   s(["/-<-\\",
+    %%      "^   |",
+    %%      "|   |",
+    %%      "\\---/"])),
+
+    %% ensure_collision(
+    %%   s(["/->-\\",
+    %%      "|   ^",
+    %%      "|   |",
+    %%      "\\---/"])),
+
+    %% ensure_collision(
+    %%   s(["/---\\",
+    %%      "|   |",
+    %%      "|   v",
+    %%      "|  /+<-\\",
+    %%      "|  |^  |",
+    %%     "\\--+/  |",
+    %%      "   |   |",
+    %%     "   \\---/"])),
+    
+    ensure_collision(
+      s(["/----\\",
+         "|    |",
+         "|    v",
+         "|  /-+<-\\",
+         "|  | ^  |",
+        "\\--+-/  |",
+         "   |    |",
+        "   \\----/"])),
+    ok.
+
+    
