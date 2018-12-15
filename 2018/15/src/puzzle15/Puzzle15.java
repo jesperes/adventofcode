@@ -1,5 +1,7 @@
 package puzzle15;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -16,6 +18,8 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+
+import org.junit.Test;
 
 public class Puzzle15 {
 
@@ -104,7 +108,46 @@ public class Puzzle15 {
 
     public static void main(String[] args)
             throws FileNotFoundException, IOException {
-        char[][] grid = parseInput("testinput4.txt");
+    }
+
+    @Test
+    public void testScenario4() throws Exception {
+        assertEquals(27730, runCombat("testinput4.txt"));
+    }
+
+    @Test
+    public void testScenario5() throws Exception {
+        assertEquals(36334, runCombat("testinput5.txt"));
+    }
+
+    @Test
+    public void testScenario6() throws Exception {
+        assertEquals(39514, runCombat("testinput6.txt"));
+    }
+
+    @Test
+    public void testScenario7() throws Exception {
+        assertEquals(27755, runCombat("testinput7.txt"));
+    }
+
+    @Test
+    public void testScenario8() throws Exception {
+        assertEquals(28944, runCombat("testinput8.txt"));
+    }
+
+    @Test
+    public void testScenario9() throws Exception {
+        assertEquals(18740, runCombat("testinput8.txt"));
+    }
+
+    @Test
+    public void testPart1Real() throws Exception {
+        assertEquals(18740, runCombat("input.txt"));
+    }
+
+    private static int runCombat(String filename)
+            throws FileNotFoundException, IOException {
+        char[][] grid = parseInput(filename);
         Map<Pos, Integer> hitpoints = new TreeMap<>();
         int height = grid.length;
         int width = grid[0].length;
@@ -120,12 +163,22 @@ public class Puzzle15 {
         System.out.println("Initial state:");
         printGrid(grid, hitpoints);
         System.out.println(hitpoints);
-        for (int i = 1; i < 48; i++) {
+        for (int i = 1; true; i++) {
 
             System.out.format("Executing round %d%n", i);
-            executeRound(grid, hitpoints);
-            System.out.format("After %d rounds:%n", i);
+            if (!executeRound(grid, hitpoints)) {
+                int numFullRounds = i - 1;
+                System.out.println("No more moves. Number of full rounds: "
+                        + numFullRounds);
 
+                int sumHP = hitpoints.values().stream().mapToInt(n -> n).sum();
+                System.out.println("Sum HP: " + sumHP);
+                int outcome = sumHP * numFullRounds;
+                System.out.println("Outcome: " + outcome);
+                return outcome;
+            }
+
+            System.out.format("After %d rounds:%n", i);
             printGrid(grid, hitpoints);
             System.out.println(hitpoints);
         }
@@ -137,6 +190,7 @@ public class Puzzle15 {
 
     private static void printGrid(char[][] grid, Map<Pos, Integer> hitpoints,
             List<Pos> plist, char plistc) {
+        System.out.println("HP: " + hitpoints);
         int height = grid.length;
         int width = grid[0].length;
 
@@ -251,16 +305,27 @@ public class Puzzle15 {
         add(grid, list, p.x - 1, p.y);
     }
 
-    private static void executeRound(char[][] grid,
+    private static boolean executeRound(char[][] grid,
             Map<Pos, Integer> hitpoints) {
         System.out.println("=======[ executeRound() ]=========");
 
         List<Pos> units = getUnitsInOrder(grid, 'E', 'G');
 
         for (Pos unit : units) {
+            if (!hitpoints.containsKey(unit)) {
+                System.out.println(
+                        "Unit was killed before it could take its turn: "
+                                + unit);
+                continue;
+            }
+
             char type = grid[unit.y][unit.x];
             char enemy = enemy(type);
             List<Pos> allEnemyUnits = getUnitsInOrder(grid, enemy);
+            if (allEnemyUnits.isEmpty()) {
+                return false;
+            }
+
             List<Pos> adjacentToAnyEnemyUnits = adjacent(grid, allEnemyUnits);
 
             /*
@@ -313,7 +378,7 @@ public class Puzzle15 {
                             grid[unit.y][unit.x], unit, moveTo,
                             shortestPath.target);
 
-                    Integer hp = hitpoints.remove(unit);
+                    int hp = hitpoints.remove(unit);
                     grid[moveTo.y][moveTo.x] = type;
                     grid[unit.y][unit.x] = '.';
                     unit = moveTo;
@@ -362,6 +427,8 @@ public class Puzzle15 {
                 }
             }
         }
+
+        return true;
     }
 
     private static void addReachable(char[][] grid, Pos unit,
