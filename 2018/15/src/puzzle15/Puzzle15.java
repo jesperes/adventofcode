@@ -1,6 +1,7 @@
 package puzzle15;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -11,26 +12,166 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.junit.Test;
 
+/*
+ * Alternate approach.
+ */
 public class Puzzle15 {
 
-    static int ATTACK_POWER = 3;
+    class ElfDeathException extends Exception {
+    }
 
-    private static class Pos implements Comparable<Pos> {
-        final int x;
-        final int y;
+    static final boolean TRACE = false;
+    static int ELF_ATTACK_POWER = 3;
 
-        public Pos(int x, int y) {
-            super();
+    @FunctionalInterface
+    interface PosCallback {
+        void call(char c, int x, int y);
+    }
+
+    class Grid {
+        char[][] grid;
+
+        // The collection of elves and goblins still alive
+        List<Unit> units = new ArrayList<>();
+
+        Grid(String filename) throws FileNotFoundException, IOException {
+            try (BufferedReader r = new BufferedReader(
+                    new FileReader(filename))) {
+                parseInput(r.lines().collect(Collectors.toList()));
+            }
+        }
+
+        // Return a stream of all positions adjacent to the given position.
+        // in reading order.
+        private Stream<Position> getAdjacent(Position pos) {
+            return Stream.of(new Position(pos.x, pos.y - 1),
+                    new Position(pos.x - 1, pos.y),
+                    new Position(pos.x + 1, pos.y),
+                    new Position(pos.x, pos.y + 1));
+        }
+
+        private void parseInput(List<String> lines) {
+            int height = lines.size();
+            int width = lines.get(0).length();
+
+            this.grid = new char[height][width];
+            for (int y = 0; y < height; y++) {
+                for (int x = 0; x < width; x++) {
+                    char c = lines.get(y).charAt(x);
+                    switch (c) {
+                    case 'G':
+                        units.add(new Goblin(this, x, y));
+                        grid[y][x] = '.';
+                        break;
+                    case 'E':
+                        units.add(new Elf(this, x, y));
+                        grid[y][x] = '.';
+                        break;
+                    case '.':
+                    case '#':
+                        grid[y][x] = c;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Returns a sorted copy of the list of units
+        public Stream<Unit> getSortedUnits() {
+            List<Unit> copy = new ArrayList<>();
+            copy.addAll(units);
+            Collections.sort(copy);
+            return copy.stream();
+        }
+
+        public boolean isOpen(Position p) {
+            if (grid[p.y][p.x] != '.')
+                return false;
+
+            for (Unit unit : units) {
+                if (unit.equals(p))
+                    return false;
+            }
+            return true;
+        }
+
+        @Override
+        public String toString() {
+            return toString(Collections.emptyList());
+        }
+
+        public String toString(List<PathElem> additional) {
+            StringBuilder buf = new StringBuilder();
+
+            int height = grid.length;
+            int width = grid[0].length;
+
+            buf.append("   ");
+            for (int x = 0; x < width; x++) {
+                if (x >= 10)
+                    break;
+
+                buf.append(String.format("%d", x));
+            }
+            buf.append("\n");
+
+            for (int y = 0; y < height; y++) {
+                int y0 = y;
+
+                buf.append(String.format("%2d ", y));
+
+                for (int x = 0; x < width; x++) {
+                    int x0 = x;
+                    // display the unit at position, or grid if no unit
+                    buf.append(Stream
+                            .concat(units.stream(), additional.stream())
+                            .filter(unit -> unit.x == x0 && unit.y == y0)
+                            .map(unit -> unit.getChar()).findFirst()
+                            .orElse(grid[y][x]));
+                }
+
+                buf.append(" ");
+                /*
+                 * We need to sort the units here, otherwise they might end up
+                 * in a different order here than when displayed.
+                 */
+                buf.append(units.stream().filter(unit -> unit.y == y0).sorted()
+                        .map(unit -> unit.toString())
+                        .collect(Collectors.joining(", ")));
+
+                buf.append("\n");
+            }
+
+            return buf.toString();
+        }
+
+        public Unit getUnitAt(Position other) {
+            for (Unit unit : units) {
+                if (unit.equals(other))
+                    return unit;
+            }
+            return null;
+        }
+
+        public void kill(Unit enemyUnit) {
+            units.remove(enemyUnit);
+        }
+    }
+
+    static class Position implements Comparable<Position> {
+        int x;
+        int y;
+
+        public Position(int x, int y) {
             this.x = x;
             this.y = y;
         }
@@ -41,523 +182,467 @@ public class Puzzle15 {
         }
 
         @Override
-        public boolean equals(Object o) {
-            Pos p = (Pos) o;
-            return p.x == x && p.y == y;
+        public boolean equals(Object obj) {
+            Position other = (Position) obj;
+            return x == other.x && y == other.y;
+        }
+
+        public boolean isAdjacentTo(Position other) {
+            if ((other.x == x && Math.abs(other.y - y) == 1)
+                    || (other.y == y && Math.abs(other.x - x) == 1))
+                return true;
+
+            return false;
         }
 
         @Override
-        public int hashCode() {
-            return Integer.hashCode(x) ^ Integer.hashCode(y);
-        }
-
-        public char getAtPos(char[][] grid) {
-            return grid[y][x];
-        }
-
-        @Override
-        public int compareTo(Pos o) {
-            /*
-             * Sort positions by reading order: top-to-bottom then left-to-right
-             */
-            if (y != o.y) {
-                return Integer.compare(y, o.y);
-            } else {
+        public int compareTo(Position o) {
+            if (y == o.y) {
                 return Integer.compare(x, o.x);
+            } else {
+                return Integer.compare(y, o.y);
             }
+        }
+
+        public char getChar() {
+            return '.';
+        }
+
+        public void move(Position newPos) {
+            if (TRACE)
+                System.out.format("[MOVE] %s -> %s%n", this, newPos);
+            x = newPos.x;
+            y = newPos.y;
         }
     }
 
-    private static class Path implements Comparable<Path> {
-        final public Pos startsAt;
-        final public Pos target;
-        final public int length;
+    abstract class Unit extends Position {
+        int hp = 200;
+        final Grid grid;
 
-        public Path(Pos startsAt, Pos target, int length) {
+        public Unit(Grid grid, int x, int y) {
+            super(x, y);
+            this.grid = grid;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("{%c,%s,%dhp}", getChar(), super.toString(),
+                    hp);
+        }
+
+        abstract boolean isEnemy(Position other);
+
+        abstract int attackPower();
+
+        // Attack enemy unit, return true if it dies.
+        public boolean attack(Unit enemyUnit) {
+            enemyUnit.hp -= attackPower();
+            return (enemyUnit.hp <= 0);
+        }
+
+    }
+
+    class Goblin extends Unit {
+
+        public Goblin(Grid grid, int x, int y) {
+            super(grid, x, y);
+        }
+
+        @Override
+        public char getChar() {
+            return 'G';
+        }
+
+        @Override
+        boolean isEnemy(Position other) {
+            Unit unit = grid.getUnitAt(other);
+            return unit != null && unit instanceof Elf;
+        }
+
+        @Override
+        int attackPower() {
+            return 3;
+        }
+    }
+
+    class Elf extends Unit {
+
+        public Elf(Grid grid, int x, int y) {
+            super(grid, x, y);
+        }
+
+        @Override
+        public char getChar() {
+            return 'E';
+        }
+
+        @Override
+        boolean isEnemy(Position other) {
+            Unit unit = grid.getUnitAt(other);
+            return unit != null && unit instanceof Goblin;
+        }
+
+        @Override
+        int attackPower() {
+            return ELF_ATTACK_POWER;
+        }
+    }
+
+    static class PathElem extends Position {
+        int dist; // distance from source
+        PathElem prev;
+
+        public PathElem(int x, int y, int dist, PathElem prev) {
+            super(x, y);
+            this.dist = dist;
+            this.prev = prev;
+        }
+
+        @Override
+        public char getChar() {
+            return '*';
+        }
+    }
+
+    static class Path implements Comparable<Path> {
+        Unit source;
+        Position target;
+
+        public int length;
+        public List<PathElem> positions = new ArrayList<>();
+
+        public Path(Unit source, Position target, int length) {
             super();
-            this.startsAt = startsAt;
+            this.source = source;
             this.target = target;
             this.length = length;
         }
 
         @Override
-        public int compareTo(Path o) {
-            int i0 = Integer.compare(length, o.length);
-            if (i0 != 0) {
-                return i0;
-            } else {
-                int i1 = target.compareTo(o.target);
-                if (i1 != 0) {
-                    return i1;
-                } else {
-                    return startsAt.compareTo(o.startsAt);
-                }
-            }
-        }
-
-        @Override
         public String toString() {
-            return "Path [startsAt=" + startsAt + ", target=" + target
-                    + ", length=" + length + "]";
+            return String.format("path from %s to %s (length %d) with steps %s",
+                    source, target, length, positions);
+        }
+
+        public Position startPos() {
+            if (positions.size() == 0)
+                return target;
+            else
+                return positions.get(0);
         }
 
         @Override
-        public boolean equals(Object obj) {
-            Path o = (Path) obj;
-            return startsAt.equals(o.startsAt) && target.equals(o.target);
-        }
-    }
-
-    public static void main(String[] args)
-            throws FileNotFoundException, IOException {
-    }
-
-    @Test
-    public void testScenario4() throws Exception {
-        assertEquals(27730, runCombat("testinput4.txt"));
-    }
-
-    @Test
-    public void testScenario5() throws Exception {
-        assertEquals(36334, runCombat("testinput5.txt"));
-    }
-
-    @Test
-    public void testScenario6() throws Exception {
-        assertEquals(39514, runCombat("testinput6.txt"));
-    }
-
-    @Test
-    public void testScenario7() throws Exception {
-        assertEquals(27755, runCombat("testinput7.txt"));
-    }
-
-    @Test
-    public void testScenario8() throws Exception {
-        assertEquals(28944, runCombat("testinput8.txt"));
-    }
-
-    @Test
-    public void testScenario9() throws Exception {
-        assertEquals(18740, runCombat("testinput9.txt"));
-    }
-
-    @Test
-    public void testScenario10() throws Exception {
-        assertEquals(10804, runCombat("testinput10.txt"));
-    }
-
-    @Test
-    public void testPart1Real() throws Exception {
-        assertEquals(0, runCombat("input.txt"));
-    }
-
-    @Test
-    public void testEdgeCase1() throws Exception {
-        assertEquals(0, runCombatOnString(//
-                "" + //
-                        "####\n" + //
-                        "##E#\n" + //
-                        "#GG#\n" + //
-                        "####\n"));
-    }
-
-    private static int runCombatOnString(String area) {
-        List<String> lines = new ArrayList<>();
-        for (String l : area.split("\n")) {
-            lines.add(l);
-        }
-        return runCombat(parseInput(lines));
-    }
-
-    private static int runCombat(String filename)
-            throws FileNotFoundException, IOException {
-        char[][] grid = parseInput(filename);
-        return runCombat(grid);
-    }
-
-    private static int runCombat(char[][] grid) {
-        Map<Pos, Integer> hitpoints = new TreeMap<>();
-        int height = grid.length;
-        int width = grid[0].length;
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                char c = grid[y][x];
-                if (c == 'G' || c == 'E') {
-                    hitpoints.put(new Pos(x, y), 200);
-                }
-            }
-        }
-
-        System.out.println("Initial state:");
-        printGrid(grid, hitpoints);
-        System.out.println(hitpoints);
-        for (int i = 1; true; i++) {
-
-            System.out.format("Executing round %d%n", i);
-            if (!executeRound(grid, hitpoints)) {
-                int numFullRounds = i - 1;
-                System.out.println("No more moves. Number of full rounds: "
-                        + numFullRounds);
-
-                int sumHP = hitpoints.values().stream().mapToInt(n -> n).sum();
-                System.out.println("Sum HP: " + sumHP);
-                int outcome = sumHP * numFullRounds;
-                System.out.println("Outcome: " + outcome);
-                return outcome;
-            }
-
-            System.out.format("After %d rounds:%n", i);
-            printGrid(grid, hitpoints);
-            System.out.println(hitpoints);
-        }
-    }
-
-    private static void printGrid(char[][] grid, Map<Pos, Integer> hitpoints) {
-        printGrid(grid, hitpoints, Collections.emptyList(), (char) 0);
-    }
-
-    private static void printGrid(char[][] grid, Map<Pos, Integer> hitpoints,
-            List<Pos> plist, char plistc) {
-        System.out.println("HP: " + hitpoints);
-        int height = grid.length;
-        int width = grid[0].length;
-
-        for (int t = 1; t > 0; t /= 10) {
-            System.out.print("   ");
-            for (int x = 0; x < width; x++) {
-                System.out.format("%d", x / t);
-            }
-            System.out.println();
-        }
-
-        for (int y = 0; y < height; y++) {
-            System.out.format("%2d ", y);
-            for (int x = 0; x < width; x++) {
-                if (plist.contains(new Pos(x, y))) {
-                    System.out.print(plistc);
-                } else {
-                    System.out.print(grid[y][x]);
-                }
-            }
-            for (Entry<Pos, Integer> e : hitpoints.entrySet()) {
-                Pos pos = e.getKey();
-
-                if (pos.y == y) {
-                    int hp = e.getValue();
-                    char type = grid[pos.y][pos.x];
-                    System.out.format(" %c(%d)", type, hp);
-                }
-            }
-
-            System.out.println();
-        }
-    }
-
-    private static char[][] parseInput(String filename)
-            throws FileNotFoundException, IOException {
-        try (BufferedReader r = new BufferedReader(new FileReader(filename))) {
-            return parseInput(r.lines().collect(Collectors.toList()));
-        }
-    }
-
-    private static char[][] parseInput(List<String> lines) {
-        int height = lines.size();
-        int width = lines.get(0).length();
-
-        char[][] grid = new char[height][width];
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                grid[y][x] = lines.get(y).charAt(x);
-            }
-        }
-
-        System.out.format("Parsed grid of size %dx%d%n", grid[0].length,
-                grid.length);
-        return grid;
-    }
-
-    private static List<Pos> getUnitsInOrder(char[][] grid, char... type) {
-        List<Pos> list = new ArrayList<>();
-        for (int y = 0; y < grid.length; y++) {
-            for (int x = 0; x < grid[y].length; x++) {
-                char c = grid[y][x];
-                for (char t : type) {
-                    if (c == t)
-                        list.add(new Pos(x, y));
-                }
-            }
-        }
-        return list;
-
-    }
-
-    private static char enemy(char c) {
-        if (c == 'G')
-            return 'E';
-        else
-            return 'G';
-    }
-
-    // Returns all positions adjacent to a position
-    private static List<Pos> adjacent(char[][] grid, Pos pos) {
-        List<Pos> plist = new ArrayList<>();
-        plist.add(pos);
-        return adjacent(grid, plist);
-    }
-
-    // Return the list of all positions adjacent to plist
-    private static List<Pos> adjacent(char[][] grid, List<Pos> plist) {
-        List<Pos> list = new ArrayList<>();
-        adjacent(grid, plist, list);
-        return list;
-    }
-
-    // Add all positions to list which are adjacent to any position in plist
-    private static void adjacent(char[][] grid, List<Pos> plist,
-            List<Pos> list) {
-        for (Pos p : plist) {
-            adjacentToUnit(grid, list, p);
-        }
-    }
-
-    // Add (x,y) to the list of positions, unless it is a wall
-    private static void add(char[][] grid, List<Pos> list, int x, int y) {
-        if (grid[y][x] != '#') {
-            list.add(new Pos(x, y));
-        }
-    }
-
-    // Add all positions which are adjacent to p to the given list.
-    private static void adjacentToUnit(char[][] grid, List<Pos> list, Pos p) {
-        add(grid, list, p.x, p.y - 1);
-        add(grid, list, p.x, p.y + 1);
-        add(grid, list, p.x + 1, p.y);
-        add(grid, list, p.x - 1, p.y);
-    }
-
-    private static boolean executeRound(char[][] grid,
-            Map<Pos, Integer> hitpoints) {
-        System.out.println("=======[ executeRound() ]=========");
-
-        List<Pos> units = getUnitsInOrder(grid, 'E', 'G');
-
-        for (Pos unit : units) {
-            System.out.format("--- Begin turn for unit %s at %s ---%n",
-                    unit.getAtPos(grid), unit);
-
-            if (!hitpoints.containsKey(unit)) {
-                System.out.println(
-                        "Unit was killed before it could take its turn: "
-                                + unit);
-                continue;
-            }
-
-            char type = grid[unit.y][unit.x];
-            char enemy = enemy(type);
-            List<Pos> allEnemyUnits = getUnitsInOrder(grid, enemy);
-            if (allEnemyUnits.isEmpty()) {
-                System.out
-                        .println("There are no more enemy units, ending turn.");
-                return false;
-            }
-
-            List<Pos> adjacentToAnyEnemyUnits = adjacent(grid, allEnemyUnits);
-
-            /*
-             * If the unit is not adjacent to any enemy units, see if we can
-             * move it towards one.
-             */
-            if (!adjacentToAnyEnemyUnits.contains(unit)) {
-
-                // Find all positions reachable from this unit.
-                Set<Pos> reachable = new TreeSet<>();
-                addReachable(grid, unit, reachable);
-
-                // Filter out all positions which are not adjacent to an enemy
-                // position.
-                Set<Pos> reachableAndAdjacent = reachable.stream()
-                        .filter(pos -> adjacentToAnyEnemyUnits.contains(pos))
-                        .collect(Collectors.toSet());
-
-                List<Path> paths = new ArrayList<>();
-
-                for (Pos p : reachableAndAdjacent) {
-                    paths.addAll(findShortestPaths(grid, p, unit, type));
-                }
-
-                if (paths.size() > 0) {
-                    /*
-                     * There is at least one path towards an enemy unit.
-                     */
-                    Collections.sort(paths);
-                    Path shortestPath = paths.get(0);
-                    Pos moveTo = shortestPath.startsAt;
-
-                    if (Boolean.TRUE) {
-                        Set<Path> allShortestPaths = new TreeSet<>();
-                        allShortestPaths.addAll(paths);
-                        List<Path> sortedShortedPaths = new ArrayList<>();
-                        sortedShortedPaths.addAll(allShortestPaths);
-                        Collections.sort(sortedShortedPaths);
-
-                        System.out.format(
-                                "All paths from %s at %s to enemies:%n", type,
-                                unit);
-                        for (Path p : sortedShortedPaths) {
-                            System.out.println(p);
-                        }
-                    }
-
-                    System.out.format(
-                            "[MOVE] Moving %s from %s to %s (towards %s)%n",
-                            grid[unit.y][unit.x], unit, moveTo,
-                            shortestPath.target);
-
-                    int hp = hitpoints.remove(unit);
-                    grid[moveTo.y][moveTo.x] = type;
-                    grid[unit.y][unit.x] = '.';
-                    unit = moveTo;
-                    // Bring the hitpoints along
-                    hitpoints.put(unit, hp);
-                }
-            }
-
-            List<Pos> adjacentEnemies = adjacent(grid, unit).stream()
-                    .filter(p -> (grid[p.y][p.x] == enemy))
-                    .collect(Collectors.toList());
-
-            if (!adjacentEnemies.isEmpty()) {
-                // Sort adjacent enemies on hitpoints
-                adjacentEnemies.sort(new Comparator<Pos>() {
-                    @Override
-                    public int compare(Pos o1, Pos o2) {
-                        int hp1 = hitpoints.get(o1);
-                        int hp2 = hitpoints.get(o2);
-                        int c = Integer.compare(hp1, hp2);
-                        if (c != 0) {
-                            return c;
-                        } else {
-                            // use reading order
-                            return o1.compareTo(o2);
-                        }
-                    }
-                });
-
-                System.out.format(
-                        "Unit %s at %s is in range of the following enemies: %s%n",
-                        type, unit, adjacentEnemies);
-
-                System.out.println("Adjacent enemies and their HP: ");
-                for (Pos e : adjacentEnemies) {
-                    System.out.format("%s (%d hp) ", e, hitpoints.get(e));
-                }
-                System.out.println();
-
-                Pos closestEnemy = adjacentEnemies.get(0);
-                int oldhp = hitpoints.get(closestEnemy);
-                int newhp = oldhp - ATTACK_POWER;
-                System.out.format(
-                        "[ATTACK] Unit %s at %s attacks %s at %s, reducing HP from %d to %d%n",
-                        type, unit, closestEnemy.getAtPos(grid), closestEnemy,
-                        oldhp, newhp);
-                hitpoints.put(closestEnemy, newhp);
-                if (newhp <= 0) {
-                    System.out.format("[ATTACK] Unit %s dies.%n", closestEnemy);
-                    grid[closestEnemy.y][closestEnemy.x] = '.';
-                    hitpoints.remove(closestEnemy);
-                }
-            }
-        }
-
-        return true;
-    }
-
-    private static void addReachable(char[][] grid, Pos unit,
-            Set<Pos> reachable) {
-
-        for (Pos adjacentUnit : adjacent(grid, unit)) {
-            if (adjacentUnit.getAtPos(grid) != '.')
-                continue; // ignore non-open positions
-
-            if (reachable.contains(adjacentUnit)) {
-                continue;
+        public int compareTo(Path o) {
+            if (length != o.length) {
+                return Integer.compare(length, o.length);
             } else {
-                reachable.add(adjacentUnit);
-                addReachable(grid, adjacentUnit, reachable);
-            }
-        }
-    }
-
-    private static void printGridWithDist(char[][] grid,
-            Map<Pos, Integer> dist) {
-        for (int y = 0; y < grid.length; y++) {
-            for (int x = 0; x < grid[y].length; x++) {
-                char c = grid[y][x];
-                Integer d = dist.get(new Pos(x, y));
-                if (c == '.' && d != null) {
-                    System.out.print(d.intValue());
+                if (target.equals(o.target)) {
+                    // same target, break ties on start square
+                    return startPos().compareTo(o.startPos());
                 } else {
-                    System.out.print(grid[y][x]);
+                    // different target, break ties on target square
+                    return target.compareTo(o.target);
                 }
             }
-            System.out.println();
         }
     }
 
-    private static Set<Path> findShortestPaths(char[][] grid, Pos start,
-            Pos dest, char type) {
+    class GameEngine {
+        private Grid grid;
+        int currentRound = 0;
+        int roundsFinished = 0;
+        public boolean attackEnabled = true;
+        public boolean allowElfDeaths = true;
 
-        Pos p = start;
-        Map<Pos, Integer> dist = new TreeMap<>();
-        Queue<Pos> unvisited = new LinkedList<>();
+        public GameEngine(Grid grid) {
+            this.grid = grid;
 
-        dist.put(p, 0);
-        unvisited.add(p);
-
-        while (!unvisited.isEmpty()) {
-            // System.out.println("Unvisited: " + unvisited);
-            // printGridWithDist(grid, dist);
-
-            p = unvisited.poll();
-
-            if (p.equals(dest)) {
-                Set<Path> set = new TreeSet<>();
-
-                // printGridWithDist(grid, dist);
-
-                for (Pos apos : adjacent(grid, dest)) {
-                    if (apos.getAtPos(grid) == '#')
-                        continue;
-
-                    if (!dist.containsKey(apos))
-                        continue;
-
-                    int adist = dist.get(apos);
-                    set.add(new Path(apos, start, adist));
-                }
-
-                return set;
-            }
-
-            if (p.getAtPos(grid) != '.') {
-                // If the position isn't what we are searching for and isn't
-                // open, ignore it.
-                continue;
-            }
-
-            int adjDist = dist.get(p) + 1;
-
-            for (Pos apos : adjacent(grid, p)) {
-                if (dist.containsKey(apos))
-                    continue;
-
-                dist.put(apos, adjDist);
-                unvisited.add(apos);
-            }
         }
 
-        // Target position could not be found.
-        return Collections.emptySet();
+        public int executeRounds() throws ElfDeathException {
+            currentRound = 1;
+
+            while (executeRound()) {
+                currentRound++;
+            }
+
+            // System.out.println(
+            // "Number of full rounds finished: " + roundsFinished);
+            //
+            int sumHP = grid.getSortedUnits().map(u -> u.hp).mapToInt(n -> n)
+                    .sum();
+
+            // System.out.println("Sum of HP of remaining units: " + sumHP);
+            return sumHP * roundsFinished;
+        }
+
+        public boolean executeRound() throws ElfDeathException {
+
+            if (TRACE) {
+                System.out.println("Executing round " + currentRound);
+                System.out.println("--------------------------------------");
+            }
+
+            for (Unit unit : grid.getSortedUnits()
+                    .collect(Collectors.toList())) {
+
+                if (TRACE) {
+                    System.out.println("-- Begin turn for " + unit);
+                    System.out.println(grid);
+                }
+
+                if (unit.hp <= 0) {
+                    if (TRACE)
+                        System.out.println(
+                                "Unit was killed before it could take its turn.");
+                    continue;
+                }
+
+                if (!grid.getSortedUnits().filter(e -> unit.isEnemy(e))
+                        .findAny().isPresent()) {
+                    if (TRACE)
+                        System.out
+                                .println("No enemies present, combat is over!");
+                    return false;
+                }
+
+                Optional<Path> pathToNearestEnemy = selectEnemyToAttack(unit);
+
+                if (!pathToNearestEnemy.isPresent()) {
+                    if (TRACE)
+                        System.out.println("No paths to enemies found.");
+                    continue;
+                }
+
+                if (pathToNearestEnemy.get().positions.size() > 0) {
+                    if (TRACE) {
+                        System.out.println("[MOVE] Moving towards enemy along "
+                                + pathToNearestEnemy.get());
+                        System.out.println(grid
+                                .toString(pathToNearestEnemy.get().positions));
+                    }
+                    unit.move(pathToNearestEnemy.get().positions.get(0));
+                }
+
+                if (attackEnabled) {
+                    if (TRACE) {
+                        System.out.println("Path to nearest enemy: "
+                                + pathToNearestEnemy.get());
+                    }
+
+                    // Adjacent to at least one enemy. Select the one
+                    // with lowest hp, break ties on reading order.
+                    Optional<Position> toAttack = grid.getAdjacent(unit)
+                            .filter(e -> unit.isEnemy(e))
+                            // .peek(System.out::println)
+                            .min(attackComparator);
+
+                    if (toAttack.isPresent()) {
+                        Position pos = toAttack.get();
+                        Unit enemyUnit = grid.getUnitAt(pos);
+
+                        if (TRACE)
+                            System.out.println(
+                                    "[ATTACK] Attacking enemy: " + enemyUnit);
+
+                        if (unit.attack(enemyUnit)) {
+                            if (TRACE)
+                                System.out.println("[ATTACK] Enemy unit dies");
+
+                            if (enemyUnit instanceof Elf && !allowElfDeaths) {
+                                throw new ElfDeathException();
+                            }
+                            grid.kill(enemyUnit);
+                        } else {
+                            if (TRACE)
+                                System.out.println(
+                                        "[ATTACK] Enemy unit: " + enemyUnit);
+                        }
+                    } else {
+                        if (TRACE)
+                            System.out.println(
+                                    "[ATTACK] Nothing to attack here.");
+                    }
+                }
+            }
+
+            if (TRACE) {
+                System.out.format("==== After round %d ====%n", currentRound);
+                System.out.println(grid);
+            }
+
+            roundsFinished++;
+            return true;
+        }
+
+        Comparator<Position> attackComparator = new Comparator<Position>() {
+            @Override
+            public int compare(Position o1, Position o2) {
+                Unit u1 = grid.getUnitAt(o1);
+                Unit u2 = grid.getUnitAt(o2);
+
+                if (u1.hp == u2.hp) {
+                    return u1.compareTo(u2); // reading order
+                } else {
+                    return Integer.compare(u1.hp, u2.hp);
+                }
+            }
+        };
+        Comparator<Path> pathComparator = new Comparator<Path>() {
+            @Override
+            public int compare(Path o1, Path o2) {
+                return o1.compareTo(o2);
+            }
+        };
+
+        public Optional<Path> selectEnemyToAttack(Unit unit) {
+            return grid.getSortedUnits().filter(other -> unit.isEnemy(other))
+                    .flatMap(enemy -> grid.getAdjacent(enemy))
+                    .map(adj -> findShortestPath(unit, adj))
+                    .filter(opt -> opt.isPresent()).map(opt -> opt.get())
+                    .min(pathComparator);
+        }
+
+        // Find the shortest path from 'source' to 'target'.
+        public Optional<Path> findShortestPath(Unit source, Position target) {
+            // System.out.format("Finding shortest path from %s to %s%n",
+            // source,
+            // target);
+
+            Set<Position> visited = new TreeSet<>(); // closed set
+            Queue<PathElem> queue = new LinkedList<>(); // open set
+
+            queue.add(new PathElem(source.x, source.y, 0, null));
+
+            while (!queue.isEmpty()) {
+                PathElem p = queue.poll();
+
+                // System.out.println("Queue size: " + queue.size());
+
+                if (p.equals(target)) {
+                    /*
+                     * We have reached our target. Construct a path by
+                     * traversing the path elements backwards.
+                     */
+                    Path shortestPath = new Path(source, target, p.dist);
+
+                    while (true) {
+                        if (p.prev == null) {
+                            break;
+                        } else {
+                            shortestPath.positions.add(p);
+                            p = p.prev;
+                        }
+                    }
+
+                    Collections.reverse(shortestPath.positions);
+                    // System.out.format(
+                    // "Found shortest path from %s to %s with length %d and
+                    // steps: %s%n",
+                    // source, target, shortestPath.length,
+                    // shortestPath.positions);
+                    // System.out.println(grid.toString(shortestPath.positions));
+                    return Optional.of(shortestPath);
+                } else {
+                    PathElem p0 = p;
+
+                    visited.add(p);
+
+                    grid.getAdjacent(p0)
+                            .filter(a -> (grid.isOpen(a) && !queue.contains(a)
+                                    && !visited.contains(a)))
+                            .map(a -> new PathElem(a.x, a.y, p0.dist + 1, p0))
+                            .forEach(a -> queue.add(a));
+                }
+            }
+
+            return Optional.empty();
+        }
+    }
+
+    public int runTestCase(String filename)
+            throws FileNotFoundException, IOException, ElfDeathException {
+        return runTestCase(filename, true);
+    }
+
+    public int runTestCase(String filename, boolean allowElfDeaths)
+            throws FileNotFoundException, IOException, ElfDeathException {
+        Grid grid = new Grid(filename);
+        GameEngine engine = new GameEngine(grid);
+        engine.allowElfDeaths = allowElfDeaths;
+        return engine.executeRounds();
+    }
+
+    @Test
+    public void testInput4() throws Exception {
+        assertEquals(27730, runTestCase("testinput4.txt"));
+    }
+
+    @Test
+    public void testInput5() throws Exception {
+        assertEquals(36334, runTestCase("testinput5.txt"));
+    }
+
+    @Test
+    public void testInput6() throws Exception {
+        assertEquals(39514, runTestCase("testinput6.txt"));
+    }
+
+    @Test
+    public void testInput7() throws Exception {
+        assertEquals(27755, runTestCase("testinput7.txt"));
+    }
+
+    @Test
+    public void testInput8() throws Exception {
+        assertEquals(28944, runTestCase("testinput8.txt"));
+    }
+
+    @Test
+    public void testInput9() throws Exception {
+        assertEquals(18740, runTestCase("testinput9.txt"));
+    }
+
+    @Test
+    public void testInput10() throws Exception {
+        assertEquals(10804, runTestCase("testinput10.txt"));
+    }
+
+    @Test
+    public void testPart1() throws Exception {
+        assertEquals(237996, runTestCase("input.txt"));
+    }
+
+    @Test
+    public void testPart2Input4() throws Exception {
+        ELF_ATTACK_POWER = 15;
+        try {
+            assertEquals(4988, runTestCase("testinput4.txt", false));
+        } catch (ElfDeathException e) {
+            fail("An elf died!");
+        }
+    }
+
+    @Test
+    public void testPart2RealInput() throws Exception {
+        ELF_ATTACK_POWER = 4;
+
+        while (true) {
+            try {
+                System.out.println("ELF_ATTACK_POWER: " + ELF_ATTACK_POWER);
+                int outcome = runTestCase("input.txt", false);
+                System.out.format("Elf attack power %d was super effective!%n",
+                        ELF_ATTACK_POWER);
+                System.out.println("Outcome: " + outcome);
+                break;
+            } catch (ElfDeathException e) {
+                System.out.format(
+                        "Elf attack power %d was too feeble, increasing... %n",
+                        ELF_ATTACK_POWER);
+
+                ELF_ATTACK_POWER++;
+            }
+        }
     }
 }
