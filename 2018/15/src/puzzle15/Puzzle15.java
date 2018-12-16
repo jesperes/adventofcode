@@ -40,11 +40,13 @@ public class Puzzle15 {
             return String.format("{%d,%d}", x, y);
         }
 
+        @Override
         public boolean equals(Object o) {
             Pos p = (Pos) o;
             return p.x == x && p.y == y;
         }
 
+        @Override
         public int hashCode() {
             return Integer.hashCode(x) ^ Integer.hashCode(y);
         }
@@ -150,9 +152,31 @@ public class Puzzle15 {
         assertEquals(0, runCombat("input.txt"));
     }
 
+    @Test
+    public void testEdgeCase1() throws Exception {
+        assertEquals(0, runCombatOnString(//
+                "" + //
+                        "####\n" + //
+                        "##E#\n" + //
+                        "#GG#\n" + //
+                        "####\n"));
+    }
+
+    private static int runCombatOnString(String area) {
+        List<String> lines = new ArrayList<>();
+        for (String l : area.split("\n")) {
+            lines.add(l);
+        }
+        return runCombat(parseInput(lines));
+    }
+
     private static int runCombat(String filename)
             throws FileNotFoundException, IOException {
         char[][] grid = parseInput(filename);
+        return runCombat(grid);
+    }
+
+    private static int runCombat(char[][] grid) {
         Map<Pos, Integer> hitpoints = new TreeMap<>();
         int height = grid.length;
         int width = grid[0].length;
@@ -233,22 +257,24 @@ public class Puzzle15 {
     private static char[][] parseInput(String filename)
             throws FileNotFoundException, IOException {
         try (BufferedReader r = new BufferedReader(new FileReader(filename))) {
-            List<String> lines = r.lines().collect(Collectors.toList());
-
-            int height = lines.size();
-            int width = lines.get(0).length();
-
-            char[][] grid = new char[height][width];
-            for (int y = 0; y < height; y++) {
-                for (int x = 0; x < width; x++) {
-                    grid[y][x] = lines.get(y).charAt(x);
-                }
-            }
-
-            System.out.format("Parsed grid of size %dx%d%n", grid[0].length,
-                    grid.length);
-            return grid;
+            return parseInput(r.lines().collect(Collectors.toList()));
         }
+    }
+
+    private static char[][] parseInput(List<String> lines) {
+        int height = lines.size();
+        int width = lines.get(0).length();
+
+        char[][] grid = new char[height][width];
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                grid[y][x] = lines.get(y).charAt(x);
+            }
+        }
+
+        System.out.format("Parsed grid of size %dx%d%n", grid[0].length,
+                grid.length);
+        return grid;
     }
 
     private static List<Pos> getUnitsInOrder(char[][] grid, char... type) {
@@ -317,6 +343,9 @@ public class Puzzle15 {
         List<Pos> units = getUnitsInOrder(grid, 'E', 'G');
 
         for (Pos unit : units) {
+            System.out.format("--- Begin turn for unit %s at %s ---%n",
+                    unit.getAtPos(grid), unit);
+
             if (!hitpoints.containsKey(unit)) {
                 System.out.println(
                         "Unit was killed before it could take its turn: "
@@ -328,6 +357,8 @@ public class Puzzle15 {
             char enemy = enemy(type);
             List<Pos> allEnemyUnits = getUnitsInOrder(grid, enemy);
             if (allEnemyUnits.isEmpty()) {
+                System.out
+                        .println("There are no more enemy units, ending turn.");
                 return false;
             }
 
@@ -417,6 +448,12 @@ public class Puzzle15 {
                         "Unit %s at %s is in range of the following enemies: %s%n",
                         type, unit, adjacentEnemies);
 
+                System.out.println("Adjacent enemies and their HP: ");
+                for (Pos e : adjacentEnemies) {
+                    System.out.format("%s (%d hp) ", e, hitpoints.get(e));
+                }
+                System.out.println();
+
                 Pos closestEnemy = adjacentEnemies.get(0);
                 int oldhp = hitpoints.get(closestEnemy);
                 int newhp = oldhp - ATTACK_POWER;
@@ -426,7 +463,7 @@ public class Puzzle15 {
                         oldhp, newhp);
                 hitpoints.put(closestEnemy, newhp);
                 if (newhp <= 0) {
-                    // Enemy dies
+                    System.out.format("[ATTACK] Unit %s dies.%n", closestEnemy);
                     grid[closestEnemy.y][closestEnemy.x] = '.';
                     hitpoints.remove(closestEnemy);
                 }
