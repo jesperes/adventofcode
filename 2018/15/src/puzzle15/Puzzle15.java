@@ -137,12 +137,17 @@ public class Puzzle15 {
 
     @Test
     public void testScenario9() throws Exception {
-        assertEquals(18740, runCombat("testinput8.txt"));
+        assertEquals(18740, runCombat("testinput9.txt"));
+    }
+
+    @Test
+    public void testScenario10() throws Exception {
+        assertEquals(10804, runCombat("testinput10.txt"));
     }
 
     @Test
     public void testPart1Real() throws Exception {
-        assertEquals(18740, runCombat("input.txt"));
+        assertEquals(0, runCombat("input.txt"));
     }
 
     private static int runCombat(String filename)
@@ -408,9 +413,9 @@ public class Puzzle15 {
                     }
                 });
 
-                // System.out.format(
-                // "Unit %s at %s is in range of the following enemies: %s%n",
-                // type, unit, adjacentEnemies);
+                System.out.format(
+                        "Unit %s at %s is in range of the following enemies: %s%n",
+                        type, unit, adjacentEnemies);
 
                 Pos closestEnemy = adjacentEnemies.get(0);
                 int oldhp = hitpoints.get(closestEnemy);
@@ -463,11 +468,6 @@ public class Puzzle15 {
         }
     }
 
-    /*
-     * Fill the distance grid around the given position with the current
-     * distance + 1. If any of the adjacent positions is the destination, return
-     * it.
-     */
     private static Set<Path> findShortestPaths(char[][] grid, Pos start,
             Pos dest, char type) {
 
