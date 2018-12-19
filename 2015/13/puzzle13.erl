@@ -6,7 +6,7 @@
 %%% Created : 18 Dec 2018 by  <jespe@LAPTOP-P6HKA27J>
 
 -module(puzzle13).
--export([start/0]).
+-compile([export_all]).
 
 permute([]) -> [[]];
 permute(L) -> [[X|Y] || X <- L, Y <- permute(L -- [X])].
@@ -64,13 +64,13 @@ happiness([A,B|Rest], First, CostMap) ->
 	happiness([B|Rest], First, CostMap).
 
 happiness0(A, B, CostMap) ->
-    maps:get({A, B}, CostMap) +
-	maps:get({B, A}, CostMap).
+    maps:get({A, B}, CostMap, 0) +
+	maps:get({B, A}, CostMap, 0).
 	
 start() ->
     %%    Input = testinput(),
     Input = input(),
-    [First|_] = NameList = sets:to_list(get_all_names(Input)),    
+    [First|_] = NameList = (sets:to_list(get_all_names(Input)) ++ ['Myself']),
     CostMap = name_list_to_map(Input, #{}),
 
     %% Filter out all permutations except the once beginning with the
@@ -86,9 +86,9 @@ start() ->
 
     AllHappiness = [{Table, happiness(Table, CostMap)} || Table <- AllTables],
     
-    lists:foldl(fun({Table, Score} = Elem, Max) when Score > Max ->
+    lists:foldl(fun({_Table, Score}, Max) when Score > Max ->
 			Score;
-		   (Elem, Max) ->
+		   (_, Max) ->
 			Max
 		end, 0, AllHappiness).
 
