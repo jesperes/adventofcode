@@ -18,6 +18,9 @@ regex1() ->
 regex2() ->
     "^ENWWWSSENNNN$".
 
+regex3() ->
+    "^ENNWSWW(NEWS|)SSSEEN(WNSE|)EE(SWEN|)NNN$".
+
 %% Compile the regex by converting it to Erlang syntax, then parsing
 %% it as an Erlang term. Tada!
 compile_re(RE) ->
@@ -51,12 +54,28 @@ re_to_list([A|Rest]) -> ",\"" ++ [A] ++ "\"" ++ re_to_list(Rest).
 start() ->
     RE = compile_re(regex_puzzle()),
     %% RE = compile_re(regex2()),
-    %% RE = compile_re(regex1()),
+    %% RE = compile_re(regex3()),
     StartPos = {0, 0},
     Map = map_rooms(RE, StartPos, #{StartPos => '.'}),
     M0 = patch_walls(Map),
-    io:format("~s~n", [to_string(M0)]),
-    M0.
+    %% io:format("~s~n", [to_string(M0)]),
+    DistMap = search_rooms(M0),
+    {find_max_dist(DistMap),
+     num_far_away_rooms(DistMap)}.
+    
+
+find_max_dist(DistMap) ->
+    {_, MaxDist} =
+        maps:fold(fun(Pos, V, {_, Max}) when V > Max ->
+                          {Pos, V};
+                     (_, _, Max) ->
+                          Max
+                  end, {undef, 0}, DistMap),
+    MaxDist.
+
+num_far_away_rooms(DistMap) ->
+    maps:size(maps:filter(fun(_, V) -> V >= 1000 end, DistMap)).
+                         
 
 
 map_room(RoomPos, DoorPos, Walls, DoorType, Map, RE) ->
@@ -177,3 +196,58 @@ to_string(Map) ->
      || Y <- lists:seq(MinY, MaxY)].
 
 
+is_door('|') -> true;
+is_door('-') -> true;
+is_door(_) -> false.
+    
+
+search_rooms(Map) ->
+    search_rooms(Map, {0, 0}, 0, #{}).
+
+search_rooms(Map, {PosX, PosY} = Pos, CurrentDist, DistMap) ->
+    UpperBound = maps:size(Map),
+    %% erlang:display({searching, Pos, at, CurrentDist}),
+
+    case maps:get(Pos, DistMap, UpperBound) of
+        PrevDist when PrevDist =< CurrentDist ->
+            %% We've already reached this room through a path which is
+            %% equal or shorter to this path.
+            %% erlang:display({already_been_here, Pos}),
+            DistMap;
+        _ -> 
+            %% We have not reached this room at all or we've reached
+            %% it through a longer path.
+            D0 = maps:put(Pos, CurrentDist, DistMap),
+
+            AdjacentRooms = 
+                [{X, Y} ||
+                    X <- lists:seq(-1, 1),
+                    Y <- lists:seq(-1, 1),
+                    ((X == 0) or (Y == 0)) and (X /= Y)],
+            
+            %% erlang:display({adjacent, Pos, AdjacentRooms}),
+
+            lists:foldl(fun({Dx, Dy}, DM) ->
+                                DoorPos = {PosX + Dx, PosY + Dy},
+                                RoomPos = {PosX + 2*Dx, PosY + 2*Dy},
+                                Door = maps:get(DoorPos, Map, '#'),
+                                Room = maps:get(RoomPos, Map, '?'),
+                                case {Room, is_door(Door)} of
+                                    {'.', true} ->
+                                        %% erlang:display({into, RoomPos}),
+                                        search_rooms(Map, RoomPos, CurrentDist + 1, DM);
+                                    _ ->
+                                        DM
+                                end
+                        end, D0, AdjacentRooms)
+    end.
+
+
+                                
+                                
+                            
+                                
+
+      
+        
+    
