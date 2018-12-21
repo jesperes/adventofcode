@@ -25,18 +25,50 @@ input(Filename) ->
                         current_state => rest,
                         remaining_time => 0,
                         distance => 0}
-              end, string:tokens(binary_to_list(Binary), "\n")).
+              end, string:tokens(binary_to_list(Binary), "\n\r")).
 
 testinput() ->
     input("testinput.txt").
-
+    
 start() ->
-    Input = testinput(),
-    lists:foldl(fun(N, Acc) ->
-                        A = iterate(Acc),
-                        io:format("~nAfter ~p seconds: ~p~n", [N, A]),
-                        A
-                end, Input, lists:seq(1, 1000)).
+    Input = input(),
+    Seconds = 2503,
+    States = 
+	lists:foldl(fun(_N, Acc) ->
+			    A = iterate(Acc),
+			    award_points(A)
+		    end, Input, lists:seq(1, Seconds)),
+
+    
+
+    {{max_dist, max_distance(States)},
+     {max_points, max_points(States)}}.
+
+max_distance(States) ->
+    lists:foldl(fun(#{distance := Dist}, Max) when Dist > Max ->
+			Dist;
+		   (_, Max) ->
+			Max
+		end, 0, States).
+
+max_points(States) ->
+    lists:foldl(fun(#{points := Pts}, Max) when Pts > Max ->
+			Pts;
+		   (_, Max) ->
+			Max
+		end, 0, States).
+    
+award_points(States) ->
+    MaxDist = max_distance(States),
+    lists:map(fun(Map) ->
+		      case maps:get(distance, Map, 0) of
+			  MaxDist ->
+			      OldPoints = maps:get(points, Map, 0),
+			      maps:put(points, OldPoints + 1, Map);
+			  _ ->
+			      Map
+		      end
+	      end, States).
 
 iterate([]) ->
     [];
