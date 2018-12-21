@@ -10,26 +10,16 @@ int64_t R[6] = { 0 };
 #define R3 R[3]
 #define R5 R[5]
 
-#define PRINT_REGS(pc)                                   \
-  printf("REGS(%d): ", pc);                              \
-  for (int i = 0; i < 6; i++) {                          \
-    if (i == 4) continue;                                \
-    printf("R%d = %-12ld (0x%08lx) | ", i, R[i], R[i]);  \
-  }                                                      \
-  printf("\n");
-
 #define ARRAY_SIZE 64 * 1024
 
 int main()
 {
-  // Keep track of R1 values we have already seen
+  // For part2, keep track of R1 values we have already seen
   int64_t seen_r1[ARRAY_SIZE] = { 0 };
   int next_r1_index = 0;
   
   // Part1: What is the lowest value for R0 causing the program to
   // stop in as few steps as possible?
-
-  R0 = 4682012;
   R0 = 0;
   
   // Part 2: what is the lowest value for R0 causing the program to
@@ -73,12 +63,14 @@ int main()
       goto pc08;               /* seti 7 6 4 */
     }
 
-    // First, check if we have seen the R1 value before
+    if (next_r1_index == 0) {
+      printf("Part 1 solution: %ld\n", R1);
+    }
+    
     for (int i = 0; i < next_r1_index; i++) {
       if (seen_r1[i] == R1) {
-        printf("Found repeated R1 %ld, previous R1 value was %ld\n",
-               R1, seen_r1[next_r1_index - 1]);
-        exit(0);
+        printf("Part 2 solution: %ld\n", seen_r1[next_r1_index - 1]);
+        return 0;
       }
     }
     
