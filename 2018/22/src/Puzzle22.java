@@ -1,7 +1,9 @@
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.Test;
 
@@ -27,6 +29,10 @@ public class Puzzle22 {
             Pos o = (Pos) obj;
             return x == o.x && y == o.y;
         }
+    }
+
+    enum Tool {
+        ClimbingGear, Torch, Neither
     }
 
     static Map<Pos, Long> erosionLevel = new HashMap<>();
@@ -83,6 +89,96 @@ public class Puzzle22 {
 
         int rl = riskLevel(start, target, depth, map);
         System.out.println("Risk level: " + rl);
+
+        /*
+         * Part 2: finding shortest path with weighted edges.
+         */
+        findShortestPath(start, target, depth, map);
+    }
+
+    static class Edge {
+        Pos from;
+        Pos to;
+        Tool tool;
+
+        public Edge(Pos from, Pos to, Tool tool) {
+            super();
+            this.from = from;
+            this.to = to;
+            this.tool = tool;
+        }
+    }
+
+    private static void findShortestPath(Pos start, Pos target, long depth,
+            Map<Pos, RegionType> map) {
+
+        Map<Pos, Long> distMap = new HashMap<Pos, Long>();
+        Set<Pos> queue = new HashSet<>();
+
+        distMap.put(start, 0L);
+        queue.add(start);
+
+        Tool currentTool = Tool.Torch;
+
+        while (!queue.isEmpty()) {
+            // Pick next node from queue with shortest path to source
+            long shortestDist = Long.MAX_VALUE;
+            Pos u = null;
+            for (Pos pos : queue) {
+                long dist = distMap.get(pos);
+                if (dist < shortestDist) {
+                    u = pos;
+                    shortestDist = dist;
+                }
+            }
+
+            queue.remove(u);
+
+            for (Pos adj : adjacentTo(u)) {
+                // There will be two edges added for each node,
+                // one for each valid tool.
+                for (Tool tool : Tool.values()) {
+                    if (isValidTool(adj, tool, map)) {
+
+                        long distToAdjacent = 1;
+                        if (!tool.equals(currentTool))
+                            distToAdjacent += 7;
+
+                        distMap.put(u, shortestDist + distToAdjacent);
+
+                    }
+                }
+            }
+        }
+    }
+
+    private static boolean isValidTool(Pos adj, Tool tool,
+            Map<Pos, RegionType> map) {
+        switch (map.get(adj)) {
+        case Narrow:
+            return tool == Tool.Torch || tool == Tool.Neither;
+        case Rocky:
+            return tool == Tool.ClimbingGear || tool == Tool.Torch;
+        case Wet:
+            return tool == Tool.ClimbingGear || tool == Tool.Neither;
+        default:
+            return false;
+        }
+    }
+
+    private static Set<Pos> adjacentTo(Pos u) {
+        Set<Pos> set = new HashSet<>();
+
+        for (long x = u.x - 1; x <= u.x + 1; x++) {
+            for (long y = u.y - 1; y <= u.y + 1; y++) {
+                if (x == y || x < 0 || y < 0)
+                    continue;
+
+                set.add(new Pos(x, y));
+            }
+        }
+
+        return set;
     }
 
     private static int riskLevel(Pos start, Pos target, int depth,
