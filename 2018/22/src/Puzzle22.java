@@ -7,6 +7,8 @@ import java.util.Set;
 
 import org.junit.Test;
 
+// 974 is too high
+
 public class Puzzle22 {
 
     static class Pos {
@@ -29,10 +31,16 @@ public class Puzzle22 {
             Pos o = (Pos) obj;
             return x == o.x && y == o.y;
         }
+
+        @Override
+        public String toString() {
+            return String.format("{%d,%d}", x, y);
+        }
+
     }
 
     enum Tool {
-        ClimbingGear, Torch, Neither
+        ClimbingGear, Torch, Neither, Unset
     }
 
     static Map<Pos, Long> erosionLevel = new HashMap<>();
@@ -82,6 +90,7 @@ public class Puzzle22 {
     public static void main(String[] args) {
         // int depth = 510;
         // Pos target = new Pos(10, 10);
+
         int depth = 5913;
         Pos target = new Pos(8, 701);
         Pos start = new Pos(0, 0);
@@ -93,68 +102,99 @@ public class Puzzle22 {
         /*
          * Part 2: finding shortest path with weighted edges.
          */
-        findShortestPath(start, target, depth, map);
+        long sp = findShortestPath(start, target, depth, map);
+        System.out.println("Shortest path: " + sp);
     }
 
-    static class Edge {
-        Pos from;
-        Pos to;
+    static class NodeData {
+        long x;
+        long y;
         Tool tool;
 
-        public Edge(Pos from, Pos to, Tool tool) {
+        public NodeData(long x, long y, Tool tool) {
             super();
-            this.from = from;
-            this.to = to;
+            this.x = x;
+            this.y = y;
             this.tool = tool;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("{%d,%d,%s}", x, y, tool);
+        }
+
+        @Override
+        public int hashCode() {
+            return toString().hashCode();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return toString().equals(obj.toString());
         }
     }
 
-    private static void findShortestPath(Pos start, Pos target, long depth,
+    private static long findShortestPath(Pos start, Pos target, int depth,
             Map<Pos, RegionType> map) {
 
-        Map<Pos, Long> distMap = new HashMap<Pos, Long>();
-        Set<Pos> queue = new HashSet<>();
+        Graph<NodeData> graph = new Graph<>();
+        Map<String, Node<NodeData>> nodemap = new HashMap<>();
 
-        distMap.put(start, 0L);
-        queue.add(start);
+        // Create nodes. The graph has two instance of each position,
+        // depending on the tool.
 
-        Tool currentTool = Tool.Torch;
-
-        while (!queue.isEmpty()) {
-            // Pick next node from queue with shortest path to source
-            long shortestDist = Long.MAX_VALUE;
-            Pos u = null;
-            for (Pos pos : queue) {
-                long dist = distMap.get(pos);
-                if (dist < shortestDist) {
-                    u = pos;
-                    shortestDist = dist;
+        for (long x = start.x; x <= target.x + 100; x++) {
+            for (long y = start.y; y <= target.y + 100; y++) {
+                Pos pos = new Pos(x, y);
+                RegionType rt = regionType(pos, depth);
+                for (Tool tool : Tool.values()) {
+                    NodeData payload = new NodeData(pos.x, pos.y, tool);
+                    Node<NodeData> node = new Node<>(payload);
+                    graph.addNode(node);
+                    nodemap.put(payload.toString(), node);
                 }
             }
+        }
 
-            queue.remove(u);
+        // Create edges. Two edges for each node, one switching tool,
+        // the other keeping the same.
+        for (Node<NodeData> node : graph.getNodes()) {
+            NodeData payload = node.getPayload();
+            Pos pos = new Pos(payload.x, payload.y);
+            Tool nodetool = payload.tool;
 
-            for (Pos adj : adjacentTo(u)) {
-                // There will be two edges added for each node,
-                // one for each valid tool.
+            for (Pos adjacent : adjacentTo(pos)) {
                 for (Tool tool : Tool.values()) {
-                    if (isValidTool(adj, tool, map)) {
+                    if (isValidTool(adjacent, tool, depth)) {
 
-                        long distToAdjacent = 1;
-                        if (!tool.equals(currentTool))
-                            distToAdjacent += 7;
+                        int dist = 1;
+                        if (!nodetool.equals(tool)) {
+                            dist += 7;
+                        }
 
-                        distMap.put(u, shortestDist + distToAdjacent);
-
+                        NodeData nd = new NodeData(adjacent.x, adjacent.y,
+                                tool);
+                        Node<NodeData> destNode = nodemap.get(nd.toString());
+                        node.addDestination(destNode, dist);
                     }
                 }
             }
         }
+
+        Node<NodeData> startNode = nodemap
+                .get(new NodeData(start.x, start.y, Tool.Torch).toString());
+        Node<NodeData> endNode = nodemap
+                .get(new NodeData(target.x, target.y, Tool.Torch).toString());
+
+        Node<NodeData> end = Dijkstra.calculateShortestPathFromSource(graph,
+                startNode, endNode);
+
+        System.out.println(end);
+        return end.getDistance() + 1;
     }
 
-    private static boolean isValidTool(Pos adj, Tool tool,
-            Map<Pos, RegionType> map) {
-        switch (map.get(adj)) {
+    private static boolean isValidTool(Pos adj, Tool tool, long depth) {
+        switch (regionType(adj, depth)) {
         case Narrow:
             return tool == Tool.Torch || tool == Tool.Neither;
         case Rocky:
@@ -169,14 +209,12 @@ public class Puzzle22 {
     private static Set<Pos> adjacentTo(Pos u) {
         Set<Pos> set = new HashSet<>();
 
-        for (long x = u.x - 1; x <= u.x + 1; x++) {
-            for (long y = u.y - 1; y <= u.y + 1; y++) {
-                if (x == y || x < 0 || y < 0)
-                    continue;
-
-                set.add(new Pos(x, y));
-            }
-        }
+        set.add(new Pos(u.x, u.y + 1));
+        set.add(new Pos(u.x + 1, u.y));
+        if (u.x > 1)
+            set.add(new Pos(u.x - 1, u.y));
+        if (u.y > 1)
+            set.add(new Pos(u.x, u.y - 1));
 
         return set;
     }
