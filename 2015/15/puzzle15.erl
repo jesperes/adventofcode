@@ -46,7 +46,6 @@ ingredient_amount([X1, _], 'Butterscotch') -> X1;
 ingredient_amount([_, X2], 'Cinnamon') -> X2.
 
     
-
 score(Amounts, Ingredients) ->
     %% Amounts is a list [X1,X2,X3,X4] where each X corresponds to an
     %% ingredient and indicates how much of each ingredient to take.
@@ -105,6 +104,62 @@ start() ->
       lists:map(fun(Amounts) ->
 			score(Amounts, Ingredients)
 		end, Combinations)).
-		  
+
+score2(Amounts, Ingredients) ->
+    %% Amounts is a list [X1,X2,X3,X4] where each X corresponds to an
+    %% ingredient and indicates how much of each ingredient to take.
     
-%% 536640 is wrong
+    Score = 
+	lists:foldl(
+	  fun(Prop, Acc) ->
+		  %% For each property (e.g. 'capacity'), multiply each
+		  %% ingredient's 'capacity' value with the amount of that
+		  %% ingredient
+		  
+		  PropVal = 
+		      maps:fold(fun(Ingredient, IngredientMap, Acc0) ->
+					A = ingredient_amount(Amounts, Ingredient),
+					V = maps:get(Prop, IngredientMap),
+					Acc0 + (A * V)
+				end, 0, Ingredients),
+		  
+		  if PropVal < 0 ->
+			  0;
+		     true ->
+			  PropVal * Acc
+		  end
+	  end, 1, properties()),
+    
+    Calories =
+	maps:fold(fun(Ingredient, IngredientMap, Acc0) ->
+			  A = ingredient_amount(Amounts, Ingredient),
+			  V = maps:get(calories, IngredientMap),
+			  Acc0 + (A * V)
+		  end, 0, Ingredients),
+    {Score, Calories}.
+	
+
+start2() ->
+    List = ["Sugar: capacity 3, durability 0, flavor 0, texture -3, calories 2",
+	    "Sprinkles: capacity -3, durability 3, flavor 0, texture 0, calories 9",
+	    "Candy: capacity -1, durability 0, flavor 4, texture 0, calories 1",
+	    "Chocolate: capacity 0, durability 0, flavor -2, texture 2, calories 8"],
+
+    Ingredients = input(List),
+    Combinations = 
+	[[X1, X2, X3, X4] ||
+	    X1 <- lists:seq(1, 100),
+	    X2 <- lists:seq(1, 100),
+	    X3 <- lists:seq(1, 100),
+	    X4 <- lists:seq(1, 100),
+	    X1 + X2 + X3 + X4 == 100],
+ 
+    lists:max(
+      lists:filter(fun({Score, Cal}) when Cal == 500 ->
+			   true;
+		      (_) ->
+			   false
+		   end, 
+		   lists:map(fun(Amounts) ->
+				     score2(Amounts, Ingredients)
+			     end, Combinations))).
