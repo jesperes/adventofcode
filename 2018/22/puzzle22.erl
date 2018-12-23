@@ -20,7 +20,7 @@ start() ->
     {114, _} = risk_level(S0),
     {Part1Sol, _} = risk_level(S1),
     {{part1, Part1Sol},
-     {part2, unknown}}.
+     {part2, shortest_path(S0)}}.
 
 
 geologic_index({0, 0}, State) ->
@@ -60,8 +60,6 @@ region_type(Pos, State) ->
         2 -> {narrow, S0}
     end.
 
-    
-
 risk_level(Pos, State) ->
     {RegionType, S0} = region_type(Pos, State),
     RL = 
@@ -84,3 +82,81 @@ risk_level({Xs, Ys}, {Xt, Yt}, State) ->
                         {RL, S0} = risk_level(Pos, StateIn),
                         {RL + N, S0}
                 end, {0, State}, PosList).
+
+tools() ->
+    [climbing_gear, torch, neither].
+
+
+adjacent({X, Y, _}) ->
+    [{Xa, Ya, Tool} ||
+        Tool <- tools(),
+        Xa <- [X - 1, X, X + 1],
+        Ya <- [Y - 1, Y, Y + 1],
+        Xa >= 0, Ya >= 0, {Xa, Ya} /= {X, Y},
+        (Xa == X) or (Ya == Y)].
+    
+valid_region_type(climbing_gear, rocky) -> true;
+valid_region_type(climbing_gear, wet) -> true;
+valid_region_type(torch, rocky) -> true;
+valid_region_type(torch, narrow) -> true;
+valid_region_type(neither, wet) -> true;
+valid_region_type(neither, narrow) -> true;
+valid_region_type(_, _) -> false.
+
+%% Return {ValidAdjacents, State} where ValidAdjacents are all the
+%% valid adjacent states, i.e. where the tool is allowed given the
+%% region's type.
+filtered_adjacents(Pos, State) ->
+    Adjacents = adjacent(Pos),
+
+    {AdjacentsWithRegionType, S2} = 
+        lists:mapfoldl(fun({X, Y, _Tool} = Node, S0) ->
+                               {RT, S1} = region_type({X, Y}, S0),
+                               {{Node, RT}, S1}
+                       end, State, Adjacents),
+    
+    ValidAdjacents = 
+        lists:filter(fun({{_, _, Tool}, RT}) ->
+                             valid_region_type(Tool, RT)
+                     end, AdjacentsWithRegionType),
+    
+    {ValidAdjacents, S2}.
+                         
+%% Return list of all (valid) edges for a node.
+edges({_, _, Tool} = Node, State) ->
+    {FAdj, S0} = filtered_adjacents(Node, State),
+
+    %% FAdj is a list of {Node, RegionType} tuples.
+    Edges = 
+        lists:map(fun({{_, _, Tool1} = N, _}) when Tool == Tool1 ->
+                          %% Same tool
+                          {1, N};
+                     ({{_, _, Tool1} = N, _}) when Tool /= Tool1 ->
+                          {1 + 7, N}
+                  end, 
+                  FAdj),
+    {{Node, Edges}, S0}.
+
+shortest_path(State) ->
+    %% dijkstra:shortest_path/3 takes a graph where the nodes are the
+    %% keys, and the edges are lists of tuples {Weight, Node}.
+    Xs = 0,
+    Ys = 0,
+    
+    Start = {Xs, Ys, torch},
+    Target = {Xt, Yt, torch} = maps:get(target, State),
+    
+    %% Construct list of nodes
+    Nodes =
+        [{X, Y, Tool} ||
+            Tool <- tools(),
+            X <- lists:seq(Xs, Xt + 20),
+            Y <- lists:seq(Ys, Yt + 100)],
+  
+    %% Construct list of {Node, Edges}.
+    {Nodes0, _S1} = 
+        lists:mapfoldl(fun edges/2, State, Nodes),
+
+    Graph = maps:from_list(Nodes0),
+    
+    dijkstra:shortest_path(Graph, Start, Target).
