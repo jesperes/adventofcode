@@ -5,7 +5,7 @@
 %% Stolen from
 %% https://rosettacode.org/wiki/Dijkstra%27s_algorithm#Erlang
 
-shortest_path(Graph, Start, End) when is_map(Graph) ->
+shortest_path(Graph, Start, End) ->
     shortest_path(Graph, [{0, [Start]}], End, #{}).
 
 shortest_path(_Graph, [], _End, _Visited) ->

@@ -8,20 +8,24 @@
 -module(puzzle22).
 -compile([export_all]).
 
+%% 977 is too high
+%% 974 is too high
+
 start() ->
-    S0 = #{depth => 510, target => {10, 10}},
-    S1 = #{depth => 5913, target => {8, 701}},
+    S0 = #{depth => 510, target => {10, 10, torch}},
+    S1 = #{depth => 5913, target => {8, 701, torch}},
     {0, _} = geologic_index({0, 0}, S0),
     {48271, _} = geologic_index({0, 1}, S0),
     {16807, _} = geologic_index({1, 0}, S0),
     {145722555, _} = geologic_index({1, 1}, S0),
-    {0, _} = geologic_index({10, 10}, S0),
+    %% {0, _} = geologic_index({10, 10}, S0),
     
-    {114, _} = risk_level(S0),
+    %% {114, _} = risk_level(S0),
     {Part1Sol, _} = risk_level(S1),
+    {Time, Part2Res} = timer:tc(fun() -> shortest_path(S1) end),
+    
     {{part1, Part1Sol},
-     {part2, shortest_path(S0)}}.
-
+     {part2, {Part2Res, Time / 1000000.0 }}}.
 
 geologic_index({0, 0}, State) ->
     {0, State};
@@ -30,8 +34,8 @@ geologic_index({0, Y}, State) ->
 geologic_index({X, 0}, State) ->
     {X * 16807, State};
 geologic_index({X, Y} = Pos, State) ->
-    Target = maps:get(target, State),
-    case Target of
+    {Tx, Ty, _} = maps:get(target, State),
+    case {Tx, Ty} of
         Pos ->
             {0, State};
         _ ->
@@ -71,9 +75,9 @@ risk_level(Pos, State) ->
     {RL, S0}.
 
 risk_level(State) ->
-    risk_level({0, 0}, maps:get(target, State), State).
+    risk_level({0, 0, torch}, maps:get(target, State), State).
 
-risk_level({Xs, Ys}, {Xt, Yt}, State) ->
+risk_level({Xs, Ys, _}, {Xt, Yt, _}, State) ->
     PosList = 
         [{X, Y} ||
             X <- lists:seq(Xs, Xt),
@@ -150,13 +154,13 @@ shortest_path(State) ->
     Nodes =
         [{X, Y, Tool} ||
             Tool <- tools(),
-            X <- lists:seq(Xs, Xt + 20),
+            X <- lists:seq(Xs, Xt + 100),
             Y <- lists:seq(Ys, Yt + 100)],
   
     %% Construct list of {Node, Edges}.
     {Nodes0, _S1} = 
         lists:mapfoldl(fun edges/2, State, Nodes),
-
+    
     Graph = maps:from_list(Nodes0),
     
-    dijkstra:shortest_path(Graph, Start, Target).
+    dijkstra2:shortest_path(Graph, Start, Target).
