@@ -1,3 +1,5 @@
+import static org.junit.Assert.assertEquals;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -12,6 +14,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.junit.Test;
 
 public class Puzzle24 {
     static Pattern pattern = Pattern.compile(
@@ -132,6 +136,29 @@ public class Puzzle24 {
         }
     }
 
+    private static class BattleResult {
+        long units;
+        Army winner;
+
+        public BattleResult(long units, Army winner) {
+            super();
+            this.units = units;
+            this.winner = winner;
+        }
+
+        @Override
+        public String toString() {
+            return "BattleResult [units=" + units + ", winner=" + winner + "]";
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            BattleResult o = (BattleResult) obj;
+            return units == o.units && winner.equals(o.winner);
+        }
+
+    }
+
     /**
      * Defines the order in which groups select their targets, i.e. which group
      * gets to pick first, second, etc.
@@ -167,10 +194,33 @@ public class Puzzle24 {
         }
     }
 
-    public static void main(String[] args)
-            throws FileNotFoundException, IOException {
+    @Test
+    public void testPart1() throws Exception {
+        assertEquals(new BattleResult(5216L, Army.Infection),
+                run("testinput.txt"));
+        assertEquals(new BattleResult(25088L, Army.Infection),
+                run("input.txt"));
+    }
 
-        List<ArmyGroup> armyGroups = parse("input.txt");
+    @Test
+    public void testPart2() throws Exception {
+        assertEquals(51, findLowestBoost("testinput.txt"));
+        assertEquals(0, findLowestBoost("input.txt"));
+    }
+
+    private static BattleResult run(String filename)
+            throws FileNotFoundException, IOException {
+        return run(filename, 0);
+    }
+
+    private static int numUnits(List<ArmyGroup> list, Army army) {
+        return list.stream().filter(g -> g.army == army).mapToInt(g -> g.units)
+                .sum();
+    }
+
+    private static BattleResult run(String filename, int boost)
+            throws FileNotFoundException, IOException {
+        List<ArmyGroup> armyGroups = parse(filename, boost);
 
         // int n = 1;
         while (true) {
@@ -196,6 +246,8 @@ public class Puzzle24 {
             // entry.getValue().id);
             // }
             // System.out.println("<<<");
+            long immuneSystemUnitsPre = numUnits(armyGroups, Army.ImmuneSystem);
+            long infectionUnitsPre = numUnits(armyGroups, Army.Infection);
 
             for (ArmyGroup attacker : armyGroups) {
                 // If the target selections does not contain a key for this
@@ -222,29 +274,29 @@ public class Puzzle24 {
             // group.units);
             // }
 
-            long immuneSystemUnits = armyGroups.stream()
-                    .filter(g -> g.army == Army.ImmuneSystem)
-                    .mapToLong(g -> g.units).sum();
-
-            long infectionUnits = armyGroups.stream()
-                    .filter(g -> g.army == Army.Infection)
-                    .mapToLong(g -> g.units).sum();
+            long immuneSystemUnits = numUnits(armyGroups, Army.ImmuneSystem);
+            long infectionUnits = numUnits(armyGroups, Army.Infection);
 
             if (immuneSystemUnits == 0) {
-                System.out.format("Infection wins with %d units left.%n",
-                        infectionUnits);
-                break;
+                return new BattleResult(infectionUnits, Army.Infection);
+            } else if (infectionUnits == 0) {
+                return new BattleResult(immuneSystemUnits, Army.ImmuneSystem);
             }
 
-            if (infectionUnits == 0) {
-                System.out.format("Immune system wins with %d units left.%n",
-                        immuneSystemUnits);
-                break;
+            if (immuneSystemUnits == immuneSystemUnitsPre
+                    && infectionUnits == infectionUnitsPre) {
+                System.out.println("Stalemate!");
+                if (immuneSystemUnits > infectionUnits) {
+                    return new BattleResult(immuneSystemUnits,
+                            Army.ImmuneSystem);
+                } else {
+                    return new BattleResult(infectionUnits, Army.Infection);
+                }
             }
         }
     }
 
-    private static List<ArmyGroup> parse(String filename)
+    private static List<ArmyGroup> parse(String filename, int boost)
             throws FileNotFoundException, IOException {
         File inputfile = new File(filename);
         List<ArmyGroup> groups = new ArrayList<>();
@@ -267,6 +319,8 @@ public class Puzzle24 {
                         int units = Integer.valueOf(m.group(1));
                         int hp = Integer.valueOf(m.group(2));
                         int damage = Integer.valueOf(m.group(5));
+                        if (army == Army.ImmuneSystem)
+                            damage += boost;
                         DamageType damageType = DamageType.valueOf(m.group(6));
                         int initiative = Integer.valueOf(m.group(7));
 
@@ -304,5 +358,23 @@ public class Puzzle24 {
         }
 
         return groups;
+    }
+
+    private static long findLowestBoost(String filename)
+            throws FileNotFoundException, IOException {
+        int boost = 0;
+        while (boost < 2000) {
+            BattleResult result = run(filename, boost);
+            if (result.winner.equals(Army.ImmuneSystem)) {
+                System.out.format(
+                        "Immune system won with %d units (boost %d)%n",
+                        result.units, boost);
+                return result.units;
+            } else {
+                System.out.format("Boost = %d, result = %s%n", boost, result);
+                boost++;
+            }
+        }
+        return -1;
     }
 }
