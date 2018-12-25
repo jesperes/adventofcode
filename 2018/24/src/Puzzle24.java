@@ -99,6 +99,8 @@ public class Puzzle24 {
                     if (ep1 != ep2)
                         return Integer.compare(ep1, ep2) * -1; // largest first
                     else {
+                        // If all else fails, tie break on initiative, largest
+                        // first
                         return Integer.compare(eg1.initiative, eg2.initiative)
                                 * -1;
                     }
@@ -116,10 +118,6 @@ public class Puzzle24 {
             }
 
             Collections.sort(enemyTargetOrder, new EnemyTargetOrder());
-            // System.out.format("%s selects targets from %s%n", id,
-            // enemyTargetOrder.stream().map(g -> g.id)
-            // .collect(Collectors.toList()));
-
             return enemyTargetOrder.stream()
                     .filter(eg -> attackDamageAgainst(eg) > 0).findFirst();
         }
@@ -137,24 +135,28 @@ public class Puzzle24 {
     }
 
     private static class BattleResult {
-        long units;
+        long winnerUnits;
+        long loserUnits;
         Army winner;
 
-        public BattleResult(long units, Army winner) {
+        public BattleResult(long winnerUnits, long loserUnits, Army winner) {
             super();
-            this.units = units;
+            this.winnerUnits = winnerUnits;
+            this.loserUnits = loserUnits;
             this.winner = winner;
         }
 
         @Override
         public String toString() {
-            return "BattleResult [units=" + units + ", winner=" + winner + "]";
+            return "BattleResult [winnerUnits=" + winnerUnits + ", loserUnits="
+                    + loserUnits + ", winner=" + winner + "]";
         }
 
         @Override
         public boolean equals(Object obj) {
             BattleResult o = (BattleResult) obj;
-            return units == o.units && winner.equals(o.winner);
+            return winnerUnits == o.winnerUnits && loserUnits == o.loserUnits
+                    && winner.equals(o.winner);
         }
 
     }
@@ -196,16 +198,21 @@ public class Puzzle24 {
 
     @Test
     public void testPart1() throws Exception {
-        assertEquals(new BattleResult(5216L, Army.Infection),
+        assertEquals(new BattleResult(5216L, 0, Army.Infection),
                 run("testinput.txt"));
-        assertEquals(new BattleResult(25088L, Army.Infection),
+        assertEquals(new BattleResult(25088L, 0, Army.Infection),
                 run("input.txt"));
     }
 
     @Test
     public void testPart2() throws Exception {
         assertEquals(51, findLowestBoost("testinput.txt"));
-        assertEquals(0, findLowestBoost("input.txt"));
+        assertEquals(2002, findLowestBoost("input.txt"));
+    }
+
+    @Test
+    public void testPart2_extra() throws Exception {
+        run("input.txt", 59);
     }
 
     private static BattleResult run(String filename)
@@ -222,10 +229,9 @@ public class Puzzle24 {
             throws FileNotFoundException, IOException {
         List<ArmyGroup> armyGroups = parse(filename, boost);
 
-        // int n = 1;
-        while (true) {
-            // System.out.format("%nAttack round %d commencing...%n", n++);
+        int stalemateAttempts = 5;
 
+        while (true) {
             // Sort the groups in selection order.
             Collections.sort(armyGroups, new OrderOfSelection());
 
@@ -239,15 +245,7 @@ public class Puzzle24 {
             // Resort the list of groups in attack order.
             Collections.sort(armyGroups, new OrderOfAttack());
 
-            // System.out.println(">>> Target selections:");
-            // for (Entry<String, ArmyGroup> entry :
-            // targetSelections.entrySet()) {
-            // System.out.format("%s attacks %s%n", entry.getKey(),
-            // entry.getValue().id);
-            // }
-            // System.out.println("<<<");
-            long immuneSystemUnitsPre = numUnits(armyGroups, Army.ImmuneSystem);
-            long infectionUnitsPre = numUnits(armyGroups, Army.Infection);
+            boolean anyKilled = false;
 
             for (ArmyGroup attacker : armyGroups) {
                 // If the target selections does not contain a key for this
@@ -260,38 +258,38 @@ public class Puzzle24 {
                     int killedUnits = ad / defender.hp;
                     if (killedUnits > defender.units)
                         killedUnits = defender.units;
+
+                    if (killedUnits > 0)
+                        anyKilled = true;
+
                     defender.units -= killedUnits;
 
-                    // System.out.format("%s attacked %s, killing %d units%n",
-                    // attacker.id, defender.id, killedUnits);
                 }
             }
 
             armyGroups.removeIf(ag -> ag.units <= 0);
 
-            // for (ArmyGroup group : armyGroups) {
-            // System.out.format("Group %s, units left %d%n", group.id,
-            // group.units);
-            // }
-
             long immuneSystemUnits = numUnits(armyGroups, Army.ImmuneSystem);
             long infectionUnits = numUnits(armyGroups, Army.Infection);
 
             if (immuneSystemUnits == 0) {
-                return new BattleResult(infectionUnits, Army.Infection);
+                return new BattleResult(infectionUnits, immuneSystemUnits,
+                        Army.Infection);
             } else if (infectionUnits == 0) {
-                return new BattleResult(immuneSystemUnits, Army.ImmuneSystem);
+                return new BattleResult(immuneSystemUnits, infectionUnits,
+                        Army.ImmuneSystem);
             }
 
-            if (immuneSystemUnits == immuneSystemUnitsPre
-                    && infectionUnits == infectionUnitsPre) {
-                System.out.println("Stalemate!");
-                if (immuneSystemUnits > infectionUnits) {
-                    return new BattleResult(immuneSystemUnits,
-                            Army.ImmuneSystem);
-                } else {
-                    return new BattleResult(infectionUnits, Army.Infection);
-                }
+            if (!anyKilled) {
+                stalemateAttempts--;
+            }
+
+            /*
+             * Always treat stalemates as infection victories.
+             */
+            if (stalemateAttempts < 0) {
+                return new BattleResult(infectionUnits, immuneSystemUnits,
+                        Army.Infection);
             }
         }
     }
@@ -366,12 +364,9 @@ public class Puzzle24 {
         while (boost < 2000) {
             BattleResult result = run(filename, boost);
             if (result.winner.equals(Army.ImmuneSystem)) {
-                System.out.format(
-                        "Immune system won with %d units (boost %d)%n",
-                        result.units, boost);
-                return result.units;
+                System.out.println(result.winnerUnits);
+                return result.winnerUnits;
             } else {
-                System.out.format("Boost = %d, result = %s%n", boost, result);
                 boost++;
             }
         }
