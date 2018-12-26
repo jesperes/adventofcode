@@ -35,11 +35,9 @@ show_input() ->
     Army2 = parse_army(Infection, infection, 0),
     {Army1, Army2}.
 
-%% 738 is too low
 start_with_boost(Boost) ->
     case input("input.txt", Boost) of
         {infection_wins, X} ->
-            io:format("Infection wins with ~p units at boost = ~p~n", [X, Boost]),
             start_with_boost(Boost + 1);
         {immunesystem_wins, _} = X ->
             {X, {boost, Boost}}
@@ -132,14 +130,9 @@ fight_until_death(Groups) ->
             TotalUnitsBefore = lists:map(fun(G) -> maps:get(units, G) end, Groups),
             TotalUnitsAfter = lists:map(fun(G) -> maps:get(units, G) end, G0),
 
-            %% Consider stalemate as valid end-of-combat scenario.
-            %% This is not really stated in the rules.
+            %% Treat stalemates as infection victories.
             if TotalUnitsAfter == TotalUnitsBefore ->
-                    if ImmUnits > InfUnits ->
-                            {immunesystem_wins, {ImmUnits, {enemy_units, InfUnits}}};
-                       true ->
-                            {infection_wins, {InfUnits, {enemy_units, ImmUnits}}}
-                    end;
+                    {infection_wins, {InfUnits, {enemy_units, ImmUnits}}};
                true ->
                     fight_until_death(G0)
             end
