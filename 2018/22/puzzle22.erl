@@ -7,25 +7,48 @@
 
 -module(puzzle22).
 -compile([export_all]).
+-include_lib("eunit/include/eunit.hrl").
 
 %% 977 is too high
 %% 974 is too high
+%% 973 is correct
 
 start() ->
-    S0 = #{depth => 510, target => {10, 10, torch}},
-    S1 = #{depth => 5913, target => {8, 701, torch}},
-    {0, _} = geologic_index({0, 0}, S0),
-    {48271, _} = geologic_index({0, 1}, S0),
-    {16807, _} = geologic_index({1, 0}, S0),
-    {145722555, _} = geologic_index({1, 1}, S0),
-    %% {0, _} = geologic_index({10, 10}, S0),
-    
-    %% {114, _} = risk_level(S0),
-    {Part1Sol, _} = risk_level(S1),
-    {Time, Part2Res} = timer:tc(fun() -> shortest_path(S1) end),
-    
-    {{part1, Part1Sol},
-     {part2, {Part2Res, Time / 1000000.0 }}}.
+    part1(510, {10, 10}).
+
+part1(Depth, {X, Y}) ->
+    State = #{depth => Depth, target => {X, Y, torch}},    
+    {RiskLevel, _} = risk_level(State),
+    RiskLevel.
+
+part2(Depth, {X, Y}) ->
+    State = #{depth => Depth, target => {X, Y, torch}},    
+    shortest_path(State).
+
+geologic_index_test_() ->
+    Depth = 510,
+    X = 10, 
+    Y = 10,
+    State = #{depth => Depth, target => {X, Y, torch}},
+
+    [
+     ?_assertMatch({0, _}, geologic_index({0, 0}, State)),
+     ?_assertMatch({48271, _}, geologic_index({0, 1}, State)),
+     ?_assertMatch({16807, _}, geologic_index({1, 0}, State)),
+     ?_assertMatch({145722555, _}, geologic_index({1, 1}, State)),
+     ?_assertMatch({0, _}, geologic_index({X, Y}, State))
+    ].
+
+part1_test_() ->
+    [
+     ?_assertEqual(114, part1(510, {10, 10})),
+     ?_assertEqual(6256, part1(5913, {8, 701}))
+    ].
+
+part2_test_() ->
+    [
+     ?_assertEqual(45, part2(510, {10, 10}))
+    ].
 
 geologic_index({0, 0}, State) ->
     {0, State};

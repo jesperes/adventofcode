@@ -49,8 +49,8 @@ shortest_path(Q, Start, End, DistMap, PrevMap) ->
             %% Remove U from Q
             Q0 = maps:remove(U, Q),
             
-            erlang:display(U),
-
+            %% erlang:display(U),
+            
             case U of
                 End ->
                     %% We are done
