@@ -18,25 +18,23 @@
 	  came_from,
 	  gscore,
 	  fscore,
-	  cost_heuristic,
-	  get_neighbors
+	  callback
 	}).
 
-a_star_move_from_closed_to_open(
+a_star_move_from_open_to_closed(
   #{open_set := OpenSet, closed_set := ClosedSet} = AStar, Element) ->
     AStar#astar{open_set = sets:del_element(Element, OpenSet),
 		closed_set = sets:add_element(Element, ClosedSet)}.
 
-a_star(Start, Goal, CostHeuristicFun, GetNeighborsFun) ->
+a_star(Start, Goal, Fun) ->
     AStar = 
 	#astar{
 	   open_set = sets:new(),
 	   closed_set = sets:new(),
 	   came_from = maps:new(),
 	   gscore = #{Start => 0},
-	   fscore = #{Start => CostHeuristicFun(Start, Goal)},
-	   cost_heuristic = CostHeuristicFun,
-	   get_neighbors = GetNeighborsFun
+	   fscore = #{Start => Fun({cost, Start, Goal})},
+	   callback = Fun
 	  },
 
     a_star(AStar).
@@ -57,33 +55,83 @@ a_star(AStar) ->
     end.
 
 a_star_recurse(AStar, Current) ->
-    AStar0 = a_star_move_from_closed_to_open(AStar, Current),
-    GetNeighborsFun = AStar#astar.get_neighbors,    
-    Neighbors = GetNeighborsFun(Current),
+    AStar0 = a_star_move_from_open_to_closed(AStar, Current),
+
+    Fun = AStar#astar.callback,
+    Neighbors = Fun({neighbors, Current}),
     
     lists:foldl(
       fun(Neighbor, AStarIn) ->
 	      ClosedSet = AStarIn#astar.closed_set,
-	      GScore = AStarIn#astar.gscore,
+	      OpenSet = AStar#astar.open_set,
+	      GScore = AStar#astar.gscore,
+
+	      NewGScore = maps:get(Current, GScore, inf) + 
+		  Fun({dist, Neighbor, Current}),
+	      NeighborGScore = maps:get(Neighbor, GScore, inf),
+	      NewGScoreIsBetter = NewGScore < NeighborGScore, 
 	      
-	      case sets:is_member(Neighbor, ClosedSet) of
-		  true ->
-		      %% Neighbor is in closed set, ignore it.
+	      InClosed = sets:is_member(Neighbor, ClosedSet),
+	      InOpen = sets:is_element(Neighbor, OpenSet),
+
+	      %% There are four distinct cases, depending on whether
+	      %% the neighbor has been seen or not, and if any new
+	      %% path to it has a better score or not.
+	      
+	      case {InClosed, InOpen, NewGScoreIsBetter} of
+		  {true, _, _} ->
+		      %% 1. Neighbor is in closed set (we've already
+		      %% evaluated it).
 		      AStarIn;
-		  _ ->
-		      TentativeGScore = maps:get(Current, GScore, inf)
-		      %%
+
+		  {false, false, _} ->
+		      %% 2. Neighbor has not been seen before, add it
+		      %% to the open set and record the current path
+		      %% to it as the best one.
+		      AStar0 = AStar#astar{
+				 open_set = sets:add_element(Neighbor, OpenSet)},
+		      record_best_path(AStar0, Current, Neighbor, NewGScore);
+		  
+		  {false, true, true} ->
+		      %% 3. Neighbor has been seen before but this new
+		      %% path is better.
+		      record_best_path(AStar, Current, 
+				       Neighbor, NewGScore);
+		  
+		  {false, true, false} ->
+		      %% 4. Neighbor has been seen before, but the old
+		      %% path was better, so ignore the new one.
+		      AStarIn
 	      end
       end, AStar, Neighbors).
 
-reconstruct_path(AStar, Current) ->    
-    ok.
+reconstruct_path(AStar, Current) ->
+    lists:reverse(reconstruct_path0(AStar, Current)).
 
+reconstruct_path0(AStar, Current) ->    
+    case maps:is_key(Current, AStar#astar.came_from) of
+	true ->
+	    Parent = maps:get(Current, AStar#astar.came_from),
+	    [Current|reconstruct_path0(AStar, Parent)];
+	false ->
+	    [Current]
+    end.
+
+record_best_path(#astar{came_from = CameFrom,
+			goal = Goal,
+			gscore = GScore,
+			fscore = FScore,
+			callback = Fun} = AStar, Current, Neighbor, NewGScore) ->
+    AStar#astar{came_from = maps:put(Neighbor, Current, CameFrom),
+		gscore = maps:put(Neighbor, NewGScore, GScore),
+		fscore = maps:put(Neighbor, NewGScore + 
+				      Fun({cost, Neighbor, Goal}), FScore)}.
+				      
 get_node_with_lowest_fscore(AStar) ->
     {Node, _} = 
-	sets:fold(fun(Node, {undef, _} = AccIn) ->
+	sets:fold(fun(Node, {undef, _}) ->
 			  {Node, maps:get(Node, AStar#astar.fscore, inf)};
-		     (Node, {CurrMinNode, Min} = AccIn) ->
+		     (Node, {_, Min} = AccIn) ->
 			  case maps:get(Node, AStar#astar.fscore, inf) of
 			      NodeFScore when NodeFScore < Min ->
 				  {Node, NodeFScore};
@@ -93,6 +141,10 @@ get_node_with_lowest_fscore(AStar) ->
 		  end, {undef, inf}, AStar#astar.open_set),
     Node.
 
+%%% ============================================================
+%%% Tests
+%%% ============================================================
+
 get_node_with_lowest_fscore_test() ->
     AStar = #astar{
 	       open_set = sets:from_list([a, b, c, d]),
@@ -100,3 +152,20 @@ get_node_with_lowest_fscore_test() ->
 	      },
     ?assertEqual(c, get_node_with_lowest_fscore(AStar)).
 
+reconstruct_path_test() ->
+    AStar = #astar{came_from = #{e => d, d => c, c => b, b => a}},
+    ?assertEqual([a, b, c, d, e], reconstruct_path(AStar, e)).
+    
+			    
+record_best_path_test() ->
+    AStar = #astar{
+	       came_from = #{},
+	       goal = e,
+	       callback = fun({cost, _N, _G}) -> 42 end,
+	       gscore = #{},
+	       fscore = #{}
+	      },
+    AStar0 = record_best_path(AStar, b, c, 5),
+    ?assertEqual(#{c => b}, AStar0#astar.came_from),
+    ?assertEqual(#{c => 5}, AStar0#astar.gscore),
+    ?assertEqual(#{c => 47}, AStar0#astar.fscore).
