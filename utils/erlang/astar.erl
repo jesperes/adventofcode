@@ -1,12 +1,14 @@
-%%% @author  <jespe@LAPTOP-P6HKA27J>
-%%% @copyright (C) 2018,
+%%% @author Jesper Eskilson <jesper@eskilson.se>
+%%% @copyright (C) 2018
 %%% @doc
-%%% A* algorithm implemented in Erlang.
+%%%
+%%% A* algorithm implemented in Erlang. Adapted from the pseudocode in
+%%% https://en.wikipedia.org/wiki/A*_search_algorithm.
+%%%
 %%% @end
-%%% Created : 28 Dec 2018 by  <jespe@LAPTOP-P6HKA27J>
 
 -module(astar).
--compile([export_all]).
+-export([a_star/3]).
 -include_lib("eunit/include/eunit.hrl").
 
 -record(astar,
@@ -31,6 +33,19 @@ a_star(Start, Goal, Fun) ->
 	   came_from = maps:new(),
 	   gscore = #{Start => 0},
 	   fscore = #{Start => Fun({cost, Start, Goal})},
+
+	   %% Callback function is used to obtain user-specific
+	   %% parameters during search. It is called in three
+	   %% different ways:
+	   %%
+	   %% 1. Fun({neighbors, Current}) to return the nodes adjacent
+	   %% to Current.
+	   %%
+	   %% 2. Fun({cost, Neighbor, Goal}) to return the estimated
+	   %% cost of going from Neighbor to Goal.
+	   %%
+	   %% 3. Fun({dist, Current, Neighbor}) to return the actual
+	   %% distance from the Current node to one of its neighbors.
 	   callback = Fun
 	  },
 
@@ -58,31 +73,31 @@ a_star_recurse(AStar, Current) ->
     Fun = AStar#astar.callback,
     Neighbors = Fun({neighbors, Current}),
 
-    AStarNext = 
+    AStarNext =
 	lists:foldl(
 	  fun(Neighbor, AStarIn) ->
 		  ClosedSet = AStarIn#astar.closed_set,
 		  OpenSet = AStar#astar.open_set,
 		  GScore = AStar#astar.gscore,
-		  
+
 		  NewGScore = maps:get(Current, GScore, inf) +
 		      Fun({dist, Neighbor, Current}),
 		  NeighborGScore = maps:get(Neighbor, GScore, inf),
 		  NewGScoreIsBetter = NewGScore < NeighborGScore,
-		  
+
 		  InClosed = sets:is_element(Neighbor, ClosedSet),
 		  InOpen = sets:is_element(Neighbor, OpenSet),
-		  
+
 		  %% There are four distinct cases, depending on whether
 		  %% the neighbor has been seen or not, and if any new
 		  %% path to it has a better score or not.
-		  
+
 		  case {InClosed, InOpen, NewGScoreIsBetter} of
 		      {true, _, _} ->
 			  %% 1. Neighbor is in closed set (we've already
 			  %% evaluated it).
 			  AStarIn;
-		      
+
 		      {false, false, _} ->
 			  %% 2. Neighbor has not been seen before, add it
 			  %% to the open set and record the current path
@@ -90,20 +105,20 @@ a_star_recurse(AStar, Current) ->
 			  AStar1 = AStarIn#astar{
 				     open_set = sets:add_element(Neighbor, OpenSet)},
 			  record_best_path(AStar1, Current, Neighbor, NewGScore);
-		      
+
 		      {false, true, true} ->
 			  %% 3. Neighbor has been seen before but this new
 			  %% path is better.
 			  record_best_path(AStarIn, Current,
 					   Neighbor, NewGScore);
-		      
+
 		      {false, true, false} ->
 			  %% 4. Neighbor has been seen before, but the old
 			  %% path was better, so ignore the new one.
 			  AStarIn
 		  end
 	  end, AStar0, Neighbors),
-    
+
     a_star(AStarNext).
 
 %%% ============================================================
@@ -216,7 +231,7 @@ a_star_test() ->
     Obstacles = sets:from_list(
 		  [pos_to_coord(Pos, Size)
 		   || Pos <- binary:matches(Grid, <<"#">>)]),
-    
+
     Start = {0, 0},
     Goal = {9, 9},
 
@@ -232,12 +247,12 @@ a_star_test() ->
 		  ({cost, Neighbor, G}) ->
 		       distance(Neighbor, G)
 	       end),
-    
-    %% X = [[pos_to_str({X,Y}, Size, Path, Grid) || 
-    %% 	     X <- lists:seq(0, Size - 1)] ++ "\n" ||
-    %% 	    Y <- lists:seq(0, Size - 1)],
-    
-    %% io:format("Path:~n~s~n", [X]),
+
+    X = [[pos_to_str({X,Y}, Size, Path, Grid) ||
+     	     X <- lists:seq(0, Size - 1)] ++ "\n" ||
+     	    Y <- lists:seq(0, Size - 1)],
+
+    io:format("Path:~n~s~n", [X]),
     ?assertEqual(25, length(Path)).
 
 pos_to_str({X, Y}, Size, Path, Grid) ->
