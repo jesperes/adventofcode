@@ -5,16 +5,13 @@ public class Puzzle22 {
         MagicMissile, Drain, Shield, Poison, Recharge
     }
 
-    class State {
-
+    public static void main(String[] args) {
+        battle(10, 250, 13, 8);
     }
 
-    int minManaSpent = Integer.MAX_VALUE;
+    private static void battle(int hp, int mana, int boss_hp, int boss_damage) {
+        int minManaSpent = Integer.MAX_VALUE;
 
-    public static void main(String[] args) {
-
-        int boss_hp = 
-        
         while (true) {
             for (Spell spell : Spell.values()) {
 

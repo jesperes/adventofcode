@@ -52,6 +52,7 @@ effect_length(recharge) -> 5.
 
 start() ->
     find_least_mana(10, 250, 13, 8).
+    %% find_least_mana(10, 250, 13, 8).
 
 find_least_mana(Hp, Mana, BossHP, BossDamage) ->
     State = state(),
@@ -88,7 +89,8 @@ find_least_mana(Start) ->
               %% overspend mana.
               States = case maps:get(turn, Current) of
                            player ->
-                               [player_attack(Current, Spell) || Spell <- spells()];
+                               [player_attack(Current, Spell) || 
+                                   Spell <- spells()];
                            boss ->
                                [boss_attack(Current)]
                        end,
@@ -98,10 +100,10 @@ find_least_mana(Start) ->
                                        maps:get(valid, State)
                                end, States),
 
-              io:format("Valid neighbors:~n", []),
-              lists:foreach(fun(N) ->
-                                    io:format("  - ~w~n", [N])
-                            end, ValidStates),
+              %% io:format("Valid neighbors:~n", []),
+              %% lists:foreach(fun(N) ->
+              %%                       io:format("  - ~w~n", [N])
+              %%               end, ValidStates),
               
               ValidStates;
               
@@ -117,7 +119,8 @@ find_least_mana(Start) ->
                       %% effects as spending "negative" mana. This is probably
                       %% to avoid having search graph edges with negative
                       %% weight.
-                      maps:get(mana_spent, Neighbor) - maps:get(mana_spent, Current)
+                      maps:get(mana_spent, Neighbor) -
+                          maps:get(mana_spent, Current)
               end;
          ({cost, #{boss_hp := BossHP}}) ->
               %% Cost is used to guide the search, and should return
@@ -229,9 +232,8 @@ boss_attack(State) ->
 
     %% Boss can die here, but this will be detected in the search,
     %% where we are looking for an end state where boss_hp =< 0.
-    
-    PlayerArmor = maps:get(armor, S0) + 
-        case is_active_effect(shield, S0) of
+    PlayerArmor = maps:get(armor, S00) + 
+        case is_active_effect(shield, S00) of
             true -> 7;
             false -> 0
         end,
