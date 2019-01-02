@@ -8,7 +8,7 @@
 %%% @end
 
 -module(astar).
--export([a_star/3]).
+-export([a_star/2]).
 -include_lib("eunit/include/eunit.hrl").
 
 -record(astar,
@@ -23,33 +23,39 @@
 	  callback
 	}).
 
-a_star(Start, Goal, Fun) ->
+a_star(Start, Fun) ->
     AStar =
 	#astar{
 	   start = Start,
-	   goal = Goal,
 	   open_set = sets:from_list([Start]),
 	   closed_set = sets:new(),
 	   came_from = maps:new(),
 	   gscore = #{Start => 0},
-	   fscore = #{Start => Fun({cost, Start, Goal})},
+	   fscore = #{Start => Fun({cost, Start})},
 
 	   %% Callback function is used to obtain user-specific
-	   %% parameters during search. It is called in three
-	   %% different ways:
+	   %% parameters during search. It is called in different
+	   %% ways:
 	   %%
 	   %% 1. Fun({neighbors, Current}) to return the nodes adjacent
 	   %% to Current.
 	   %%
-	   %% 2. Fun({cost, Neighbor, Goal}) to return the estimated
-	   %% cost of going from Neighbor to Goal.
+	   %% 2. Fun({cost, Neighbor}) to return the estimated cost of
+	   %% going from Neighbor to the goal.
 	   %%
 	   %% 3. Fun({dist, Current, Neighbor}) to return the actual
 	   %% distance from the Current node to one of its neighbors.
+           %% 
+           %% 4. Fun({is_goal, Node}) to return true/false if this is
+           %% the goal-node or not.
 	   callback = Fun
 	  },
 
     a_star(AStar).
+
+is_goal(Current, AStar) ->
+    Fun = AStar#astar.callback,
+    Fun({is_goal, Current}).
 
 a_star(AStar) ->
     case sets:size(AStar#astar.open_set) of
@@ -58,10 +64,10 @@ a_star(AStar) ->
 	    {error, could_not_find_goal};
 	_ ->
 	    Current = get_node_with_lowest_fscore(AStar),
-
-	    if Current == AStar#astar.goal ->
+            case is_goal(Current, AStar) of
+                true ->
 		    {ok, reconstruct_path(AStar, Current)};
-	       true ->
+                false ->
 		    %% io:format("Current node: ~p~n", [Current]),
 		    a_star_recurse(AStar, Current)
 	    end
@@ -138,14 +144,13 @@ reconstruct_path0(AStar, Current) ->
     end.
 
 record_best_path(#astar{came_from = CameFrom,
-			goal = Goal,
 			gscore = GScore,
 			fscore = FScore,
 			callback = Fun} = AStar, Current, Neighbor, NewGScore) ->
     AStar#astar{came_from = maps:put(Neighbor, Current, CameFrom),
 		gscore = maps:put(Neighbor, NewGScore, GScore),
 		fscore = maps:put(Neighbor, NewGScore +
-				      Fun({cost, Neighbor, Goal}), FScore)}.
+				      Fun({cost, Neighbor}), FScore)}.
 
 get_node_with_lowest_fscore(AStar) ->
     {Node, _} =
@@ -184,8 +189,7 @@ reconstruct_path_test() ->
 record_best_path_test() ->
     AStar = #astar{
 	       came_from = #{},
-	       goal = e,
-	       callback = fun({cost, _N, _G}) -> 42 end,
+	       callback = fun({cost, _N}) -> 42 end,
 	       gscore = #{},
 	       fscore = #{}
 	      },
@@ -236,7 +240,7 @@ a_star_test() ->
     Goal = {9, 9},
 
     {ok, Path} =
-	a_star(Start, Goal,
+	a_star(Start,
 	       fun({neighbors, Current}) ->
 		       Neighbors = adjacent(Current, {0, Size-1, 0, Size-1}),
 		       lists:filter(fun(N) ->
@@ -244,8 +248,10 @@ a_star_test() ->
 				    end, Neighbors);
 		  ({dist, Neighbor, Current}) ->
 		       distance(Neighbor, Current);
-		  ({cost, Neighbor, G}) ->
-		       distance(Neighbor, G)
+		  ({cost, Neighbor}) ->
+		       distance(Neighbor, Goal);
+                  ({is_goal, Node}) ->
+                       Node == Goal
 	       end),
 
     X = [[pos_to_str({X,Y}, Size, Path, Grid) ||
