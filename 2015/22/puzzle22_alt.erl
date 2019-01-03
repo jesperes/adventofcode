@@ -6,7 +6,7 @@
 %%% Created :  2 Jan 2019 by Jesper Eskilson <jesper.eskilson@klarna.com>
 
 -module(puzzle22_alt).
--export([start/0, start1/0]).
+-compile([export_all]).
 -include_lib("eunit/include/eunit.hrl").
 
 %% Alternative approach to day 22
@@ -38,26 +38,35 @@ state(HP, Mana, BossHP, BossDamage, Spells) ->
       armor => 0,
       recursion_level => 0,
       winner => false,
-      spells => Spells
+      spells => Spells,
+      verbose => true
      }.
 
-start() ->
-    start(50, 250, 14, 8, search).
+start1a() ->
+    start(10, 250, 13, 8, search).
 
-start1() ->   
+start1b() ->
+    start(10, 250, 14, 8, search).
+
+start() ->   
     start(50, 500, 51, 9, search).
 
-part1_1_test() ->
+part1_search1_test() ->
+    Result = start(10, 250, 13, 8, search),
+    ?assertEqual(226, Result).
+
+part1_guided1_test() ->
     Result = start(10, 250, 13, 8, [poison, magic_missile]),
     ?assertEqual(226, Result).
 
-part1_2_test() ->
+part1_search2_test() ->
+    Result = start(10, 250, 14, 8, search),
+    ?assertEqual(641, Result).
+
+part1_guided2_test() ->
     Result = start(10, 250, 14, 8, [recharge, shield, drain, poison, magic_missile]),
     ?assertEqual(641, Result).
 
-part1_3_test() ->
-    Result = start(10, 250, 14, 8, search),
-    ?assertEqual(641, Result).
     
 start(HP, Mana, BossHP, BossDamage, Spells) ->
     InitState = state(HP, Mana, BossHP, BossDamage, Spells),
@@ -79,29 +88,40 @@ incr_rec(State) ->
 
 print_indent(State, Format, Args) ->
     RecLevel = maps:get(recursion_level, State),
-    io:format("~*s(~w) ~s",
-              [RecLevel * 2, "", RecLevel, io_lib:format(Format, Args)]),
-    ok.
+    case maps:get(verbose, State) of
+        true ->
+            io:format("~*s(~w) ~s",
+                      [RecLevel * 2, "", RecLevel, io_lib:format(Format, Args)]);
+        _ ->
+            ok
+    end.
+
+battle(Who, State) ->
+    battle(Who, State, undef).
     
 
+battle(_, #{mana_spent := ManaSpent} = State, CurrentBest) when ManaSpent > CurrentBest ->
+    print_indent(State, "Pruning tree due to overspending (~w > ~w)~n", [ManaSpent, CurrentBest]),
+    undef;
 %% Returns the best mana found, or 'undef' if no valid solution.
-battle(boss, #{boss_hp := BossHP} = State) when BossHP =< 0 ->
+battle(boss, #{boss_hp := BossHP} = State, _) when BossHP =< 0 ->
     %% erlang:display({player_wins_direct, BossHP, maps:get(mana_spent, State)}),    
     print_indent(State, "*** PLAYER WINS (boss hp = ~w, lowest mana spent = ~w) ***~n", 
                  [BossHP, 
                   maps:get(mana_spent, State)]),
     maps:get(mana_spent, State);
-battle(player, #{hp := HP} = State) when HP =< 0 ->
+battle(player, #{hp := HP} = State, _) when HP =< 0 ->
     print_indent(State, "*** PLAYER LOSES (hp = ~w) ***~n", [HP]),
     undef;
-battle(player, #{spells := []}) ->
+battle(player, #{spells := []}, _) ->
     undef;
-battle(player, State) ->
+battle(player, State, CurrentBest) ->
     S0 = incr_rec(State),
 
-    print_indent(S0, "Player turn, hp = ~p, mana = ~p, boss_hp = ~p~n", 
+    print_indent(S0, "Player turn, hp = ~p, mana = ~w, mana_spent = ~w, boss_hp = ~w~n", 
                  [maps:get(hp, S0),
                   maps:get(mana, S0),
+                  maps:get(mana_spent, S0),
                   maps:get(boss_hp, S0)]),
     S1 = apply_effects(S0),
 
@@ -118,30 +138,17 @@ battle(player, State) ->
 
             Best = 
                 lists:foldl(
-                  fun(S, undef) ->
+                  fun(S, BestMana) ->
                           Spell = maps:get(spell_cast, S),
-                          print_indent(S0, "No known solution at this level yet, battling with '~w'...~n", 
-                                       [Spell]),
-                          battle(boss, S);       
-                                          
-                     (S, BestMana) ->
-                          Spell = maps:get(spell_cast, S),
-                          print_indent(S0, "Battling with '~w'...~n", [Spell]),
-                          min(BestMana, battle(boss, S))
+                          print_indent(S0, "Battling with '~w' (best mana is now ~p)...~n", [Spell, BestMana]),
+                          min(BestMana, battle(boss, S, BestMana))
                   end,
-                  undef,
+                  CurrentBest,
                   States
                  ),
-
-            %% This case is for debugging only
-            case Best of
-                undef ->
-                    print_indent(S0, "No winning solutions found for any spell at this level.~n",[]),
-                    undef;
-                N when is_number(N) ->
-                    print_indent(S0, "Propagating best solution upwards: ~w~n", [N]),
-                    N
-            end;
+            
+            print_indent(S0, "Best solution at this level: ~w~n", [Best]),
+            Best;
 
         %% This is the mode where we have a list of spells to apply,
         %% in this case every state is a "winner".
@@ -151,7 +158,7 @@ battle(player, State) ->
             battle(boss, S3)
     end;
 
-battle(boss, State) ->
+battle(boss, State, CurrentBest) ->
     S0 = incr_rec(State),
     print_indent(S0, "Boss turn (hp = ~p, boss_hp = ~p)~n", 
                  [maps:get(hp, S0),
@@ -177,7 +184,7 @@ battle(boss, State) ->
             print_indent(S0, "Boss deals ~w damage to player~n", [BossDamage]),
             S2 = maps:put(hp, PlayerHP - BossDamage, S1),
             S3 = maps:put(spell_cast, undef, S2),
-            battle(player, S3)
+            battle(player, S3, CurrentBest)
     end.
     
 apply_effects(State) ->
@@ -185,13 +192,10 @@ apply_effects(State) ->
 
     %% Apply effects
     S0 = maps:fold(fun(poison, _T, StateIn) ->
-                           %%print_indent(State, "Poison dealing 3 damage to boss.~n", []),
                            maps:update_with(boss_hp, fun(V) -> V - 3 end, StateIn);
                       (recharge, _T, StateIn) ->
-                           %%print_indent(State, "Poison increasing mana by 101.~n", []),
                            maps:update_with(mana, fun(V) -> V + 101 end, StateIn);
                       (shield, _T, StateIn) ->
-                           %%print_indent(State, "Shield setting armor to 7.~n", []),
                            maps:put(armor, 7, StateIn)
                    end, State, Effects),
     
@@ -214,8 +218,6 @@ apply_effects(State) ->
                                            false
                                    end
                            end, Effects0),
-
-    %% print_indent(State, "Applied effects ~w -> ~w~n", [Effects, Effects1]),
 
     maps:put(effects, Effects1, S1).
 
