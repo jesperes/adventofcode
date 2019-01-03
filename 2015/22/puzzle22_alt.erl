@@ -6,7 +6,7 @@
 %%% Created :  2 Jan 2019 by Jesper Eskilson <jesper.eskilson@klarna.com>
 
 -module(puzzle22_alt).
--export([start/0, start/5]).
+-export([start/0, start1/0]).
 -include_lib("eunit/include/eunit.hrl").
 
 %% Alternative approach to day 22
@@ -40,6 +40,9 @@ state(HP, Mana, BossHP, BossDamage, Spells) ->
      }.
 
 start() ->
+    start(50, 250, 17, 8, search).
+
+start1() ->   
     start(50, 500, 51, 9, search).
 
 part1_1_test() ->
@@ -79,22 +82,21 @@ part1_3_test() ->
     %%              end, Result)),
     ?assertMatch([#{winner := true}|_], Result).
 
-state_to_str(S) ->
-    io_lib:format("hp = ~10w, mana = ~10w, boss_hp = ~10w, effects = ~w",
-                  [maps:get(hp, S),
-                   maps:get(mana, S),
-                   maps:get(boss_hp, S),
-                   maps:get(effects, S)]).
+%% state_to_str(S) ->
+%%     io_lib:format("hp = ~10w, mana = ~10w, boss_hp = ~10w, effects = ~w",
+%%                   [maps:get(hp, S),
+%%                    maps:get(mana, S),
+%%                    maps:get(boss_hp, S),
+%%                    maps:get(effects, S)]).
     
 start(HP, Mana, BossHP, BossDamage, Spells) ->
     InitState = state(HP, Mana, BossHP, BossDamage, Spells),
     States = battle(player, InitState),
-    lists:foreach(fun print_state/1, States),
+    %% lists:foreach(fun print_state/1, States),
     States.
 
-
-print_state(S) ->
-    io:format("~s~n", [state_to_str(S)]).
+%% print_state(S) ->
+%%     io:format("~s~n", [state_to_str(S)]).
 
 %% Valid spells are spells which are not currently in effect, and ones
 %% which we can afford.
@@ -112,30 +114,36 @@ incr_rec(State) ->
     State#{recursion_level => maps:get(recursion_level, State) + 1}.
 
 print_indent(State, Format, Args) ->
-    RecLevel = maps:get(recursion_level, State),
-    io:format("~*s(~w) ~s",
-              [RecLevel * 2, "", RecLevel, io_lib:format(Format, Args)]).
+    %% RecLevel = maps:get(recursion_level, State),
+    %% io:format("~*s(~w) ~s",
+    %%           [RecLevel * 2, "", RecLevel, io_lib:format(Format, Args)]),
+    ok.
     
 %% Do battle between player and boss. Returns a list of states
 %% representing the sequence of moves beating the boss in the least
 %% amount of mana spent.
 
 battle(boss, #{boss_hp := BossHP} = State) when BossHP =< 0 ->
-    print_indent(State, "*** WINNER (boss hp = ~w) ***~n", [BossHP]),
+    erlang:display({player_wins_direct, BossHP, maps:get(mana_spent, State)}),
+    
+    print_indent(State, "*** PLAYER WINS (boss hp = ~w, lowest mana spent = ~w) ***~n", 
+                 [BossHP, 
+                  maps:get(mana_spent, State)]),
     [State#{winner => true,
             lowest_mana_spent => maps:get(mana_spent, State)}];
 battle(player, #{hp := HP} = State) when HP =< 0 ->
-    print_indent(State, "*** LOSER (hp = ~w) ***~n", [HP]),
+    print_indent(State, "*** PLAYER LOSES (hp = ~w) ***~n", [HP]),
     [State#{winner => false}];
 battle(player, #{spells := []} = State) ->
     [State#{winner => false}];
 battle(player, State) ->
     S0 = incr_rec(State),
-    print_indent(S0, "Player turn!~n", []),
 
+    print_indent(S0, "Player turn, hp = ~p, mana = ~p, boss_hp = ~p~n", 
+                 [maps:get(hp, S0),
+                  maps:get(mana, S0),
+                  maps:get(boss_hp, S0)]),
     S1 = apply_effects(S0),
-
-
     case maps:get(spells, S1) of
         search ->
             ValidSpells = valid_spells(S1),
@@ -152,52 +160,59 @@ battle(player, State) ->
             Winner = 
                 lists:foldl(
                   fun(S, undef) ->
-                          print_indent(S0, "Player casting spell: ~w~n", [maps:get(spell_cast, S)]),
-    
+                          print_indent(S0, "Player casting spell '~w' (1)~n", [maps:get(spell_cast, S)]),
+                          
                           %% If the accumulator is 'undef', just go ahead
                           %% and battle
                           CandidateWinner = battle(boss, S),
                           [#{winner := CandWin} = CandHead|_CandRest] = CandidateWinner,
                           case CandWin of
                               true ->
-                                  print_indent(S0, "Found winner (1)~n", []),
+                                  ManaSpent = maps:get(lowest_mana_spent, CandHead),
+                                  print_indent(S0, "Found winner (1), lowest_mana_spent = ~p~n", [ManaSpent]),
                                   CandidateWinner;
                               false ->
-                                  print_indent(S0, "Pruning solution, not a winner~n", []),
+                                  print_indent(S0, "Casting spell '~w' did not yield any solutions.~n", 
+                                               [maps:get(spell_cast, S)]),
                                   undef
                           end;
                      
                      (S, [WinnerHead|_] = CurrentWinner) ->
-                          print_indent(S0, "Player casting spell: ~w~n", [maps:get(spell_cast, S)]),
+                          print_indent(S0, "Player casting spell '~s' (2)~n", [maps:get(spell_cast, S)]),
 
                           #{lowest_mana_spent := CurrentBest} = WinnerHead,
                           #{mana_spent := CurrentlySpent} = S,
                           
                           if CurrentBest < CurrentlySpent ->
                                   %% We are already overspending
-                                  print_indent(S0, "Pruning solution (overspending ~w < ~w)~n", 
+                                  print_indent(S0, "Pruning solution (1) (overspending ~w < ~w)~n", 
                                                [CurrentBest, CurrentlySpent]),
                                   CurrentWinner;
                              true ->
                                   %% There is still room to spend. Update
                                   %% spending limit in the state we are
                                   %% currently exploring.
-                                  S0 = S#{lowest_mana_spent => CurrentBest},
+                                  S01 = S#{lowest_mana_spent => CurrentBest},
                                   
                                   %% Recurse into battle!
-                                  CandidateWinner = battle(boss, S0),
+                                  CandidateWinner = battle(boss, S01),
                                   
                                   %% Check if the new result is a
                                   %% winner, and replace current
                                   %% winner if so.
                                   [#{winner := CandWin,
-                                     lowest_mana_spent := LowestScore} = CandHead|CandRest] = CandidateWinner,
+                                     lowest_mana_spent := LowestScore}|_] = CandidateWinner,
                                   case {CandWin, LowestScore} of
-                                      {player, Score} when Score < CurrentBest ->
-                                          print_indent(S0, "Improving score to ~p~n", [Score]),
-                                          [CandHead#{lowest_mana_spent => Score}|CandRest];
+                                      {true, Score} when Score < CurrentBest ->
+                                          print_indent(S0, "Found better (winning) solution ~w < ~w~n",
+                                                       [Score, CurrentBest]),
+                                          CandidateWinner;
+                                      {true, _} ->
+                                          print_indent(S0, "Found worse (winning) solution ~w < ~w (skipping)~n",
+                                                       [LowestScore, CurrentBest]),
+                                          CurrentWinner;
                                       _ ->
-                                          print_indent(S0, "Pruning solution (overspending 1)~n", []),
+                                          print_indent(S0, "Skipping losing solution.~n", []),
                                           CurrentWinner
                                   end
                           end
@@ -225,14 +240,18 @@ battle(player, State) ->
 
 battle(boss, State) ->
     S0 = incr_rec(State),
-    print_indent(S0, "Boss turn!~n", []),
+    print_indent(S0, "Boss turn (hp = ~p, boss_hp = ~p)~n", 
+                 [maps:get(hp, S0),
+                  maps:get(boss_hp, S0)]),
 
     S1 = apply_effects(S0),
 
     %% Check if boss has died as a result of spell effects.
     case maps:get(boss_hp, S1) of
         HP when HP =< 0 ->
-            print_indent(S0, "*** WINNER (boss hp = ~w)~n", [HP]),
+            erlang:display({player_wins_indirect, HP, maps:get(mana_spent, State)}),
+
+            print_indent(S0, "*** PLAYER WINS (boss hp = ~w)~n", [HP]),
             
             %% This is one of the possible end conditions: the boss is
             %% killed by a player effect on the boss turn.
@@ -244,7 +263,7 @@ battle(boss, State) ->
             %% to keep track of.
             BossDamage = maps:get(boss_damage, S1) - maps:get(armor, S1),
             PlayerHP = maps:get(hp, S1),
-            print_indent(S0, "--> boss dealing ~w damage to player~n", [BossDamage]),
+            print_indent(S0, "Boss deals ~w damage to player~n", [BossDamage]),
             S2 = maps:put(hp, PlayerHP - BossDamage, S1),
             S3 = maps:put(spell_cast, undef, S2),
             prepend_current_state(S3, battle(player, S3))
@@ -262,13 +281,13 @@ apply_effects(State) ->
 
     %% Apply effects
     S0 = maps:fold(fun(poison, _T, StateIn) ->
-                           print_indent(State, "Poison dealing 3 damage to boss.~n", []),
+                           %%print_indent(State, "Poison dealing 3 damage to boss.~n", []),
                            maps:update_with(boss_hp, fun(V) -> V - 3 end, StateIn);
                       (recharge, _T, StateIn) ->
-                           print_indent(State, "Poison increasing mana by 101.~n", []),
+                           %%print_indent(State, "Poison increasing mana by 101.~n", []),
                            maps:update_with(mana, fun(V) -> V + 101 end, StateIn);
                       (shield, _T, StateIn) ->
-                           print_indent(State, "Shield setting armor to 7.~n", []),
+                           %%print_indent(State, "Shield setting armor to 7.~n", []),
                            maps:put(armor, 7, StateIn)
                    end, State, Effects),
     
@@ -292,7 +311,7 @@ apply_effects(State) ->
                                    end
                            end, Effects0),
 
-    print_indent(State, "Applied effects ~w -> ~w~n", [Effects, Effects1]),
+    %% print_indent(State, "Applied effects ~w -> ~w~n", [Effects, Effects1]),
 
     maps:put(effects, Effects1, S1).
 
