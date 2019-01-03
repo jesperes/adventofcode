@@ -11,6 +11,9 @@
 
 %% Alternative approach to day 22
 
+%% 494 is not correct
+%% 1428 is not correct
+
 spells() ->
     [magic_missile, drain, shield, poison, recharge].
 
@@ -32,7 +35,6 @@ state(HP, Mana, BossHP, BossDamage, Spells) ->
       hp => HP,
       mana => Mana,
       mana_spent => 0,
-      lowest_mana_spent => undef,
       armor => 0,
       recursion_level => 0,
       winner => false,
@@ -40,63 +42,26 @@ state(HP, Mana, BossHP, BossDamage, Spells) ->
      }.
 
 start() ->
-    start(50, 250, 17, 8, search).
+    start(50, 250, 14, 8, search).
 
 start1() ->   
     start(50, 500, 51, 9, search).
 
 part1_1_test() ->
     Result = start(10, 250, 13, 8, [poison, magic_missile]),
-    ?assertEqual(
-       [77, 77, 24, 24],
-       lists:map(fun(S) ->
-                         maps:get(mana, S)
-                 end, Result)),
-    
-    [#{lowest_mana_spent := LowestManaSpent}|_] = Result,
-    ?assertEqual(226, LowestManaSpent), 
-    ?assertMatch([#{winner := true}|_], Result).
+    ?assertEqual(226, Result).
 
 part1_2_test() ->
     Result = start(10, 250, 14, 8, [recharge, shield, drain, poison, magic_missile]),
-    ?assertEqual(
-       [21, 122, 110, 211, 239, 340, 167, 167, 114, 114],
-       lists:map(fun(S) ->
-                         maps:get(mana, S)
-                 end, Result)),
-    [#{lowest_mana_spent := LowestManaSpent}|_] = Result,
-    ?assertEqual(641, LowestManaSpent), 
-    ?assertMatch([#{winner := true}|_], Result).
+    ?assertEqual(641, Result).
 
 part1_3_test() ->
     Result = start(10, 250, 14, 8, search),
-    [#{lowest_mana_spent := LowestManaSpent}|_] = Result,
-    ?assertEqual(641, LowestManaSpent), 
-    %% We get the same lowest mana spent when searching, but the
-    %% sequence of moves is slightly different. Why?
-
-    %% ?assertEqual(
-    %%    [250, 21, 122, 110, 211, 239, 340, 167, 167, 114, 114],
-    %%    lists:map(fun(S) ->
-    %%                      maps:get(mana, S)
-    %%              end, Result)),
-    ?assertMatch([#{winner := true}|_], Result).
-
-%% state_to_str(S) ->
-%%     io_lib:format("hp = ~10w, mana = ~10w, boss_hp = ~10w, effects = ~w",
-%%                   [maps:get(hp, S),
-%%                    maps:get(mana, S),
-%%                    maps:get(boss_hp, S),
-%%                    maps:get(effects, S)]).
+    ?assertEqual(641, Result).
     
 start(HP, Mana, BossHP, BossDamage, Spells) ->
     InitState = state(HP, Mana, BossHP, BossDamage, Spells),
-    States = battle(player, InitState),
-    %% lists:foreach(fun print_state/1, States),
-    States.
-
-%% print_state(S) ->
-%%     io:format("~s~n", [state_to_str(S)]).
+    battle(player, InitState).
 
 %% Valid spells are spells which are not currently in effect, and ones
 %% which we can afford.
@@ -108,34 +73,29 @@ valid_spells(State) ->
                          (not maps:is_key(Spell, Effects))
                              and (cost(Spell) =< Mana)
                  end, spells()).
-    
 
 incr_rec(State) ->
     State#{recursion_level => maps:get(recursion_level, State) + 1}.
 
 print_indent(State, Format, Args) ->
-    %% RecLevel = maps:get(recursion_level, State),
-    %% io:format("~*s(~w) ~s",
-    %%           [RecLevel * 2, "", RecLevel, io_lib:format(Format, Args)]),
+    RecLevel = maps:get(recursion_level, State),
+    io:format("~*s(~w) ~s",
+              [RecLevel * 2, "", RecLevel, io_lib:format(Format, Args)]),
     ok.
     
-%% Do battle between player and boss. Returns a list of states
-%% representing the sequence of moves beating the boss in the least
-%% amount of mana spent.
 
+%% Returns the best mana found, or 'undef' if no valid solution.
 battle(boss, #{boss_hp := BossHP} = State) when BossHP =< 0 ->
-    erlang:display({player_wins_direct, BossHP, maps:get(mana_spent, State)}),
-    
+    %% erlang:display({player_wins_direct, BossHP, maps:get(mana_spent, State)}),    
     print_indent(State, "*** PLAYER WINS (boss hp = ~w, lowest mana spent = ~w) ***~n", 
                  [BossHP, 
                   maps:get(mana_spent, State)]),
-    [State#{winner => true,
-            lowest_mana_spent => maps:get(mana_spent, State)}];
+    maps:get(mana_spent, State);
 battle(player, #{hp := HP} = State) when HP =< 0 ->
     print_indent(State, "*** PLAYER LOSES (hp = ~w) ***~n", [HP]),
-    [State#{winner => false}];
-battle(player, #{spells := []} = State) ->
-    [State#{winner => false}];
+    undef;
+battle(player, #{spells := []}) ->
+    undef;
 battle(player, State) ->
     S0 = incr_rec(State),
 
@@ -144,6 +104,7 @@ battle(player, State) ->
                   maps:get(mana, S0),
                   maps:get(boss_hp, S0)]),
     S1 = apply_effects(S0),
+
     case maps:get(spells, S1) of
         search ->
             ValidSpells = valid_spells(S1),
@@ -155,78 +116,31 @@ battle(player, State) ->
                                        apply_spell(Spell, S1)
                                end, ValidSpells),
 
-            %% Recurse over all possible spells, keeping track of the
-            %% best solution.
-            Winner = 
+            Best = 
                 lists:foldl(
                   fun(S, undef) ->
-                          print_indent(S0, "Player casting spell '~w' (1)~n", [maps:get(spell_cast, S)]),
-                          
-                          %% If the accumulator is 'undef', just go ahead
-                          %% and battle
-                          CandidateWinner = battle(boss, S),
-                          [#{winner := CandWin} = CandHead|_CandRest] = CandidateWinner,
-                          case CandWin of
-                              true ->
-                                  ManaSpent = maps:get(lowest_mana_spent, CandHead),
-                                  print_indent(S0, "Found winner (1), lowest_mana_spent = ~p~n", [ManaSpent]),
-                                  CandidateWinner;
-                              false ->
-                                  print_indent(S0, "Casting spell '~w' did not yield any solutions.~n", 
-                                               [maps:get(spell_cast, S)]),
-                                  undef
-                          end;
-                     
-                     (S, [WinnerHead|_] = CurrentWinner) ->
-                          print_indent(S0, "Player casting spell '~s' (2)~n", [maps:get(spell_cast, S)]),
-
-                          #{lowest_mana_spent := CurrentBest} = WinnerHead,
-                          #{mana_spent := CurrentlySpent} = S,
-                          
-                          if CurrentBest < CurrentlySpent ->
-                                  %% We are already overspending
-                                  print_indent(S0, "Pruning solution (1) (overspending ~w < ~w)~n", 
-                                               [CurrentBest, CurrentlySpent]),
-                                  CurrentWinner;
-                             true ->
-                                  %% There is still room to spend. Update
-                                  %% spending limit in the state we are
-                                  %% currently exploring.
-                                  S01 = S#{lowest_mana_spent => CurrentBest},
-                                  
-                                  %% Recurse into battle!
-                                  CandidateWinner = battle(boss, S01),
-                                  
-                                  %% Check if the new result is a
-                                  %% winner, and replace current
-                                  %% winner if so.
-                                  [#{winner := CandWin,
-                                     lowest_mana_spent := LowestScore}|_] = CandidateWinner,
-                                  case {CandWin, LowestScore} of
-                                      {true, Score} when Score < CurrentBest ->
-                                          print_indent(S0, "Found better (winning) solution ~w < ~w~n",
-                                                       [Score, CurrentBest]),
-                                          CandidateWinner;
-                                      {true, _} ->
-                                          print_indent(S0, "Found worse (winning) solution ~w < ~w (skipping)~n",
-                                                       [LowestScore, CurrentBest]),
-                                          CurrentWinner;
-                                      _ ->
-                                          print_indent(S0, "Skipping losing solution.~n", []),
-                                          CurrentWinner
-                                  end
-                          end
-                  end, 
+                          Spell = maps:get(spell_cast, S),
+                          print_indent(S0, "No known solution at this level yet, battling with '~w'...~n", 
+                                       [Spell]),
+                          battle(boss, S);       
+                                          
+                     (S, BestMana) ->
+                          Spell = maps:get(spell_cast, S),
+                          print_indent(S0, "Battling with '~w'...~n", [Spell]),
+                          min(BestMana, battle(boss, S))
+                  end,
                   undef,
                   States
                  ),
 
-            case Winner of
+            %% This case is for debugging only
+            case Best of
                 undef ->
                     print_indent(S0, "No winning solutions found for any spell at this level.~n",[]),
-                    [State#{winner => false}];
-                _ ->
-                    prepend_current_state(S1, Winner)
+                    undef;
+                N when is_number(N) ->
+                    print_indent(S0, "Propagating best solution upwards: ~w~n", [N]),
+                    N
             end;
 
         %% This is the mode where we have a list of spells to apply,
@@ -234,8 +148,7 @@ battle(player, State) ->
         [Spell|Rest] ->
             S2 = apply_spell(Spell, S1),
             S3 = maps:put(spells, Rest, S2),
-            Winner = battle(boss, S3),
-            prepend_current_state(S3, Winner)
+            battle(boss, S3)
     end;
 
 battle(boss, State) ->
@@ -249,14 +162,12 @@ battle(boss, State) ->
     %% Check if boss has died as a result of spell effects.
     case maps:get(boss_hp, S1) of
         HP when HP =< 0 ->
-            erlang:display({player_wins_indirect, HP, maps:get(mana_spent, State)}),
-
-            print_indent(S0, "*** PLAYER WINS (boss hp = ~w)~n", [HP]),
-            
             %% This is one of the possible end conditions: the boss is
             %% killed by a player effect on the boss turn.
-            [S1#{winner => true,
-                 lowest_mana_spent => maps:get(mana_spent, S1)}];
+
+            %% erlang:display({player_wins_indirect, HP, maps:get(mana_spent, State)}),
+            print_indent(S0, "*** PLAYER WINS (boss hp = ~w)~n", [HP]),
+            maps:get(mana_spent, S1);
         _ ->
             %% The logic here is much simpler than for the player
             %% since we have no choices to make, and no mana spending
@@ -266,16 +177,9 @@ battle(boss, State) ->
             print_indent(S0, "Boss deals ~w damage to player~n", [BossDamage]),
             S2 = maps:put(hp, PlayerHP - BossDamage, S1),
             S3 = maps:put(spell_cast, undef, S2),
-            prepend_current_state(S3, battle(player, S3))
+            battle(player, S3)
     end.
     
-
-%% Prepend the given state to the list of winning moves, and propagate
-%% the winner field upwards.
-prepend_current_state(State, [#{winner := Winner,
-                                lowest_mana_spent := ManaSpent}|_] = List) ->
-    [State#{winner => Winner, lowest_mana_spent => ManaSpent}|List].
-
 apply_effects(State) ->
     Effects = maps:get(effects, State),
 
@@ -314,6 +218,7 @@ apply_effects(State) ->
     %% print_indent(State, "Applied effects ~w -> ~w~n", [Effects, Effects1]),
 
     maps:put(effects, Effects1, S1).
+
 
 create_effect(State, Spell) ->
     maps:update_with(effects,
