@@ -1,62 +1,64 @@
 -module(puzzle24).
 -compile([export_all]).
 
-%% https://www.geeksforgeeks.org/partition-set-k-subsets-equal-sum/
+%% To avoid combinatorial explosions when looking for possible
+%% combination of packages for the first group, we assume that group A
+%% will never be larger than 6. This turns out to be good enough.
+-define(MAX_GROUP_A_SIZE, 6).
+
+packages() -> [1, 2, 3, 7, 11, 13, 17, 19, 23, 31, 37, 41, 43, 47,
+               53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107,
+               109, 113].
 
 start() ->
-    part3(test_data()).
+    {{part1, start_common(3)},
+     {part2, start_common(4)}}.
 
-part3(Packages) ->
-    TotalSum = lists:sum(Packages),
-    case TotalSum rem 3 of
-        0 ->
-            Sum = TotalSum div 3,
-            io:format("Subset sum = ~w~n", [Sum]),
-            part3(Packages, {Sum, Sum, Sum});
-        _ ->
-            io:format("Total sum ~w not divisible by 3.~n", [TotalSum]),
-            []
-    end.
+start_common(Groups) ->
+    Packages = packages(),
+    Sum = lists:sum(Packages) div Groups,
+    find_first_group_qe(Packages, Sum).
 
-%% Returns a list of all combinations of {ElemsA, ElemsB, ElemsC}
-%% where the sum of all elements in ElemsX are the same.
+%% Compute the "quantum entanglement" of a group, which is simply the
+%% product of all integers in the group.
+qe(L) ->
+    lists:foldl(fun(V, AccIn) -> V * AccIn end, 1, L).
 
-part3([], {0, 0, 0}) ->
-    [{[], [], []}];
-part3([P|Packages], {A, B, C} = Bins) ->
-    As = if P =< A -> 
-                 part3(Packages, {A - P, B, C});
-            true -> []
-         end,
+%% Sort group A candidates on length (smallest first), then
+%% on Quantum Entanglement.
+sort_fun(A, B) when length(A) /= length(B) -> 
+    length(A) =< length(B);
+sort_fun(A, B) ->
+    qe(A) =< qe(B).
 
-    Asols = lists:map(fun({A0, B0, C0}) ->
-                              {[P|A0], B0, C0}
-                      end, As),
+find_first_group_qe(Packages, Sum) ->  
+    GroupAs = find_a(Packages, Sum),
+    [Best|_] = lists:sort(fun sort_fun/2, GroupAs),
+    %% I assume where that the remaining elements can be divided into
+    %% 2 (3) groups with the correct sum. This assumption turned out
+    %% to be correct.
+    qe(Best).
 
-    Bs = if P =< B -> 
-                 part3(Packages, {A, B - P, C});
-            true -> []
-         end,
+%% Find best choices for first group (A)
+find_a(Data, Sum) ->
+    lists:foldl(
+      fun(N, As) ->
+              Combos = cnr(N, Data),
+              As ++ lists:filter(fun(X) -> lists:sum(X) == Sum end, Combos)
+      end, [], lists:seq(1, ?MAX_GROUP_A_SIZE)).
 
-    Bsols = lists:map(fun({A1, B1, C1}) ->
-                              {A1, [P|B1], C1}
-                      end, Bs),
-
-    Cs = if P =< C -> 
-                 part3(Packages, {A, B, C - P});
-            true -> []
-         end,
+%% Returns all possible combinations of a given length.
+%% https://github.com/joergen7/lib_combin/blob/master/src/lib_combin.erl
+cnr(N, SrcLst) when N >= 0 ->
+  Cnr = fun
+            Cnr(0, _, Acc)     -> [Acc];
+            Cnr(_, [], _)      -> [];
+            Cnr(M, [H|T], Acc) ->
+                case T of
+                    []    -> Cnr(M-1, [], [H|Acc]);
+                    [_|_] -> Cnr(M-1, T, [H|Acc]) ++ Cnr(M, T, Acc)
+                end
+        end,
     
-    Csols = lists:map(fun({A2, B2, C2}) ->
-                              {A2, B2, [P|C2]}
-                      end, Cs),
+  Cnr(N, SrcLst, []).
 
-    Asols ++ Bsols ++ Csols.
-
-
-real_data() -> [1, 2, 3, 7, 11, 13, 17, 19, 23, 31, 37, 41, 43, 47,
-                53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107,
-                109, 113].
-
-test_data() -> [1, 2, 3, 4, 5, 7, 8, 9, 10, 11].
-    
