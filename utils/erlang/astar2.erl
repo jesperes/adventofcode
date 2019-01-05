@@ -13,56 +13,60 @@
 -include_lib("eunit/include/eunit.hrl").
 
 astar(Start, End, CostFn, NbrFn, DistFn) ->
-    O = sets:from_list([Start]), %% OpenSet
-    C = sets:new(),              %% ClosedSet
-    CF = #{},                    %% CameFrom
-    Gs = #{Start => 0},          %% GScores
-    Fs = gb_sets:from_list([{CostFn(Start), Start}]),
+    O = gb_sets:from_list([Start]), %% OpenSet
+    C = gb_sets:empty(),	    %% ClosedSet
+    CF = maps:new(),		    %% CameFrom
+    Gs = #{Start => 0},
+    Fs = gb_sets:singleton({CostFn(Start), Start}),
     astar(End, O, C, CF, Gs, Fs, CostFn, NbrFn, DistFn).
 
 astar(End, O, C, CF, Gs, Fs, CostFn, NbrFn, DistFn) ->
-    case sets:size(O) of
-        0 -> search_exhausted;
+    case gb_sets:is_empty(O) of
+        true -> search_exhausted;
         _ -> 
             {{_, Curr}, Fs0} = gb_sets:take_smallest(Fs),
             astar0(Curr, End, O, C, CF, Gs, Fs0, CostFn, NbrFn, DistFn)
     end.
 
 astar0(End, End, _O, _C, CF, _Gs, _Fs, _CostFn, _NbrFn, _DistFn) ->
-    lists:reverse(path_recon(End, CF));
+    %% The path is returned in reverse, to avoid reversing it if it is
+    %% not going to be used.
+    path_recon(End, CF);
 astar0(Curr, End, O, C, CF, Gs, Fs, CostFn, NbrFn, DistFn) ->
-    O0 = sets:del_element(Curr, O), %% remove curr from open
-    C0 = sets:add_element(Curr, C), %% add curr to close
+    O0 = gb_sets:del_element(Curr, O),	%% remove curr from open
+    C0 = gb_sets:add_element(Curr, C), %% add curr to close
     Res = lists:foldl(fun astar_nbr/2, {Curr, O0, C0, CF, Gs, Fs, CostFn, DistFn}, NbrFn(Curr)),
     {_, O1, C1, CF0, Gs0, Fs0, _, _} = Res,
     astar(End, O1, C1, CF0, Gs0, Fs0, CostFn, NbrFn, DistFn).
 
 %% Function to fold over the neighbors in the recursive step.
 astar_nbr(Nbr, {Curr, O, C, CF, Gs, Fs, CostFn, DistFn} = AccIn) ->
-    InClosed = sets:is_element(Nbr, C),
-    if InClosed ->
+    case gb_sets:is_member(Nbr, C) of
+	true ->
             %% Neighbor is already evaluated.
             AccIn;
-       true ->
+	false ->
             %% Add (possibly new) neighbor to open set
-            O0 = sets:add_element(Nbr, O),
+            O0 = case gb_sets:is_member(Nbr, O) of
+		     true -> O;
+		     false -> gb_sets:insert(Nbr, O)
+		 end,
+	    %% Check if this path to the neighbor is better. If so
+	    %% store it and continue.
             NewGs = maps:get(Curr, Gs) + DistFn(Curr, Nbr),
             OldGs = maps:get(Nbr, Gs, inf),
             if NewGs < OldGs ->
                     %% Record new path if better
-                    {CF0, Gs0, Fs0} = record_best_path(Nbr, Curr, CF, Gs, Fs, NewGs, CostFn),
-                    {Curr, O0, C, CF0, Gs0, Fs0, CostFn, DistFn};
-               true ->
-                    AccIn
+		    {Curr, O0, C,   
+		     maps:put(Nbr, Curr, CF),	% update came-from map
+		     maps:put(Nbr, NewGs, Gs), % update neighbor's gscore
+		     gb_sets:add_element({NewGs + CostFn(Nbr), Nbr}, Fs),
+		     CostFn, DistFn};
+	       true -> AccIn
             end
     end.
 
 %%% Helper functions
-record_best_path(Nbr, Curr, CF, Gs, Fs, NewGs, CostFn) ->    
-    {CF#{Nbr => Curr}, % update came-from map
-     Gs#{Nbr => NewGs}, % update neighbor's gscore
-     gb_sets:add({NewGs + CostFn(Nbr), Nbr}, Fs)}.
-
 path_recon(Curr, CF) ->
     case maps:is_key(Curr, CF) of
         true ->  [Curr|path_recon(maps:get(Curr, CF), CF)];
@@ -70,32 +74,29 @@ path_recon(Curr, CF) ->
     end.
 
 %%% Tests
-t1_test() ->
-    Grid = <<"S....#....",
-	     ".....#....",
-	     "..##.#.#..",
-	     "..##...#..",
-	     ".......##.",
-	     ".......#..",
-	     "########..",
-	     ".........#",
-	     "....######",
-	     ".........G">>,
-    Size = 10,
 
-    PosToCoord = fun({Start, _}, W) ->
-                         {Start rem W, Start div W}
+ex_search(Grid, Size) ->
+    PosToCoord = fun({Start, _}) ->
+                         {Start rem Size, Start div Size}
                  end,
-    Obstacles = sets:from_list(
-		  [PosToCoord(Pos, Size)
-		   || Pos <- binary:matches(Grid, <<"#">>)]),
 
-    Start = {0, 0},
-    {Xg, Yg} = Goal = {9, 9},
+    Obstacles = sets:from_list(
+		  [PosToCoord(Pos)
+		   || Pos <- binary:matches(Grid, <<"#">>)]),
+    
+    GetPosOf = fun(Binary) ->
+		       [Pos] = binary:matches(Grid, Binary),
+		       PosToCoord(Pos)
+	       end,
+
+    {Xg, Yg} = Goal = GetPosOf(<<"G">>),
+    Start = GetPosOf(<<"S">>),
     MinX = MinY = 0,
-    MaxX = MaxY = 9,
+    MaxX = MaxY = Size - 1,
 
     CostFn = fun({X, Y}) -> abs(X - Xg) + abs(Y - Yg) end,
+
+
     AdjFn = fun({X, Y}) ->
                     [{Xa, Ya} ||
                         Xa <- lists:seq(X - 1, X + 1),
@@ -114,21 +115,82 @@ t1_test() ->
     PosToStrFn = 
         fun({X, Y}, Path) ->
                 case lists:member({X,Y}, Path) of
-                    true -> $*;
+                    true -> $x;
                     false -> binary:at(Grid, Y * Size + X)
                 end
         end,
     
     DistFn = fun({Xa, Ya}, {Xb, Yb}) -> abs(Xa - Xb) + abs(Ya - Yb) end,
-
-    Red0 = proplists:get_value(reductions, process_info(self())),
-    Path = astar(Start, Goal, CostFn, NbrFn, DistFn),
-    Red1 = proplists:get_value(reductions, process_info(self())),
-    erlang:display({reductions, Red1 - Red0}),
-
-    X = [[PosToStrFn({X,Y}, Path) ||
-     	     X <- lists:seq(0, Size - 1)] ++ "\n" ||
-     	    Y <- lists:seq(0, Size - 1)],
     
-    io:format("Path:~n~s~n", [X]),
-    ?assertEqual(24, length(Path)).
+    Repeat = 1000,
+    {Time, _} = 
+	timer:tc(fun() ->
+			 lists:foreach(
+			   fun(_N) ->
+				   astar(Start, Goal, CostFn, NbrFn, DistFn)
+			   end, lists:seq(1, Repeat))
+		 end),
+
+    ?debugFmt("Average time/iter: ~w us", [Time / Repeat]),
+			 
+    Path = astar(Start, Goal, CostFn, NbrFn, DistFn),
+    case Path of
+	search_exhausted ->
+	    search_exhausted;
+	_ ->
+	    X = [[PosToStrFn({X,Y}, Path) ||
+		     X <- lists:seq(0, Size - 1)] ++ "\n" ||
+		    Y <- lists:seq(0, Size - 1)],    
+	    
+	    ?debugFmt("Path length: ~w", [length(Path)]),
+	    ?debugFmt("Path:~n~s~n", [X]),
+	    Path
+    end.
+
+t1_test() ->
+    Grid = <<"S....#....",
+	     ".....#....",
+	     "..##.#.#..",
+	     "..##...#..",
+	     ".......##.",
+	     ".......#..",
+	     "########..",
+	     ".........#",
+	     "....######",
+	     ".........G">>,
+    ?assertEqual(24, length(ex_search(Grid, 10))).
+    
+t2_test() ->
+    Grid = <<".....#....",
+	     ".....#.###",
+	     "..##.#.#..",
+	     "..##...#..",
+	     "......###.",
+	     "..#..S#...",
+	     "..#####.#.",
+	     "..##....#.",
+	     "..#..#.##.",
+	     ".....#.#G.">>,
+    ?assertEqual(19, length(ex_search(Grid, 10))).
+    
+t3_test() ->
+    Grid = <<"S.........",
+	     "...######.",
+	     "#.......#.",
+	     "#...###.#.",
+	     "#.#.#...#.",
+	     "#.#.#.#.#.",
+	     "###.#####.",
+	     "..#.#.....",
+	     "..###.####",
+	     ".........G">>,
+    ?assertEqual(23, length(ex_search(Grid, 10))).
+
+t4_test() ->
+    Grid = <<"S....",
+	     ".....",
+	     "..###",
+	     "..#..",
+	     "..#.G">>,
+	     
+    ?assertEqual(search_exhausted, ex_search(Grid, 5)).
