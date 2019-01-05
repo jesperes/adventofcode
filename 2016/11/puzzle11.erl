@@ -22,6 +22,34 @@
 %%%   are connected to their generator.
 %%%
 
+%%%
+%%% Performance notes
+%%%
+%%% First solution solved part 1 in ~15 seconds, but part 2 adds two
+%%% microchips and this causes part 2 to take much too long time.
+%%%
+%%% eprof says:
+%%%
+%%% ...
+%%% puzzle11:rtg/1                             7159210     4.54   1778000  [      0.25]
+%%% puzzle11:'-check_items/1-fun-0-'/1         7800823     4.71   1843000  [      0.24]
+%%% puzzle11:is_microchip/1                    9415855     4.95   1936000  [      0.21]
+%%% puzzle11:'-check_items/1-fun-1-'/2         9415855     5.38   2107000  [      0.22]
+%%% lists:delete/2                            13118728     8.29   3245000  [      0.25]
+%%% gb_sets:insert_1/3                         9570438     8.33   3262000  [      0.34]
+%%% gb_sets:is_member_1/2                     30183837    17.97   7035000  [      0.23]
+%%% ---------------------------------------  ---------  -------  --------  [----------]
+%%% Total:                                   180182569  100.00%  39139000  [      0.22]
+%%%
+%%% is_member is taking time presumably because each node is a map of
+%%% {int, list} pairs, which needs to be pairwise compared all the
+%%% time. Perhaps one optimization is to find a more efficient
+%%% representation of node states.
+%%%
+
+%% Alternate node presentation (a tuple)
+%% #{Item => Floor, ...}}
+
 testdata() ->
     <<"The first floor contains a hydrogen-compatible microchip and a lithium-compatible microchip.\n",
       "The second floor contains a hydrogen generator.\n",
