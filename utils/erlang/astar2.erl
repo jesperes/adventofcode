@@ -47,10 +47,8 @@ astar_nbr(Nbr, {Curr, O, C, CF, Gs, Fs, CostFn, DistFn} = AccIn) ->
             AccIn;
 	false ->
             %% Add (possibly new) neighbor to open set
-            O0 = case gb_sets:is_member(Nbr, O) of
-		     true -> O;
-		     false -> gb_sets:insert(Nbr, O)
-		 end,
+            O0 = gb_sets:add(Nbr, O),
+
 	    %% Check if this path to the neighbor is better. If so
 	    %% store it and continue.
             NewGs = maps:get(Curr, Gs) + DistFn(Curr, Nbr),
@@ -60,7 +58,7 @@ astar_nbr(Nbr, {Curr, O, C, CF, Gs, Fs, CostFn, DistFn} = AccIn) ->
 		    {Curr, O0, C,   
 		     maps:put(Nbr, Curr, CF),	% update came-from map
 		     maps:put(Nbr, NewGs, Gs), % update neighbor's gscore
-		     gb_sets:add_element({NewGs + CostFn(Nbr), Nbr}, Fs),
+		     gb_sets:add({NewGs + CostFn(Nbr), Nbr}, Fs),
 		     CostFn, DistFn};
 	       true -> AccIn
             end

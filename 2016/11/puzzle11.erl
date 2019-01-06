@@ -10,6 +10,10 @@
 -include_lib("eunit/include/eunit.hrl").
 
 -define(ELEVATOR, 'E').
+-define(BOTTOM_FLOOR, 0).
+-define(SECOND_FLOOR, 1).
+-define(THIRD_FLOOR, 2).
+-define(TOP_FLOOR, 3).
 
 %%%
 %%% Rules: 
@@ -47,8 +51,14 @@
 %%% representation of node states.
 %%%
 
-%% Alternate node presentation (a tuple)
-%% #{Item => Floor, ...}}
+
+%%% Alternative representation: store all the elements as a list of
+%%% integers, where each position in the list corresponds to to an
+%%% element (e.g. elevator, microchip, generator), and the value at
+%%% that location the floor the element is on. Since we only ever have
+%%% 4 floors, 2 bits is enough.
+
+%%% Time part 1: 8.5 secs
 
 testdata() ->
     <<"The first floor contains a hydrogen-compatible microchip and a lithium-compatible microchip.\n",
@@ -63,137 +73,212 @@ realdata() ->
 start() ->
     {
       {part1, number_of_moves(realdata(), part1)}
-      %%,  {part2, number_of_moves(realdata(), part2)}
+      %% {part2, number_of_moves(realdata(), part2)}
     }.
 
-number_of_moves(InputData, Part) ->
+number_of_moves(Data, Part) ->
     {Time, Result} = timer:tc(fun() ->
-				      number_of_moves0(InputData, Part)
+				      number_of_moves0(Data, Part)
 			      end),
     io:format("Time: ~w secs~n", [Time / 1000000.0]),
     Result.
 
-number_of_moves0(InputData, Part) ->
-    Floors = 
-	case Part of
-	    part1 ->
-		parse(InputData);
-	    part2 ->
-		%% For part 2, we discover that there are additional
-		%% RTG/microchips (Elerium & Dilithium).
-		F = parse(InputData),
-		ItemsFloor1 = maps:get(1, F),
-		maps:put(1, ItemsFloor1 ++ [eg, em, dg, dm], F)
-	end,
-
-    Path = 
-	astar2:astar(Floors, endstate(Floors), 
-		     fun cost/1,
-		     fun moves/1,
-		     fun distance/2),
-
-    %% -1 is here because the path includes the start state, and we
-    %% want the number of moves, not the number of states.
-    length(Path) - 1.
+number_of_moves0(Data, Part) ->
+    {Names, Start} = parse(Data, Part),
     
+    io:format("Initial state:~n", []),
+    print(Names, Start),
+    io:format("Searching...~n", []),
+    case astar2:astar(Start, endstate(Names), 
+		      fun cost/1,
+		      fun(Bits) ->
+			      moves(Names, Bits)
+		      end,
+		      fun distance/2) of
+	search_exhausted ->
+	    no_solution;
+	Path ->
+	    %% -1 is here because the path includes the start state, and we
+	    %% want the number of moves, not the number of states.
+	    length(Path) - 1
+    end.
 
 %%% Searching
 
 distance(_, _) -> 1.
 
+%% Cost-heuristic; lower value means closer to goal.  We use the
+%% sum of the distances for each item from the fourth floor.
 cost(Node) ->
-    %% Cost-heuristic; lower value means closer to goal.  We use the
-    %% sum of the distances for each item from the fourth floor.
-    maps:fold(fun(Floor, Items, Acc) ->
-		      Acc + (length(Items) * (4 - Floor))
-	      end, 0, Node).
+    cost(Node, 0).
+cost(<<>>, Sum) -> Sum;
+cost(<<Floor:2, Rest/bitstring>>, Sum) ->
+    cost(Rest, Sum + (?TOP_FLOOR - Floor)).
 
-endstate(Floors) ->
-    %% All items on the fourth floor, and the other floors empty.
-    #{4 => lists:sort(maps:fold(fun(_K, V, Acc) ->
-					V ++ Acc
-				end, [], Floors)),
-      3 => [], 
-      2 => [], 
-      1 => []}.
+endstate(Names) ->
+    TopFloor = ?TOP_FLOOR,
+    << <<TopFloor:2>> || _ <- Names >>.
 
-%% Return the possible moves represented as new states.
-moves(Floors) ->
-    %% We can only move things from the floor the elevator is on.  We
-    %% can move the elevator plus 0-2 items.
-    {ElevatorFloor, ItemsOnElevatorFloor} =
-	maps:fold(fun(E, Items, AccIn) when is_number(E) ->
-			  case lists:member(?ELEVATOR, Items) of
-			      true -> {E, Items};
-			      false -> AccIn
-			  end
-		  end, {undef, undef}, Floors),
-    Xs = lists:delete(?ELEVATOR, ItemsOnElevatorFloor),
+%% The elevator floor is always the two first bits
+moves([?ELEVATOR|Names] = AllNames, <<EF:2, Rest/bitstring>> = Bits) ->
+    %% io:format("~n==========================================~n", []),
+    %% io:format("Getting adjacent moves for: ~w~n", [Bits]),
+    %% print(AllNames, Bits),
     
-    %% Create a list of combinations of items to move, e.g.  [e], [sg,
-    %% e], [pg, e], [pg, sg, e], etc.  All combinations must include
-    %% the elevator.
-    ItemCombos = lists:map(fun(Elem) -> 
-				   lists:sort(Elem ++ [?ELEVATOR]) 
-			   end,
-			   cnr(1, Xs) ++ cnr(2, Xs)),
-    
-    %% The possible floors we can move to.
-    FloorNums = 
-	case ElevatorFloor of
-	    1 -> [2];
-	    2 -> [1,3];
-	    3 -> [2,4];
-	    4 -> [3]
-	end,
-    
-    %% Create a list of {Floor, Items} tuples describing all possible
-    %% combinations of moves. Many of these will be invalid.
-    Moves = lists:map(
-	      fun(F) ->
-		      lists:map(
-			fun(Combo) -> {F, Combo} end, ItemCombos)
-	      end, FloorNums),
-    
-    %% Filter out all moves which will destroy microchips.
-    ValidMoves = 
-	lists:filter(
-	  fun({DestFloor, ItemsToMove}) ->
-		  I0 = maps:get(ElevatorFloor, Floors) -- ItemsToMove,
-		  I1 = maps:get(DestFloor, Floors) ++ ItemsToMove,
-		  check_items(I0) and check_items(I1)
-	  end, lists:flatten(Moves)),
-    
-    States = 
-	lists:map(fun(Move) ->
-			  apply_move(Move, ElevatorFloor, Floors)
-		  end, ValidMoves),
-    
-    %%io:format("Computed next moves for:~n", []),    print(Floors),
-    %%io:get_line("Continue?"),
-    States.
+    %% Items on the elevator floor
+    EItems = items_on_floor(Names, EF, Rest),
 
-	
+    Combos = combinations(1, EItems) ++ combinations(2, EItems),
+
+    %% io:format("Number of combinations: ~w~n", [length(Combos)]),
+
+    Moves = 
+	lists:foldl(
+	  fun(FN, Acc) ->
+		  %% Items on the destination floor
+		  FItems = items_on_floor(Names, FN, Rest),
+		  
+		  lists:foldl(
+		    fun(Combo, CAcc) ->
+			    %% io:format("Checking move ~w to floor ~w~n", [Combo, FN]),
+			    case {check_items(FItems, Combo, []), 
+				  check_items(EItems, [], Combo)} of
+				{true, true} ->
+				    Move = apply_move(FN, [?ELEVATOR|Combo], AllNames, Bits),
+				    %% io:format("Move ~w to floor ~w is OK: ~w~n", [Combo, FN+1, Move]),
+				    [Move|CAcc];
+				_ ->
+				    %% io:format("Move ~w to floor ~w will DESTROY one or more chips.~n", [Combo, FN+1]),
+				    CAcc
+			    end
+		    end, Acc, Combos)
+	  end, [], adj_floors(EF)),
+    
+    %% io:format("Valid adjacent states: ~w~n", [[Moves]]),
+    Moves.
+
+%% Check that "Items" is compatible
+check_items(Items, ItemsToAdd, ItemsToRemove) ->
+    ItemsToCheck = (Items -- ItemsToRemove) ++ ItemsToAdd,
+    %% ?debugFmt("check_items(~w, ~w, ~w) -> ~w", [Items, ItemsToAdd, ItemsToRemove, ItemsToCheck]),
+    check_items(ItemsToCheck).
+
+apply_move(_FN, _ItemsToMove, [], <<>>) -> <<>>;
+apply_move(NewFN, ItemsToMove, [Item|Names], <<OldFN:2, Rest/bitstring>>) -> 
+    Bits = apply_move(NewFN, ItemsToMove, Names, Rest),
+    case lists:member(Item, ItemsToMove) of
+	true ->
+	    <<NewFN:2, Bits/bitstring>>;
+	false ->
+	    <<OldFN:2, Bits/bitstring>>
+    end.
+
 %% Check that all microchips are either shielded by their own RTG or
 %% that it is not exposed to another RTG on the same floor.
 check_items(Items) ->
     %% {Ms, Gs} = split_items(lists:delete(?ELEVATOR, Items)),
-    lists:all(fun(Item) ->
-		      case is_microchip(Item) of
-			  true ->
-			      M = Item,
-			      IsShielded = lists:member(rtg(M), Items),			      
-			      HasOtherRTGs = 
-				  lists:any(fun(Item) ->
-						    is_rtg(Item)
-					    end, lists:delete(rtg(M), Items)),
-			      %%?debugFmt("~p: IsShielded(~p) = ~w", [Items, M, IsShielded]),
-			      %%?debugFmt("~p: HasOtherRTGs(~p) = ~w", [Items, M, HasOtherRTGs]),
-			      IsShielded or (not HasOtherRTGs);
-			  false ->
-			      true
-		      end
-	      end, Items).
+    Status = 
+	lists:all(fun(Item) ->
+			  case is_microchip(Item) of
+			      true ->
+				  M = Item,
+				  RTG = rtg(M),
+				  IsShielded = lists:member(RTG, Items),			      
+				  HasOtherRTGs = 
+				      lists:any(fun(X) ->
+							is_rtg(X)
+						end, lists:delete(RTG, Items)),
+				  %%?debugFmt("~p: IsShielded(~p) = ~w", [Items, M, IsShielded]),
+				  %%?debugFmt("~p: HasOtherRTGs(~p) = ~w", [Items, M, HasOtherRTGs]),
+				  IsShielded or (not HasOtherRTGs);
+			      false ->
+				  true
+			  end
+		  end, Items),
+    
+    %% io:format("Check items ~w : ~w~n", [Items, Status]),
+    Status.
+
+%%% Parser
+
+parse(Binary) ->
+    parse(Binary, part1).
+   
+parse(Binary, Part) ->
+    Lines = string:tokens(binary_to_list(Binary), "\n\r"),
+    E = [{?ELEVATOR, ?BOTTOM_FLOOR}|lists:foldl(fun parse_line/2, [], Lines)],
+    Elements = 
+	lists:sort(
+	  case Part of
+	      part1 -> E;
+	      part2 -> lists:sort(E ++ [{eg, 0}, {em, 0}, {dg, 0}, {dm, 0}])
+	  end),
+    
+    Bits = floors_to_binary([X || {_, X} <- Elements]),
+    Names = [X || {X, _} <- Elements],
+    {Names, Bits}.
+
+floornum("first") -> ?BOTTOM_FLOOR;
+floornum("second") -> ?BOTTOM_FLOOR + 1;
+floornum("third") -> ?BOTTOM_FLOOR + 2;
+floornum("fourth") -> ?TOP_FLOOR.
+
+
+parse_line(Line, List) ->
+    ["The", Floor, "floor", "contains"|Items] = string:tokens(Line, " .,"),
+    parse_items(Items, floornum(Floor), List).
+
+parse_items([], _, List) -> 
+    List;
+parse_items(["and"|Rest], FN, List) -> 
+    parse_items(Rest, FN, List);
+parse_items(["a", [C|_], [T|_]|Rest], FN, List) ->
+    parse_items(Rest, FN, [{list_to_atom([C,T]), FN}|List]);
+parse_items(["nothing", "relevant"], _FN, List) ->
+    List.
+
+%%% Printer
+
+print(Names, Bits) ->
+    io:format("--~n~w, ~w~n", [Names, Bits]),
+    lists:foreach(
+      fun(FloorNum) ->
+	      io:format("F~w ", [FloorNum + 1]),	      
+	      print_floor(FloorNum, Names, Bits)
+      end, lists:seq(3, 0, -1)).
+
+print_floor(_, [], <<>>) ->
+    io:format("~n", []);
+print_floor(FN, [Item|Items], <<F:2, Rest/bitstring>>) when F == FN ->
+    io:format("~-3s", [string:uppercase(atom_to_list(Item))]),
+    print_floor(FN, Items, Rest);
+print_floor(FN, [_|Items], <<_:2, Rest/bitstring>>) ->
+    io:format(".  ", []),
+    print_floor(FN, Items, Rest).
+
+%%% Helpers
+
+items_on_floor([], _, _) ->
+    [];
+items_on_floor([Item|Names], FN, <<Floor:2,Rest/bitstring>>) when FN == Floor ->
+    [Item|items_on_floor(Names, FN, Rest)];
+items_on_floor([_|Names], FN, <<_:2,Rest/bitstring>>) ->
+    items_on_floor(Names, FN, Rest).
+
+items_on_floor_test() ->
+    {Names, Bits} = parse(testdata()),
+    ['E'|_] = Names,
+    <<EF:2, _Rest/bitstring>> = Bits,
+    ?assertEqual([?ELEVATOR, hm, lm], items_on_floor(Names, EF, Bits)),
+    ?assertEqual([hg], items_on_floor(Names, ?SECOND_FLOOR, Bits)),
+    ?assertEqual([lg], items_on_floor(Names, ?THIRD_FLOOR, Bits)),
+    ?assertEqual([], items_on_floor(Names, ?TOP_FLOOR, Bits)).
+
+adj_floors(?BOTTOM_FLOOR) -> [?SECOND_FLOOR];
+adj_floors(?SECOND_FLOOR) -> [?BOTTOM_FLOOR, ?THIRD_FLOOR];
+adj_floors(?THIRD_FLOOR) -> [?SECOND_FLOOR, ?TOP_FLOOR];
+adj_floors(?TOP_FLOOR) -> [?THIRD_FLOOR].
+
 
 %% Return the RTG powering the given microchip.
 rtg(sm) -> sg;
@@ -202,8 +287,11 @@ rtg(pm) -> pg;
 rtg(cm) -> cg;
 rtg(rm) -> rg;
 rtg(hm) -> hg;
-rtg(lm) -> lg.
-
+rtg(lm) -> lg;
+rtg(em) -> eg;
+rtg(dm) -> dg.
+	   
+     
 is_microchip(sm) -> true;
 is_microchip(tm) -> true;
 is_microchip(pm) -> true;
@@ -234,76 +322,31 @@ is_rtg(lg) -> true;
 is_rtg(eg) -> true;
 is_rtg(dg) -> true;
 is_rtg(_) -> false.
-    
-%% Split items into microchips and generators
-split_items(Items) ->
-    lists:foldl(fun(Item, {Ms, Gs}) ->
-			case is_microchip(Item) of		
-			    true -> {[Item|Ms], Gs};
-			    false -> {Ms, [Item|Gs]}
-			end
-		end, {[], []}, Items).
 
-%% Apply a move to a set of floors/items.
-apply_move({DestFloor, Items}, OrigFloor, Floors) ->
-    ItemsOnOrigFloor = maps:get(OrigFloor, Floors),
-    ItemsOnDestFloor = maps:get(DestFloor, Floors),
-    Floors#{OrigFloor => lists:sort(lists:subtract(ItemsOnOrigFloor, Items)),
-	    DestFloor => lists:sort(ItemsOnDestFloor ++ Items)}.
+%%% List is a sorted list of floors of the elements involved.
+floors_to_binary(List) ->
+    << <<X:2>> || X <- List >>.
 
-%%% Parser
-
-parse(Binary) ->
-    Lines = string:tokens(binary_to_list(Binary), "\n\r"),
-    Floors =
-        lists:foldl(fun(Line, Floors) ->
-			    {FloorNum, Items} = parse_line(Line),
-			    Floors#{FloorNum => Items}
-                    end, #{}, Lines),
-    %% Put elevator on floor 1.
-    maps:update_with(1, fun(V) -> [?ELEVATOR|V] end, Floors).
-
-floornum("first") -> 1;
-floornum("second") -> 2;
-floornum("third") -> 3;
-floornum("fourth") -> 4.
-
-parse_line(Line) ->
-    ["The", Floor, "floor", "contains"|Items] = string:tokens(Line, " .,"),
-    {floornum(Floor), lists:sort(parse_items(Items, []))}.
-
-parse_items([], List) -> List;
-parse_items(["and"|Rest], List) -> parse_items(Rest, List);
-parse_items(["a", [C|_], [T|_]|Rest], List) ->
-    parse_items(Rest, [list_to_atom([C,T])|List]);
-parse_items(["nothing", "relevant"], List) ->
-    List.
- 
-%%% Printer
-
-print(Floors) ->
-    lists:map(fun({FloorNum, Floor}) ->
-                      io:format("~w ~w~n", 
-                                [FloorNum, Floor])
-              end, lists:reverse(lists:sort(maps:to_list(Floors)))),
-    ok.
-
-%%% Helpers
+binary_to_floors(Bin) ->
+    [X || <<X:2>> <= Bin].
 
 %% Returns all possible combinations of a given length.
 %% https://github.com/joergen7/lib_combin/blob/master/src/lib_combin.erl
-cnr(N, SrcLst) when N >= 0 ->
-  Cnr = fun
-            Cnr(0, _, Acc)     -> [Acc];
-            Cnr(_, [], _)      -> [];
-            Cnr(M, [H|T], Acc) ->
-                case T of
-                    []    -> Cnr(M-1, [], [H|Acc]);
-                    [_|_] -> Cnr(M-1, T, [H|Acc]) ++ Cnr(M, T, Acc)
-                end
-        end,
-    
-  Cnr(N, SrcLst, []).
+combinations(N, List) when N >= 0 ->
+    combinations(N, List, []).
+
+combinations(0, _, Acc) -> [Acc];
+combinations(_, [], _) -> [];
+combinations(M, [H|T], Acc) ->
+    case T of
+	[]    -> combinations(M-1, [], [H|Acc]);
+	[_|_] -> combinations(M-1, T, [H|Acc]) ++ combinations(M, T, Acc)
+    end.
+
+combinations_test() ->
+    ?assertEqual([[2,1],[3,1],[3,2]], combinations(2, [1, 2, 3])),
+    ?assertEqual([[1],[2],[3]], combinations(1, [1, 2, 3])),
+    ?assertEqual([[]], combinations(0, [1, 2, 3])).
 
 %%% Tests
 
@@ -316,8 +359,38 @@ check_items_test_() ->
     ].
 
 apply_move_test() ->
-    ?assertEqual(
-       #{1 => [d, e, f],
-	 2 => [g, h, i, j, a, b, c]},
-       apply_move({2, [a, b, c]}, 1, #{1 => [a, b, c, d, e, f],
-				       2 => [g, h, i, j]})).
+    Names =  [?ELEVATOR, a, b, c, d, e, f],
+    Floors = [2,         1, 2, 2, 1, 3, 3],
+    Moving = [?ELEVATOR,    b, c],
+    ToFloor = 3,
+    ExpRes = [3,         1, 3, 3, 1, 3, 3],
+
+    Bits = floors_to_binary(Floors),
+    Moved = apply_move(ToFloor, Moving, Names, Bits),
+    ?debugFmt("~w -> (moving ~w to floor ~w) -> ~w",
+	      [Floors, Moving, ToFloor, binary_to_floors(Moved)]),
+    ?assertEqual(ExpRes, binary_to_floors(Moved)).
+
+cost_test() ->
+    {Names, Bits} = parse(testdata()),
+    ?assertEqual(12, cost(Bits)),
+    ?assertEqual(0, cost(endstate(Names))).
+
+moves_test() ->
+    {Names, Bits} = parse(testdata()),
+    print(Names, Bits),
+    [Move] = moves(Names, Bits),
+    io:format("First move:~n", []),
+    print(Names, Move).
+
+ex1_test() ->
+    Names = [?ELEVATOR,hg,hm,lg,lm],
+    Bits = floors_to_binary([1, 1, 1, 2, 0]),
+    print(Names, Bits),
+    Move = apply_move(?THIRD_FLOOR, [?ELEVATOR, hm, hg], Names, Bits),
+    print(Names, Move),
+    ?assertEqual(floors_to_binary([2, 2, 2, 2, 0]), Move).
+
+    
+   
+
