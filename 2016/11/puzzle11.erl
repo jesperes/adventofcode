@@ -58,7 +58,8 @@
 %%% that location the floor the element is on. Since we only ever have
 %%% 4 floors, 2 bits is enough.
 
-%%% Time part 1: 8.5 secs
+%%% Time part 1: 8.3 secs
+%%% Time part 2: 583 secs (almost 10 minutes)
 
 testdata() ->
     <<"The first floor contains a hydrogen-compatible microchip and a lithium-compatible microchip.\n",
@@ -72,8 +73,9 @@ realdata() ->
 
 start() ->
     {
-      {part1, number_of_moves(realdata(), part1)}
-      %% {part2, number_of_moves(realdata(), part2)}
+      {part1_test, number_of_moves(testdata(), part1)},
+      {part1, number_of_moves(realdata(), part1)},
+      {part2, number_of_moves(realdata(), part2)}
     }.
 
 number_of_moves(Data, Part) ->
@@ -98,9 +100,7 @@ number_of_moves0(Data, Part) ->
 	search_exhausted ->
 	    no_solution;
 	Path ->
-	    %% -1 is here because the path includes the start state, and we
-	    %% want the number of moves, not the number of states.
-	    length(Path) - 1
+	    Path
     end.
 
 %%% Searching
@@ -119,6 +119,8 @@ endstate(Names) ->
     TopFloor = ?TOP_FLOOR,
     << <<TopFloor:2>> || _ <- Names >>.
 
+
+
 %% The elevator floor is always the two first bits
 moves([?ELEVATOR|Names] = AllNames, <<EF:2, Rest/bitstring>> = Bits) ->
     %% io:format("~n==========================================~n", []),
@@ -132,27 +134,56 @@ moves([?ELEVATOR|Names] = AllNames, <<EF:2, Rest/bitstring>> = Bits) ->
 
     %% io:format("Number of combinations: ~w~n", [length(Combos)]),
 
+    %% Pids = 
+    %% 	lists:map(
+    %% 	  fun({FN, Combo}) ->
+    %% 		  Parent = self(),
+    %% 		  spawn(fun() ->
+    %% 				FItems = items_on_floor(Names, FN, Rest),
+    %% 				case {check_items(FItems, Combo, []), 
+    %% 				      check_items(EItems, [], Combo)} of
+    %% 				    {true, true} ->
+    %% 					Parent ! {self(), apply_move(FN, [?ELEVATOR|Combo], AllNames, Bits)};
+    %% 				    _ ->
+    %% 					Parent ! {self(), invalid_move}
+    %% 				end
+    %% 			end)
+    %% 		  end, [{FN, Combo} || 
+    %% 			   FN <- adj_floors(EF),
+    %% 			   Combo <- Combos]),
+    
+    %% Moves = 
+    %% 	lists:foldl(
+    %% 	  fun(Pid, Acc) ->
+    %% 		  receive
+    %% 		      {Pid, invalid_move} ->
+    %% 			  Acc;
+    %% 		      {Pid, Move} ->
+    %% 			  [Move|Acc]
+    %% 		  end
+    %% 	  end, [], Pids),
+    
     Moves = 
-	lists:foldl(
-	  fun(FN, Acc) ->
-		  %% Items on the destination floor
-		  FItems = items_on_floor(Names, FN, Rest),
-		  
-		  lists:foldl(
-		    fun(Combo, CAcc) ->
-			    %% io:format("Checking move ~w to floor ~w~n", [Combo, FN]),
-			    case {check_items(FItems, Combo, []), 
-				  check_items(EItems, [], Combo)} of
-				{true, true} ->
-				    Move = apply_move(FN, [?ELEVATOR|Combo], AllNames, Bits),
-				    %% io:format("Move ~w to floor ~w is OK: ~w~n", [Combo, FN+1, Move]),
-				    [Move|CAcc];
-				_ ->
-				    %% io:format("Move ~w to floor ~w will DESTROY one or more chips.~n", [Combo, FN+1]),
-				    CAcc
-			    end
-		    end, Acc, Combos)
-	  end, [], adj_floors(EF)),
+    	lists:foldl(
+    	  fun(FN, Acc) ->
+    		  %% Items on the destination floor
+    		  FItems = items_on_floor(Names, FN, Rest),
+    		  
+    		  lists:foldl(
+    		    fun(Combo, CAcc) ->
+    			    %% io:format("Checking move ~w to floor ~w~n", [Combo, FN]),
+    			    case {check_items(FItems, Combo, []), 
+    				  check_items(EItems, [], Combo)} of
+    				{true, true} ->
+    				    Move = apply_move(FN, [?ELEVATOR|Combo], AllNames, Bits),
+    				    %% io:format("Move ~w to floor ~w is OK: ~w~n", [Combo, FN+1, Move]),
+    				    [Move|CAcc];
+    				_ ->
+    				    %% io:format("Move ~w to floor ~w will DESTROY one or more chips.~n", [Combo, FN+1]),
+    				    CAcc
+    			    end
+    		    end, Acc, Combos)
+    	  end, [], adj_floors(EF)),
     
     %% io:format("Valid adjacent states: ~w~n", [[Moves]]),
     Moves.
