@@ -13,41 +13,35 @@
 -include_lib("eunit/include/eunit.hrl").
 
 astar(Start, End, CostFn, NbrFn, DistFn) ->
-    O = gb_sets:from_list([Start]), %% OpenSet
-    C = gb_sets:empty(),	    %% ClosedSet
+    OC = #{Start => open},
     CF = maps:new(),		    %% CameFrom
     Gs = #{Start => 0},
     Fs = gb_sets:singleton({CostFn(Start), Start}),
-    astar(End, O, C, CF, Gs, Fs, CostFn, NbrFn, DistFn).
+    astar(End, OC, CF, Gs, Fs, CostFn, NbrFn, DistFn).
 
-astar(End, O, C, CF, Gs, Fs, CostFn, NbrFn, DistFn) ->
-    case gb_sets:is_empty(O) of
-        true -> search_exhausted;
-        _ -> 
-            {{_, Curr}, Fs0} = gb_sets:take_smallest(Fs),
-            astar0(Curr, End, O, C, CF, Gs, Fs0, CostFn, NbrFn, DistFn)
-    end.
+astar(End, OC, CF, Gs, Fs, CostFn, NbrFn, DistFn) ->
+    {{_, Curr}, Fs0} = gb_sets:take_smallest(Fs),
+    astar0(Curr, End, OC, CF, Gs, Fs0, CostFn, NbrFn, DistFn).
 
-astar0(End, End, _O, _C, CF, _Gs, _Fs, _CostFn, _NbrFn, _DistFn) ->
+astar0(End, End, _OC, CF, _Gs, _Fs, _CostFn, _NbrFn, _DistFn) ->
     %% The path is returned in reverse, to avoid reversing it if it is
     %% not going to be used.
     path_recon(End, CF);
-astar0(Curr, End, O, C, CF, Gs, Fs, CostFn, NbrFn, DistFn) ->
-    O0 = gb_sets:del_element(Curr, O),	%% remove curr from open
-    C0 = gb_sets:add_element(Curr, C), %% add curr to close
-    Res = lists:foldl(fun astar_nbr/2, {Curr, O0, C0, CF, Gs, Fs, CostFn, DistFn}, NbrFn(Curr)),
-    {_, O1, C1, CF0, Gs0, Fs0, _, _} = Res,
-    astar(End, O1, C1, CF0, Gs0, Fs0, CostFn, NbrFn, DistFn).
+astar0(Curr, End, OC, CF, Gs, Fs, CostFn, NbrFn, DistFn) ->
+    OC0 = OC#{Curr => closed},
+    Res = lists:foldl(fun astar_nbr/2, {Curr, OC0, CF, Gs, Fs, CostFn, DistFn}, NbrFn(Curr)),
+    {_, OC1, CF0, Gs0, Fs0, _, _} = Res,
+    astar(End, OC1, CF0, Gs0, Fs0, CostFn, NbrFn, DistFn).
 
 %% Function to fold over the neighbors in the recursive step.
-astar_nbr(Nbr, {Curr, O, C, CF, Gs, Fs, CostFn, DistFn} = AccIn) ->
-    case gb_sets:is_member(Nbr, C) of
-	true ->
+astar_nbr(Nbr, {Curr, OC, CF, Gs, Fs, CostFn, DistFn} = AccIn) ->
+    case maps:get(Nbr, OC, open) of
+	closed ->
             %% Neighbor is already evaluated.
             AccIn;
-	false ->
+	open ->
             %% Add (possibly new) neighbor to open set
-            O0 = gb_sets:add(Nbr, O),
+            OC0 = OC#{Nbr => open},
 
 	    %% Check if this path to the neighbor is better. If so
 	    %% store it and continue.
@@ -55,7 +49,7 @@ astar_nbr(Nbr, {Curr, O, C, CF, Gs, Fs, CostFn, DistFn} = AccIn) ->
             OldGs = maps:get(Nbr, Gs, inf),
             if NewGs < OldGs ->
                     %% Record new path if better
-		    {Curr, O0, C,   
+		    {Curr, OC0,   
 		     maps:put(Nbr, Curr, CF),	% update came-from map
 		     maps:put(Nbr, NewGs, Gs), % update neighbor's gscore
 		     gb_sets:add({NewGs + CostFn(Nbr), Nbr}, Fs),
