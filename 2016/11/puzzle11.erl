@@ -100,7 +100,7 @@ number_of_moves0(Data, Part) ->
 	search_exhausted ->
 	    no_solution;
 	Path ->
-	    Path
+	    length(Path) - 1
     end.
 
 %%% Searching
