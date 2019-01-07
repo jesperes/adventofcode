@@ -15,6 +15,7 @@
 -include_lib("eunit/include/eunit.hrl").
 
 astar(Start, End, CostFn, NbrFn, DistFn) ->
+    
     O = gb_sets:from_list([Start]), %% OpenSet
     C = gb_sets:empty(),	    %% ClosedSet
     Gs = #{Start => 0},

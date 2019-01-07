@@ -210,6 +210,7 @@ check_items(Items) ->
     %% {Ms, Gs} = split_items(lists:delete(?ELEVATOR, Items)),
     Status = 
 	lists:all(fun(Item) ->
+			  
 			  case is_microchip(Item) of
 			      true ->
 				  M = Item,
