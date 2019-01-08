@@ -8,8 +8,6 @@
 -module(puzzle13).
 -compile([export_all]).
 
-%% 119 is too low
-
 start() ->
     start(50, 1364, 25).
 
@@ -24,12 +22,14 @@ start(Depth, Fav, Size) ->
 
     Reachable = search_to_depth(Start, Depth, Fav),
 
-    S = [[pos_to_str({X,Y}, Start, Reachable, Fav) || X <- lists:seq(0, Size)] ++ "\n"
+    S = [[pos_to_str({X,Y}, Start, Reachable, Fav) 
+          || X <- lists:seq(0, Size)] ++ "\n"
          || Y <- lists:seq(0, Size)],
     io:format("~s~n", [S]),
 
     {{part1, length(Path) - 1},
      {part2, sets:size(search_to_depth(Start, Depth, Fav))}}.
+
 pos_to_str(Pos, Start, _Reachable, _Fav) when Pos == Start -> "S";
 pos_to_str(Pos, _Start, Reachable, Fav) ->
     case is_wall(Pos, Fav) of
@@ -50,7 +50,7 @@ bitcount(V, C) -> bitcount(V band (V - 1), C + 1).
 is_wall({X, Y}, Fav) -> 
     bitcount((X*X + 3*X + 2*X*Y + Y + Y*Y + Fav)) rem 2 == 1.
 
-%%% Search callbacks
+%%% A* search algorithm callbacks
 
 distance(_, _) -> 1.
 cost({X0,Y0}, {X1,Y1}) -> abs(X0 - X1) + abs(Y0 - Y1).
@@ -63,6 +63,11 @@ neighbors({X, Y}, Fav) ->
        {X + 1, Y},
        {X, Y + 1},
        {X, Y - 1}]).
+
+%%% Part 2: enumerate all positions reachable using max 50 steps.  Use
+%%% a depth-first search, but keep track of the depth at which each
+%%% node was found so we can revisit nodes when seen at an earlier
+%%% depth.
     
 search_to_depth(Start, Depth, Fav) ->
     Visited = search_to_depth(Start, 1, Depth, Fav, #{Start => 0}),
@@ -75,7 +80,8 @@ search_to_depth(Curr, CurrDepth, MaxDepth, Fav, Visited) ->
       fun(Nbr, VisitedIn) ->
               case maps:get(Nbr, VisitedIn, inf) of
                   NbrDepth when NbrDepth > CurrDepth ->
-                      search_to_depth(Nbr, CurrDepth + 1, MaxDepth, Fav, VisitedIn#{Nbr => CurrDepth});
+                      search_to_depth(Nbr, CurrDepth + 1, MaxDepth, Fav, 
+                                      VisitedIn#{Nbr => CurrDepth});
                   _ ->
                       VisitedIn
               end
