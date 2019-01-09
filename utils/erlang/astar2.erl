@@ -13,25 +13,34 @@
 -include_lib("eunit/include/eunit.hrl").
 
 astar(Start, End, CostFn, NbrFn, DistFn) ->
+    astar0(Start, CostFn, NbrFn, DistFn, 
+          fun(E) -> E == End end).
+
+astar0(Start, CostFn, NbrFn, DistFn, EndFn) ->
     OC = #{Start => open},
     CF = maps:new(),		    %% CameFrom
     Gs = #{Start => 0},
     Fs = gb_sets:singleton({CostFn(Start), Start}),
-    astar(End, OC, CF, Gs, Fs, CostFn, NbrFn, DistFn).
+    astar0(OC, CF, Gs, Fs, CostFn, NbrFn, DistFn, EndFn).
 
-astar(End, OC, CF, Gs, Fs, CostFn, NbrFn, DistFn) ->
-    {{_, Curr}, Fs0} = gb_sets:take_smallest(Fs),
-    astar0(Curr, End, OC, CF, Gs, Fs0, CostFn, NbrFn, DistFn).
-
-astar0(End, End, _OC, CF, _Gs, _Fs, _CostFn, _NbrFn, _DistFn) ->
-    %% The path is returned in reverse, to avoid reversing it if it is
-    %% not going to be used.
-    path_recon(End, CF);
-astar0(Curr, End, OC, CF, Gs, Fs, CostFn, NbrFn, DistFn) ->
-    OC0 = OC#{Curr => closed},
-    Res = lists:foldl(fun astar_nbr/2, {Curr, OC0, CF, Gs, Fs, CostFn, DistFn}, NbrFn(Curr)),
-    {_, OC1, CF0, Gs0, Fs0, _, _} = Res,
-    astar(End, OC1, CF0, Gs0, Fs0, CostFn, NbrFn, DistFn).
+astar0(OC, CF, Gs, Fs, CostFn, NbrFn, DistFn, EndFn) ->
+    case gb_sets:size(Fs) of
+        0 ->
+            search_exhausted;
+        _ ->
+            {{_, Curr}, Fs0} = gb_sets:take_smallest(Fs),
+            case EndFn(Curr) of
+                true ->
+                    path_recon(Curr, CF);
+                false ->
+                    OC0 = OC#{Curr => closed},
+                    {_, OC1, CF0, Gs0, Fs1, _, _} =
+                        lists:foldl(
+                          fun astar_nbr/2, 
+                          {Curr, OC0, CF, Gs, Fs0, CostFn, DistFn}, NbrFn(Curr)),
+                    astar0(OC1, CF0, Gs0, Fs1, CostFn, NbrFn, DistFn, EndFn)
+            end
+    end.
 
 %% Function to fold over the neighbors in the recursive step.
 astar_nbr(Nbr, {Curr, OC, CF, Gs, Fs, CostFn, DistFn} = AccIn) ->
@@ -184,5 +193,5 @@ t4_test() ->
 	     "..###",
 	     "..#..",
 	     "..#.G">>,
-	     
+          
     ?assertEqual(search_exhausted, ex_search(Grid, 5)).
