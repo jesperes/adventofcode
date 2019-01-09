@@ -13,8 +13,13 @@
 -include_lib("eunit/include/eunit.hrl").
 
 astar(Start, End, CostFn, NbrFn, DistFn) ->
-    astar0(Start, CostFn, NbrFn, DistFn, 
-          fun(E) -> E == End end).
+    case is_function(End) of
+        true ->
+            astar0(Start, CostFn, NbrFn, DistFn, End);
+        false ->
+            astar0(Start, CostFn, NbrFn, DistFn, 
+                   fun(E) -> E == End end)
+    end.
 
 astar0(Start, CostFn, NbrFn, DistFn, EndFn) ->
     OC = #{Start => open},
