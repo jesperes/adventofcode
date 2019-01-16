@@ -6,20 +6,23 @@
 %%% Created : 12 Dec 2018 by Jesper Eskilson <>
 
 -module(puzzle12).
--export([start1/0, start2/0]).
+-export([main/0]).
 
 -include_lib("eunit/include/eunit.hrl").
+
+main() ->
+    {{part1, start1()},
+     {part2, start2()}}.
 
 start1() ->
     start0(20).
 
 start2() ->
-    { 
-      start0(50),
-      start0(500),
-      start0(5000),
-      start0(50000),
-      start0(500 * 1000)
+    start0(50).
+      %%start0(500),
+      %%start0(5000),
+      %%start0(50000),
+      %%start0(500 * 1000)
       %% 5 * 10^4 -> 2651362
       %% 5 * 10^5 -> 26501362
       %% 5 * 10^6 -> 265001362
@@ -29,7 +32,7 @@ start2() ->
       %% 5 * 10^10 -> 2650000001362
       %% 5 * 10^11 -> 26500000001362
       %% start0(5000000) 
-    }.
+
 
 
 start0(Limit) ->
@@ -57,23 +60,23 @@ realdata() ->
     {ok, Binary} = file:read_file("input.txt"),
     binary_to_list(Binary).
 
-testdata() ->
-    "initial state: #..#.#..##......###...###
+%% testdata() ->
+%%     "initial state: #..#.#..##......###...###
 
-...## => #
-..#.. => #
-.#... => #
-.#.#. => #
-.#.## => #
-.##.. => #
-.#### => #
-#.#.# => #
-#.### => #
-##.#. => #
-##.## => #
-###.. => #
-###.# => #
-####. => #".
+%% ...## => #
+%% ..#.. => #
+%% .#... => #
+%% .#.#. => #
+%% .#.## => #
+%% .##.. => #
+%% .#### => #
+%% #.#.# => #
+%% #.### => #
+%% ##.#. => #
+%% ##.## => #
+%% ###.. => #
+%% ###.# => #
+%% ####. => #".
 
 parse_data(String) ->
     [First|Rest] = string:tokens(String, "\n"),
@@ -116,14 +119,14 @@ bounds(Pots) ->
                   end, undef, Pots),
     {MinPot-5, MaxPot+5}.
 
-pot_set_to_string(Set) ->
-    {Start, End} = bounds(Set),
-    [ case sets:is_element(PotNr, Set) of
-          true ->
-              $#;
-          _ ->
-              $.
-      end || PotNr <- lists:seq(Start, End)].
+%% pot_set_to_string(Set) ->
+%%     {Start, End} = bounds(Set),
+%%     [ case sets:is_element(PotNr, Set) of
+%%           true ->
+%%               $#;
+%%           _ ->
+%%               $.
+%%       end || PotNr <- lists:seq(Start, End)].
 
 apply_step(Pots, Rules) ->
     {Start, End} = bounds(Pots),

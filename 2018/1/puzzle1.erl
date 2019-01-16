@@ -1,5 +1,10 @@
 -module(puzzle1).
--export([start1/0, start2/0, find_first_duplicate/1]).
+-export([main/0]).
+
+main() ->
+    compile:file("utils.erl"),
+    {{part1, start1()},
+     {part2, start2()}}.
 
 start1() ->
     Lines = utils:read_file_lines("input.txt"),
@@ -54,10 +59,3 @@ find_first_duplicate([N|IntList], Freq, FreqSet) ->
             find_first_duplicate(IntList, NewFreq, 
                                  sets:add_element(NewFreq, FreqSet))
     end.
-
-                                 
-            
-
-
-    
-

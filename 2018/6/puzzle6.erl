@@ -1,5 +1,9 @@
 -module(puzzle6).
--export([start1/0, start2/0]).
+-export([main/0]).
+
+main() ->
+    {{part1, start1()},
+     {part2, start2()}}.
 
 input() ->
     {ok, Binary} = file:read_file("input.txt"),

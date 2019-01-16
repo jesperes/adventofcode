@@ -1,13 +1,17 @@
 -module(puzzle8).
--export([start1/0, start2/0]).
+-export([main/0]).
+
+main() ->
+    {{part1, start1()},
+     {part2, start2()}}.
 
 start1() ->
-    IntList = tokenize_input(testdata()),
+    IntList = tokenize_input(realdata()),
     {Root, [], _} = parse_node(IntList, 0),
-    {Root, metadata_sum(Root)}.
+    metadata_sum(Root).
 
-testdata() -> 
-    "2 3 0 3 10 11 12 1 1 0 1 99 2 1 1 2".
+%%testdata() -> 
+%%    "2 3 0 3 10 11 12 1 1 0 1 99 2 1 1 2".
 
 realdata() ->
     {ok, Binary} = file:read_file("input.txt"),

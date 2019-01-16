@@ -1,10 +1,14 @@
 -module(puzzle11).
--export([start1/0,start2/0]).
+-export([main/0]).
 
 -define(GRID_SERIAL_NUMBER, 8).
 
+main() ->
+    {{part1, start1()},
+     {part2, start2()}}.
+
 start1() ->
-    test1(),
+    %% test1(),
     find_max_power_grid(1133).
 
 start2() ->
@@ -32,11 +36,13 @@ find_max_power_grid(GSN) ->
         [ {X,Y,power_level_3x3(X,Y,GSN)} || 
             Y <- lists:seq(1, 298),
             X <- lists:seq(1, 298) ],
-    lists:foldl(fun({X,Y,PL}, {_,_,MaxPL}) when PL > MaxPL ->
-                        {X,Y,PL};
-                   (_, Max) ->
-                        Max
-                end, {undef, undef, 0}, PowerGrids).
+    {X, Y, _} = 
+        lists:foldl(fun({X,Y,PL}, {_,_,MaxPL}) when PL > MaxPL ->
+                            {X,Y,PL};
+                       (_, Max) ->
+                            Max
+                    end, {undef, undef, 0}, PowerGrids),
+    {X, Y}.
 
 find_max_power_grid_anysize(GSN) ->
     %% An exhausting search for all power grids of all sizes is very
@@ -50,17 +56,20 @@ find_max_power_grid_anysize(GSN) ->
             Y <- lists:seq(1, 300 - Size + 1),
             X <- lists:seq(1, 300 - Size + 1) ],
 
-    lists:foldl(fun({X,Y,S,PL}, {_,_,_,MaxPL}) when PL > MaxPL ->
-                        {X,Y,S,PL};
-                   (_, Max) ->
-                        Max
-                end, {undef, undef, undef, 0}, PowerGrids).
+    {X, Y, _, _} =
+        lists:foldl(fun({X,Y,S,PL}, {_,_,_,MaxPL}) when PL > MaxPL ->
+                            {X,Y,S,PL};
+                       (_, Max) ->
+                            Max
+                    end, {undef, undef, undef, 0}, PowerGrids),
+    {X, Y}.
+        
 
-test1() ->
-    4 = power_level(3,5,8),
-    -5 = power_level(122,79,57),
-    0 = power_level(217,196,39),
-    4 = power_level(101,153,71),
-    29 = power_level_3x3(33,45,18),
-    30 = power_level_3x3(21,61,42),
-    {33,45,29} = find_max_power_grid(18).
+%% test1() ->
+%%     4 = power_level(3,5,8),
+%%     -5 = power_level(122,79,57),
+%%     0 = power_level(217,196,39),
+%%     4 = power_level(101,153,71),
+%%     29 = power_level_3x3(33,45,18),
+%%     30 = power_level_3x3(21,61,42),
+%%     {33,45,29} = find_max_power_grid(18).

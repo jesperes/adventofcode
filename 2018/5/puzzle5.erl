@@ -1,14 +1,15 @@
 -module(puzzle5).
--export([start1/0, start2/0]).
+-export([main/0]).
+
+main() ->
+    {{part1, start1()},
+     {part2, start2()}}.
 
 start1() ->
     test(),
     Polymer = input(),
     ReactedPolymer = react(Polymer),
     length(ReactedPolymer).
-
-%% testdata() ->
-%%     "dabAcCaCBAcCcaDA".
 
 input() ->
     {ok, Binary} = file:read_file("input.txt"),

@@ -1,7 +1,12 @@
 -module(puzzle7).
--export([start1/0, start2/0, test/0]).
+-export([main/0]).
 
 -define(TEST, false).
+
+
+main() ->
+    {{part1, start1()},
+     {part2, start2()}}.
 
 start1() ->
     Edges = 
@@ -136,7 +141,7 @@ start2() ->
 find_step_order2(Edges, Workers, Duration) ->
     find_step_order2(0, [], get_nodes(Edges), Edges, Workers, Duration).
 
-find_step_order2(Second, CompletedNodes, [], _, _, _) ->
+find_step_order2(Second, _CompletedNodes, [], _, _, _) ->
     Second - 1;
 find_step_order2(Second, CompletedNodes, Remaining, Edges, Workers, Duration) ->
     %% Second is the current second we are on. CompletedNodes,
@@ -197,5 +202,3 @@ work_duration(N, BaseDur) ->
     [X] = atom_to_list(N),
     BaseDur + X - $A + 1.
 
-test() ->
-    61 = work_duration('A', 60).

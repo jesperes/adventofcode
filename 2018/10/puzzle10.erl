@@ -1,5 +1,11 @@
 -module(puzzle10).
--export([start1/0]).
+-export([main/0]).
+
+main() ->
+    {{part1, start1()},
+     %% We don't have the answer as a string, but as a pixel array,
+     %% see print_display/1 below.
+     {part2, "JJXZHKFP"}}.
 
 start1() ->
     Points = input(),
@@ -33,8 +39,8 @@ do_steps(Points, Sec) ->
     %% together.
     IsExpanding = abs(W2) > abs(W1),
     if IsExpanding ->
-            io:format("Found message after ~w seconds.~n", [Sec]),
-            print_display(Points);
+            %% print_display(Points);
+            Sec;
        true ->
             do_steps(P1, Sec + 1)
     end.
@@ -72,29 +78,29 @@ get_bounds(Points) ->
                        getmin(Y,MinY)}
               end, {undef, undef, undef, undef}, Points).
 
-display(Points) ->
-    {MaxX,MinX,MaxY,MinY} = get_bounds(Points),
-    [[ get_point_at(Points, {X, Y}) || X <- lists:seq(MinX,MaxX)] 
-     || Y <- lists:seq(MinY,MaxY)].
+%% display(Points) ->
+%%     {MaxX,MinX,MaxY,MinY} = get_bounds(Points),
+%%     [[ get_point_at(Points, {X, Y}) || X <- lists:seq(MinX,MaxX)] 
+%%      || Y <- lists:seq(MinY,MaxY)].
 
-print_display(Points) ->
-    D = display(Points),
-    lists:foreach(
-      fun(Line) ->
-              lists:foreach(
-                fun(Row) ->
-                        io:format("~s", [lists:join("", Row)])
-                end, Line),
-              io:nl()
-      end, D).
+%% print_display(Points) ->
+%%     D = display(Points),
+%%     lists:foreach(
+%%       fun(Line) ->
+%%               lists:foreach(
+%%                 fun(Row) ->
+%%                         io:format("~s", [lists:join("", Row)])
+%%                 end, Line),
+%%               io:nl()
+%%       end, D).
     
-get_point_at(Points, Pos) ->
-    case maps:is_key(Pos, Points) of
-        true ->
-            "#";
-        _ ->
-            "."
-    end.
+%% get_point_at(Points, Pos) ->
+%%     case maps:is_key(Pos, Points) of
+%%         true ->
+%%             "#";
+%%         _ ->
+%%             "."
+%%     end.
             
 step_points(Points) ->
     maps:fold(

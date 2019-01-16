@@ -1,5 +1,9 @@
 -module(puzzle2).
--export([start1/0, start2/0]).
+-export([main/0]).
+
+main() ->
+    {{part1, start1()},
+     {part2, start2()}}.
 
 split_binary_into_lines(Binary) ->
     string:tokens(binary_to_list(Binary), "\n").
@@ -17,9 +21,6 @@ freq_table([Char|Rest], Table) ->
     OldFreq = maps:get(Char, Table, 0),
     NewTable = maps:put(Char, OldFreq + 1, Table),
     freq_table(Rest, NewTable).
-
-
-
 
 start1() ->
     Lines = read_file_lines("input.txt"),
@@ -97,11 +98,13 @@ start2() ->
     DiffList = [{X, Y, number_of_different_chars(X, Y)} || 
                    X <- Lines, Y <- Lines, X < Y],
     
-    lists:filtermap(
-      fun({X, Y, N}) ->
-              if N =:= 1 ->
-                      {true, remove_diff_char(X, Y)};
-                 true ->
-                      false
-              end
-      end, DiffList).
+    [Solution] = 
+        lists:filtermap(
+          fun({X, Y, N}) ->
+                  if N =:= 1 ->
+                          {true, remove_diff_char(X, Y)};
+                     true ->
+                          false
+                  end
+          end, DiffList),
+    Solution.

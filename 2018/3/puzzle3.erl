@@ -1,5 +1,9 @@
 -module(puzzle3).
--export([start1/0, start2/0]).
+-export([main/0]).
+
+main() ->
+    {{part1, start1()},
+     {part2, start2()}}.
 
 start1() ->
     %% TestData = ["#1 @ 1,3: 4x4",
