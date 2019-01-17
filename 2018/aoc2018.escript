@@ -1,7 +1,5 @@
 #!/usr/bin/env escript
 
--define(TIMEOUT, 5 * 1000).
-
 solution(1, part1) -> 470;
 solution(1, part2) -> 790;
 solution(2, part1) -> 9139;
@@ -51,6 +49,9 @@ solution(24, part2) -> 2002;
 solution(25, part1) -> 318;
 solution(25, part2) -> ok;                      %% no part 2 for day 25
 solution(_, _) -> not_implemented.
+
+timeout(5) -> timer:seconds(30);
+timeout(_) -> timer:seconds(5).
 
 count(What, Result) ->
     length(lists:filter(fun({W, _}) when W == What -> true;
@@ -115,6 +116,7 @@ run_puzzle0(Src, Day) ->
                     {skipped, Day};
 
                 {true, Expected} ->
+                    Timeout = timeout(Day),
                     Parent = self(),
                     Pid = spawn(fun() ->
                                         Parent ! {result, timer:tc(fun() -> Mod:main() end)}
@@ -131,9 +133,9 @@ run_puzzle0(Src, Day) ->
                             end;
                         Other ->
                             io:format("Msg: ~p~n", [Other])
-                    after ?TIMEOUT ->
+                    after Timeout ->
                             exit(Pid, timeout),
-                            io:format("*** TIMEOUT (after ~w seconds) ***~n", [floor(?TIMEOUT/1000)]),
+                            io:format("*** TIMEOUT (after ~w seconds) ***~n", [floor(Timeout/1000)]),
                             {timeout, Day}
                     end;
                 

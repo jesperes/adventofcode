@@ -60,6 +60,5 @@ start2(Polymer) ->
                              (X =/= C) and (X =/= C - 32)
                      end, Polymer),
               Size = react(P0),
-              erlang:display({C, Size, Best}),
               min(Size, Best)
       end, 50000, lists:seq($a, $z)).
