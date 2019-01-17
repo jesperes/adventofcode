@@ -21,11 +21,14 @@
 
 
 main() ->    
-    {{part1, start1()},
-     {part2, start2()}}.
+    {infection_wins, {Part1, _}} = start1(),
+    {{immunesystem_wins, {Part2, _}}, _} = start2(),
 
-start() ->
-    input("testinput.txt", 0).
+    {{part1, Part1},
+     {part2, Part2}}.
+
+%% start() ->
+%%     input("testinput.txt", 0).
 
 start1() ->
     input("input.txt", 0).
@@ -33,13 +36,13 @@ start1() ->
 start2() ->
     start_with_boost(0).
 
-show_input() ->
-    {ok, Binary} = file:read_file("input.txt"),
-    [_, _, ImmuneSystem, _, Infection] =
-        re:split(binary_to_list(Binary), "(Immune System|Infection):"),
-    Army1 = parse_army(ImmuneSystem, immunesystem, 0),
-    Army2 = parse_army(Infection, infection, 0),
-    {Army1, Army2}.
+%% show_input() ->
+%%     {ok, Binary} = file:read_file("input.txt"),
+%%     [_, _, ImmuneSystem, _, Infection] =
+%%         re:split(binary_to_list(Binary), "(Immune System|Infection):"),
+%%     Army1 = parse_army(ImmuneSystem, immunesystem, 0),
+%%     Army2 = parse_army(Infection, infection, 0),
+%%     {Army1, Army2}.
 
 start_with_boost(Boost) ->
     case input("input.txt", Boost) of

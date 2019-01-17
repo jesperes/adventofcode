@@ -1,6 +1,6 @@
-#!/usr/bin/env escript 
+#!/usr/bin/env escript
 
--define(TIMEOUT, 10000).
+-define(TIMEOUT, 5 * 1000).
 
 solution(1, part1) -> 470;
 solution(1, part2) -> 790;
@@ -49,20 +49,31 @@ solution(23, part2) -> 160646364;
 solution(24, part1) -> 25088;
 solution(24, part2) -> 2002;
 solution(25, part1) -> 318;
-solution(25, part2) -> ok;
+solution(25, part2) -> ok;                      %% no part 2 for day 25
 solution(_, _) -> not_implemented.
+
+count(What, Result) ->
+    length(lists:filter(fun({W, _}) when W == What -> true;
+                           (_) -> false
+                        end, Result)).
 
 main(_) ->
     Puzzles = lists:seq(1, 25),
     Dir = filename:absname("."),
-    {Time, _} = 
-        timer:tc(fun() -> 
-                         lists:foreach(fun(Day) ->
+    {Time, Result} =
+        timer:tc(fun() ->
+                         lists:map(fun(Day) ->
                                                run_puzzle(Dir, Day)
-                                       end, Puzzles)   
+                                       end, Puzzles)
                  end),
     io:format("Total time: ~.2f seconds (~.2f msecs/puzzle)~n",
-              [Time / 1000000, (Time / 1000) / length(Puzzles)]).
+              [Time / 1000000, (Time / 1000) / length(Puzzles)]),
+
+    io:format("Failed:    ~w~n", [count(fail, Result)]),
+    io:format("Timeouts:  ~w~n", [count(timeout, Result)]),
+    io:format("Skipped:   ~w~n", [count(skipped, Result)]),
+    io:format("Succeeded: ~w~n", [count(ok, Result)]).
+
 
 run_puzzle(Dir, Day) ->
     SubDir = io_lib:format("~s/~w", [Dir, Day]),
@@ -71,7 +82,8 @@ run_puzzle(Dir, Day) ->
 
     case filelib:is_file(Src) of
         false ->
-            io:format("Day ~2w: --- Skipped, no source found ---~n", [Day]);
+            io:format("Day ~2w: --- Skipped, no source found ---~n", [Day]),
+            {skipped, Day};
         true ->
             run_puzzle0(Src, Day)
     end.
@@ -85,42 +97,48 @@ has_main(Mod) ->
 
 run_puzzle0(Src, Day) ->
     case compile:file(Src,
-                      [nowarn_export_all, 
-                       nowarn_unused_function,
-                       verbose, 
-                       report_warnings, 
+                      [nowarn_export_all,
+                       %% nowarn_unused_function,
+                       verbose,
+                       report_warnings,
                        report_errors]) of
         {ok, Mod} ->
             io:format("Day ~2w: ", [Day]),
 
             case {has_main(Mod), get_expected_solution(Day)} of
                 {false, _} ->
-                    io:format("--- Entry point ~w:main/0 not defined, skipping~n", [Mod]);
+                    io:format("--- Entry point ~w:main/0 not defined, skipping~n", [Mod]),
+                    {skipped, Day};
 
                 {_, not_implemented} ->
-                    io:format("--- Solution not known, skipping~n", []);
-                
+                    io:format("--- Solution not known, skipping~n", []),
+                    {skipped, Day};
+
                 {true, Expected} ->
                     Parent = self(),
-                    Pid = spawn(fun() -> 
+                    Pid = spawn(fun() ->
                                         Parent ! {result, timer:tc(fun() -> Mod:main() end)}
                                 end),
-                    receive 
+                    receive
                         {result, {Time, Actual}} ->
                             if Actual == Expected ->
-                                    io:format("OK ~10w msecs~n", [floor(Time/1000)]);
+                                    io:format("OK ~10w msecs~n", [floor(Time/1000)]),
+                                    {ok, Day};
                                true ->
-                                    io:format("*** FAIL *** (incorrect result) (expected ~w, got ~w)~n",
-                                              [Expected, Actual])
+                                    io:format("*** FAIL *** (incorrect result after ~w msecs) (expected ~w, got ~w)~n",
+                                              [floor(Time/1000), Expected, Actual]),
+                                    {fail, Day}
                             end;
                         Other ->
                             io:format("Msg: ~p~n", [Other])
                     after ?TIMEOUT ->
                             exit(Pid, timeout),
-                            io:format("*** TIMEOUT ***~n", [])                    
+                            io:format("*** TIMEOUT (after ~w seconds) ***~n", [floor(?TIMEOUT/1000)]),
+                            {timeout, Day}
                     end;
                 
                 Other ->
-                    io:format("Failed to compile: ~w~n", [Other])
+                    io:format("Failed to compile: ~w~n", [Other]),
+                    {skipped, Day}
             end
     end.

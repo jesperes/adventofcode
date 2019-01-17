@@ -7,6 +7,7 @@
 
 -module(puzzle20).
 -export([main/0]).
+-compile([export_all]).
 
 regex_puzzle() ->
     {ok, Binary} = file:read_file("input.txt"),    

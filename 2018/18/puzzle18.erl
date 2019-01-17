@@ -7,65 +7,33 @@
 
 -module(puzzle18).
 -export([main/0]).
--compile([export_all]).
 
 main() ->
-    {{part1, false},
-     {part2, false}}.
-
-testdata() ->
-    <<".#.#...|#.\n",
-      ".....#|##|\n",
-      ".|..|...#.\n",
-      "..|#.....#\n",
-      "#.#|||#|#|\n",
-      "...#.||...\n",
-      ".|....|...\n",
-      "||...#|.#|\n",
-      "|.||||..|.\n",
-      "...#.|..|.\n">>.
-
-testgrid() ->
-    Lines = string:tokens(binary_to_list(testdata()), "\n"),
-    parse_lines(Lines, 0, #{}).
+    {{part1, start1()},
+     {part2, start2()}}.
 
 inputgrid() ->
     {ok, Binary} = file:read_file("input.txt"),
     Lines = string:tokens(binary_to_list(Binary), "\n"),
     parse_lines(Lines, 0, #{}).
 
-start() ->
-    test(),
-    realinput().
-
-test() ->
-    MaxX = 10,
-    MaxY = 10,
-    Grid = testgrid(),
-    G0 = do_iterations(10, Grid, MaxX, MaxY),
-    1147 = get_resource_value(G0).
-
-realinput() ->
+start1() ->
     MaxX = 50,
     MaxY = 50,
-    Iters = 1,
-    FinalGrid =
-        lists:foldl(fun(N, Acc) ->
-                            G0 = do_iterations(Iters, Acc, MaxX, MaxY),
-                            RV = get_resource_value(G0),
-                            io:format("iter(~p) -> ~p;~n", [N * Iters, RV]),
-                            G0
-                    end, inputgrid(), lists:seq(1, 10000)),
-    
-    %% io:format("~s~n", [grid_to_string(FinalGrid, MaxX, MaxY)]),
-    get_resource_value(FinalGrid).
+    Iters = 10,
+    G0 = do_iterations(Iters, inputgrid(), MaxX, MaxY),
+    get_resource_value(G0).
 
+start2() ->
+    cyclic_pattern(1000000000).
 
 %% The total resource value is cyclical with a period of 28, and
 %% starting at e.g. 968.
 
 -define(CYCLE_LENGTH, 28).
 -define(CYCLE_BASE, 968).
+
+%% TODO detect loop automatically
     
 iter(968) -> 178398;
 iter(969) -> 175593;
@@ -138,10 +106,10 @@ parse_line([$.|Rest], X, Y, Grid) ->
 parse_line([_|Rest], X, Y, Grid) ->
     parse_line(Rest, X + 1, Y, Grid).
 
-grid_to_string(Grid, MaxX, MaxY) ->
-    [[ maps:get({X, Y}, Grid, '?') || 
-         X <- lists:seq(0, MaxX - 1) ] ++ "\n" || 
-        Y <- lists:seq(0, MaxY - 1) ].
+%% grid_to_string(Grid, MaxX, MaxY) ->
+%%     [[ maps:get({X, Y}, Grid, '?') || 
+%%          X <- lists:seq(0, MaxX - 1) ] ++ "\n" || 
+%%         Y <- lists:seq(0, MaxY - 1) ].
 
 coords(MaxX, MaxY) ->
     [ {X, Y} || 

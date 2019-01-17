@@ -60,37 +60,37 @@ execute_instr_list([[OpNum, A, B, C]|Rest], RegVals) ->
 
 %% This is a throwaway function to obtain the opnum to opcode mapping,
 %% see opcode/1.
-match_opcodes(MatchedSamples) ->
-    %% MatchedSamples is a list of {sample, Before, Instr, After,
-    %% OpcodeList} when OpcodeList is a list of opcodes which match
-    %% the Before/Instr/After sample.
+%% match_opcodes(MatchedSamples) ->
+%%     %% MatchedSamples is a list of {sample, Before, Instr, After,
+%%     %% OpcodeList} when OpcodeList is a list of opcodes which match
+%%     %% the Before/Instr/After sample.
     
-    L = 
-        [ lists:filtermap(fun({sample, _, [SampleOpNum|_], _, _, MatchingOpCodes}) ->
-                                  case SampleOpNum == OpNum of
-                                      true ->
-                                          {true, {OpNum, sets:from_list(MatchingOpCodes)}};
-                                      _ ->
-                                          false
-                                  end
-                          end, MatchedSamples)
-          || OpNum <- lists:seq(0, length(opcodes()) - 1) ],
+%%     L = 
+%%         [ lists:filtermap(fun({sample, _, [SampleOpNum|_], _, _, MatchingOpCodes}) ->
+%%                                   case SampleOpNum == OpNum of
+%%                                       true ->
+%%                                           {true, {OpNum, sets:from_list(MatchingOpCodes)}};
+%%                                       _ ->
+%%                                           false
+%%                                   end
+%%                           end, MatchedSamples)
+%%           || OpNum <- lists:seq(0, length(opcodes()) - 1) ],
 
-    %% L is now a list of tuples {opnum, matching_opcodes}, so we take
-    %% the intersection of all the matching opcodes.
+%%     %% L is now a list of tuples {opnum, matching_opcodes}, so we take
+%%     %% the intersection of all the matching opcodes.
 
-    lists:map(fun([{OpNum, _}|_] = OpCodeMatches) ->
+%%     lists:map(fun([{OpNum, _}|_] = OpCodeMatches) ->
                       
-                      Sets = 
-                          lists:map(fun({_, MatchingOpCodes}) ->
-                                            MatchingOpCodes
-                                    end, OpCodeMatches),
-                      ISet = sets:intersection(Sets),
+%%                       Sets = 
+%%                           lists:map(fun({_, MatchingOpCodes}) ->
+%%                                             MatchingOpCodes
+%%                                     end, OpCodeMatches),
+%%                       ISet = sets:intersection(Sets),
                       
-                      {OpNum, sets:to_list(ISet)};
-                 (_) ->
-                      {}
-              end, L).
+%%                       {OpNum, sets:to_list(ISet)};
+%%                  (_) ->
+%%                       {}
+%%               end, L).
 
 
 %% {521,
@@ -132,6 +132,9 @@ match_opcodes(MatchedSamples) ->
 %% 14 = addr
 %% 15 = mulr
 %%
+
+%% This is also one of those "cheating" cases where we do part of the
+%% solution by hand then just remember it.
 
 opcode(0) -> eqri;
 opcode(1) -> seti;

@@ -7,10 +7,11 @@
 
 -module(puzzle23).
 -export([main/0]).
+-compile([export_all]).
 
 main() ->
     {{part1, part1()},
-     {part2, part2()}}.
+     {part2, not_implemented}}.
 
 part1() ->
     NanoBots = input("input.txt"),

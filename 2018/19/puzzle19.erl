@@ -8,6 +8,7 @@
 -module(puzzle19).
 
 -export([main/0]).
+-compile([export_all]).
 
 main() ->
     {{part1, start()},

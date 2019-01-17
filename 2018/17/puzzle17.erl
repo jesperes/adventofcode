@@ -50,15 +50,15 @@ realinput() ->
     {ok, Binary} = file:read_file("input.txt"),
     Binary.
 
-testinput1() ->
-    << "x=495, y=2..7\n",
-       "y=7, x=495..501\n",
-       "x=501, y=3..7\n",
-       "x=498, y=2..4\n",
-       "x=506, y=1..2\n",
-       "x=498, y=10..13\n",
-       "x=504, y=10..13\n",
-       "y=13, x=498..504" >>.
+%% testinput1() ->
+%%     << "x=495, y=2..7\n",
+%%        "y=7, x=495..501\n",
+%%        "x=501, y=3..7\n",
+%%        "x=498, y=2..4\n",
+%%        "x=506, y=1..2\n",
+%%        "x=498, y=10..13\n",
+%%        "x=504, y=10..13\n",
+%%        "y=13, x=498..504" >>.
 
 veins(Binary) ->
     [parse_line(Line)
@@ -92,31 +92,31 @@ grid_new(Veins) ->
 grid_new(Veins, Grid) ->
     lists:foldl(fun grid_add_vein/2, Grid, Veins).
 
-grid_to_string(Grid, MaxY) ->
-    MinX = lists:min(
-             lists:map(fun({{X,_Y},_V}) ->
-                               X
-                       end, maps:to_list(Grid))),
-    MaxX = lists:max(
-             lists:map(fun({{X,_Y},_V}) ->
-                               X
-                       end, maps:to_list(Grid))),
+%% grid_to_string(Grid, MaxY) ->
+%%     MinX = lists:min(
+%%              lists:map(fun({{X,_Y},_V}) ->
+%%                                X
+%%                        end, maps:to_list(Grid))),
+%%     MaxX = lists:max(
+%%              lists:map(fun({{X,_Y},_V}) ->
+%%                                X
+%%                        end, maps:to_list(Grid))),
 
-    "   " ++ 
-        [io_lib:format("~w", [N]) || N <- lists:seq(0, 9)] ++
-        "\n" ++
-        [io_lib:format("~02w ", [Y]) ++ 
-             [grid_cell_to_string(X, Y, Grid) || 
-                 X <- lists:seq(MinX, MaxX)] ++ "\n" ||           
-            Y <- lists:seq(0, MaxY)].
+%%     "   " ++ 
+%%         [io_lib:format("~w", [N]) || N <- lists:seq(0, 9)] ++
+%%         "\n" ++
+%%         [io_lib:format("~02w ", [Y]) ++ 
+%%              [grid_cell_to_string(X, Y, Grid) || 
+%%                  X <- lists:seq(MinX, MaxX)] ++ "\n" ||           
+%%             Y <- lists:seq(0, MaxY)].
 
-grid_cell_to_string(X, Y, Grid) ->
-    case starting_point() of
-        {X,Y} ->
-            "+";
-        _ ->
-            atom_to_list(maps:get({X,Y}, Grid, '.'))
-    end.
+%% grid_cell_to_string(X, Y, Grid) ->
+%%     case starting_point() of
+%%         {X,Y} ->
+%%             "+";
+%%         _ ->
+%%             atom_to_list(maps:get({X,Y}, Grid, '.'))
+%%     end.
 
 down({X, Y}) -> {X, Y + 1}.
 left({X, Y}) -> {X - 1, Y}.
