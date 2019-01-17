@@ -1,95 +1,65 @@
 -module(puzzle5).
 -export([main/0]).
+-compile([export_all]).
 
 main() ->
-    {{part1, start1()},
-     {part2, start2()}}.
+    Input = input_from_file("input.txt"),
+    {{part1, start1(Input)},
+     {part2, start2(Input)}}.
 
-start1() ->
-    test(),
-    Polymer = input(),
-    ReactedPolymer = react(Polymer),
-    length(ReactedPolymer).
+input_from_file(Filename) ->
+    {ok, Binary} = file:read_file(Filename),
+    %% file:read_file/1 appends a newline to the file, so we need to
+    %% remove it
+    Size = byte_size(Binary),
+    {B0, _} = split_binary(Binary, Size - 1),
+    gb_sets:from_list(
+      lists:zip(lists:seq(0, byte_size(B0) - 1),
+                binary_to_list(B0))).
 
-input() ->
-    {ok, Binary} = file:read_file("input.txt"),
-    %% Trimming is important here, the input data contains a trailing
-    %% newline.
-    string:trim(binary_to_list(Binary)).
+start1(Polymer) ->
+    react(Polymer).
 
 react(Polymer) ->
-    case do_react(Polymer) of
-        Polymer -> %% nothing happened, we're done
+    P0 = react_once(gb_sets:iterator(Polymer), Polymer),
+    OldSize = gb_sets:size(Polymer),
+    NewSize = gb_sets:size(P0),
+    if OldSize == NewSize ->
+            %% No reactions were possible.
+            NewSize;
+       true ->
+            react(P0)
+    end.
+
+react_once(It, Polymer) ->
+    case gb_sets:next(It) of
+        none ->
             Polymer;
-        NewPolymer ->
-            react(NewPolymer)
-    end.
-
-is_upper_case(Char) ->
-    Char < $a.
-
-to_lower_case(Char) ->
-    case is_upper_case(Char) of
-        true ->
-            Char + 32;
-        false ->
-            Char
-    end.
-
-test() ->
-    true = is_upper_case($A),
-    false = is_upper_case($a),
-    true = is_upper_case($Z),
-    false = is_upper_case($z),
-    $a = to_lower_case($A),
-    $z = to_lower_case($Z),
-    "dabCBAcaDA" = react("dabAcCaCBAcCcaDA").
-
-do_react([]) ->
-    [];
-do_react([X]) ->
-    [X];
-do_react([X,X|Rest]) ->
-    %% no reaction
-    [X|do_react([X|Rest])];
-do_react([X,Y|Rest]) ->
-    case is_upper_case(X) =:= is_upper_case(Y) of
-        true ->
-            %% same case, no reaction
-            [X|do_react([Y|Rest])];
-        false->
-            %% different case, will react if
-            %% same letter
-            case to_lower_case(X) =:= to_lower_case(Y) of
-                true ->
-                    %% Reaction removes the letters and continue with the next
-                    do_react(Rest);
-                false ->
-                    %% No reaction
-                    [X|do_react([Y|Rest])]
+        {{_, X} = A, It0} ->
+            case gb_sets:next(It0) of
+                none ->
+                    Polymer;
+                {{_, Y} = B, _} ->
+                    if abs(X - Y) == 32 ->
+                            %% React!
+                            P0 = gb_sets:delete(A, Polymer),
+                            P1 = gb_sets:delete(B, P0),
+                            It2 = gb_sets:iterator_from(B, P1),
+                            react_once(It2, P1);
+                       true ->
+                            react_once(It0, Polymer)
+                    end
             end
     end.
 
-%% Removes all occurrences of c/C from the polymer, reacts it and
-%% returns a tuple {C, length(P)} where P is the polymer after
-%% reaction.
-remove_and_react(C, Polymer) ->
-    %% io:format("Removing ~p and reacting...~n", [[C]]),
-    ReducedPolymer = 
-        lists:filter(fun(X) -> 
-                             (X /= C) and (X /= (C + 32))
+start2(Polymer) ->
+    lists:foldl(
+      fun(C, Best) ->
+              P0 = gb_sets:filter(
+                     fun({_, X}) -> 
+                             (X =/= C) and (X =/= C - 32)
                      end, Polymer),
-    ReactedPolymer = react(ReducedPolymer),
-    {C, length(ReactedPolymer)}.
-    
-start2() ->
-    %% Polymer = testdata(),
-    Polymer = input(),
-    List = [ remove_and_react(C, Polymer) || C <- lists:seq($A, $Z)],
-    
-    lists:foldl(fun({_C,Len}, Min) when Len < Min ->
-                        Len;
-                   (_, Min) ->
-                        Min
-                end, length(Polymer), List).
-
+              Size = react(P0),
+              erlang:display({C, Size, Best}),
+              min(Size, Best)
+      end, 50000, lists:seq($a, $z)).
