@@ -13,10 +13,16 @@
 
 
 -module(puzzle24).
--compile([export_all]).
+-export([main/0]).
+
 -include_lib("eunit/include/eunit.hrl").
 
 -define(UNIT_RE, <<"(\\d+) units each with (\\d+) hit points (\\((.*)\\) )?with an attack that does (\\d+) (\\w+) damage at initiative (\\d+)">>).
+
+
+main() ->    
+    {{part1, start1()},
+     {part2, start2()}}.
 
 start() ->
     input("testinput.txt", 0).
@@ -37,7 +43,7 @@ show_input() ->
 
 start_with_boost(Boost) ->
     case input("input.txt", Boost) of
-        {infection_wins, X} ->
+        {infection_wins, _} ->
             start_with_boost(Boost + 1);
         {immunesystem_wins, _} = X ->
             {X, {boost, Boost}}

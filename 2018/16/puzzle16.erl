@@ -8,9 +8,9 @@
 %%%-------------------------------------------------------------------
 -module(puzzle16).
 
--export([start/0]).
+-export([main/0]).
 
-start() ->
+main() ->
     {ok, Binary} = file:read_file("input.txt"),
     Lines = string:tokens(binary_to_list(Binary), "\n"),
     List = parse_lines(Lines),

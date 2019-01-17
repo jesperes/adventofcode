@@ -6,15 +6,16 @@
 %%% Created : 22 Dec 2018 by  <jespe@LAPTOP-P6HKA27J>
 
 -module(puzzle22).
--compile([export_all]).
 -include_lib("eunit/include/eunit.hrl").
+-export([main/0]).
 
 %% 977 is too high
 %% 974 is too high
 %% 973 is correct
 
-start() ->
-    part1(510, {10, 10}).
+main() ->
+    {{part1, part1(510, {10, 10})},
+     {part2, part2(510, {10, 10})}}.
 
 part1(Depth, {X, Y}) ->
     State = #{depth => Depth, target => {X, Y, torch}},    

@@ -1,6 +1,10 @@
 -module(puzzle21).
 
--compile([export_all]).
+-export([main/0]).
+
+main() ->
+    {{part1, 0},
+     {part2, 0}}.
 
 start(R0) ->
     {IpReg, Prog} = read_program("input.txt"),

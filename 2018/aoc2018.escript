@@ -1,5 +1,7 @@
 #!/usr/bin/env escript 
 
+-define(TIMEOUT, 10000).
+
 solution(1, part1) -> 470;
 solution(1, part2) -> 790;
 solution(2, part1) -> 9139;
@@ -26,37 +28,32 @@ solution(12, part1) -> 2767;
 solution(12, part2) -> 2650000001362;
 solution(13, part1) -> {94,78};
 solution(13, part2) -> {26,85};
+solution(15, part1) -> 237996;
+solution(15, part2) -> 69700;
+solution(16, part1) -> 521;
+solution(16, part2) -> 594;
+solution(17, part1) -> 34775;
+solution(17, part2) -> 27086;
+solution(18, part1) -> 466312;
+solution(18, part2) -> 176782;
+solution(19, part1) -> 1500;
+solution(19, part2) -> 18869760;
+solution(20, part1) -> 3218;
+solution(20, part2) -> 8725;
+solution(21, part1) -> 4682012;
+solution(21, part2) -> 5363733;
+solution(22, part1) -> 6256;
+solution(22, part2) -> 973;
+solution(23, part1) -> 889;
+solution(23, part2) -> 160646364;
+solution(24, part1) -> 25088;
+solution(24, part2) -> 2002;
+solution(25, part1) -> 318;
+solution(25, part2) -> ok;
 solution(_, _) -> not_implemented.
 
-%% Goal: get all of these times down to under 5 seconds per part.
-%% Day  1 solution, time =     316.84 msecs
-%% Day  2 solution, time =     18.452 msecs
-%% Day  3 solution, time =  39230.006 msecs
-%% Day  4 solution, time =     11.366 msecs
-%% Day  5 solution, time =  13203.479 msecs
-%% Day  6 solution, time =   1141.034 msecs
-%% Day  7 solution, time =     16.256 msecs
-%% Day  8 solution, time =      8.038 msecs
-%% Day  9 solution, time =   4404.032 msecs
-%% Day 10 solution, time =   2335.187 msecs
-
 main(_) ->
-    Puzzles = [ 1
-              , 2
-              , 3
-              , 4
-              , 5
-              , 6
-              , 7
-              , 8
-              , 9
-              , 10
-                
-                %% These aren't returning correct results
-                %% , 11
-                %% , 12
-                %% , 13 
-              ],
+    Puzzles = lists:seq(1, 25),
     Dir = filename:absname("."),
     {Time, _} = 
         timer:tc(fun() -> 
@@ -64,37 +61,66 @@ main(_) ->
                                                run_puzzle(Dir, Day)
                                        end, Puzzles)   
                  end),
-    io:format("Total time: ~w seconds (~w msecs/puzzle)~n",
+    io:format("Total time: ~.2f seconds (~.2f msecs/puzzle)~n",
               [Time / 1000000, (Time / 1000) / length(Puzzles)]).
 
 run_puzzle(Dir, Day) ->
     SubDir = io_lib:format("~s/~w", [Dir, Day]),
     Src = io_lib:format("~s/puzzle~w.erl", [SubDir, Day]),
     file:set_cwd(SubDir),
+
+    case filelib:is_file(Src) of
+        false ->
+            io:format("Day ~2w: --- Skipped, no source found ---~n", [Day]);
+        true ->
+            run_puzzle0(Src, Day)
+    end.
+
+get_expected_solution(Day) ->
+    {{part1, solution(Day, part1)},
+     {part2, solution(Day, part2)}}.
+
+has_main(Mod) ->
+    lists:member({main, 0}, proplists:get_value(exports, Mod:module_info())).
+
+run_puzzle0(Src, Day) ->
     case compile:file(Src,
-                      [nowarn_export_all, verbose, 
-                       report_warnings, report_errors]) of
+                      [nowarn_export_all, 
+                       nowarn_unused_function,
+                       verbose, 
+                       report_warnings, 
+                       report_errors]) of
         {ok, Mod} ->
-            Expected = 
-                {{part1, solution(Day, part1)},
-                 {part2, solution(Day, part2)}},
-            
-            {Time, Actual} = timer:tc(fun() -> 
-                                              Mod:main()
-                                      end),
-            
-            io:format("Day ~2w solution, time = ~10w msecs~n",
-                      [Day, Time/1000]),
-            
-            if Actual == Expected ->
-                    ok;
-               true ->
-                    io:format("Incorrect result reported by day ~w solution:~n",
-                              [Day]),
-                    io:format("*** EXPECTED: ~p~n", [Expected]),
-                    io:format("*** ACTUAL:   ~p~n", [Actual])
-            end;
-        
-        Other ->
-            io:format("Failed to compile: ~w~n", [Other])
+            io:format("Day ~2w: ", [Day]),
+
+            case {has_main(Mod), get_expected_solution(Day)} of
+                {false, _} ->
+                    io:format("--- Entry point ~w:main/0 not defined, skipping~n", [Mod]);
+
+                {_, not_implemented} ->
+                    io:format("--- Solution not known, skipping~n", []);
+                
+                {true, Expected} ->
+                    Parent = self(),
+                    Pid = spawn(fun() -> 
+                                        Parent ! {result, timer:tc(fun() -> Mod:main() end)}
+                                end),
+                    receive 
+                        {result, {Time, Actual}} ->
+                            if Actual == Expected ->
+                                    io:format("OK ~10w msecs~n", [floor(Time/1000)]);
+                               true ->
+                                    io:format("*** FAIL *** (incorrect result) (expected ~w, got ~w)~n",
+                                              [Expected, Actual])
+                            end;
+                        Other ->
+                            io:format("Msg: ~p~n", [Other])
+                    after ?TIMEOUT ->
+                            exit(Pid, timeout),
+                            io:format("*** TIMEOUT ***~n", [])                    
+                    end;
+                
+                Other ->
+                    io:format("Failed to compile: ~w~n", [Other])
+            end
     end.

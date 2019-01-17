@@ -6,9 +6,9 @@
 %%% Created : 23 Dec 2018 by Jesper Eskilson <>
 
 -module(puzzle23).
--compile([export_all]).
+-export([main/0]).
 
-start() ->
+main() ->
     {{part1, part1()},
      {part2, part2()}}.
 
@@ -71,7 +71,7 @@ find_best_point(NanoBots) ->
             Y <- lists:seq(10, 50),
             Z <- lists:seq(10, 50)],
     
-    lists:foldl(fun({Pos, NumB}, {P, Max, _}) when length(NumB) > Max ->
+    lists:foldl(fun({Pos, NumB}, {_P, Max, _}) when length(NumB) > Max ->
                         {Pos, length(NumB), NumB};
                    (_, Max) ->
                         Max

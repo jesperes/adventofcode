@@ -6,8 +6,12 @@
 %%% Created : 18 Dec 2018 by Jesper Eskilson <>
 
 -module(puzzle18).
--export([start/0]).
+-export([main/0]).
 -compile([export_all]).
+
+main() ->
+    {{part1, false},
+     {part2, false}}.
 
 testdata() ->
     <<".#.#...|#.\n",

@@ -7,20 +7,19 @@
 
 -module(puzzle17).
 -define(TEST, true).
--export([start/0]).
+-export([main/0]).
 
 starting_point() ->
     {500, 0}.
 
-
-start() ->
+main() ->
     Veins = veins(realinput()),
     Grid = grid_new(Veins),
     {MinY, MaxY} = find_y_bounds(Veins),
     {_, G0} = flow_down(Grid, starting_point(), MaxY),
-    io:format("~s~n", [grid_to_string(G0, MaxY)]),
-    {count_reachable_tiles(G0, MinY, MaxY),
-     count_tiles_after_draining(G0, MinY, MaxY)}.
+    %% io:format("~s~n", [grid_to_string(G0, MaxY)]),
+    {{part1, count_reachable_tiles(G0, MinY, MaxY)},
+     {part2, count_tiles_after_draining(G0, MinY, MaxY)}}.
 
 count_reachable_tiles(Grid, MinY, MaxY) ->
     maps:fold(fun({_,Y}, '|', N) when (Y =< MaxY) and (Y >= MinY) ->

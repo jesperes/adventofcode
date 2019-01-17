@@ -6,7 +6,7 @@
 %%% Created : 20 Dec 2018 by Jesper Eskilson <>
 
 -module(puzzle20).
--compile([export_all]).
+-export([main/0]).
 
 regex_puzzle() ->
     {ok, Binary} = file:read_file("input.txt"),    
@@ -51,7 +51,7 @@ re_to_list([$||Rest]) -> ",nil],[nil" ++ re_to_list(Rest);
 re_to_list([A|Rest]) -> ",\"" ++ [A] ++ "\"" ++ re_to_list(Rest).
 
 
-start() ->
+main() ->
     RE = compile_re(regex_puzzle()),
     %% RE = compile_re(regex2()),
     %% RE = compile_re(regex3()),
@@ -60,8 +60,8 @@ start() ->
     M0 = patch_walls(Map),
     %% io:format("~s~n", [to_string(M0)]),
     DistMap = search_rooms(M0),
-    {find_max_dist(DistMap),
-     num_far_away_rooms(DistMap)}.
+    {{part1, find_max_dist(DistMap)},
+     {part2, num_far_away_rooms(DistMap)}}.
     
 
 find_max_dist(DistMap) ->

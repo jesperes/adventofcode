@@ -7,8 +7,12 @@
 
 -module(puzzle19).
 
--compile([export_all]).
+-export([main/0]).
 
+main() ->
+    {{part1, start()},
+     {part2, start2()}}.
+      
 start() ->
     test(),
     %% {Ip, Prog} = read_program("testprog1.txt"),
@@ -18,25 +22,21 @@ start() ->
 test() ->
     [1, 2, 42, 4, 5] = write_reg(2, 42, [1, 2, 3, 4, 5]).
 
-
 magic_number() ->
     %% 10551355,
     10551398.
 
-
 start2() ->
     Factors = start2(1, magic_number(), []),
     lists:foldl(fun plus/2, 0, Factors).
-
 
 start2(N, Magic, Factors) when Magic rem N == 0 ->
     %% erlang:display({factor, N}),
     [N|start2(N + 1, Magic, Factors)];
 start2(N, Magic, Factors) when N < Magic ->
     start2(N + 1, Magic, Factors);
-start2(_, _, Factors) ->2
+start2(_, _, Factors) ->
     Factors.
-
 
 read_program(Filename) ->
     {ok, Binary} = file:read_file(Filename),
@@ -67,11 +67,11 @@ emulate(Prog, IpReg) ->
     emulate(Prog, IpReg, IpVal, Regs, 0).
 
 emulate(Prog, Ip, IpVal, Regs, Cycle) ->
-    if (Cycle rem 1000000 == 0) ->
-            io:format("Cycle: ~p IP: ~02s  Regs: ~p~n", [Cycle, integer_to_list(IpVal), Regs]);
-       true ->
-            ok
-    end,
+    %% if (Cycle rem 1000000 == 0) ->
+    %%         io:format("Cycle: ~p IP: ~02s  Regs: ~p~n", [Cycle, integer_to_list(IpVal), Regs]);
+    %%    true ->
+    %%         ok
+    %% end,
     
     case maps:is_key(IpVal, Prog) of
         false ->
