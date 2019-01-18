@@ -21,7 +21,7 @@ solution(9, part2) -> 3553108197;
 solution(10, part1) -> 10036;
 solution(10, part2) -> "JJXZHKFP";
 solution(11, part1) -> {235,14};
-solution(11, part2) -> 1133;
+solution(11, part2) -> {237,227,14};
 solution(12, part1) -> 2767;
 solution(12, part2) -> 2650000001362;
 solution(13, part1) -> {94,78};
@@ -50,7 +50,7 @@ solution(25, part1) -> 318;
 solution(25, part2) -> ok;                      %% no part 2 for day 25
 solution(_, _) -> not_implemented.
 
-timeout(5) -> timer:seconds(30);
+timeout(11) -> timer:seconds(60);
 timeout(_) -> timer:seconds(5).
 
 count(What, Result) ->
@@ -101,6 +101,7 @@ run_puzzle0(Src, Day) ->
                       [nowarn_export_all,
                        %% nowarn_unused_function,
                        verbose,
+                       %% native,
                        report_warnings,
                        report_errors]) of
         {ok, Mod} ->

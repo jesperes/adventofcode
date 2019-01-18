@@ -52,17 +52,17 @@ find_max_power_grid_anysize(GSN) ->
     %% hope for the best. :)
     PowerGrids = 
         [ {X, Y, Size, power_level_nxn(X,Y,Size,GSN)} || 
-            Size <- lists:seq(10, 20),
+            Size <- lists:seq(12, 15),
             Y <- lists:seq(1, 300 - Size + 1),
             X <- lists:seq(1, 300 - Size + 1) ],
 
-    {X, Y, _, _} =
+    {X, Y, S, _} =
         lists:foldl(fun({X,Y,S,PL}, {_,_,_,MaxPL}) when PL > MaxPL ->
                             {X,Y,S,PL};
                        (_, Max) ->
                             Max
                     end, {undef, undef, undef, 0}, PowerGrids),
-    {X, Y}.
+    {X, Y, S}.
         
 
 %% test1() ->
