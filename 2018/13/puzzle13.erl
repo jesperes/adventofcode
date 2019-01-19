@@ -9,7 +9,14 @@
 -export([main/0]).
 -compile([export_all]).
 
+trace(Fmt, Args) ->
+    Io = get(tracefile),
+    io:format(Io, Fmt, Args).
+
 main() ->
+    {ok, Io} = file:open("trace-erl.log", [write]),
+    put(tracefile, Io),
+    
     Input = parse("input.txt"),
     {Carts, _} = Input,
     io:format("Number of carts: ~w~n", [gb_trees:size(Carts)]),
@@ -17,15 +24,14 @@ main() ->
      {part2, start2(Input)}}.
 
 start1(Input) ->
-    do_steps(Input, part1).
+    do_steps(Input, part1, 1).
 
 start2(Input) ->
-    do_steps(Input, part2).
+    do_steps(Input, part2, 1).
 
-do_steps(Input, Part) ->
+do_steps(Input, Part, N) ->
     {Carts, Tracks} = Input,
-    %% print(Input),
-    case do_step(Carts, Tracks, Part) of
+    case do_step(Carts, Tracks, Part, N) of
         {crash, {Y, X}} ->
             {X, Y};
         Carts0 ->
@@ -36,35 +42,29 @@ do_steps(Input, Part) ->
                     {{Y, X}, _} = gb_trees:smallest(Carts0),
                     {X, Y};
                 _ ->
-                    do_steps({Carts0, Tracks}, Part)
+                    do_steps({Carts0, Tracks}, Part, N + 1)
             end
     end.
 
+cart_to_str({Y, X}, {Dir, Turn}) ->
+    io_lib:format("{y=~w,x=~w,dir=~c,turn=~w}",
+                  [Y, X, dir_to_char(Dir), Turn]).
+
 %% Move all carts one tick, return the set of new cart positions.
-do_step(Carts, Tracks, Part) ->
-    MovedCarts = do_step(Carts, Tracks, gb_trees:empty(), Part),
-    case MovedCarts of
-        {crash, _} ->
-            ok;
-        _ ->
-            A = gb_trees:size(MovedCarts),
-            B = gb_trees:size(Carts),
-            if A =/= B ->
-                    io:format("Carts removed, before = ~w, after = ~w~n", [B, A]);
-               true ->
-                    ok
-            end
-    end,
+do_step(Carts, Tracks, Part, N) ->
+    trace("begin round ~w~n", [N]),
+    MovedCarts = do_step0(Carts, Tracks, gb_trees:empty(), Part),
+    trace("end round ~w~n", [N]),    
     MovedCarts.
 
-do_step(Carts, Tracks, MovedCarts, Part) ->
+do_step0(Carts, Tracks, MovedCarts, Part) ->
     case gb_trees:is_empty(Carts) of
         true ->
             MovedCarts;
         false ->
             {Pos, Cart, RemainingCarts} = gb_trees:take_smallest(Carts),
             case move_cart(Pos, Cart, RemainingCarts, MovedCarts, Tracks) of 
-                {crash, Type, CrashPos} ->
+                {crash, Type, CrashPos, CrashedInto} ->
                     case {Type, Part} of
                         {_, part1} ->
                             %% For part 1, we simply return the first crash
@@ -78,17 +78,33 @@ do_step(Carts, Tracks, MovedCarts, Part) ->
                         {new, part2} ->
                             %% Crash with not-yet-moved cart; remove
                             %% from the "remaining" list.
-                            do_step(gb_trees:delete(CrashPos, RemainingCarts), 
+                            {Yc, Xc} = CrashPos,
+                            trace("  collision at ~w,~w~n",
+                                  [Xc, Yc]),
+                            trace("    obliterated: ~s~n", [cart_to_str(CrashPos, Cart)]),
+                            trace("    obliterated: ~s~n", [cart_to_str(CrashPos, CrashedInto)]),
+                            do_step0(gb_trees:delete(CrashPos, RemainingCarts), 
                                     Tracks, MovedCarts, Part);
                         
                         {moved, part2} ->
                             %% Crash with moved cart; remove it from
                             %% the "moved" list.
-                            do_step(RemainingCarts, Tracks, 
+                            {Yc, Xc} = CrashPos,
+                            trace("  collision at ~w,~w~n",
+                                  [Xc, Yc]),
+                            trace("    obliterated: ~s~n", [cart_to_str(CrashPos, Cart)]),
+                            trace("    obliterated: ~s~n", [cart_to_str(CrashPos, CrashedInto)]),
+                            do_step0(RemainingCarts, Tracks, 
                                     gb_trees:delete(CrashPos, MovedCarts), Part)
                     end;
                 {move, NewPos, MovedCart} ->
-                    do_step(RemainingCarts, Tracks,
+
+
+                    trace("  moved cart ~s -> ~s~n",
+                          [cart_to_str(Pos, Cart),
+                           cart_to_str(NewPos, MovedCart)]),
+
+                    do_step0(RemainingCarts, Tracks,
                             gb_trees:insert(NewPos, MovedCart, MovedCarts), 
                             Part)
             end
@@ -118,7 +134,6 @@ move_cart(Pos, Cart, Remaining, Moved, Tracks) ->
 %% at the new cart position, or {ok, NewPos, NewCart} if the move to
 %% the new position was ok.
 collides(Cart, NewPos, NewCart, Moved, Remaining) ->
-    {Dir, _Turn} = Cart,
 
     %% Case 1: There is an existing (not yet moved) cart in the
     %% position we are about to move this cart into. If they are
@@ -126,19 +141,14 @@ collides(Cart, NewPos, NewCart, Moved, Remaining) ->
     %% other way, they will move out of the way and everything is
     %% fine.
     case gb_trees:lookup(NewPos, Remaining) of
-        {value, {Dir1, _}} ->
-            case is_facing(Dir1, Dir) of
-                true ->
-                    {crash, new, NewPos};
-                false ->
-                    {move, NewPos, NewCart}
-            end;
+        {value, Cart1} ->
+            {crash, new, NewPos, Cart1};
         none ->
             %% Case 2: If we already have placed a cart in this
             %% position, we have a collision.
             case gb_trees:lookup(NewPos, Moved) of
-                {value, _} ->
-                    {crash, moved, NewPos};
+                {value, Cart1} ->
+                    {crash, moved, NewPos, Cart1};
                 none ->
                     {move, NewPos, NewCart}
             end
@@ -185,7 +195,7 @@ parse(Filename) ->
 %%% Pretty-printer 
 
 print({Carts, Tracks}) ->
-    TrackList = gb_trees:keys(Tracks),
+    TrackList = lists:filter(fun(X) -> is_tuple(X) end, gb_trees:keys(Tracks)),
     YCoords = lists:map(fun({Y, _}) -> Y end, TrackList),
     MinY = lists:min(YCoords),
     MaxY = lists:max(YCoords),

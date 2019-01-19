@@ -2,6 +2,9 @@ package puzzle13;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -9,272 +12,270 @@ import java.util.stream.Collectors;
 
 public class Puzzle13 {
 
-	static boolean STOP_ON_FIRST_COLLISION = false;
-	static String INPUT = "input.txt";
+    static boolean STOP_ON_FIRST_COLLISION = false;
+    static String INPUT = "input.txt";
 
-	static class Cart implements Comparable<Cart> {
-		char dir;
-		int turn; // -1, 0, 1
-		int x;
-		int y;
-		boolean obliterated = false;
+    static Writer trace;
 
-		public Cart(int x, int y, char dir, int turn) {
-			super();
-			this.x = x;
-			this.y = y;
-			this.dir = dir;
-			this.turn = turn;
-		}
+    static class Cart implements Comparable<Cart> {
+        char dir;
+        int turn; // -1, 0, 1
+        int x;
+        int y;
+        boolean obliterated = false;
 
-		@Override
-		public int compareTo(Cart other) {
-			if (y != other.y) {
-				return Integer.compare(y, other.y);
-			} else {
-				return Integer.compare(x, other.x);
-			}
+        public Cart(int x, int y, char dir, int turn) {
+            super();
+            this.x = x;
+            this.y = y;
+            this.dir = dir;
+            this.turn = turn;
+        }
 
-		}
+        @Override
+        public int compareTo(Cart other) {
+            if (y != other.y) {
+                return Integer.compare(y, other.y);
+            } else {
+                return Integer.compare(x, other.x);
+            }
 
-		@Override
-		public String toString() {
-			return "Cart [dir=" + dir + ", turn=" + turn + ", x=" + x + ", y=" + y + "]";
-		}
-	}
+        }
 
-	static char follow_turn(char dir, char turn_type) {
-		switch (turn_type) {
-		case '/':
-			switch (dir) {
-			case 'v':
-				return '<';
-			case '<':
-				return 'v';
-			case '>':
-				return '^';
-			case '^':
-				return '>';
-			}
-			break;
-		case '\\':
-			switch (dir) {
-			case 'v':
-				return '>';
-			case '<':
-				return '^';
-			case '>':
-				return 'v';
-			case '^':
-				return '<';
-			}
-			break;
-		}
+        @Override
+        public String toString() {
+            return String.format("{y=%d,x=%d,dir=%c,turn=%d}", y, x, dir, turn);
+        }
+    }
 
-		return 99;
-	}
+    static char follow_turn(char dir, char turn_type) {
+        switch (turn_type) {
+        case '/':
+            switch (dir) {
+            case 'v':
+                return '<';
+            case '<':
+                return 'v';
+            case '>':
+                return '^';
+            case '^':
+                return '>';
+            }
+            break;
+        case '\\':
+            switch (dir) {
+            case 'v':
+                return '>';
+            case '<':
+                return '^';
+            case '>':
+                return 'v';
+            case '^':
+                return '<';
+            }
+            break;
+        }
 
-	static char turn(char dir, int turn) {
-		switch (dir) {
-		case 'v':
-			switch (turn) {
-			case -1:
-				return '>';
-			case 0:
-				return 'v';
-			case 1:
-				return '<';
-			}
-		case '^':
-			switch (turn) {
-			case -1:
-				return '<';
-			case 0:
-				return '^';
-			case 1:
-				return '>';
-			}
-		case '<':
-			switch (turn) {
-			case -1:
-				return 'v';
-			case 0:
-				return '<';
-			case 1:
-				return '^';
-			}
-		case '>':
-			switch (turn) {
-			case -1:
-				return '^';
-			case 0:
-				return '>';
-			case 1:
-				return 'v';
-			}
-		}
+        return 99;
+    }
 
-		return '?';
-	}
+    static char turn(char dir, int turn) {
+        switch (dir) {
+        case 'v':
+            switch (turn) {
+            case -1:
+                return '>';
+            case 0:
+                return 'v';
+            case 1:
+                return '<';
+            }
+        case '^':
+            switch (turn) {
+            case -1:
+                return '<';
+            case 0:
+                return '^';
+            case 1:
+                return '>';
+            }
+        case '<':
+            switch (turn) {
+            case -1:
+                return 'v';
+            case 0:
+                return '<';
+            case 1:
+                return '^';
+            }
+        case '>':
+            switch (turn) {
+            case -1:
+                return '^';
+            case 0:
+                return '>';
+            case 1:
+                return 'v';
+            }
+        }
 
-	public static void main(String[] args) throws Exception {
+        return '?';
+    }
 
-		List<Cart> carts = new ArrayList<>();
+    public static void main(String[] args) throws Exception {
 
-		try (BufferedReader r = new BufferedReader(new FileReader(INPUT))) {
-			List<String> lines = r.lines().collect(Collectors.toList());
-			List<List<Character>> grid = new ArrayList<>();
+        List<Cart> carts = new ArrayList<>();
 
-			int y = 0;
+        trace = new FileWriter("trace.log");
 
-			for (String line : lines) {
+        try (BufferedReader r = new BufferedReader(new FileReader(INPUT))) {
+            List<String> lines = r.lines().collect(Collectors.toList());
+            List<List<Character>> grid = new ArrayList<>();
 
-				char[] chars = line.toCharArray();
-				List<Character> gridline = new ArrayList<>();
+            int y = 0;
 
-				for (int i = 0; i < chars.length; i++) {
-					char c = chars[i];
+            for (String line : lines) {
 
-					switch (c) {
-					case 'v':
-					case '^':
-						carts.add(new Cart(i, y, c, -1));
-						chars[i] = '|';
-						break;
+                char[] chars = line.toCharArray();
+                List<Character> gridline = new ArrayList<>();
 
-					case '<':
-					case '>':
-						carts.add(new Cart(i, y, c, -1));
-						chars[i] = '-';
-						break;
-					default:
-						break;
-					}
-					gridline.add(chars[i]);
-				}
+                for (int i = 0; i < chars.length; i++) {
+                    char c = chars[i];
 
-				grid.add(gridline);
-				y++;
-			}
+                    switch (c) {
+                    case 'v':
+                    case '^':
+                        carts.add(new Cart(i, y, c, -1));
+                        chars[i] = '|';
+                        break;
 
-			while (numCarts(carts) > 1) {
-				moveCarts(grid, carts);
-			}
+                    case '<':
+                    case '>':
+                        carts.add(new Cart(i, y, c, -1));
+                        chars[i] = '-';
+                        break;
+                    default:
+                        break;
+                    }
+                    gridline.add(chars[i]);
+                }
 
-			Cart last = remaining(carts);
+                grid.add(gridline);
+                y++;
+            }
 
-			System.out.format("Last remaining cart is at %d,%d%n", last.x, last.y);
-		}
-	}
+            int i = 1;
+            while (numCarts(carts) > 1) {
+                moveCarts(grid, carts, i++);
+            }
 
-	// static void printGrid(List<List<Character>> grid, List<Cart> carts) {
-	// int y = 0;
-	// for (List<Character> line : grid) {
-	// int x = 0;
-	// for (Character c : line) {
-	// boolean isCart = false;
-	//
-	// for (Cart cart : carts) {
-	// if (cart.obliterated)
-	// continue;
-	//
-	// if (cart.x == x && cart.y == y) {
-	// System.out.print(cart.dir);
-	// isCart = true;
-	// break;
-	// }
-	// }
-	//
-	// if (!isCart) {
-	// System.out.print(c);
-	// }
-	//
-	// x++;
-	// }
-	//
-	// System.out.println();
-	// y++;
-	// }
-	// }
+            Cart last = remaining(carts);
 
-	static Cart remaining(List<Cart> carts) {
-		return carts.stream().filter(c -> !c.obliterated).findFirst().get();
-	}
+            System.out.format("Last remaining cart is at %d,%d%n", last.x,
+                    last.y);
 
-	static long numCarts(List<Cart> carts) {
-		return carts.stream().filter(c -> !c.obliterated).count();
-	}
+            trace.close();
 
-	static void moveCarts(List<List<Character>> grid, List<Cart> carts) throws Exception {
-		Collections.sort(carts);
+        }
+    }
 
-		for (Cart cart : carts) {
-			if (cart.obliterated)
-				continue;
+    static Cart remaining(List<Cart> carts) {
+        return carts.stream().filter(c -> !c.obliterated).findFirst().get();
+    }
 
-			moveCart(cart, carts, grid);
-		}
-	}
+    static long numCarts(List<Cart> carts) {
+        return carts.stream().filter(c -> !c.obliterated).count();
+    }
 
-	private static void moveCart(Cart cart, List<Cart> carts, List<List<Character>> grid) {
-		switch (cart.dir) {
-		case '<':
-			cart.x--;
-			break;
-		case '>':
-			cart.x++;
-			break;
-		case '^':
-			cart.y--;
-			break;
-		case 'v':
-			cart.y++;
-			break;
-		}
+    static void moveCarts(List<List<Character>> grid, List<Cart> carts,
+            int round) throws Exception {
+        Collections.sort(carts);
 
-		for (Cart other : carts) {
-			if (other.obliterated)
-				continue;
+        trace.write(String.format("begin round %d\n", round));
+        for (Cart cart : carts) {
+            if (cart.obliterated)
+                continue;
 
-			if (other.x == cart.x && other.y == cart.y && other != cart) {
-				if (STOP_ON_FIRST_COLLISION) {
-					System.out.format("Collision at %d,%d%n", cart.x, cart.y);
-					System.exit(0);
-				} else {
-					cart.obliterated = true;
-					other.obliterated = true;
-				}
-			}
-		}
+            String pos1 = cart.toString();
 
-		char newGridPos = grid.get(cart.y).get(cart.x);
-		switch (newGridPos) {
-		case '+':
-			// We've reached an intersection, we should turn according to cart.turn.
-			cart.dir = turn(cart.dir, cart.turn);
+            moveCart(cart, carts, grid);
 
-			// Direction to take in next intersection
-			switch (cart.turn) {
-			case -1:
-				cart.turn = 0;
-				break;
-			case 0:
-				cart.turn = 1;
-				break;
-			case 1:
-				cart.turn = -1;
-				break;
-			}
-			break;
-		case '/':
-		case '\\':
-			// We've reached a turn in the track
-			cart.dir = follow_turn(cart.dir, newGridPos);
-			break;
-		case '-':
-		case '|':
-			// Nothing to do, we just continue in the same direction.
-			break;
-		}
-	}
+            String pos2 = cart.toString();
+
+            if (!cart.obliterated)
+                trace.write(
+                        String.format("  moved cart %s -> %s%n", pos1, pos2));
+        }
+
+        trace.write(String.format("end round %d\n", round));
+    }
+
+    private static void moveCart(Cart cart, List<Cart> carts,
+            List<List<Character>> grid) throws IOException {
+        switch (cart.dir) {
+        case '<':
+            cart.x--;
+            break;
+        case '>':
+            cart.x++;
+            break;
+        case '^':
+            cart.y--;
+            break;
+        case 'v':
+            cart.y++;
+            break;
+        }
+
+        for (Cart other : carts) {
+            if (other.obliterated)
+                continue;
+
+            if (other.x == cart.x && other.y == cart.y && other != cart) {
+
+                if (STOP_ON_FIRST_COLLISION) {
+                    System.out.format("Collision at %d,%d%n", cart.x, cart.y);
+                    System.exit(0);
+                } else {
+                    trace.write(String.format("  collision at %d,%d%n", cart.x,
+                            cart.y));
+                    cart.obliterated = true;
+                    other.obliterated = true;
+                    trace.write(String.format("    obliterated: %s%n", cart));
+                    trace.write(String.format("    obliterated: %s%n", other));
+                }
+            }
+        }
+
+        char newGridPos = grid.get(cart.y).get(cart.x);
+        switch (newGridPos) {
+        case '+':
+            // We've reached an intersection, we should turn according to
+            // cart.turn.
+            cart.dir = turn(cart.dir, cart.turn);
+
+            // Direction to take in next intersection
+            switch (cart.turn) {
+            case -1:
+                cart.turn = 0;
+                break;
+            case 0:
+                cart.turn = 1;
+                break;
+            case 1:
+                cart.turn = -1;
+                break;
+            }
+            break;
+        case '/':
+        case '\\':
+            // We've reached a turn in the track
+            cart.dir = follow_turn(cart.dir, newGridPos);
+            break;
+        case '-':
+        case '|':
+            // Nothing to do, we just continue in the same direction.
+            break;
+        }
+    }
 }
