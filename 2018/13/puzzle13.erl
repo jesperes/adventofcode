@@ -7,161 +7,256 @@
 
 -module(puzzle13).
 -export([main/0]).
+-compile([export_all]).
 
 main() ->
-    {collision, Part1Pos} = start(part1),
-    {last_cart_left, Part2Pos} = start(part2),
-    {{part1, Part1Pos},
-     {part2, Part2Pos}}.
+    Input = parse("input.txt"),
+    {Carts, _} = Input,
+    io:format("Number of carts: ~w~n", [gb_trees:size(Carts)]),
+    {{part1, start1(Input)},
+     {part2, start2(Input)}}.
 
-start(Part) ->
-    {Tracks, Carts} = parse(realdata()),
+start1(Input) ->
+    do_steps(Input, part1).
 
-    %% print_track(Tracks, Carts),
-    catch lists:foldl(fun(_, CartsIn) ->
-                              Carts0 = do_step(CartsIn, Tracks, Part),
-                              %% print_track(Tracks, Carts0),
-                              case maps:size(Carts0) of
-                                  1 ->
-                                      [LastCartPos] = maps:keys(Carts0),
-                                      throw({last_cart_left, LastCartPos});
-                                  0 ->
-                                      throw(no_carts_left);
-                                  _ ->
-                                      Carts0
-                              end
-                      end, Carts, lists:seq(1, 1000000)).
+start2(Input) ->
+    do_steps(Input, part2).
 
-realdata() ->
-    {ok, Binary} = file:read_file("input.txt"),
-    binary_to_list(Binary).
+do_steps(Input, Part) ->
+    {Carts, Tracks} = Input,
+    %% print(Input),
+    case do_step(Carts, Tracks, Part) of
+        {crash, {Y, X}} ->
+            {X, Y};
+        Carts0 ->
+            case gb_trees:size(Carts0) of
+                0 ->
+                    no_carts_left;
+                1 ->
+                    {{Y, X}, _} = gb_trees:smallest(Carts0),
+                    {X, Y};
+                _ ->
+                    do_steps({Carts0, Tracks}, Part)
+            end
+    end.
 
-%% print_track(Tracks, Carts) ->
-%%     lists:foreach(fun(S) ->
-%%                           %% erlang:display(S)
-%%                           io:format("~s~n", [S])
-%%                   end, track_to_str(Tracks, Carts, 12, 7)).
+%% Move all carts one tick, return the set of new cart positions.
+do_step(Carts, Tracks, Part) ->
+    MovedCarts = do_step(Carts, Tracks, gb_trees:empty(), Part),
+    case MovedCarts of
+        {crash, _} ->
+            ok;
+        _ ->
+            A = gb_trees:size(MovedCarts),
+            B = gb_trees:size(Carts),
+            if A =/= B ->
+                    io:format("Carts removed, before = ~w, after = ~w~n", [B, A]);
+               true ->
+                    ok
+            end
+    end,
+    MovedCarts.
 
-parse(Str) ->
-    %% Parse all track segments into a map of {X,Y} -> Char.
-    {_, Tracks, Carts} =
-        lists:foldl(
-          fun(Line, {Y, TM, CM}) ->
-                  {_, TM1, CM1} =
-                      lists:foldl(
-                        fun(Char, {X,TM2,CM2}) ->
-                                {TM3, CM3} = put_track_char({X,Y}, Char, TM2, CM2),
-                                {X + 1, TM3, CM3}
-                        end,
-                        {0, TM, CM},
-                        Line),
-                  {Y + 1, TM1, CM1}
-          end,
-          {0, maps:new(), maps:new()},
-          string:tokens(Str, "\n")),
-    {Tracks,Carts}.
+do_step(Carts, Tracks, MovedCarts, Part) ->
+    case gb_trees:is_empty(Carts) of
+        true ->
+            MovedCarts;
+        false ->
+            {Pos, Cart, RemainingCarts} = gb_trees:take_smallest(Carts),
+            case move_cart(Pos, Cart, RemainingCarts, MovedCarts, Tracks) of 
+                {crash, Type, CrashPos} ->
+                    case {Type, Part} of
+                        {_, part1} ->
+                            %% For part 1, we simply return the first crash
+                            %% position.
+                            {crash, CrashPos};
+                        
+                        %% For part 2, we remove all crashed carts
+                        %% and continue until there is only one
+                        %% cart left
+                        
+                        {new, part2} ->
+                            %% Crash with not-yet-moved cart; remove
+                            %% from the "remaining" list.
+                            do_step(gb_trees:delete(CrashPos, RemainingCarts), 
+                                    Tracks, MovedCarts, Part);
+                        
+                        {moved, part2} ->
+                            %% Crash with moved cart; remove it from
+                            %% the "moved" list.
+                            do_step(RemainingCarts, Tracks, 
+                                    gb_trees:delete(CrashPos, MovedCarts), Part)
+                    end;
+                {move, NewPos, MovedCart} ->
+                    do_step(RemainingCarts, Tracks,
+                            gb_trees:insert(NewPos, MovedCart, MovedCarts), 
+                            Part)
+            end
+    end.
 
-is_cart($<) ->
-    true;
-is_cart($>) ->
-    true;
-is_cart($^) ->
-    true;
-is_cart($v) ->
-    true;
-is_cart(_) ->
-    false.
+move_cart(Pos, Cart, Remaining, Moved, Tracks) ->
+    %% Remaining is the set of carts not yet moved in this round.
+    %% Moved is the set of carts already moved in this round.
 
-default_track_under_cart($<) ->
-    $-;
-default_track_under_cart($>) ->
-    $-;
-default_track_under_cart($^) ->
-    $|;
-default_track_under_cart($v) ->
-    $|.
+    {Dir, Turn} = Cart,
+    
+    NewPos = move(Pos, Dir),
+
+    %% Either turn at an intersection, or follow the tracks.
+    NewCart =
+        case is_at_intersection(NewPos, Tracks) of
+            true ->
+                {turn(Dir, Turn), next_dir(Turn)};
+            _ ->
+                Track = gb_trees:get(NewPos, Tracks),
+                {follow_track(Dir, Track), Turn}
+        end,
+
+    collides(Cart, NewPos, NewCart, Moved, Remaining). 
+
+%% Check for collisions. Returns {crash, NewPos} if there was a crash
+%% at the new cart position, or {ok, NewPos, NewCart} if the move to
+%% the new position was ok.
+collides(Cart, NewPos, NewCart, Moved, Remaining) ->
+    {Dir, _Turn} = Cart,
+
+    %% Case 1: There is an existing (not yet moved) cart in the
+    %% position we are about to move this cart into. If they are
+    %% facing our way, we have a collision. If they are facing the
+    %% other way, they will move out of the way and everything is
+    %% fine.
+    case gb_trees:lookup(NewPos, Remaining) of
+        {value, {Dir1, _}} ->
+            case is_facing(Dir1, Dir) of
+                true ->
+                    {crash, new, NewPos};
+                false ->
+                    {move, NewPos, NewCart}
+            end;
+        none ->
+            %% Case 2: If we already have placed a cart in this
+            %% position, we have a collision.
+            case gb_trees:lookup(NewPos, Moved) of
+                {value, _} ->
+                    {crash, moved, NewPos};
+                none ->
+                    {move, NewPos, NewCart}
+            end
+    end.
+
+    
+
+%%% Parser
+
+%% Folds a fun over a binary representing a x,y-grid 
+%% 
+%% TODO move this to a general library function, it is useful for many
+%% other puzzles as well. Also, implement without converting to list
+%% first.
+xy_fold(Fun, Init, Binary) ->
+    Str = binary_to_list(Binary),
+    [First|_] = string:split(Str, "\n"),
+    Width = length(First),
+
+    {_, Out} = 
+        lists:foldl(fun(C, {N, AccIn}) ->
+                            X = N rem (Width + 1),
+                            Y = N div (Width + 1),
+                            {N + 1, Fun(X, Y, C, AccIn)}
+                    end, {0, Init}, Str),
+    Out.
+
+store_pos(X, Y, C, {Carts, Tracks}) ->
+    case pos_type(C) of
+        cart ->
+            {gb_trees:insert({Y, X}, {direction(C), -1}, Carts),
+             gb_trees:insert({Y, X}, default_track_under_cart(C), Tracks)};
+        track ->
+            {Carts, gb_trees:insert({Y, X}, C, Tracks)};
+        space ->
+            {Carts, Tracks}
+    end.
+            
+parse(Filename) ->
+    {ok, Binary} = file:read_file(Filename),
+    xy_fold(fun store_pos/4, 
+            {gb_trees:empty(), gb_trees:empty()}, Binary).
+  
+%%% Pretty-printer 
+
+print({Carts, Tracks}) ->
+    TrackList = gb_trees:keys(Tracks),
+    YCoords = lists:map(fun({Y, _}) -> Y end, TrackList),
+    MinY = lists:min(YCoords),
+    MaxY = lists:max(YCoords),
+    XCoords = lists:map(fun({_, X}) -> X end, TrackList),
+    MinX = lists:min(XCoords),
+    MaxX = lists:max(XCoords),
+    
+    S = [[pos_to_str({Y, X}, Carts, Tracks) || X <- lists:seq(MinX, MaxX)] ++ "\n" 
+         || Y <- lists:seq(MinY, MaxY)],
+    
+    io:format("~s~n", [S]).
+
+pos_to_str(Pos, Carts, Tracks) ->
+    case gb_trees:lookup(Pos, Carts) of
+        {value, {Dir, _}} ->
+            dir_to_char(Dir);
+        none ->
+            case gb_trees:lookup(Pos, Tracks) of
+                {value, X} ->  X;
+                none -> 32
+            end
+    end.
+
+%%% Helpers 
+
+pos_type($<) -> cart;
+pos_type($>) -> cart;
+pos_type($^) -> cart;
+pos_type($v) -> cart;
+pos_type(32) -> space;
+pos_type($\n) -> space;
+pos_type($+) -> track;
+pos_type($|) -> track;
+pos_type($\\) -> track;
+pos_type($/) -> track;
+pos_type($-) -> track.
+
+default_track_under_cart($<) -> $-;
+default_track_under_cart($>) -> $-;
+default_track_under_cart($^) -> $|;
+default_track_under_cart($v) -> $|.
 
 direction($^) -> 0;
 direction($>) -> 1;
 direction($v) -> 2;
 direction($<) -> 3.
 
-%% dir_to_char(0) -> $^;
-%% dir_to_char(1) -> $>;
-%% dir_to_char(2) -> $v;
-%% dir_to_char(3) -> $<.
-
-put_track_char(K, C, TM, CM) ->
-    case is_cart(C) of
-        true ->
-            TM0 = maps:put(K, default_track_under_cart(C), TM),
-            %% Cart values are represented as {Dir,Next} where Dir is
-            %% the current direction 0..3 clockwise, and Next is one
-            %% of {-1, 0, 1} to apply to direction at next
-            %% intersection.
-            CM0 = maps:put(K, {direction(C),-1}, CM),
-            {TM0, CM0};
-        false ->
-            case C of
-                32 ->
-                    {TM, CM};
-                _ ->
-                    TM0 = maps:put(K, C, TM),
-                    {TM0, CM}
-            end
-    end.
+follow_track(0, $/)  -> 1; %% north turning right
+follow_track(0, $|)  -> 0; %% north going straight
+follow_track(0, $\\) -> 3; %% north turning left
+follow_track(1, $/)  -> 0; %% east turning left
+follow_track(1, $-)  -> 1; %% east going straight
+follow_track(1, $\\) -> 2; %% east turning right
+follow_track(2, $/)  -> 3; %% south turning right
+follow_track(2, $|)  -> 2; %% south going straight
+follow_track(2, $\\) -> 1; %% south turning left
+follow_track(3, $/)  -> 2; %% west turning left
+follow_track(3, $-)  -> 3; %% west going straight
+follow_track(3, $\\) -> 0. %% west turning right
 
 
+is_facing(0 = _Old, 2 = _New) -> true;
+is_facing(1 = _Old, 3 = _New) -> true;
+is_facing(2 = _Old, 0 = _New) -> true;
+is_facing(3 = _Old, 1 = _New) -> true;
+is_facing(_, _) -> false.
 
-%% char_at(Pos, TM, CM) ->
-%%     case maps:get(Pos, CM, empty) of
-%%         {Dir,_NextDir} ->
-%%             dir_to_char(Dir);
-%%         empty ->
-%%             maps:get(Pos, TM, 32)
-%%     end.
-
-%% track_to_str(TM, CM, W, H) ->
-%%     [[ char_at({X,Y}, TM, CM) || X <- lists:seq(0, W)]
-%%      || Y <- lists:seq(0, H)].
-
-do_step(Carts, Tracks, Part) ->
-    SortedCarts =
-        lists:sort(fun({{X1,Y1},_},{{X2,Y2},_}) ->
-                           if Y1 < Y2 ->
-                                   true;
-                              Y1 == Y2 ->
-                                   X1 =< X2;
-                              true ->
-                                   false
-                           end
-                   end, maps:to_list(Carts)),
-
-    lists:foldl(
-      fun({Pos, Cart}, Carts0) ->
-              move_cart(Pos, Cart, Tracks, Carts0, Carts, Part)
-      end, #{}, SortedCarts).
-
-
-is_facing(0 = _Old, 2 = _New) ->
-    true;
-is_facing(1 = _Old, 3 = _New) ->
-    true;
-is_facing(2 = _Old, 0 = _New) ->
-    true;
-is_facing(3 = _Old, 1 = _New) ->
-    true;
-is_facing(_, _) ->
-    false.
-
-move({X,Y}, 0) ->
-    {X,Y-1};
-move({X,Y}, 1) ->
-    {X+1,Y};
-move({X,Y}, 2) ->
-    {X,Y+1};
-move({X,Y}, 3) ->
-    {X-1,Y}.
+move({Y,X}, 0) -> {Y-1,X};
+move({Y,X}, 1) -> {Y,X+1};
+move({Y,X}, 2) -> {Y+1,X};
+move({Y,X}, 3) -> {Y,X-1}.
 
 next_dir(-1) -> 0;
 next_dir(0) -> 1;
@@ -170,94 +265,14 @@ next_dir(1) -> -1.
 turn(Dir, Turn) ->
     (Dir + Turn + 4) rem 4.
 
+dir_to_char(0) -> $^;
+dir_to_char(1) -> $>;
+dir_to_char(2) -> $v;
+dir_to_char(3) -> $<.
+
 is_at_intersection(Pos, Tracks) ->
-    case maps:get(Pos, Tracks, false) of
-        $+ ->
-            true;
-        _ ->
-            false
+    case gb_trees:lookup(Pos, Tracks) of
+        {value, $+} -> true;
+        _  -> false
     end.
 
-follow_track(0, $/) -> %% north turning right
-    1;
-follow_track(0, $|) -> %% north going straight
-    0;
-follow_track(0, $\\) -> %% north turning left
-    3;
-follow_track(1, $/) -> %% east turning left
-    0;
-follow_track(1, $-) -> %% east going straight
-    1;
-follow_track(1, $\\) -> %% east turning right
-    2;
-follow_track(2, $/) -> %% south turning right
-    3;
-follow_track(2, $|) -> %% south going straight
-    2;
-follow_track(2, $\\) -> %% south turning left
-    1;
-follow_track(3, $/) -> %% west turning left
-    2;
-follow_track(3, $-) -> %% west going straight
-    3;
-follow_track(3, $\\) -> %% west turning right
-    0.
-
-move_cart(Pos, Cart, Tracks, NewCarts, OldCarts, Part) ->
-    {Dir, Turn} = Cart,
-
-    %% erlang:display({moving, Pos, Cart}),
-
-    NewPos = move(Pos, Dir),
-
-    NewCart =
-        case is_at_intersection(NewPos, Tracks) of
-            true ->
-                %% Turn in the specified direction, and compute what
-                %% to do in the next turn
-                {turn(Dir, Turn), next_dir(Turn)};
-            _ ->
-                %% Otherwise, check if the track turns at the new
-                %% position and turn accordingly to follow
-                Track = maps:get(NewPos, Tracks),
-                {follow_track(Dir, Track), Turn}
-        end,
-
-    %% Check for collisions.
-
-    %% Case 1: There is an existing (not yet moved) cart in the
-    %% position we are about to move this cart into. If they are
-    %% facing our way, we have a collision. If they are facing the
-    %% other way, they will move out of the way and everything is
-    %% fine.
-    OldCartAtNewPos = maps:get(NewPos, OldCarts, none),
-    Coll1 =
-        case OldCartAtNewPos of
-            none ->
-                false;
-            {D1, _} ->
-                is_facing(D1, Dir)
-        end,
-
-    %% Case 2: If we already have placed a cart in this position,
-    %% we have a collision.
-    Coll2 = maps:is_key(NewPos, NewCarts),
-
-    IsCollision = Coll1 or Coll2,
-
-    case IsCollision of
-        true ->
-            case Part of
-                part1 ->
-                    throw({collision, NewPos});
-                part2 ->
-                    %% erlang:display({removing, NewPos}),
-                    maps:remove(NewPos, NewCarts)
-            end;
-        _ ->
-            maps:put(NewPos, NewCart, NewCarts)
-    end.
-
-
-%% s(L) ->
-%%     lists:flatten(lists:join("\n", L)).
