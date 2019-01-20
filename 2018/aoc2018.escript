@@ -51,7 +51,25 @@ solution(24, part2) -> 2002;
 solution(25, part1) -> 318;
 solution(25, part2) -> ok.                      %% no part 2 for day 25
 
-%% timeout(11) -> timer:seconds(60);
+
+%% All puzzles run cleanly in less than 5 seconds, except these ones:
+
+%% Day 9 (Marble Mania) times out after little more than 5 seconds
+%% Day 14 (Chocolate Carts) is not implemented yet
+%% Day 15 (Beverage Bandits) was only solved java
+%% Day 19 (Go With The Flow) times out
+%% Day 21 (Chronal Conversion) ??
+%% Day 22 (Mode Maze) times out
+%% Day 23 (Experimental Emergency Teleportation) cheated with python solution
+%% Day 24 (Immune System Simulator) timeout
+%% Day 25 (Four-Dimensional Adventure)
+
+%% Total time: 36.41 seconds (1456.28 msecs/puzzle)
+%% Failed:    2
+%% Timeouts:  5
+%% Skipped:   2
+%% Succeeded: 16
+
 timeout(_) -> timer:seconds(5).
 
 count(What, Result) ->
@@ -62,6 +80,16 @@ count(What, Result) ->
 main(_) ->
     Puzzles = lists:seq(1, 25),
     Dir = filename:absname("."),
+    
+    %% compile utility code
+    Utils = 
+	filelib:fold_files(Dir ++ "/../utils/erlang", ".*\\.erl$", false,
+			   fun(F, AccIn) ->
+				   [compile:file(F)|AccIn]
+			   end, []),
+
+    io:format("Compile utility code: ~w~n", [Utils]),
+
     {Time, Result} =
         timer:tc(fun() ->
                          lists:map(fun(Day) ->
