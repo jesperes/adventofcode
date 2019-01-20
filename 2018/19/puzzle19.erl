@@ -42,7 +42,7 @@ start2(_, _, Factors) ->
 read_program(Filename) ->
     {ok, Binary} = file:read_file(Filename),
     ProgAsStr = binary_to_list(Binary),
-    [IpLine|Lines] = string:tokens(ProgAsStr, "\n"),
+    [IpLine|Lines] = string:tokens(ProgAsStr, "\n\r"),
     ["#ip", IpStr] = string:tokens(IpLine, " "),
     Ip = list_to_integer(IpStr),
     {_, Map} = 

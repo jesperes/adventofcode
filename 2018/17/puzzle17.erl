@@ -62,7 +62,7 @@ realinput() ->
 
 veins(Binary) ->
     [parse_line(Line)
-     || Line <- string:tokens(binary_to_list(Binary), "\n")].
+     || Line <- string:tokens(binary_to_list(Binary), "\n\r")].
        
 parse_line(Line) ->
     parse_line0(string:tokens(Line, "=, .")).
