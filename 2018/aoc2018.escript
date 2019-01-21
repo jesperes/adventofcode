@@ -54,7 +54,6 @@ solution(25, part2) -> ok.                      %% no part 2 for day 25
 
 %% All puzzles run cleanly in less than 5 seconds, except these ones:
 
-%% Day 9 (Marble Mania) times out after little more than 5 seconds
 %% Day 14 (Chocolate Carts) is not implemented yet
 %% Day 15 (Beverage Bandits) was only solved java
 %% Day 19 (Go With The Flow) times out
