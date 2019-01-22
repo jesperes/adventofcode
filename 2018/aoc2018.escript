@@ -26,8 +26,8 @@ solution(12, part1) -> 2767;
 solution(12, part2) -> 2650000001362;
 solution(13, part1) -> {94,78};
 solution(13, part2) -> {26,85};
-solution(14, part1) -> 5115114101;
-solution(14, part2) -> 633601;
+solution(14, part1) -> "5115114101";
+solution(14, part2) -> 20310465;
 solution(15, part1) -> 237996;
 solution(15, part2) -> 69700;
 solution(16, part1) -> 521;
@@ -69,6 +69,7 @@ solution(25, part2) -> ok.                      %% no part 2 for day 25
 %% Skipped:   2
 %% Succeeded: 16
 
+timeout(14) -> timer:seconds(60);
 timeout(_) -> timer:seconds(5).
 
 count(What, Result) ->
