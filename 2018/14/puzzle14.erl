@@ -13,65 +13,85 @@
 
 main() ->
     Input = 633601,
-    
     {{part1, start1(Input)},
-     {part2, start2(Input)}}.
+     {part2, start2(integer_to_list(Input))}}.
     
 start1(Input) ->
-    A = array:from_list([3, 7]),
-    lists:map(fun(X) -> X + $0 end, step1(A, 0, 1, Input)).
+    L = <<3, 7>>,
+    Bin = step1(L, 0, 1, Input),
+    lists:map(fun(X) -> X + $0 end, binary_to_list(Bin)).
 
-start2(Input) ->
-    Input0 = combine_recipes(Input, 0),
-    A = array:from_list([3, 7]),
-    step2(A, 0, 1, Input0, Input0).
+step1(L, _, _, Input) when byte_size(L) >= Input + 10 ->
+    binary:part(L, Input, 10);
+step1(L, Elf1, Elf2, Input) ->
+    {L0, NewElf1, NewElf2, _} = append_and_move_elves(L, Elf1, Elf2, Input, false),
+    step1(L0, NewElf1, NewElf2, Input).
 
-step1(Array, Elf1, Elf2, Input) ->
-    S = array:size(Array),
-    if S > Input + 10 ->
-            sub_array(Array, Input, 10);
-       true ->
-            X1 = array:get(Elf1, Array),
-            X2 = array:get(Elf2, Array),
-            NewArray = 
-                lists:foldl(fun(N, Acc) ->
-                                    array:set(array:size(Acc), N, Acc)
-                            end, Array, combine_recipes(X1, X2)),
-            Size = array:size(NewArray),
-            NewElf1 = (Elf1 + X1 + 1) rem Size,
-            NewElf2 = (Elf2 + X2 + 1) rem Size,
-            step1(NewArray, NewElf1, NewElf2, Input)
+start2(InputStr) ->
+    Bin = list_to_binary(
+            lists:map(fun(X) -> X - $0 end,
+                      InputStr)),
+    L = <<3, 7>>,
+    step2(L, 0, 1, Bin, 0).
+    
+%% We know the answer is ~20 million, so stop at 21.
+step2(L, _, _, _, _) when byte_size(L) > 21000000 ->
+    false;
+step2(_, _, _, _, {found, At}) ->
+    At;
+step2(L, Elf1, Elf2, Input, P) ->
+    %% if byte_size(L) rem 10000 == 0 ->
+    %%         erlang:display({processing, byte_size(L)});
+    %%    true ->
+    %%         ok
+    %% end,
+
+    {L0, NewElf1, NewElf2, P0} = append_and_move_elves(L, Elf1, Elf2, Input, P),
+    step2(L0, NewElf1, NewElf2, Input, P0).
+
+%%% Helpers
+
+append_and_move_elves(L, Elf1, Elf2, Input, P) ->
+    E1 = binary:at(L, Elf1),
+    E2 = binary:at(L, Elf2),
+    LLen = byte_size(L),
+
+    E12 = E1 + E2,
+    {NewP, L0} = 
+        if E12 < 10 ->
+                P1 = progress(P, E12, Input, LLen),
+                {P1, <<L/binary, E12>>};
+           true ->
+                X = 1,
+                Y = E12 rem 10,
+                P1 = progress(P, X, Input, LLen),
+                P2 = progress(P1, Y, Input, LLen + 1),                
+                {P2, <<L/binary, X, Y>>}
+        end,
+    Len = byte_size(L0),
+    NewElf1 = (Elf1 + E1 + 1) rem Len,
+    NewElf2 = (Elf2 + E2 + 1) rem Len,
+    {L0, NewElf1, NewElf2, NewP}.
+
+progress(false, _, _, _) ->
+    false;
+progress(P, _, _, _) when is_tuple(P) ->
+    P;
+progress(P, X, Input, I) when is_integer(P) ->
+    NewP = 
+        case binary:at(Input, P) == X of
+            true ->
+                P + 1;
+            false ->
+                0
+        end,
+    case NewP of
+        L when L == byte_size(Input) ->
+            {found, I - byte_size(Input) + 1};
+        _ ->
+            NewP
     end.
-
-step2(Array, _Elf1, _Elf2, Input, []) ->
-    array:size(Array) - length(Input);
-step2(Array, Elf1, Elf2, Input, Progress) ->
-    X1 = array:get(Elf1, Array),
-    X2 = array:get(Elf2, Array),
-    {NewProg0, NewArray} = 
-        lists:foldl(fun(N, {[H|NewProg], Acc}) ->
-                            AccOut = array:set(array:size(Acc), N, Acc),
-                            if N == H -> {NewProg, AccOut};
-                               true -> {Input, AccOut}
-                            end;
-                       (_, {[], Acc}) ->
-                            {[], Acc}
-                    end, {Progress, Array}, combine_recipes(X1, X2)),
-    Size = array:size(NewArray),
-    NewElf1 = (Elf1 + X1 + 1) rem Size,
-    NewElf2 = (Elf2 + X2 + 1) rem Size,
-    step2(NewArray, NewElf1, NewElf2, Input, NewProg0).
-
-sub_array(_, _, 0) ->
-    [];
-sub_array(_, Start, _) when Start < 0 ->
-    [];
-sub_array(Array, Start, N) ->
-    [array:get(Start, Array)|sub_array(Array, Start + 1, N - 1)].
-
-combine_recipes(A, B) ->
-    lists:map(fun(X) -> X - $0 end, integer_to_list(A + B)).
-
+                
         
 %%% Tests
 
@@ -81,7 +101,7 @@ part1_test() ->
     ?assertEqual("5941429882", start1(2018)).
 
 part2_test() ->
-    ?assertEqual(9, start2(51589)),
+    ?assertEqual(9, start2("51589")),
     %% ?assertEqual(5, start2("01245")),
-    ?assertEqual(18, start2(92510)),
-    ?assertEqual(2018, start2(59414)).
+    ?assertEqual(18, start2("92510")),
+    ?assertEqual(2018, start2("59414")).
