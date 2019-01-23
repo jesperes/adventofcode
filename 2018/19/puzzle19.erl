@@ -6,33 +6,34 @@
 %%% Created : 19 Dec 2018 by Jesper Eskilson <>
 
 -module(puzzle19).
-
 -export([main/0]).
--compile([export_all]).
 
 main() ->
-    {{part1, start()},
+    {eop, _, {regs, [R0|_]}} = start(),
+    {{part1, R0},
      {part2, start2()}}.
       
 start() ->
     test(),
-    %% {Ip, Prog} = read_program("testprog1.txt"),
     {Ip, Prog} = read_program("input.txt"),
     emulate(Prog, Ip).
 
 test() ->
-    [1, 2, 42, 4, 5] = write_reg(2, 42, [1, 2, 3, 4, 5]).
+    [0, 1, 42, 3, 4, 5] = write_reg(2, 42, [0, 1, 2, 3, 4, 5]).
 
 magic_number() ->
-    %% 10551355,
     10551398.
 
+initregs() ->
+    [0, 0, 0, 0, 0, 0].
+
+%% Part 2 (where R1 is set to 1) computes the sum of the factors of
+%% the magic_number(), so we solve directly instead.
 start2() ->
     Factors = start2(1, magic_number(), []),
     lists:foldl(fun plus/2, 0, Factors).
 
 start2(N, Magic, Factors) when Magic rem N == 0 ->
-    %% erlang:display({factor, N}),
     [N|start2(N + 1, Magic, Factors)];
 start2(N, Magic, Factors) when N < Magic ->
     start2(N + 1, Magic, Factors);
@@ -58,9 +59,6 @@ parse_line([Op, A, B, C]) ->
      list_to_integer(A),
      list_to_integer(B),
      list_to_integer(C)}.
-
-initregs() ->
-    [1, 0, 0, 0, 0, 0].
 
 emulate(Prog, IpReg) ->    
     Regs = initregs(),
@@ -99,18 +97,23 @@ emulate(Prog, Ip, IpVal, Regs, Cycle) ->
     
     
 
-opcodes() -> 
-    [addr, addi, mulr, muli, banr, bani, borr, bori, setr,
-     seti, gtir, gtri, gtrr, eqir, eqri, eqrr].
+%%opcodes() -> 
+%%    [addr, addi, mulr, muli, banr, bani, borr, bori, setr,
+%%     seti, gtir, gtri, gtrr, eqir, eqri, eqrr].
 
-read_reg(Reg, RegVals) ->
-    lists:nth(Reg + 1, RegVals).
+read_reg(0, [R0|_]) -> R0;
+read_reg(1, [_, R1|_]) -> R1;
+read_reg(2, [_, _, R2|_]) -> R2;
+read_reg(3, [_, _, _, R3|_]) -> R3;
+read_reg(4, [_, _, _, _, R4|_]) -> R4;
+read_reg(5, [_, _, _, _, _, R5]) -> R5.
 
-write_reg(0, V, [_|RegVals]) ->
-    [V|RegVals];
-write_reg(N, V, [X|RegVals]) ->
-    [X|write_reg(N - 1, V, RegVals)].
-
+write_reg(0, V, [_, R1, R2, R3, R4, R5]) -> [V, R1, R2, R3, R4, R5];
+write_reg(1, V, [R0, _, R2, R3, R4, R5]) -> [R0, V, R2, R3, R4, R5];
+write_reg(2, V, [R0, R1, _, R3, R4, R5]) -> [R0, R1, V, R3, R4, R5];
+write_reg(3, V, [R0, R1, R2, _, R4, R5]) -> [R0, R1, R2, V, R4, R5];
+write_reg(4, V, [R0, R1, R2, R3, _, R5]) -> [R0, R1, R2, R3, V, R5];
+write_reg(5, V, [R0, R1, R2, R3, R4, _]) -> [R0, R1, R2, R3, R4, V].
 
 %% -- opcode helpers --
 execute_arithm_opcode_reg(A, B, C, RegVals, Fun) ->
@@ -182,9 +185,6 @@ execute_opcode(eqrr, A, B, C, RegVals) ->
     execute_compare_op(AVal, BVal, C, RegVals, fun eq/2).
 
 %% -- utils --	  
-
-int(S) ->
-    list_to_integer(S).
 
 plus(A, B) ->
     A + B.
