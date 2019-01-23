@@ -70,6 +70,7 @@ solution(25, part2) -> ok.                      %% no part 2 for day 25
 %% Succeeded: 16
 
 timeout(14) -> timer:seconds(60);
+timeout(21) -> timer:seconds(60);
 timeout(_) -> timer:seconds(5).
 
 count(What, Result) ->
