@@ -69,10 +69,6 @@ solution(25, part2) -> ok.                      %% no part 2 for day 25
 %% Skipped:   2
 %% Succeeded: 16
 
-timeout(14) -> timer:seconds(60);
-timeout(21) -> timer:seconds(60);
-timeout(_) -> timer:seconds(5).
-
 count(What, Result) ->
     length(lists:filter(fun({W, _}) when W == What -> true;
                            (_) -> false
@@ -101,7 +97,6 @@ main(_) ->
               [Time / 1000000, (Time / 1000) / length(Puzzles)]),
 
     io:format("Failed:    ~w~n", [count(fail, Result)]),
-    io:format("Timeouts:  ~w~n", [count(timeout, Result)]),
     io:format("Skipped:   ~w~n", [count(skipped, Result)]),
     io:format("Succeeded: ~w~n", [count(ok, Result)]).
 
@@ -129,9 +124,9 @@ has_main(Mod) ->
 run_puzzle0(Src, Day) ->
     case compile:file(Src,
                       [nowarn_export_all,
-                       %% nowarn_unused_function,
+                       nowarn_unused_function,
                        verbose,
-                       %% native,
+                       native,
                        report_warnings,
                        report_errors]) of
         {ok, Mod} ->
@@ -147,27 +142,14 @@ run_puzzle0(Src, Day) ->
                     {skipped, Day};
 
                 {true, Expected} ->
-                    Timeout = timeout(Day),
-                    Parent = self(),
-                    Pid = spawn(fun() ->
-                                        Parent ! {result, timer:tc(fun() -> Mod:main() end)}
-                                end),
-                    receive
-                        {result, {Time, Actual}} ->
-                            if Actual == Expected ->
-                                    io:format("OK ~10w msecs~n", [floor(Time/1000)]),
-                                    {ok, Day};
-                               true ->
-                                    io:format("*** FAIL *** (incorrect result after ~w msecs) (expected ~w, got ~w)~n",
-                                              [floor(Time/1000), Expected, Actual]),
-                                    {fail, Day}
-                            end;
-                        Other ->
-                            io:format("Msg: ~p~n", [Other])
-                    after Timeout ->
-                            exit(Pid, timeout),
-                            io:format("*** TIMEOUT (after ~w seconds) ***~n", [floor(Timeout/1000)]),
-                            {timeout, Day}
+                    {Time, Actual} = timer:tc(fun() -> Mod:main() end),
+                    if Actual == Expected ->
+                            io:format("OK ~10w msecs~n", [floor(Time/1000)]),
+                            {ok, Day};
+                       true ->
+                            io:format("*** FAIL *** (incorrect result after ~w msecs) (expected ~w, got ~w)~n",
+                                      [floor(Time/1000), Expected, Actual]),
+                            {fail, Day}
                     end;
                 
                 Other ->

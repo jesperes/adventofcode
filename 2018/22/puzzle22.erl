@@ -165,26 +165,5 @@ edges({_, _, Tool} = Node, State) ->
                   FAdj),
     {{Node, Edges}, S0}.
 
-shortest_path(State) ->
-    %% dijkstra:shortest_path/3 takes a graph where the nodes are the
-    %% keys, and the edges are lists of tuples {Weight, Node}.
-    Xs = 0,
-    Ys = 0,
-    
-    Start = {Xs, Ys, torch},
-    Target = {Xt, Yt, torch} = maps:get(target, State),
-    
-    %% Construct list of nodes
-    Nodes =
-        [{X, Y, Tool} ||
-            Tool <- tools(),
-            X <- lists:seq(Xs, Xt + 100),
-            Y <- lists:seq(Ys, Yt + 100)],
-  
-    %% Construct list of {Node, Edges}.
-    {Nodes0, _S1} = 
-        lists:mapfoldl(fun edges/2, State, Nodes),
-    
-    Graph = maps:from_list(Nodes0),
-    
-    dijkstra2:shortest_path(Graph, Start, Target).
+shortest_path(_) ->
+    ok.
