@@ -34,7 +34,7 @@ strongest(NanoBots) ->
 
 input(Filename) ->
     {ok, Binary} = file:read_file(Filename),
-    Lines = string:tokens(binary_to_list(Binary), "\n"),
+    Lines = string:tokens(binary_to_list(Binary), "\n\r"),
     lists:map(fun(Line) ->
                       ["pos", X, Y, Z, "r", R] = string:tokens(Line, "=<,> "),
                       {list_to_integer(X),

@@ -9,46 +9,50 @@
 %%% Created :  4 Jan 2019 by Jesper Eskilson <jesper.eskilson@klarna.com>
 
 -module(astar2).
--export([astar/5]).
+-export([astar/6]).
 -include_lib("eunit/include/eunit.hrl").
 
-astar(Start, End, CostFn, NbrFn, DistFn) ->
+astar(Start, End, CostFn, NbrFn, DistFn, State) ->
     case is_function(End) of
         true ->
-            astar0(Start, CostFn, NbrFn, DistFn, End);
+            astar0(Start, CostFn, NbrFn, DistFn, End, State);
         false ->
             astar0(Start, CostFn, NbrFn, DistFn, 
-                   fun(E) -> E == End end)
+                   fun(E, S) -> {E == End, S} end, State)
     end.
 
-astar0(Start, CostFn, NbrFn, DistFn, EndFn) ->
+astar0(Start, CostFn, NbrFn, DistFn, EndFn, State) ->
     OC = #{Start => open},
     CF = maps:new(),		    %% CameFrom
     Gs = #{Start => 0},
-    Fs = gb_sets:singleton({CostFn(Start), Start}),
-    astar0(OC, CF, Gs, Fs, CostFn, NbrFn, DistFn, EndFn).
+    {Cost, S0} = CostFn(Start, State),
+    Fs = gb_sets:singleton({Cost, Start}),
+    astar0(OC, CF, Gs, Fs, CostFn, NbrFn, DistFn, EndFn, S0).
 
-astar0(OC, CF, Gs, Fs, CostFn, NbrFn, DistFn, EndFn) ->
+astar0(OC, CF, Gs, Fs, CostFn, NbrFn, DistFn, EndFn, State) ->
     case gb_sets:size(Fs) of
         0 ->
             search_exhausted;
         _ ->
             {{_, Curr}, Fs0} = gb_sets:take_smallest(Fs),
-            case EndFn(Curr) of
-                true ->
-                    path_recon(Curr, CF);
-                false ->
+            case EndFn(Curr, State) of
+                {true, _} ->
+		    Dist = maps:get(Curr, Gs),
+		    {Dist, path_recon(Curr, CF)};
+                {false, S0} ->
                     OC0 = OC#{Curr => closed},
-                    {_, OC1, CF0, Gs0, Fs1, _, _} =
+		    {Nbrs, S1} = NbrFn(Curr, S0),
+
+                    {_, OC1, CF0, Gs0, Fs1, _, _, S2} =
                         lists:foldl(
                           fun astar_nbr/2, 
-                          {Curr, OC0, CF, Gs, Fs0, CostFn, DistFn}, NbrFn(Curr)),
-                    astar0(OC1, CF0, Gs0, Fs1, CostFn, NbrFn, DistFn, EndFn)
+                          {Curr, OC0, CF, Gs, Fs0, CostFn, DistFn, S1}, Nbrs),
+                    astar0(OC1, CF0, Gs0, Fs1, CostFn, NbrFn, DistFn, EndFn, S2)
             end
     end.
 
 %% Function to fold over the neighbors in the recursive step.
-astar_nbr(Nbr, {Curr, OC, CF, Gs, Fs, CostFn, DistFn} = AccIn) ->
+astar_nbr(Nbr, {Curr, OC, CF, Gs, Fs, CostFn, DistFn, State} = AccIn) ->
     case maps:get(Nbr, OC, open) of
 	closed ->
             %% Neighbor is already evaluated.
@@ -59,15 +63,20 @@ astar_nbr(Nbr, {Curr, OC, CF, Gs, Fs, CostFn, DistFn} = AccIn) ->
 
 	    %% Check if this path to the neighbor is better. If so
 	    %% store it and continue.
-            NewGs = maps:get(Curr, Gs) + DistFn(Curr, Nbr),
+	    {Dist, S0} = DistFn(Curr, Nbr, State),
+            NewGs = maps:get(Curr, Gs) + Dist,
             OldGs = maps:get(Nbr, Gs, inf),
             if NewGs < OldGs ->
+		    {Cost, S1} = CostFn(Nbr, S0),
                     %% Record new path if better
 		    {Curr, OC0,   
-		     maps:put(Nbr, Curr, CF),	% update came-from map
-		     maps:put(Nbr, NewGs, Gs), % update neighbor's gscore
-		     gb_sets:add({NewGs + CostFn(Nbr), Nbr}, Fs),
-		     CostFn, DistFn};
+		     maps:put(Nbr, Curr, CF),  %% update came-from map
+		     maps:put(Nbr, NewGs, Gs), %% update neighbor's gscore
+		     gb_sets:add({NewGs + Cost, Nbr}, Fs),
+		     CostFn, 
+		     DistFn,
+		     S1
+		    };
 	       true -> AccIn
             end
     end.
@@ -100,7 +109,7 @@ ex_search(Grid, Size) ->
     MinX = MinY = 0,
     MaxX = MaxY = Size - 1,
 
-    CostFn = fun({X, Y}) -> abs(X - Xg) + abs(Y - Yg) end,
+    CostFn = fun({X, Y}, S) -> {abs(X - Xg) + abs(Y - Yg), S} end,
 
 
     AdjFn = fun({X, Y}) ->
@@ -112,10 +121,10 @@ ex_search(Grid, Size) ->
                         {Xa, Ya} /= {X, Y}]
             end,
     
-    NbrFn = fun(Curr) ->
-                    lists:filter(fun(N) ->
-                                         not sets:is_element(N, Obstacles)
-                                 end, AdjFn(Curr))
+    NbrFn = fun(Curr, S) ->		    
+                    {lists:filter(fun(N) ->
+					  not sets:is_element(N, Obstacles)
+				  end, AdjFn(Curr)), S}
             end,
     
     PosToStrFn = 
@@ -126,20 +135,20 @@ ex_search(Grid, Size) ->
                 end
         end,
     
-    DistFn = fun({Xa, Ya}, {Xb, Yb}) -> abs(Xa - Xb) + abs(Ya - Yb) end,
+    DistFn = fun({Xa, Ya}, {Xb, Yb}, S) -> {abs(Xa - Xb) + abs(Ya - Yb), S} end,
     
     Repeat = 1000,
     {Time, _} = 
 	timer:tc(fun() ->
 			 lists:foreach(
 			   fun(_N) ->
-				   astar(Start, Goal, CostFn, NbrFn, DistFn)
+				   astar(Start, Goal, CostFn, NbrFn, DistFn, #{})
 			   end, lists:seq(1, Repeat))
 		 end),
 
     ?debugFmt("Average time/iter: ~w us", [Time / Repeat]),
 			 
-    Path = astar(Start, Goal, CostFn, NbrFn, DistFn),
+    Path = astar(Start, Goal, CostFn, NbrFn, DistFn, #{}),
     case Path of
 	search_exhausted ->
 	    search_exhausted;

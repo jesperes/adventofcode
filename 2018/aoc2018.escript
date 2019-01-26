@@ -126,7 +126,7 @@ run_puzzle0(Src, Day) ->
                       [nowarn_export_all,
                        nowarn_unused_function,
                        verbose,
-                       native,
+                       %% native,
                        report_warnings,
                        report_errors]) of
         {ok, Mod} ->

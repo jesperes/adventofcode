@@ -1,6 +1,8 @@
 -module(puzzle1).
 -export([main/0]).
 
+-compile([export_all]).
+
 main() ->
     compile:file("utils.erl"),
     {{part1, start1()},
@@ -8,20 +10,12 @@ main() ->
 
 start1() ->
     Lines = utils:read_file_lines("input.txt"),
-    FreqList = 
-        lists:map(fun(Line) ->
-                          list_to_integer(Line)
-                  end, Lines),
-    lists:foldl(fun(N, Acc) ->
-                        N + Acc
-                end, 0, FreqList).
+    FreqList =  lists:map(fun list_to_integer/1, Lines),
+    lists:foldl(fun(N, Acc) -> N + Acc end, 0, FreqList).
 
 start2() ->
     Lines = utils:read_file_lines("input.txt"),
-    FreqList = 
-        lists:map(fun(Line) ->
-                          list_to_integer(Line)
-                  end, Lines),
+    FreqList =  lists:map(fun list_to_integer/1, Lines),
     find_first_duplicate(FreqList).
 
 find_first_duplicate(IntList) ->

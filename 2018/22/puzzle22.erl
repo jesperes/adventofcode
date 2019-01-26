@@ -8,14 +8,12 @@
 -module(puzzle22).
 -include_lib("eunit/include/eunit.hrl").
 -export([main/0]).
+-compile([export_all]).
 
-%% 977 is too high
-%% 974 is too high
-%% 973 is correct
 
 main() ->
-    {{part1, part1(510, {10, 10})},
-     {part2, part2(510, {10, 10})}}.
+    {{part1, part1(5913, {8, 701})},
+     {part2, part2(5913, {8, 701})}}.
 
 part1(Depth, {X, Y}) ->
     State = #{depth => Depth, target => {X, Y, torch}},    
@@ -115,7 +113,7 @@ tools() ->
     [climbing_gear, torch, neither].
 
 
-adjacent({X, Y, _}) ->
+adjacent({X, Y, _, _}) ->
     [{Xa, Ya, Tool} ||
         Tool <- tools(),
         Xa <- [X - 1, X, X + 1],
@@ -136,34 +134,49 @@ valid_region_type(_, _) -> false.
 %% region's type.
 filtered_adjacents(Pos, State) ->
     Adjacents = adjacent(Pos),
-
+    
     {AdjacentsWithRegionType, S2} = 
-        lists:mapfoldl(fun({X, Y, _Tool} = Node, S0) ->
+        lists:mapfoldl(fun({X, Y, Tool}, S0) ->
                                {RT, S1} = region_type({X, Y}, S0),
-                               {{Node, RT}, S1}
+                               {{X, Y, Tool, RT}, S1}
                        end, State, Adjacents),
     
     ValidAdjacents = 
-        lists:filter(fun({{_, _, Tool}, RT}) ->
+        lists:filter(fun({_, _, Tool, RT}) ->
                              valid_region_type(Tool, RT)
                      end, AdjacentsWithRegionType),
     
     {ValidAdjacents, S2}.
-                         
-%% Return list of all (valid) edges for a node.
-edges({_, _, Tool} = Node, State) ->
-    {FAdj, S0} = filtered_adjacents(Node, State),
 
-    %% FAdj is a list of {Node, RegionType} tuples.
-    Edges = 
-        lists:map(fun({{_, _, Tool1} = N, _}) when Tool == Tool1 ->
-                          %% Same tool
-                          {1, N};
-                     ({{_, _, Tool1} = N, _}) when Tool /= Tool1 ->
-                          {1 + 7, N}
-                  end, 
-                  FAdj),
-    {{Node, Edges}, S0}.
 
-shortest_path(_) ->
-    ok.
+get_node(X, Y, T, S) ->
+    {RT, S0} = region_type({X, Y}, S),
+    {{X, Y, T, RT}, S0}.
+
+shortest_path(#{target := {Xg, Yg, Tg}} = State) ->
+    {Start, S0} = get_node(0, 0, torch, State),
+    {Goal, S1} = get_node(Xg, Yg, Tg, S0),
+    
+    CostFn = fun({X, Y, Tool, _}, S) -> 
+		     C = abs(X - Xg) + abs(Y - Yg),
+		     {if Tg == Tool -> C;
+			 true -> C + 7
+    		      end, S}
+    	     end,
+    
+    NbrFn = fun filtered_adjacents/2,
+    
+    DistFn = fun({_, _, Tool1, _}, {_, _, Tool2, _}, S) -> 
+    		     {if Tool1 == Tool2 -> 1;
+    			 true -> 8
+    		      end, S}
+    	     end,
+    
+    {Dist, _} = astar2:astar(Start, Goal, CostFn, NbrFn, DistFn, S1),
+    Dist.
+
+
+    
+    
+
+    
