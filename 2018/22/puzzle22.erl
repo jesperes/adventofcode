@@ -12,162 +12,124 @@
 
 
 main() ->
-    {{part1, part1(5913, {8, 701})},
-     {part2, part2(5913, {8, 701})}}.
+    io:format("Computing grid...~n", []),
 
-part1(Depth, {X, Y}) ->
-    State = #{depth => Depth, target => {X, Y, torch}},    
-    {RiskLevel, _} = risk_level(State),
-    RiskLevel.
+    Target = {8, 701, torch},
+    Grid = compute_grid(200, 1200, 5913, Target),
+    %%     Target = {10, 10, torch},
+    %% Grid = compute_grid(50, 50, 510, Target),
+    
+    io:format("Solving...~n", []),
+    {{part1, part1(Grid)},
+     {part2, part2(Grid)}}.
 
-part2(Depth, {X, Y}) ->
-    State = #{depth => Depth, target => {X, Y, torch}},    
-    shortest_path(State).
+compute_grid_cell(X, Grid) ->
+    Y = maps:get(y, Grid),
+    Depth = maps:get(depth, Grid),
+    {Xt, Yt, _} = maps:get(target, Grid),
+    GI = case {X, Y} of
+	     {0, 0} -> 0;
+	     {X, 0} -> X * 16807;
+	     {0, Y} -> Y * 48271;
+	     {Xt, Yt} -> 0;
+	     {X, Y} ->
+		 {EL1, _} = maps:get({X, Y-1}, Grid),
+		 {EL2, _} = maps:get({X-1, Y}, Grid),
+		 EL1 * EL2
+	 end,
+    EL = (GI + Depth) rem 20183,
+    RT = EL rem 3,
+    Grid#{{X, Y} => {EL, RT}}.
 
-geologic_index_test_() ->
-    Depth = 510,
-    X = 10, 
-    Y = 10,
-    State = #{depth => Depth, target => {X, Y, torch}},
+compute_grid_line(Y, #{max_x := MaxX} = Grid) ->
+    lists:foldl(fun compute_grid_cell/2, 
+		Grid#{y => Y}, 
+		lists:seq(0, MaxX)).
 
-    [
-     ?_assertMatch({0, _}, geologic_index({0, 0}, State)),
-     ?_assertMatch({48271, _}, geologic_index({0, 1}, State)),
-     ?_assertMatch({16807, _}, geologic_index({1, 0}, State)),
-     ?_assertMatch({145722555, _}, geologic_index({1, 1}, State)),
-     ?_assertMatch({0, _}, geologic_index({X, Y}, State))
-    ].
+compute_grid(MaxX, MaxY, Depth, Target) ->
+    lists:foldl(fun compute_grid_line/2, 
+		#{max_x => MaxX, depth => Depth, target => Target}, 
+		lists:seq(0, MaxY)).
 
-part1_test_() ->
-    [
-     ?_assertEqual(114, part1(510, {10, 10})),
-     ?_assertEqual(6256, part1(5913, {8, 701}))
-    ].
+part1(Grid) ->
+    {Xt, Yt, _} = maps:get(target, Grid),
+    Coords = [{X, Y} || 
+		 X <- lists:seq(0, Xt),
+		 Y <- lists:seq(0, Yt)],
+    Fun = fun(Pos, N) ->
+		  {_, RT} = maps:get(Pos, Grid),
+		  RT + N
+	  end,
+    lists:foldl(Fun, 0, Coords).
 
-part2_test_() ->
-    [
-     ?_assertEqual(45, part2(510, {10, 10}))
-    ].
-
-geologic_index({0, 0}, State) ->
-    {0, State};
-geologic_index({0, Y}, State) ->
-    {Y * 48271, State};
-geologic_index({X, 0}, State) ->
-    {X * 16807, State};
-geologic_index({X, Y} = Pos, State) ->
-    {Tx, Ty, _} = maps:get(target, State),
-    case {Tx, Ty} of
-        Pos ->
-            {0, State};
-        _ ->
-            {E1, S0} = erosion_level({X - 1, Y}, State),
-            {E2, S1} = erosion_level({X, Y - 1}, S0),
-            {E1 * E2, S1}
-    end.
-
-erosion_level(Pos, State) ->
-    case maps:is_key(Pos, State) of
-        true ->
-            ErosionLevel = maps:get(Pos, State),
-            {ErosionLevel, State};
-        false ->
-            {GI, S0} = geologic_index(Pos, State),
-            ErosionLevel = (GI + maps:get(depth, S0)) rem 20183,
-            {ErosionLevel, 
-             maps:put(Pos, ErosionLevel, S0)}
-    end.
-
-region_type(Pos, State) ->    
-    {ErosionLevel, S0} = erosion_level(Pos, State),
-    case ErosionLevel rem 3 of
-        0 -> {rocky, S0};
-        1 -> {wet, S0};
-        2 -> {narrow, S0}
-    end.
-
-risk_level(Pos, State) ->
-    {RegionType, S0} = region_type(Pos, State),
-    RL = 
-        case RegionType of
-            rocky -> 0;
-            wet -> 1;
-            narrow -> 2
-        end,
-    {RL, S0}.
-
-risk_level(State) ->
-    risk_level({0, 0, torch}, maps:get(target, State), State).
-
-risk_level({Xs, Ys, _}, {Xt, Yt, _}, State) ->
-    PosList = 
-        [{X, Y} ||
-            X <- lists:seq(Xs, Xt),
-            Y <- lists:seq(Ys, Yt)],
-    lists:foldl(fun(Pos, {N, StateIn}) ->
-                        {RL, S0} = risk_level(Pos, StateIn),
-                        {RL + N, S0}
-                end, {0, State}, PosList).
-
+region_type(0) -> rocky;
+region_type(1) -> wet;
+region_type(2) -> narrow.
+    
 tools() ->
-    [gear, torch, neither].
+    [climbing_gear, torch, neither].
 
-nbrs({X, Y, _, _}, State) ->
-    Adj = [{Pos, Tool} ||
-              Tool <- tools(),
-              Pos <- [{X - 1, Y},
-                      {X + 1, Y},
-                      {X, Y + 1},
-                      {X, Y - 1}]],
-    
-    Fun = fun({{Xa, Ya}, Tool}, {Acc, S0}) when Xa >= 0, Ya >= 0 ->
-                  {RT, S1} = region_type({X, Y}, S0),
-                  Node = 
-                      case valid_region_type(Tool, RT) of
-                          true ->
-                              [{Xa, Ya, Tool, RT}|Acc];
-                          false ->
-                              Acc
-                      end,
-                  {Node, S1};
-             (_, Acc) ->
-                  Acc
-          end,
-    
-    lists:foldl(Fun, {[], State}, Adj).
-
-valid_region_type(gear, rocky) -> true;
-valid_region_type(gear, wet) -> true;
-valid_region_type(torch, rocky) -> true;
-valid_region_type(torch, narrow) -> true;
-valid_region_type(neither, wet) -> true;
-valid_region_type(neither, narrow) -> true;
+%% We store the region type as an int, because it is computed as
+%% "erosion level" mod 3. So, 0 = rocky, 1 = wet, 2 = narrow.
+valid_region_type(climbing_gear, 0) -> true;
+valid_region_type(climbing_gear, 1) -> true;
+valid_region_type(torch, 0) -> true;
+valid_region_type(torch, 2) -> true;
+valid_region_type(neither, 1) -> true;
+valid_region_type(neither, 2) -> true;
 valid_region_type(_, _) -> false.
 
-get_node(X, Y, T, S) ->
-    {RT, S0} = region_type({X, Y}, S),
-    {{X, Y, T, RT}, S0}.
+filter_nbr({{X, Y}, T} = Pos, Grid, Acc) when (X >= 0) and (Y >= 0) ->
+    {_, RT} = maps:get({X, Y}, Grid),
+    case valid_region_type(T, RT) of
+	true ->
+	    [{X, Y, T}|Acc];
+	false ->
+	    Acc
+    end;
+filter_nbr(_, _, Acc) ->
+    Acc.
+    
+%% Return the list of neighbors to {X, Y, T}.
+nbrs({X, Y, _T}, Grid) ->
+    lists:foldl(fun(Elem, Acc) ->
+			filter_nbr(Elem, Grid, Acc)
+		end, [],
+		[{Pos, Tool} ||
+		    Tool <- tools(),
+		    Pos <- [{X - 1, Y},
+			    {X + 1, Y},
+			    {X, Y + 1},
+			    {X, Y - 1}]]).
 
-shortest_path(#{target := {Xg, Yg, Tg}} = State) ->
-    {Start, S0} = get_node(0, 0, torch, State),
-    {Goal, S1} = get_node(Xg, Yg, Tg, S0),
+part2(Grid) ->
+    Goal = {Xt, Yt, Tt} = maps:get(target, Grid),
+    Start = {0, 0, torch},
+    CostFn = fun({X, Y, Tool}) -> 
+		     C = abs(X - Xt) + abs(Y - Yt),
+		     if Tt == Tool -> 
+		     	     C;
+		     	true -> 
+		     	     C + 7
+		     end
+    	     end,
+ 
+    NbrFn = fun(Node) ->
+		    Nbrs = nbrs(Node, Grid),
+		    %% erlang:display(Node),
+		    Nbrs			
+	    end,
     
-    CostFn = fun({X, Y, Tool, _}, S) -> 
-		     C = abs(X - Xg) + abs(Y - Yg),
-		     {if Tg == Tool -> C;
-			 true -> C + 7
-    		      end, S}
+    DistFn = fun({_, _, Tool1}, {_, _, Tool2}) -> 
+    		     if Tool1 == Tool2 -> 1;
+			true -> 8
+		     end
     	     end,
     
-    NbrFn = fun nbrs/2,
-    
-    DistFn = fun({_, _, Tool1, _}, {_, _, Tool2, _}, S) -> 
-    		     {if Tool1 == Tool2 -> 1;
-    			 true -> 8
-    		      end, S}
-    	     end,
-    
-    {Dist, _} = astar2:astar(Start, Goal, CostFn, NbrFn, DistFn, S1),
+    {Dist, Path} = astar2:astar(Start, Goal, CostFn, NbrFn, DistFn),
+    %% lists:foreach(fun(P) ->
+    %% 			  io:format("Step: ~w~n", [P])
+    %% 		  end, lists:reverse(Path)),
     Dist.
 
 

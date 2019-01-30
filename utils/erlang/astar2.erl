@@ -9,50 +9,50 @@
 %%% Created :  4 Jan 2019 by Jesper Eskilson <jesper.eskilson@klarna.com>
 
 -module(astar2).
--export([astar/6]).
+-export([astar/5]).
 -include_lib("eunit/include/eunit.hrl").
 
-astar(Start, End, CostFn, NbrFn, DistFn, State) ->
+astar(Start, End, CostFn, NbrFn, DistFn) ->
     case is_function(End) of
         true ->
-            astar0(Start, CostFn, NbrFn, DistFn, End, State);
+            astar0(Start, CostFn, NbrFn, DistFn, End);
         false ->
-            astar0(Start, CostFn, NbrFn, DistFn, 
-                   fun(E, S) -> {E == End, S} end, State)
+            astar0(Start, CostFn, NbrFn, DistFn,
+                   fun(E) -> E == End end)
     end.
 
-astar0(Start, CostFn, NbrFn, DistFn, EndFn, State) ->
+astar0(Start, CostFn, NbrFn, DistFn, EndFn) ->
     OC = #{Start => open},
     CF = maps:new(),		    %% CameFrom
     Gs = #{Start => 0},
-    {Cost, S0} = CostFn(Start, State),
-    Fs = gb_sets:singleton({Cost, Start}),
-    astar0(OC, CF, Gs, Fs, CostFn, NbrFn, DistFn, EndFn, S0).
+    Fs = gb_sets:singleton({CostFn(Start), Start}),
+    astar0(OC, CF, Gs, Fs, CostFn, NbrFn, DistFn, EndFn).
 
-astar0(OC, CF, Gs, Fs, CostFn, NbrFn, DistFn, EndFn, State) ->
+astar0(OC, CF, Gs, Fs, CostFn, NbrFn, DistFn, EndFn) ->
     case gb_sets:size(Fs) of
         0 ->
             search_exhausted;
         _ ->
             {{_, Curr}, Fs0} = gb_sets:take_smallest(Fs),
-            case EndFn(Curr, State) of
-                {true, _} ->
+	    %% erlang:display({bestcost, BestCost, Curr}),
+            case EndFn(Curr) of
+                true ->
 		    Dist = maps:get(Curr, Gs),
 		    {Dist, path_recon(Curr, CF)};
-                {false, S0} ->
+                false ->
                     OC0 = OC#{Curr => closed},
-		    {Nbrs, S1} = NbrFn(Curr, S0),
+		    Nbrs = NbrFn(Curr),
 
-                    {_, OC1, CF0, Gs0, Fs1, _, _, S2} =
+                    {_, OC1, CF0, Gs0, Fs1, _, _} =
                         lists:foldl(
-                          fun astar_nbr/2, 
-                          {Curr, OC0, CF, Gs, Fs0, CostFn, DistFn, S1}, Nbrs),
-                    astar0(OC1, CF0, Gs0, Fs1, CostFn, NbrFn, DistFn, EndFn, S2)
+                          fun astar_nbr/2,
+                          {Curr, OC0, CF, Gs, Fs0, CostFn, DistFn}, Nbrs),
+                    astar0(OC1, CF0, Gs0, Fs1, CostFn, NbrFn, DistFn, EndFn)
             end
     end.
 
 %% Function to fold over the neighbors in the recursive step.
-astar_nbr(Nbr, {Curr, OC, CF, Gs, Fs, CostFn, DistFn, State} = AccIn) ->
+astar_nbr(Nbr, {Curr, OC, CF, Gs, Fs, CostFn, DistFn} = AccIn) ->
     case maps:get(Nbr, OC, open) of
 	closed ->
             %% Neighbor is already evaluated.
@@ -63,19 +63,19 @@ astar_nbr(Nbr, {Curr, OC, CF, Gs, Fs, CostFn, DistFn, State} = AccIn) ->
 
 	    %% Check if this path to the neighbor is better. If so
 	    %% store it and continue.
-	    {Dist, S0} = DistFn(Curr, Nbr, State),
+	    Dist = DistFn(Curr, Nbr),
             NewGs = maps:get(Curr, Gs) + Dist,
             OldGs = maps:get(Nbr, Gs, inf),
             if NewGs < OldGs ->
-		    {Cost, S1} = CostFn(Nbr, S0),
+		    Cost = CostFn(Nbr),
+		    
                     %% Record new path if better
-		    {Curr, OC0,   
+		    {Curr, OC0,
 		     maps:put(Nbr, Curr, CF),  %% update came-from map
 		     maps:put(Nbr, NewGs, Gs), %% update neighbor's gscore
 		     gb_sets:add({NewGs + Cost, Nbr}, Fs),
-		     CostFn, 
-		     DistFn,
-		     S1
+		     CostFn,
+		     DistFn
 		    };
 	       true -> AccIn
             end
@@ -98,7 +98,7 @@ ex_search(Grid, Size) ->
     Obstacles = sets:from_list(
 		  [PosToCoord(Pos)
 		   || Pos <- binary:matches(Grid, <<"#">>)]),
-    
+
     GetPosOf = fun(Binary) ->
 		       [Pos] = binary:matches(Grid, Binary),
 		       PosToCoord(Pos)
@@ -109,8 +109,7 @@ ex_search(Grid, Size) ->
     MinX = MinY = 0,
     MaxX = MaxY = Size - 1,
 
-    CostFn = fun({X, Y}, S) -> {abs(X - Xg) + abs(Y - Yg), S} end,
-
+    CostFn = fun({X, Y}) -> abs(X - Xg) + abs(Y - Yg) end,
 
     AdjFn = fun({X, Y}) ->
                     [{Xa, Ya} ||
@@ -120,43 +119,43 @@ ex_search(Grid, Size) ->
                         Ya >= MinY, Ya =< MaxY,
                         {Xa, Ya} /= {X, Y}]
             end,
-    
-    NbrFn = fun(Curr, S) ->		    
-                    {lists:filter(fun(N) ->
-					  not sets:is_element(N, Obstacles)
-				  end, AdjFn(Curr)), S}
+
+    NbrFn = fun(Curr) ->
+                    lists:filter(fun(N) ->
+					 not sets:is_element(N, Obstacles)
+				 end, AdjFn(Curr))
             end,
-    
-    PosToStrFn = 
+
+    PosToStrFn =
         fun({X, Y}, Path) ->
                 case lists:member({X,Y}, Path) of
                     true -> $x;
                     false -> binary:at(Grid, Y * Size + X)
                 end
         end,
-    
-    DistFn = fun({Xa, Ya}, {Xb, Yb}, S) -> {abs(Xa - Xb) + abs(Ya - Yb), S} end,
-    
+
+    DistFn = fun({Xa, Ya}, {Xb, Yb}) -> abs(Xa - Xb) + abs(Ya - Yb) end,
+
     Repeat = 1000,
-    {Time, _} = 
+    {Time, _} =
 	timer:tc(fun() ->
 			 lists:foreach(
 			   fun(_N) ->
-				   astar(Start, Goal, CostFn, NbrFn, DistFn, #{})
+				   astar(Start, Goal, CostFn, NbrFn, DistFn)
 			   end, lists:seq(1, Repeat))
 		 end),
 
     ?debugFmt("Average time/iter: ~w us", [Time / Repeat]),
-			 
-    Path = astar(Start, Goal, CostFn, NbrFn, DistFn, #{}),
-    case Path of
+
+    Result = astar(Start, Goal, CostFn, NbrFn, DistFn),
+    case Result of
 	search_exhausted ->
 	    search_exhausted;
-	_ ->
+	{_, Path} ->
 	    X = [[PosToStrFn({X,Y}, Path) ||
 		     X <- lists:seq(0, Size - 1)] ++ "\n" ||
-		    Y <- lists:seq(0, Size - 1)],    
-	    
+		    Y <- lists:seq(0, Size - 1)],
+
 	    ?debugFmt("Path length: ~w", [length(Path)]),
 	    ?debugFmt("Path:~n~s~n", [X]),
 	    Path
@@ -174,7 +173,7 @@ t1_test() ->
 	     "....######",
 	     ".........G">>,
     ?assertEqual(24, length(ex_search(Grid, 10))).
-    
+
 t2_test() ->
     Grid = <<".....#....",
 	     ".....#.###",
@@ -187,7 +186,7 @@ t2_test() ->
 	     "..#..#.##.",
 	     ".....#.#G.">>,
     ?assertEqual(19, length(ex_search(Grid, 10))).
-    
+
 t3_test() ->
     Grid = <<"S.........",
 	     "...######.",
@@ -207,5 +206,5 @@ t4_test() ->
 	     "..###",
 	     "..#..",
 	     "..#.G">>,
-          
+
     ?assertEqual(search_exhausted, ex_search(Grid, 5)).
