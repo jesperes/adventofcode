@@ -33,8 +33,8 @@ astar0(OC, CF, Gs, Fs, CostFn, NbrFn, DistFn, EndFn) ->
         0 ->
             search_exhausted;
         _ ->
-            {{_, Curr}, Fs0} = gb_sets:take_smallest(Fs),
-	    %% erlang:display({bestcost, BestCost, Curr}),
+	    %% erlang:display({fs, gb_sets:to_list(Fs)}),
+            {{BestCost, Curr}, Fs0} = gb_sets:take_smallest(Fs),
             case EndFn(Curr) of
                 true ->
 		    Dist = maps:get(Curr, Gs),
@@ -68,6 +68,11 @@ astar_nbr(Nbr, {Curr, OC, CF, Gs, Fs, CostFn, DistFn} = AccIn) ->
             OldGs = maps:get(Nbr, Gs, inf),
             if NewGs < OldGs ->
 		    Cost = CostFn(Nbr),
+
+		    %% Fs1 = gb_sets:filter(
+		    %% 	    fun({_, N}) when N == Nbr -> false;
+		    %% 	       (_) -> true
+		    %% 	    end, Fs),
 		    
                     %% Record new path if better
 		    {Curr, OC0,

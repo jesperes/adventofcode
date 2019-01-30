@@ -12,16 +12,18 @@
 
 
 main() ->
-    io:format("Computing grid...~n", []),
+    test(),
 
     Target = {8, 701, torch},
     Grid = compute_grid(200, 1200, 5913, Target),
-    %%     Target = {10, 10, torch},
-    %% Grid = compute_grid(50, 50, 510, Target),
-    
-    io:format("Solving...~n", []),
     {{part1, part1(Grid)},
      {part2, part2(Grid)}}.
+
+test() ->
+    Target = {10, 10, torch},
+    Grid = compute_grid(50, 50, 510, Target),
+    114 = part1(Grid),
+    45 = part2(Grid).
 
 compute_grid_cell(X, Grid) ->
     Y = maps:get(y, Grid),
@@ -79,7 +81,7 @@ valid_region_type(neither, 1) -> true;
 valid_region_type(neither, 2) -> true;
 valid_region_type(_, _) -> false.
 
-filter_nbr({{X, Y}, T} = Pos, Grid, Acc) when (X >= 0) and (Y >= 0) ->
+filter_nbr({{X, Y}, T}, Grid, Acc) when (X >= 0) and (Y >= 0) ->
     {_, RT} = maps:get({X, Y}, Grid),
     case valid_region_type(T, RT) of
 	true ->
@@ -126,14 +128,8 @@ part2(Grid) ->
 		     end
     	     end,
     
-    {Dist, Path} = astar2:astar(Start, Goal, CostFn, NbrFn, DistFn),
+    {Dist, _Path} = astar2:astar(Start, Goal, CostFn, NbrFn, DistFn),
     %% lists:foreach(fun(P) ->
     %% 			  io:format("Step: ~w~n", [P])
-    %% 		  end, lists:reverse(Path)),
+    %%  		  end, lists:reverse(Path)),
     Dist.
-
-
-    
-    
-
-    
