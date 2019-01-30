@@ -110,44 +110,39 @@ risk_level({Xs, Ys, _}, {Xt, Yt, _}, State) ->
                 end, {0, State}, PosList).
 
 tools() ->
-    [climbing_gear, torch, neither].
+    [gear, torch, neither].
 
-
-adjacent({X, Y, _, _}) ->
-    [{Xa, Ya, Tool} ||
-        Tool <- tools(),
-        Xa <- [X - 1, X, X + 1],
-        Ya <- [Y - 1, Y, Y + 1],
-        Xa >= 0, Ya >= 0, {Xa, Ya} /= {X, Y},
-        (Xa == X) or (Ya == Y)].
+nbrs({X, Y, _, _}, State) ->
+    Adj = [{Pos, Tool} ||
+              Tool <- tools(),
+              Pos <- [{X - 1, Y},
+                      {X + 1, Y},
+                      {X, Y + 1},
+                      {X, Y - 1}]],
     
-valid_region_type(climbing_gear, rocky) -> true;
-valid_region_type(climbing_gear, wet) -> true;
+    Fun = fun({{Xa, Ya}, Tool}, {Acc, S0}) when Xa >= 0, Ya >= 0 ->
+                  {RT, S1} = region_type({X, Y}, S0),
+                  Node = 
+                      case valid_region_type(Tool, RT) of
+                          true ->
+                              [{Xa, Ya, Tool, RT}|Acc];
+                          false ->
+                              Acc
+                      end,
+                  {Node, S1};
+             (_, Acc) ->
+                  Acc
+          end,
+    
+    lists:foldl(Fun, {[], State}, Adj).
+
+valid_region_type(gear, rocky) -> true;
+valid_region_type(gear, wet) -> true;
 valid_region_type(torch, rocky) -> true;
 valid_region_type(torch, narrow) -> true;
 valid_region_type(neither, wet) -> true;
 valid_region_type(neither, narrow) -> true;
 valid_region_type(_, _) -> false.
-
-%% Return {ValidAdjacents, State} where ValidAdjacents are all the
-%% valid adjacent states, i.e. where the tool is allowed given the
-%% region's type.
-filtered_adjacents(Pos, State) ->
-    Adjacents = adjacent(Pos),
-    
-    {AdjacentsWithRegionType, S2} = 
-        lists:mapfoldl(fun({X, Y, Tool}, S0) ->
-                               {RT, S1} = region_type({X, Y}, S0),
-                               {{X, Y, Tool, RT}, S1}
-                       end, State, Adjacents),
-    
-    ValidAdjacents = 
-        lists:filter(fun({_, _, Tool, RT}) ->
-                             valid_region_type(Tool, RT)
-                     end, AdjacentsWithRegionType),
-    
-    {ValidAdjacents, S2}.
-
 
 get_node(X, Y, T, S) ->
     {RT, S0} = region_type({X, Y}, S),
@@ -164,7 +159,7 @@ shortest_path(#{target := {Xg, Yg, Tg}} = State) ->
     		      end, S}
     	     end,
     
-    NbrFn = fun filtered_adjacents/2,
+    NbrFn = fun nbrs/2,
     
     DistFn = fun({_, _, Tool1, _}, {_, _, Tool2, _}, S) -> 
     		     {if Tool1 == Tool2 -> 1;
