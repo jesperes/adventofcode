@@ -76,21 +76,24 @@ count(What, Result) ->
 
 compile(F) ->
     code:add_pathz(filename:dirname(F)),
-    compile:file(F,
-                 [
-                  nowarn_export_all,
-                  nowarn_unused_function,
-                  verbose,
-                  native,
-                  report_warnings,
-                  report_errors,
-                  {outdir, filename:dirname(F)}]).
+    HipeArch = erlang:system_info(hipe_architecture),
+    CompilerOpts = [nowarn_export_all,
+		    nowarn_unused_function,
+		    verbose,
+		    report_warnings,
+		    report_errors] ++ 
+	if HipeArch =/= undefined ->
+		[native];
+	   true ->
+		[]
+	end,
+    
+    compile:file(F, CompilerOpts ++ [{outdir, filename:dirname(F)}]).
 
 main(_) ->
     Puzzles = lists:seq(1, 25),
     Dir = filename:absname("."),
 
-    
     %% compile utility code
     Utils = 
 	filelib:fold_files(

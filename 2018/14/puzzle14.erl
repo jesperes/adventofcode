@@ -9,6 +9,8 @@
 -compile([export_all]).
 -include_lib("eunit/include/eunit.hrl").
 
+%% TODO optimize by adding e.g. 1000 recipes at a time.
+
 %% Chocolate Carts
 
 main() ->
@@ -28,24 +30,14 @@ step1(L, Elf1, Elf2, Input) ->
     step1(L0, NewElf1, NewElf2, Input).
 
 start2(InputStr) ->
-    Bin = list_to_binary(
-            lists:map(fun(X) -> X - $0 end,
-                      InputStr)),
+    Bin = list_to_binary(lists:map(fun(X) -> X - $0 end, InputStr)),
     L = <<3, 7>>,
     step2(L, 0, 1, Bin, 0).
-    
-%% We know the answer is ~20 million, so stop at 21.
-step2(L, _, _, _, _) when byte_size(L) > 21000000 ->
-    false;
-step2(_, _, _, _, {found, At}) ->
-    At;
-step2(L, Elf1, Elf2, Input, P) ->
-    %% if byte_size(L) rem 10000 == 0 ->
-    %%         erlang:display({processing, byte_size(L)});
-    %%    true ->
-    %%         ok
-    %% end,
 
+%% We know the answer is ~20 million, so stop at 21.
+step2(L, _, _, _, _) when byte_size(L) > 21000000 -> false;
+step2(_, _, _, _, {found, At}) -> At;
+step2(L, Elf1, Elf2, Input, P) ->
     {L0, NewElf1, NewElf2, P0} = append_and_move_elves(L, Elf1, Elf2, Input, P),
     step2(L0, NewElf1, NewElf2, Input, P0).
 
@@ -73,18 +65,13 @@ append_and_move_elves(L, Elf1, Elf2, Input, P) ->
     NewElf2 = (Elf2 + E2 + 1) rem Len,
     {L0, NewElf1, NewElf2, NewP}.
 
-progress(false, _, _, _) ->
-    false;
-progress(P, _, _, _) when is_tuple(P) ->
-    P;
+progress(false, _, _, _) -> false;
+progress(P, _, _, _) when is_tuple(P) -> P;
 progress(P, X, Input, I) when is_integer(P) ->
-    NewP = 
-        case binary:at(Input, P) == X of
-            true ->
-                P + 1;
-            false ->
-                0
-        end,
+    NewP = case binary:at(Input, P) == X of
+	       true -> P + 1;
+	       false -> 0
+	   end,
     case NewP of
         L when L == byte_size(Input) ->
             {found, I - byte_size(Input) + 1};
