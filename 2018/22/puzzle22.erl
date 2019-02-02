@@ -10,19 +10,11 @@
 -export([main/0]).
 -compile([export_all]).
 
-
 main() ->
-    test(),
-    Target = {8, 701, torch},
-    Grid = compute_grid(200, 1200, 5913, Target),
+    Target = {8, 701, 1}, %% 1 == torch
+    Grid = compute_grid(150, 800, 5913, Target),
     {{part1, part1(Grid)},
      {part2, part2(Grid)}}.
-
-test() ->
-    Target = {10, 10, torch},
-    Grid = compute_grid(50, 50, 510, Target),
-    114 = part1(Grid),
-    45 = part2(Grid).
 
 compute_grid_cell(X, Grid) ->
     Y = maps:get(y, Grid),
@@ -62,28 +54,19 @@ part1(Grid) ->
 	  end,
     lists:foldl(Fun, 0, Coords).
 
-region_type(0) -> rocky;
-region_type(1) -> wet;
-region_type(2) -> narrow.
+%% We represent the tools as [0, 1, 2] and the region type as [0, 1,
+%% 2]. With (climbing gear == 0, torch == 1, and 2 == neither) and (0
+%% == rocky, 1 == wet, 2 == narrow), checking for matching region type
+%% with tool simply becomes Tool != RegionType.
     
-tools() ->
-    [climbing_gear, torch, neither].
-
-%% We store the region type as an int, because it is computed as
-%% "erosion level" mod 3. So, 0 = rocky, 1 = wet, 2 = narrow.
-valid_region_type(climbing_gear, 0) -> true;
-valid_region_type(climbing_gear, 1) -> true;
-valid_region_type(torch, 0) -> true;
-valid_region_type(torch, 2) -> true;
-valid_region_type(neither, 1) -> true;
-valid_region_type(neither, 2) -> true;
-valid_region_type(_, _) -> false.
-
 is_valid_tool(Pos, T, Grid) ->
     {_, RT} = maps:get(Pos, Grid),
-    valid_region_type(T, RT).
+    T =/= RT.
 
 filter_nbr({{X, Y}, T}, {Xn, Yn, _}, Grid, Acc) when (X >= 0) and (Y >= 0) ->
+    %% Note that the tool needs to be valid both in the current
+    %% location and in the location we are moving to, because we need
+    %% to change first, then move.
     case is_valid_tool({X, Y}, T, Grid) and
         is_valid_tool({Xn, Yn}, T, Grid) of
         true ->
@@ -101,7 +84,7 @@ nbrs({X, Y, _T} = Node, Grid) ->
 			filter_nbr(Nbr, Node, Grid, Acc)
 		end, [],
 		[{Pos, Tool} ||
-		    Tool <- tools(),
+		    Tool <- [0, 1, 2],
 		    Pos <- [{X - 1, Y},
 			    {X + 1, Y},
 			    {X, Y + 1},
@@ -109,7 +92,7 @@ nbrs({X, Y, _T} = Node, Grid) ->
 
 part2(Grid) ->
     Goal = {Xt, Yt, Tt} = maps:get(target, Grid),
-    Start = {0, 0, torch},
+    Start = {0, 0, 1}, %% 1 == torch
 
     CostFn = fun({X, Y, Tool}) -> 
 		     C = abs(X - Xt) + abs(Y - Yt),
