@@ -74,6 +74,18 @@ count(What, Result) ->
                            (_) -> false
                         end, Result)).
 
+compile(F) ->
+    code:add_pathz(filename:dirname(F)),
+    compile:file(F,
+                 [
+                  nowarn_export_all,
+                  nowarn_unused_function,
+                  verbose,
+                  native,
+                  report_warnings,
+                  report_errors,
+                  {outdir, filename:dirname(F)}]).
+
 main(_) ->
     Puzzles = lists:seq(1, 25),
     Dir = filename:absname("."),
@@ -83,20 +95,10 @@ main(_) ->
     Utils = 
 	filelib:fold_files(
 	  Dir ++ "/../utils/erlang", ".*\\.erl$", false,
-	  fun(F, AccIn) ->
-		  code:add_pathz(filename:dirname(F)),
-		  [compile:file(F,
-				[
-				 nowarn_export_all,
-				 nowarn_unused_function,
-				 verbose,
-				 %% native,
-				 report_warnings,
-				 report_errors,
-				 {outdir, filename:dirname(F)}
-				])|AccIn]
-		   end, []),
-
+	  fun(F, Acc) ->
+                  [compile(F)|Acc]
+          end, []),
+    
     io:format("Compile utility code: ~w~n", [Utils]),
 
     {Time, Result} =
@@ -133,18 +135,11 @@ get_expected_solution(Day) ->
 has_main(Mod) ->
     lists:member({main, 0}, proplists:get_value(exports, Mod:module_info())).
 
-run_puzzle0(Src, SrcDir, Day) ->
-    case compile:file(Src,
-                      [{outdir, SrcDir},
-		       nowarn_export_all,
-                       nowarn_unused_function,
-                       verbose,
-                       %% native,
-                       report_warnings,
-                       report_errors]) of
+run_puzzle0(Src, _SrcDir, Day) ->
+    case compile(Src) of
         {ok, Mod} ->
             io:format("Day ~2w: ", [Day]),
-
+            
             case {has_main(Mod), get_expected_solution(Day)} of
                 {false, _} ->
                     io:format("--- Entry point ~w:main/0 not defined, skipping~n", [Mod]),

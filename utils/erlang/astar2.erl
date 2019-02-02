@@ -34,7 +34,7 @@ astar0(OC, CF, Gs, Fs, CostFn, NbrFn, DistFn, EndFn) ->
             search_exhausted;
         _ ->
 	    %% erlang:display({fs, gb_sets:to_list(Fs)}),
-            {{BestCost, Curr}, Fs0} = gb_sets:take_smallest(Fs),
+            {{_, Curr}, Fs0} = gb_sets:take_smallest(Fs),
             case EndFn(Curr) of
                 true ->
 		    Dist = maps:get(Curr, Gs),

@@ -13,7 +13,6 @@
 
 main() ->
     test(),
-
     Target = {8, 701, torch},
     Grid = compute_grid(200, 1200, 5913, Target),
     {{part1, part1(Grid)},
@@ -30,7 +29,6 @@ compute_grid_cell(X, Grid) ->
     Depth = maps:get(depth, Grid),
     {Xt, Yt, _} = maps:get(target, Grid),
     GI = case {X, Y} of
-	     {0, 0} -> 0;
 	     {X, 0} -> X * 16807;
 	     {0, Y} -> Y * 48271;
 	     {Xt, Yt} -> 0;
@@ -81,21 +79,26 @@ valid_region_type(neither, 1) -> true;
 valid_region_type(neither, 2) -> true;
 valid_region_type(_, _) -> false.
 
-filter_nbr({{X, Y}, T}, Grid, Acc) when (X >= 0) and (Y >= 0) ->
-    {_, RT} = maps:get({X, Y}, Grid),
-    case valid_region_type(T, RT) of
-	true ->
-	    [{X, Y, T}|Acc];
-	false ->
-	    Acc
+is_valid_tool(Pos, T, Grid) ->
+    {_, RT} = maps:get(Pos, Grid),
+    valid_region_type(T, RT).
+
+filter_nbr({{X, Y}, T}, {Xn, Yn, _}, Grid, Acc) when (X >= 0) and (Y >= 0) ->
+    case is_valid_tool({X, Y}, T, Grid) and
+        is_valid_tool({Xn, Yn}, T, Grid) of
+        true ->
+            [{X, Y, T}|Acc];
+        false ->
+            Acc
     end;
-filter_nbr(_, _, Acc) ->
+        
+filter_nbr(_, _, _, Acc) ->
     Acc.
-    
+
 %% Return the list of neighbors to {X, Y, T}.
-nbrs({X, Y, _T}, Grid) ->
-    lists:foldl(fun(Elem, Acc) ->
-			filter_nbr(Elem, Grid, Acc)
+nbrs({X, Y, _T} = Node, Grid) ->
+    lists:foldl(fun(Nbr, Acc) ->
+			filter_nbr(Nbr, Node, Grid, Acc)
 		end, [],
 		[{Pos, Tool} ||
 		    Tool <- tools(),
@@ -107,19 +110,18 @@ nbrs({X, Y, _T}, Grid) ->
 part2(Grid) ->
     Goal = {Xt, Yt, Tt} = maps:get(target, Grid),
     Start = {0, 0, torch},
+
     CostFn = fun({X, Y, Tool}) -> 
 		     C = abs(X - Xt) + abs(Y - Yt),
-		     if Tt == Tool -> 
-		     	     C;
-		     	true -> 
-		     	     C + 7
-		     end
+                     if Tt == Tool -> C;
+                        true -> C + 7
+                     end
     	     end,
  
     NbrFn = fun(Node) ->
 		    Nbrs = nbrs(Node, Grid),
-		    %% erlang:display(Node),
-		    Nbrs			
+                    %% erlang:display({nbrs, Nbrs}),
+                    Nbrs
 	    end,
     
     DistFn = fun({_, _, Tool1}, {_, _, Tool2}) -> 
