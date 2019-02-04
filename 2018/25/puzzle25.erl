@@ -20,57 +20,42 @@ part1() ->
     merge(InitConsts).
 
 merge(Consts) ->
-    %% io:format("Merging: ~p~n", [maps:size(Consts)]),
+    NewConst = merge_consts(Consts),
     
-    Nums = lists:seq(0, maps:size(Consts) - 1),
-    Mergable = 
-	[{C1, C2} ||
-	    C1 <- Nums,
-	    C2 <- Nums,
-	    C1 < C2,
-	    is_mergeable(C1, C2, Consts)],
+    Len1 = maps:size(Consts),
+    Len2 = maps:size(NewConst),
     
-    {Merges, Map, Old} = 
-	lists:foldl(fun({C1, C2}, {N, New, Old}) ->
-			    case {maps:get(C1, Old, undefined),
-				  maps:get(C2, Old, undefined)} of
-				{undefined, C2p} ->
-				    {N + 1,
-				     maps:put(N, C2p, New),
-				     maps:remove(C2, Old)};
-				{C1p, undefined} ->
-				    {N + 1,
-				     maps:put(N, C1p, New),
-				     maps:remove(C1, Old)};
-				{C1p, C2p} ->
-			    	    {N + 1, 
-			    	     maps:put(N, C1p ++ C2p, New),
-			    	     maps:remove(C2, maps:remove(C1, Old))}
-			    end
-		    end, {0, #{}, Consts}, Mergable),
-
-    {_, Map0} = 
-	maps:fold(fun(_, V, {N, Acc}) ->
-			  {N + 1, maps:put(N, V, Acc)}
-		  end, {Merges, Map}, Old),
-    
-    {_, Map1} = maps:fold(fun(_K, undefined, Acc) ->
-				  Acc;
-			     (_K, V, {N, Acc}) ->
-				  {N + 1, maps:put(N, V, Acc)}
-			  end, {0, #{}}, Map0),
-    
-    if Merges > 0 ->
-	    merge(Map1);
-       true ->
-	    maps:size(Map1)
+    if Len1 =/= Len2 -> merge(NewConst);
+       true -> maps:size(NewConst)
     end.
 
+%% Merge all mergable constellations
+merge_consts(Consts) ->
+    lists:foldl(fun({C1, C2}, Map) ->
+			C2p = maps:get(C2, Map, []),
+			case maps:is_key(C1, Map) of
+			    true ->
+				maps:update_with(C1, 
+						 fun(X) ->
+							 X ++ C2p
+						 end, maps:remove(C2, Map));
+			    _ ->
+				Map
+			end
+		end, Consts, mergable_consts(Consts)).
+
+%% Return a list of tuples {C1, C2} of mergable constellations.
+mergable_consts(Consts) ->
+    Nums = maps:keys(Consts),
+    [{C1, C2} ||
+	C1 <- Nums,
+	C2 <- Nums,
+	C1 < C2,
+	is_mergeable(C1, C2, Consts)].
+
 %% Generalized manhattan distance
-dist(P1, P2) ->
-    lists:foldl(fun({A, B}, Acc) ->
-			abs(A - B) + Acc
-		end, 0, lists:zip(P1, P2)).
+dist({X1, Y1, Z1, W1}, {X2, Y2, Z2, W2}) ->
+    abs(X1 - X2) + abs(Y1 - Y2) + abs(Z1 - Z2) + abs(W1 - W2).
 
 %% Two constellations are mergeable if there is at least one pair of
 %% points separated by no more than MAX_CONSTELLATION_SEP.
@@ -78,8 +63,8 @@ is_mergeable(C1, C2, Consts) ->
     lists:any(fun(Dist) ->
 		      Dist =< ?MAX_CONSTELLATION_SEP
 	      end, [dist(P1, P2) ||
-		       P1 <- maps:get(C1, Consts),
-		       P2 <- maps:get(C2, Consts)
+		       P1 <- maps:get(C1, Consts, []),
+		       P2 <- maps:get(C2, Consts, [])
 		   ]).
 
 
@@ -88,8 +73,9 @@ get_points(Filename) ->
     {ok, Binary} = file:read_file(Filename),
     {_, Map} = 
 	lists:foldl(fun(Line, {N, Map}) ->
-			    Point = lists:map(fun list_to_integer/1, 
-					      string:tokens(Line, ",")),
+			    Point = list_to_tuple(
+				      lists:map(fun list_to_integer/1, 
+						string:tokens(Line, ","))),
 			    {N + 1, maps:put(N, [Point], Map)}
 		    end, {0, #{}}, string:tokens(binary_to_list(Binary), "\n\r")),
     Map.
