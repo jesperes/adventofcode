@@ -60,13 +60,17 @@ dist({X1, Y1, Z1, W1}, {X2, Y2, Z2, W2}) ->
 %% Two constellations are mergeable if there is at least one pair of
 %% points separated by no more than MAX_CONSTELLATION_SEP.
 is_mergeable(C1, C2, Consts) ->
-    lists:any(fun(Dist) ->
-		      Dist =< ?MAX_CONSTELLATION_SEP
-	      end, [dist(P1, P2) ||
-		       P1 <- maps:get(C1, Consts, []),
-		       P2 <- maps:get(C2, Consts, [])
-		   ]).
+    C1p = maps:get(C1, Consts, []),
+    C2p = maps:get(C2, Consts, []),
+    is_mergable0(C1p, C2p).
 
+is_mergable0([], _) -> false;
+is_mergable0([A|As], Bs) -> 
+    is_mergable1(A, Bs) orelse is_mergable0(As, Bs).
+
+is_mergable1(_, []) -> false;
+is_mergable1(A, [B|Bs]) ->
+    (dist(A, B) =< ?MAX_CONSTELLATION_SEP) orelse is_mergable1(A, Bs).
 
 %%% Parser
 get_points(Filename) ->    
