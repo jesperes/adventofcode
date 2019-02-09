@@ -91,6 +91,8 @@ compile(F) ->
     compile:file(F, CompilerOpts ++ [{outdir, filename:dirname(F)}]).
 
 main(_) ->
+    true = (list_to_integer(erlang:system_info(otp_release)) >= 21),
+
     Puzzles = lists:seq(1, 25),
     Dir = filename:absname("."),
 
