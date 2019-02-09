@@ -9,6 +9,8 @@
 -export([main/0]).
 -compile([export_all]).
 
+-include_lib("eunit/include/eunit.hrl").
+
 main() ->
     {{part1, part1()},
      {part2, part2()}}.
@@ -20,47 +22,101 @@ part1() ->
     length(InRange).
 
 part2() ->
-    NanoBots = input("testinput2.txt"),
-    test(NanoBots),
-    io:format("Bots = ~p~n", [NanoBots]),
+    NanoBots = input("input.txt"),
     Box = find_bounding_box(NanoBots),
-    %% {{X, Y, Z}, {W, H, D}} = Box,
-    %% {Box, volume(Box)},
-    search(Box, NanoBots).
-
-test(Bots) ->
-    5 = num_intersects({{12, 12, 12}, {1, 1, 1}}, Bots).
-
-search({Pos, {1, 1, 1}} = Box, Bots) ->
-    [{Pos, num_intersects(Box, Bots)}];
-search(Box, NanoBots) ->
-    io:format("Searching box ~p (in range of ~p bots)~n", [Box, num_intersects(Box, NanoBots)]),
-
-    {B1, B2} = split_box(Box),
-
-    Bots1 = num_intersects(B1, NanoBots),
-    Bots2 = num_intersects(B2, NanoBots),
-
-    %% io:format("B1 = ~p (in range of ~p bots)~n", [B1, Bots1]),
-    %% io:format("B2 = ~p (in range of ~p bots)~n", [B2, Bots2]),
+    {_, Sols} = 
+	search(_Boxes = gb_sets:singleton({num_intersects(Box, NanoBots), Box}), 
+	       _Solutions = gb_sets:empty(),
+	       NanoBots),
     
-    if Bots1 > Bots2 ->
-	    search(B1, NanoBots);
-       Bots2 > Bots1 ->
-	    search(B2, NanoBots);
+    {_, Post} = gb_sets:largest(Sols),
+    manhattan_dist(Post, {0, 0, 0}).
+
+%% Search for the points with most number of nanobots in range.  Boxes
+%% is an ordered set with those sub-boxes we have not yet examined.
+%% Solutions is an ordered set with the current (best) solutions.
+search(Boxes, Solutions, NanoBots) ->
+    NumBoxes = gb_sets:size(Boxes),
+    if NumBoxes == 0 ->
+	    %% No more boxes to examine.
+	    {Boxes, Solutions};
        true ->
-	    search(B1, NanoBots) ++
-		search(B2, NanoBots)
-    end.    
+	    %% Take the best box seen so far (the one in range of most
+	    %% bots), and split in in half along the largest axis.
+	    {{_, Box}, Boxes1} = gb_sets:take_largest(Boxes),	    
+	    {B1, B2} = split_box(Box),
+	    
+	    %% Update box-queue and solutions
+	    {Boxes2, Solutions1} = 
+		handle_subbox(B1, Boxes1, Solutions, NanoBots),
+	    {Boxes3, Solutions2} = 
+		handle_subbox(B2, Boxes2, Solutions1, NanoBots),
+	    
+	    %% Recurse.
+	    search(Boxes3, Solutions2, NanoBots)
+    end.
+
+
+best_solution(Solutions) ->
+    NumSols = gb_sets:size(Solutions),
+    if NumSols == 0 -> 0;
+       true ->
+	    {Best, _} = gb_sets:largest(Solutions),
+	    Best
+    end.
+
+%% Return true if the given box contains exactly one point.
+is_point({_, {1, 1, 1}}) -> true;
+is_point(_) -> false.
     
+box_to_point({Pos, _}) -> Pos.
+
+handle_subbox(Box, Boxes, Solutions, NanoBots) ->    
+    NumBots = num_intersects(Box, NanoBots),
+    BestSol = best_solution(Solutions),
+    IsPoint = is_point(Box),
     
-num_intersects(Box, NanoBots) ->
+    if IsPoint and (NumBots >= BestSol) ->
+	    %% Single point, equal or better than the current best solution
+	    Sol = {NumBots, box_to_point(Box)},
+	    {Boxes, 
+	     if NumBots > BestSol ->
+		     %% If this point is best, discard all other solutions
+		     gb_sets:singleton(Sol);
+		true ->
+		     gb_sets:add(Sol, Solutions)
+	     end};
+       NumBots >= BestSol ->
+	    %% We haven't reached a single point, but this
+	    %% sub-box has the potential of containing better
+	    %% solutions, so add the box to the queue.
+	    {gb_sets:add({NumBots, Box}, Boxes), Solutions};
+       true ->
+	    %% Not enough bots in range of this sub-box, just ignore it.
+	    {Boxes, Solutions}
+    end.
+    
+%% Count the number of bots which are in range of any position within
+%% the given box.
+num_intersects(Box, Bots) ->
     lists:foldl(fun(Bot, N) ->
 			Intersects = intersects(Box, Bot),
 			if Intersects -> 1 + N;
-			   true -> 0
+			   true -> N
 			end
-		end, 0, NanoBots).
+		end, 0, Bots).
+
+num_intersects_test() ->
+    Bots = [{2,10,12,12},
+	    {2,12,14,12},
+	    {4,16,12,12},
+	    {6,14,14,14},
+	    {200,50,50,50},
+	    {5,10,10,10}],
+    
+    Box = {{12, 12, 12}, {1, 1, 1}},
+    ?assert(intersects(Box, {2, 10, 12, 12})),
+    ?assertEqual(5, num_intersects({{12, 12, 12}, {1, 1, 1}}, Bots)).
 
 manhattan_comp(MinX, W, X) ->
     MaxX = MinX + W - 1,
@@ -72,6 +128,14 @@ manhattan_comp(MinX, W, X) ->
 	    MinX - X
     end.
 
+manhattan_comp_test() ->
+    ?assertEqual(0, manhattan_comp(0, 5, 2)),
+    ?assertEqual(0, manhattan_comp(0, 5, 0)),
+    ?assertEqual(1, manhattan_comp(0, 5, 5)),
+    ?assertEqual(2, manhattan_comp(0, 5, -2)),
+    ?assertEqual(2, manhattan_comp(0, 5, 6)).
+     
+%%
 intersects(Box, Bot) ->
     {{Xb, Yb, Zb}, {W, H, D}} = Box,
     {R, X, Y, Z} = Bot,
@@ -81,8 +145,15 @@ intersects(Box, Bot) ->
 	manhattan_comp(Yb, H, Y) + 
 	manhattan_comp(Zb, D, Z),
     
+    %% erlang:display({manhattan_dist, Box, Bot, Dist}),
+
     Dist =< R.
 
+intersects_test() ->
+    ?assertNot(intersects({{0, 0, 0}, {2, 2, 2}}, {0, 3, 3, 3})),
+    ?assert(intersects({{0, 0, 0}, {2, 2, 2}}, {6, 3, 3, 3})),
+    ?assert(intersects({{0, 0, 0}, {2, 2, 2}}, {9, -3, -3, -3})).
+   
 
 %% Split the box in two along the longest axis.
 split_box({{Xb, Yb, Zb}, {W, H, D}}) ->
