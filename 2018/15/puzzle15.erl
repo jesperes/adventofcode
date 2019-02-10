@@ -26,28 +26,36 @@ main() ->
      {part2, 0}}.
 
 part1() ->    
-    Grid = read_grid("testinput4.txt", 3),
+    Grid = read_grid("input.txt", 3),
     io:format("Start:~n~s~n", [grid_to_string(Grid)]),    
     do_battle_until_death(1, Grid).
 
-    
+%% do_battle_until_death(3, Grid) ->
+%%     Grid;
 do_battle_until_death(N, Grid) ->
+    io:format("Doing round ~p~n", [N]),
     case do_round(Grid) of
         {winner, Type, FinalGrid} ->
             FullRounds = N - 1,
+	    SumHP = sum_hp(FinalGrid),
+
             io:format("Winner is ~p after ~p full rounds, final grid:~n~s~n",
                       [Type, N - 1, grid_to_string(FinalGrid)]),
-            io:format("Output = ~p~n", 
-                      [FullRounds * sum_hp(FinalGrid)]);
+            io:format("Output = ~p * ~p = ~p~n", 
+                      [FullRounds, SumHP, FullRounds * SumHP]),
+	    FullRounds * SumHP;
         NewGrid ->
-            io:format("~nAfter ~p rounds:~n~s~n", [N, grid_to_string(NewGrid)]),
+            %% io:format("~nAfter ~p rounds:~n~s~n", [N, grid_to_string(NewGrid)]),
             do_battle_until_death(N + 1, NewGrid)
     end.
 
 sum_hp(Grid) ->
-    lists:sum(lists:map(fun({_, {_, HP, _}}) -> HP end, 
+    %% io:format("~p~n", [gb_trees:to_list(Grid#grid.units)]),
+    lists:sum(lists:map(fun({_, {_, HP, _}}) -> 
+				HP
+			end, 
                         gb_trees:to_list(Grid#grid.units))).
-    
+
 do_round(Grid) ->
     move_or_attack(gb_trees:iterator(Grid#grid.units), Grid).
 
@@ -71,41 +79,42 @@ move_or_attack(Iter, Grid) ->
             %% iterator since the HP may have been modified due to
             %% attacks by other units.
             
-            {_, HP, _} = gb_trees:get(Pos, Grid#grid.units),
-            
-	    case {HP, move(Pos, Type, Grid)} of
-                {N, _} when N =< 0 ->
+	    case gb_trees:lookup(Pos, Grid#grid.units) of
+		none ->
                     %% Unit was killed before its turn.
-                    io:format("~p unit at ~p was killed before its turn.~n", [Type, Pos]),
-                    GridAfterDeletingDeadUnit = 
-                        Grid#grid{units = gb_trees:delete(Pos, Grid#grid.units)},
-                    move_or_attack(NextIter, GridAfterDeletingDeadUnit);
-                {_, no_enemies} ->
-                    %% There are no enemies left,
-                    {winner, Type, Grid};
-                {_, no_path} ->
-		    %% There is no path from this unit to any enemy.
-		    %% The unit cannot move, and ends it's turn.
-		    io:format("~p unit at ~p can not reach any enemy~n", [Type, Pos]),
-		    move_or_attack(NextIter, Grid);
-                
-		{_, in_range} ->
-		    %% Unit is already in range, continue with combat.
-		    io:format("~p unit at ~p can combat enemy units directly~n", 
-                              [Type, Pos]),
-		    GridAfterCombat = combat(Pos, Grid),
-		    move_or_attack(NextIter, GridAfterCombat);
+                    %% io:format("~p unit at ~p was killed before its turn.~n", [Type, Pos]),
+                    move_or_attack(NextIter, Grid);
 
-		{_, {move_and_fight, NewPos}} ->
-		    io:format("~p unit at ~p can move to ~p and fight~n", [Type, Pos, NewPos]),
-		    GridAfterMove = apply_move(Pos, NewPos, Grid),
-		    GridAfterCombat = combat(NewPos, GridAfterMove),
-		    move_or_attack(NextIter, GridAfterCombat);
+		{value, _} ->
+		    case move(Pos, Type, Grid) of
+			no_enemies ->
+			    %% There are no enemies left,
+			    {winner, Type, Grid};
+			
+			no_path ->
+			    %% There is no path from this unit to any enemy.
+			    %% The unit cannot move, and ends it's turn.
+			    %% io:format("~p unit at ~p can not reach any enemy~n", [Type, Pos]),
+			    move_or_attack(NextIter, Grid);
                 
-		{_, {move, NewPos}} ->
-		    io:format("~p unit at ~p moves to ~p~n", [Type, Pos, NewPos]),
-		    GridAfterMove = apply_move(Pos, NewPos, Grid),
-		    move_or_attack(NextIter, GridAfterMove)
+			in_range ->
+			    %% Unit is already in range, continue with combat.
+			    %% io:format("~p unit at ~p can combat enemy units directly~n", 
+			    %%           [Type, Pos]),
+			    GridAfterCombat = combat(Pos, Grid),
+			    move_or_attack(NextIter, GridAfterCombat);
+				
+			{move_and_fight, NewPos} ->
+			    %% io:format("~p unit at ~p can move to ~p and fight~n", [Type, Pos, NewPos]),
+			    GridAfterMove = apply_move(Pos, NewPos, Grid),
+			    GridAfterCombat = combat(NewPos, GridAfterMove),
+			    move_or_attack(NextIter, GridAfterCombat);
+			
+			{move, NewPos, BestPath} ->
+			    %% io:format("~p unit at ~p moves to ~p (path to enemy: ~w)~n", [Type, Pos, NewPos, BestPath]),
+			    GridAfterMove = apply_move(Pos, NewPos, Grid),
+			    move_or_attack(NextIter, GridAfterMove)
+		    end
 	    end
     end.
 
@@ -142,7 +151,16 @@ combat(Pos, Grid) ->
 	    %% io:format("Attacked enemy at ~p, new enemy hp = ~p~n", 
 	    %%           [EnemyPos, NewEnemyHP]),
             
-	    NewUnits = gb_trees:update(EnemyPos, {EnemyType, NewEnemyHP, EnemyAP}, Grid#grid.units),
+	    %% Delete enemy unit if dead, otherwise update its HP
+	    NewUnits = 
+		if NewEnemyHP =< 0 ->
+			io:format("Deleted dead unit ~p at ~p, ~p units left.~n", 
+				  [EnemyType, EnemyPos, gb_trees:size(Grid#grid.units) - 1]), 
+			gb_trees:delete(EnemyPos, Grid#grid.units);
+		   true ->
+			gb_trees:update(EnemyPos, {EnemyType, NewEnemyHP, EnemyAP}, Grid#grid.units)
+		end,
+
 	    Grid#grid{units = NewUnits}
     end.
 
@@ -150,9 +168,19 @@ combat(Pos, Grid) ->
 %% and iterator.
 apply_move(Pos, NewPos, Grid) ->
     Val = gb_trees:get(Pos, Grid#grid.units),
-    NewUnits = gb_trees:insert(NewPos, Val, 
-			       gb_trees:delete(Pos, Grid#grid.units)),
-    Grid#grid{units = NewUnits}.
+    
+    case gb_trees:lookup(NewPos, Grid#grid.units) of
+	none ->
+	    NewUnits = gb_trees:insert(NewPos, Val, 
+				       gb_trees:delete(Pos, Grid#grid.units)),
+	    Grid#grid{units = NewUnits};
+	{value, V} ->
+	    io:format("~s~n", [grid_to_string(Grid)]),
+	    false = 
+		io:format("Attempting to move unit ~p at ~p into ~p which is occupied by ~p~n",
+			  [Val, Pos, NewPos, V])
+    end.
+	    
 
 %%% Find shortest path
 
@@ -167,8 +195,14 @@ is_open(Pos, Grid) ->
 	and (not gb_trees:is_defined(Pos, Grid#grid.units)).
 
 move(Pos, Type, Grid) ->
+    %% Start squares is any non-wall square, possibly with an enemy
+    %% unit in it.
+    StartSquares = get_start_squares(Pos, Type, Grid),
+    
+    %% io:format("Start squares: ~p~n", [StartSquares]),
+
     Enemies = lists:filter(fun({_, {EnemyType, HP, _}}) ->
-    				   (EnemyType =/= Type) and (HP > 0)
+    				   (EnemyType =/= Type)
     			   end, gb_trees:to_list(Grid#grid.units)), 
 
     %% io:format("Enemies of ~p: ~p~n", [Pos, Enemies]),
@@ -180,8 +214,9 @@ move(Pos, Type, Grid) ->
     %% for towards the enemy ends up at the beginning of the list.
     Paths = 
 	lists:sort(lists:flatten(
-		     [path_to_enemy(Pos, Enemy, Grid) 
-		      || Enemy <- Enemies])),
+		     [path_to_enemy(StartPos, Enemy, Grid)
+		      || StartPos <- StartSquares,
+			 Enemy <- Enemies])),
     
     %% io:format("Best paths towards enemies:~n~p~n", [Paths]),
     
@@ -193,40 +228,50 @@ move(Pos, Type, Grid) ->
 	    %% This means that there is no path to any enemy for the
 	    %% unit at this position; the unit cannot move.
 	    no_path;
-	{_, [{_, BestPath}|_]} ->
-	    %% Now, reverse the list to find out which square to move
-	    %% to. The first element in the reversed list is our
-	    %% starting position.
-	    case BestPath  of
-		[_AdjPos] ->
-		    %% Already in range of enemy
-		    in_range;
-		[Next, _AdjPos] ->
-		    %% Moving one step will bring us in range for combat
-		    {move_and_fight, Next};
-		_ -> 
-		    %% Unit is too far, can just move.
-		    [_StartPos, Next|_RemainingPathTowardsEnemy] = 
-			lists:reverse(BestPath),
-		    {move, Next}
+	{_, [{Steps, _}|_] = AllPaths} ->
+	    
+	    %% The best path to any square adjacent to an enemy is 
+	    %% Steps long, but there may several such paths.
+
+	    [BestPath|_] = AllPaths0 =
+		lists:sort(
+		  lists:filtermap(fun({N, Path}) ->
+					  if N == Steps ->
+						  {true, lists:reverse(Path)};
+					     true ->
+						  false
+					  end
+				  end, AllPaths)),
+	    
+	    %% io:format("All paths from ~p unit at ~p to enemies: ~p~n", [Type, Pos, AllPaths0]),
+	    %% io:format("Selecting: ~p~n", [BestPath]),
+
+	    case BestPath of
+	    	[] ->
+	    	    %% Already in range of enemy
+	    	    in_range;
+	    	[Next] ->
+	    	    %% Moving one step will bring us in range for combat
+	    	    {move_and_fight, Next};
+	    	_ -> 
+	    	    %% Unit is too far, can just move.
+	    	    [Next|_RemainingPathTowardsEnemy] = BestPath,
+	    	    {move, Next, BestPath}
 	    end
     end.
 
 
+path_to_enemy(Pos, {Pos, _}, _) ->
+    {0, []};
 path_to_enemy(Pos, {EnemyPos, _}, Grid) ->
-    case manhattan_dist(Pos, EnemyPos) of
-	1 ->
-	    %% If the positions are adjacent, don't bother searching.
-	    {0, [Pos]};
-	_ ->
-	    EnemyAdj = open_and_adjacent(EnemyPos, Grid),
-	    Paths = lists:filter(fun(P) ->
-					 P =/= search_exhausted
-				 end, [find_path(Pos, AdjPos, Grid)
-				       || AdjPos <- EnemyAdj]),
-	    Paths
-    end.
-
+    %% io:format("Searching path from ~p to ~p~n", [Pos, EnemyPos]),
+    EnemyAdj = open_and_adjacent(EnemyPos, Grid),
+    Paths = lists:filter(fun(P) ->
+				 P =/= search_exhausted
+			 end, [find_path(Pos, AdjPos, Grid)
+			       || AdjPos <- EnemyAdj]),
+    Paths.
+	
 manhattan_dist({X1, Y1}, {X2, Y2}) ->   
     abs(X1 - X2) + abs(Y1 - Y2).
 
@@ -237,6 +282,8 @@ open_and_adjacent(Pos, Grid) ->
       end, adjacent(Pos)).
 
 find_path(StartPos, EndPos, Grid) ->
+    %% io:format("Finding shortest path from ~p -> ~p~n", [StartPos, EndPos]),
+
     {Ye, Xe} = EndPos,
     
     CostFn = fun({Y, X}) -> abs(Xe - X) + abs(Ye - Y) end,
@@ -248,6 +295,28 @@ find_path(StartPos, EndPos, Grid) ->
     
     astar2:astar(StartPos, EndPos, CostFn, NbrFn, DistFn).
 
+get_start_squares(Pos, Type, Grid) ->
+    lists:filter(fun(Adj) ->
+			 case sets:is_element(Adj, Grid#grid.walls) of
+			     true ->
+				 %% Not a wall
+				 false;
+			     false ->
+				 %% Lookup = gb_trees:lookup(Adj, Grid#grid.units),
+				 %% io:format("Lookup = ~p~n", [Lookup]),
+				 case gb_trees:lookup(Adj, Grid#grid.units) of
+				     {value, {T, _, _}} when (T =/= Type) ->
+					 %% Enemy
+					 true; 
+				     {value, _} ->
+					 %% Non-enemy
+					 false;
+				     none ->
+					 %% Open space
+					 true
+				 end
+			 end
+		 end, adjacent(Pos)).
 
 %%% Pretty-printing
 
@@ -256,9 +325,9 @@ grid_pos_to_string(Pos, Grid) ->
 	true -> '#';
 	false -> 
 	    case gb_trees:lookup(Pos, Grid#grid.units) of
-		{value, {Type, _, _}} ->
+		{value, {Type, HP, _}} when HP > 0 ->
 		    Type;
-		none -> 
+		_ -> 
 		    '.'
 	    end
     end.
@@ -273,7 +342,11 @@ units_and_hp(Y, Grid) ->
     lists:map(
       fun(Unit) ->
               {Type, HP, _} = gb_trees:get(Unit, Grid#grid.units),
-              io_lib:format(" ~s(~w)", [Type, HP])
+	      if HP > 0 ->
+		      io_lib:format(" ~s(~w)", [Type, HP]);
+		 true ->
+		      []
+	      end
       end, UnitsOnThisLine).
 
     
@@ -290,7 +363,8 @@ grid_to_string(Grid) ->
     MinY = lists:min(Ys),
     MaxY = lists:max(Ys),
     
-    [[io_lib:format("~s", 
+    [io_lib:format("~w ", [Y]) ++
+     [io_lib:format("~s", 
 		    [grid_pos_to_string({Y, X}, Grid)]) ||
 	 X <- lists:seq(MinX, MaxX)] ++ units_and_hp(Y, Grid) ++ "\n" ||
 	Y <- lists:seq(MinY, MaxY)].
@@ -323,8 +397,6 @@ parse_grid(Binary, ElfAttackPower) ->
     Walls = lists:filter(fun({_, _, C}) ->
 				 C =:= '#'
 			 end, Items),
-
-    
 
     #grid{
        units = gb_trees:from_orddict(
@@ -376,12 +448,12 @@ lookup_test() ->
     ?assertEqual('G', grid_pos_to_string({3, 5}, Grid)).
     
 
-move_test() ->
-    Grid = read_grid("testinput2.txt", 3),
+%% move_test() ->
+%%     Grid = read_grid("testinput2.txt", 3),
 
-    ?assertEqual(in_range, move({1, 3}, 'E', Grid)),    
-    ?assertEqual({move_and_fight, {1, 3}}, move({1, 2}, 'E', Grid)),
-    ?assertEqual({move, {1, 2}}, move({1, 1}, 'E', Grid)).
+%%     ?assertEqual(in_range, move({1, 3}, 'E', Grid)),    
+%%     ?assertEqual({move_and_fight, {1, 3}}, move({1, 2}, 'E', Grid)),
+%%     ?assertEqual({move, {1, 2}}, move({1, 1}, 'E', Grid)).
 
 move2_test() ->     
     Bin = <<"#########\n",
@@ -395,5 +467,83 @@ move2_test() ->
 	    "#########\n">>,
     Grid = parse_grid(Bin, 0),
     ?assertEqual(in_range, move({2, 4}, 'G', Grid)).
+
+move3_test() ->        
+    Bin = <<"#######\n",
+	    "#..G..#\n",
+	    "#...G.#\n",
+	    "#.#G#G#\n",
+	    "#...#E#\n",
+	    "#.....#\n",
+	    "#######\n">>,
+    Grid = parse_grid(Bin, 0),
+    ?assertMatch({move, {1, 2}, _}, move({1, 3}, 'G', Grid)).
+
+
+move4_test() ->
+    Bin = <<"#######\n",
+	    "#..GE.#\n",
+	    "#.....#\n",
+	    "#.#.#.#\n",
+	    "#...#.#\n",
+	    "#.....#\n",
+	    "#######\n">>,
+    Grid = parse_grid(Bin, 0),
+    ?assertMatch(in_range, move({1, 3}, 'G', Grid)).
+
+ex_helper(Binary) ->
+    Grid = parse_grid(Binary, 3),
+    do_battle_until_death(1, Grid).
+
+ex1_test() ->
+    Bin = <<"#######\n",
+	    "#G..#E#\n",
+	    "#E#E.E#\n",
+	    "#G.##.#\n",
+	    "#...#E#\n",
+	    "#...E.#\n",
+	    "#######\n">>,
+    ?assertEqual(36334, ex_helper(Bin)).
+
+ex2_test() ->
+    Bin = <<"#######\n",
+	    "#E..EG#\n",
+	    "#.#G.E#\n",
+	    "#E.##E#\n",
+	    "#G..#.#\n",
+	    "#..E#.#\n",
+	    "#######\n">>,
+    ?assertEqual(39514, ex_helper(Bin)).
+
+ex3_test() ->
+    Bin = <<"#######\n",
+	    "#E.G#.#\n",
+	    "#.#G..#\n",
+	    "#G.#.G#\n",
+	    "#G..#.#\n",
+	    "#...E.#\n",
+	    "#######\n">>,
+    ?assertEqual(27755, ex_helper(Bin)).
+
+ex4_test() ->
+    Bin = <<"#######\n",
+	    "#.E...#\n",
+	    "#.#..G#\n",
+	    "#.###.#\n",
+	    "#E#G#G#\n",
+	    "#...#G#\n",
+	    "#######\n">>,
+    ?assertEqual(28944, ex_helper(Bin)).
     
+ex5_test() ->
+    Bin = <<"#########\n",
+	    "#G......#\n",
+	    "#.E.#...#\n",
+	    "#..##..G#\n",
+	    "#...##..#\n",
+	    "#...#...#\n",
+	    "#.G...G.#\n",
+	    "#.....G.#\n",
+	    "#########\n">>,
+    ?assertEqual(18740, ex_helper(Bin)).
     
