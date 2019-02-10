@@ -263,9 +263,11 @@ move(Pos, Type, Grid) ->
 	
 		    io:format("Nearest: ~p~n", [Nearest]),
 	    
-		    %% Note that there may be more than one path which leads
-		    %% to the square we chose to head for, so we need to look through
-		    %% all paths, and take the 
+		    %% TODO ... continue here ...  Now that we have
+		    %% chosen the enemy-adjacent square to move to we
+		    %% need to find all paths to it to figure out
+		    %% which of the start squares we should use.
+		    
 		    [NewPos|_] = AllStartSquares =
 			lists:sort(
 			  lists:filtermap(fun({_, [X|_] = Path}) ->
