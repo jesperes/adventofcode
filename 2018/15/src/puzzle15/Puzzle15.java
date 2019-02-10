@@ -178,7 +178,7 @@ public class Puzzle15 {
 
         @Override
         public String toString() {
-            return String.format("{%d,%d}", x, y);
+            return String.format("{%d,%d}", y, x);
         }
 
         @Override
@@ -379,8 +379,14 @@ public class Puzzle15 {
 
         public boolean executeRound() throws ElfDeathException {
 
+            System.out.format("Doing round %d: [%s]%n", currentRound,
+                    grid.getSortedUnits()
+                            .map(u -> String.format("{{%d,%d},{'%c',%d,%d}}",
+                                    u.y, u.x, (u instanceof Elf) ? 'E' : 'G',
+                                    u.hp, u.attackPower()))
+                            .collect(Collectors.joining(",")));
+
             if (TRACE) {
-                System.out.println("Executing round " + currentRound);
                 System.out.println("--------------------------------------");
             }
 
@@ -447,13 +453,18 @@ public class Puzzle15 {
                                     "[ATTACK] Attacking enemy: " + enemyUnit);
 
                         if (unit.attack(enemyUnit)) {
-                            if (TRACE)
-                                System.out.println("[ATTACK] Enemy unit dies");
 
                             if (enemyUnit instanceof Elf && !allowElfDeaths) {
                                 throw new ElfDeathException();
                             }
+
                             grid.kill(enemyUnit);
+
+                            char c = (enemyUnit instanceof Elf) ? 'E' : 'G';
+                            System.out.format(
+                                    "Deleted dead unit '%c' at {%d,%d}, %d units left%n",
+                                    c, enemyUnit.y, enemyUnit.x,
+                                    grid.units.size());
                         } else {
                             if (TRACE)
                                 System.out.println(

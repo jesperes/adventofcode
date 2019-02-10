@@ -30,10 +30,11 @@ part1() ->
     io:format("Start:~n~s~n", [grid_to_string(Grid)]),    
     do_battle_until_death(1, Grid).
 
-%% do_battle_until_death(3, Grid) ->
-%%     Grid;
+do_battle_until_death(2, Grid) ->
+    io:format("Terminating at 2 rounds:~n~s~n", [grid_to_string(Grid)]),
+    io:format("Units: ~w~n", [gb_trees:to_list(Grid#grid.units)]);
 do_battle_until_death(N, Grid) ->
-    io:format("Doing round ~p~n", [N]),
+    io:format("Doing round ~w: ~w~n", [N, gb_trees:to_list(Grid#grid.units)]),
     case do_round(Grid) of
         {winner, Type, FinalGrid} ->
             FullRounds = N - 1,
@@ -169,17 +170,17 @@ combat(Pos, Grid) ->
 apply_move(Pos, NewPos, Grid) ->
     Val = gb_trees:get(Pos, Grid#grid.units),
     
-    case gb_trees:lookup(NewPos, Grid#grid.units) of
-	none ->
-	    NewUnits = gb_trees:insert(NewPos, Val, 
-				       gb_trees:delete(Pos, Grid#grid.units)),
-	    Grid#grid{units = NewUnits};
-	{value, V} ->
-	    io:format("~s~n", [grid_to_string(Grid)]),
-	    false = 
-		io:format("Attempting to move unit ~p at ~p into ~p which is occupied by ~p~n",
-			  [Val, Pos, NewPos, V])
-    end.
+    %% case gb_trees:lookup(NewPos, Grid#grid.units) of
+    %% 	none ->
+    NewUnits = gb_trees:insert(NewPos, Val, 
+			       gb_trees:delete(Pos, Grid#grid.units)),
+    Grid#grid{units = NewUnits}.
+    %% 	{value, V} ->
+    %% 	    io:format("~s~n", [grid_to_string(Grid)]),
+    %% 	    false = 
+    %% 		io:format("Attempting to move unit ~p at ~p into ~p which is occupied by ~p~n",
+    %% 			  [Val, Pos, NewPos, V])
+    %% end.
 	    
 
 %%% Find shortest path
@@ -195,15 +196,92 @@ is_open(Pos, Grid) ->
 	and (not gb_trees:is_defined(Pos, Grid#grid.units)).
 
 move(Pos, Type, Grid) ->
-    %% Start squares is any non-wall square, possibly with an enemy
-    %% unit in it.
-    StartSquares = get_start_squares(Pos, Type, Grid),
-    
-    %% io:format("Start squares: ~p~n", [StartSquares]),
 
-    Enemies = lists:filter(fun({_, {EnemyType, HP, _}}) ->
-    				   (EnemyType =/= Type)
-    			   end, gb_trees:to_list(Grid#grid.units)), 
+    io:format("~s~n", [grid_to_string(Grid)]),
+
+    %% EnemySquares is the list of all enemy positions
+    EnemySquares = lists:filtermap(fun({EnemyPos, {EnemyType, _, _}}) ->
+					   if (EnemyType =/= Type) ->
+						   {true, EnemyPos};
+					      true -> 
+						   false
+					   end
+				   end, gb_trees:to_list(Grid#grid.units)), 
+    
+    case EnemySquares of 
+	[] ->
+	    %% There are no more enemies left.
+	    no_enemies;
+	
+	_ ->
+	    
+	    %% InRange is the list of all squares in range of at least one enemy
+	    InRange = [Adj ||
+			  Enemy <- EnemySquares,
+			  Adj <- adjacent(Enemy),
+			  is_open(Adj, Grid) or (Adj =:= Pos)],
+	    
+	    %% io:format("Positions in range of at least one enemy: ~p~n", [InRange]),
+	    
+	    %% Compute the list of squares adjacent to enemies with the shortest
+	    %% distance.
+	    {BestReachable, _} =
+		lists:foldl(fun(P, {Paths, Best} = Acc) ->
+				    %% TODO prune the search tree of paths
+				    %% known to be too long.
+				    Path = find_path(Pos, P, Best, Grid),
+				    case Path of
+					{Len, _} when Len < Best ->
+					    {[Path], Len};
+					{Len, _} when Len =:= Best ->
+					    {[Path|Paths], Best};
+					_ ->
+					    Acc
+				    end
+					
+			    end, {[], inf}, InRange),
+	    
+	    case BestReachable of
+		[] ->
+		    %% There are no enemies reachable from this unit.
+		    no_path;
+		
+		_ ->
+		    %% The target square (adjacent to enemy) will be first in
+		    %% the paths returned by the A* implementation, so by
+		    %% sorting them we will get them in the right order.
+		    %% 
+		    %% "Nearest" has the same meaning as in the puzzle
+		    %% description, i.e. those enemy-adjacent squares which
+		    %% all share the smallest distance to the attacking unit.
+		    %% Of these, we choose the first one in reading order
+		    %% (this will be the first one in the "Nearest" list).
+		    %% 
+		    %% "Chosen" is here the enemy-adjacent, reachable, square
+		    %% which we chose. 
+		    [{_Len, [Chosen|_]}|_] = Nearest = lists:sort(BestReachable),
+		    
+		    %% Note that there may be more than one path which leads
+		    %% to the square we chose to head for, so we need to look through
+		    %% all paths, and take the 
+		    [NewPos|_] =
+			lists:sort(
+			  lists:filtermap(fun({_, [X|_] = Path}) ->
+						  if X =:= Chosen ->
+							  [Start|_] = lists:reverse(Path),
+							  {true, Start};
+						     true ->
+							  false
+						  end
+					  end, Nearest)),
+		    
+		    %% io:format("All start squares: ~p~n", [AllStartSquares]),
+		    NewPos
+	    end
+    end.
+
+    %% X = [find_shortest_paths(Pos, End, Grid) ||
+    %% 	    End <- InRange
 
     %% io:format("Enemies of ~p: ~p~n", [Pos, Enemies]),
 
@@ -212,65 +290,76 @@ move(Pos, Type, Grid) ->
     %% enemy. This is fortunate (or really by design), because it
     %% means that sorting the list of paths, the path we are heading
     %% for towards the enemy ends up at the beginning of the list.
-    Paths = 
-	lists:sort(lists:flatten(
-		     [path_to_enemy(StartPos, Enemy, Grid)
-		      || StartPos <- StartSquares,
-			 Enemy <- Enemies])),
+    %%  Paths = 
+    %% 	lists:sort(lists:flatten(
+    %% 		     [path_to_enemy(StartPos, Enemy, Grid)
+    %% 		      || StartPos <- StartSquares,
+    %% 			 Enemy <- Enemies])),
+
+    %% P0 = {11, 13},
     
-    %% io:format("Best paths towards enemies:~n~p~n", [Paths]),
+    %% if Pos =:= P0 ->
+    %%  	    lists:foreach(
+    %% 	      fun(P) ->
+    %% 		      io:format("~p = ~w~n", [Pos, P])
+    %% 	      end, Paths);
+    %%    true -> ok
+    %% end,
     
-    case {Enemies, Paths} of
-        {[], _} ->
-            %% No enemies found, end of combat.
-            no_enemies;
-	{_, []} -> 
-	    %% This means that there is no path to any enemy for the
-	    %% unit at this position; the unit cannot move.
-	    no_path;
-	{_, [{Steps, _}|_] = AllPaths} ->
+    %% case {Enemies, Paths} of
+    %%     {[], _} ->
+    %%         %% No enemies found, end of combat.
+    %%         no_enemies;
+    %% 	{_, []} -> 
+    %% 	    %% This means that there is no path to any enemy for the
+    %% 	    %% unit at this position; the unit cannot move.
+    %% 	    no_path;
+    %% 	{_, [{Steps, _}|_] = AllPaths} ->
 	    
-	    %% The best path to any square adjacent to an enemy is 
-	    %% Steps long, but there may several such paths.
+    %% 	    %% The best path to any square adjacent to an enemy is 
+    %% 	    %% Steps long, but there may several such paths.
 
-	    [BestPath|_] = AllPaths0 =
-		lists:sort(
-		  lists:filtermap(fun({N, Path}) ->
-					  if N == Steps ->
-						  {true, lists:reverse(Path)};
-					     true ->
-						  false
-					  end
-				  end, AllPaths)),
+    %% 	    [BestPath|_] = AllPaths0 =
+    %% 		lists:sort(
+    %% 		  lists:filtermap(fun({N, Path}) ->
+    %% 					  if N == Steps ->
+    %% 						  {true, lists:reverse(Path)};
+    %% 					     true ->
+    %% 						  false
+    %% 					  end
+    %% 				  end, AllPaths)),
 	    
-	    %% io:format("All paths from ~p unit at ~p to enemies: ~p~n", [Type, Pos, AllPaths0]),
-	    %% io:format("Selecting: ~p~n", [BestPath]),
+    %% 	    if Pos =:= P0 ->
+    %% 	     	    %% io:format("All paths from ~p unit at ~p to enemies:~n~p~n", [Type, Pos, AllPaths0]),
+    %% 	     	    io:format("Selecting: ~p~n", [BestPath]);
+    %% 	       true ->
+    %% 	     	    ok
+    %% 	    end,
 
-	    case BestPath of
-	    	[] ->
-	    	    %% Already in range of enemy
-	    	    in_range;
-	    	[Next] ->
-	    	    %% Moving one step will bring us in range for combat
-	    	    {move_and_fight, Next};
-	    	_ -> 
-	    	    %% Unit is too far, can just move.
-	    	    [Next|_RemainingPathTowardsEnemy] = BestPath,
-	    	    {move, Next, BestPath}
-	    end
-    end.
+    %% 	    case BestPath of
+    %% 	    	[] ->
+    %% 	    	    %% Already in range of enemy
+    %% 	    	    in_range;
+    %% 	    	[Next] ->
+    %% 	    	    %% Moving one step will bring us in range for combat
+    %% 	    	    {move_and_fight, Next};
+    %% 	    	_ -> 
+    %% 	    	    %% Unit is too far, can just move.
+    %% 	    	    [Next|_RemainingPathTowardsEnemy] = BestPath,
+    %% 	    	    {move, Next, BestPath}
+    %% 	    end
+    %% end.
 
-
-path_to_enemy(Pos, {Pos, _}, _) ->
-    {0, []};
-path_to_enemy(Pos, {EnemyPos, _}, Grid) ->
-    %% io:format("Searching path from ~p to ~p~n", [Pos, EnemyPos]),
-    EnemyAdj = open_and_adjacent(EnemyPos, Grid),
-    Paths = lists:filter(fun(P) ->
-				 P =/= search_exhausted
-			 end, [find_path(Pos, AdjPos, Grid)
-			       || AdjPos <- EnemyAdj]),
-    Paths.
+%% path_to_enemy(Pos, {Pos, _}, _) ->
+%%     {0, []};
+%% path_to_enemy(Pos, {EnemyPos, _}, Grid) ->
+%%     %% io:format("Searching path from ~p to ~p~n", [Pos, EnemyPos]),
+%%     EnemyAdj = open_and_adjacent(EnemyPos, Grid),
+%%     Paths = lists:filter(fun(P) ->
+%% 				 P =/= search_exhausted
+%% 			 end, [find_path(Pos, AdjPos, Grid)
+%% 			       || AdjPos <- EnemyAdj]),
+%%     Paths.
 	
 manhattan_dist({X1, Y1}, {X2, Y2}) ->   
     abs(X1 - X2) + abs(Y1 - Y2).
@@ -281,9 +370,11 @@ open_and_adjacent(Pos, Grid) ->
 	      is_open(AdjPos, Grid)
       end, adjacent(Pos)).
 
-find_path(StartPos, EndPos, Grid) ->
-    %% io:format("Finding shortest path from ~p -> ~p~n", [StartPos, EndPos]),
-
+find_path(StartPos, EndPos, _Best, Grid) ->
+    %% Best is here the current shortest distance, and we are not
+    %% interested in any solutions worse than that, but our astar
+    %% implementation does not support specifying an upper bound.
+    
     {Ye, Xe} = EndPos,
     
     CostFn = fun({Y, X}) -> abs(Xe - X) + abs(Ye - Y) end,
@@ -295,28 +386,28 @@ find_path(StartPos, EndPos, Grid) ->
     
     astar2:astar(StartPos, EndPos, CostFn, NbrFn, DistFn).
 
-get_start_squares(Pos, Type, Grid) ->
-    lists:filter(fun(Adj) ->
-			 case sets:is_element(Adj, Grid#grid.walls) of
-			     true ->
-				 %% Not a wall
-				 false;
-			     false ->
-				 %% Lookup = gb_trees:lookup(Adj, Grid#grid.units),
-				 %% io:format("Lookup = ~p~n", [Lookup]),
-				 case gb_trees:lookup(Adj, Grid#grid.units) of
-				     {value, {T, _, _}} when (T =/= Type) ->
-					 %% Enemy
-					 true; 
-				     {value, _} ->
-					 %% Non-enemy
-					 false;
-				     none ->
-					 %% Open space
-					 true
-				 end
-			 end
-		 end, adjacent(Pos)).
+%% get_start_squares(Pos, Type, Grid) ->
+%%     lists:filter(fun(Adj) ->
+%% 			 case sets:is_element(Adj, Grid#grid.walls) of
+%% 			     true ->
+%% 				 %% Not a wall
+%% 				 false;
+%% 			     false ->
+%% 				 %% Lookup = gb_trees:lookup(Adj, Grid#grid.units),
+%% 				 %% io:format("Lookup = ~p~n", [Lookup]),
+%% 				 case gb_trees:lookup(Adj, Grid#grid.units) of
+%% 				     {value, {T, _, _}} when (T =/= Type) ->
+%% 					 %% Enemy
+%% 					 true; 
+%% 				     {value, _} ->
+%% 					 %% Non-enemy
+%% 					 false;
+%% 				     none ->
+%% 					 %% Open space
+%% 					 true
+%% 				 end
+%% 			 end
+%% 		 end, adjacent(Pos)).
 
 %%% Pretty-printing
 
@@ -454,6 +545,15 @@ lookup_test() ->
 %%     ?assertEqual(in_range, move({1, 3}, 'E', Grid)),    
 %%     ?assertEqual({move_and_fight, {1, 3}}, move({1, 2}, 'E', Grid)),
 %%     ?assertEqual({move, {1, 2}}, move({1, 1}, 'E', Grid)).
+
+move1_test() ->
+    Bin = <<"#######\n",
+	    "#.E...#\n",
+	    "#.....#\n",
+	    "#...G.#\n",
+	    "#######\n">>,
+    Grid = parse_grid(Bin, 0),
+    move({1, 2}, 'E', Grid).
 
 move2_test() ->     
     Bin = <<"#########\n",
