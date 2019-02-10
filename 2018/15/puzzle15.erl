@@ -197,7 +197,7 @@ is_open(Pos, Grid) ->
 
 move(Pos, Type, Grid) ->
 
-    io:format("~s~n", [grid_to_string(Grid)]),
+    %% io:format("~s~n", [grid_to_string(Grid)]),
 
     %% EnemySquares is the list of all enemy positions
     EnemySquares = lists:filtermap(fun({EnemyPos, {EnemyType, _, _}}) ->
@@ -221,7 +221,7 @@ move(Pos, Type, Grid) ->
 			  Adj <- adjacent(Enemy),
 			  is_open(Adj, Grid) or (Adj =:= Pos)],
 	    
-	    %% io:format("Positions in range of at least one enemy: ~p~n", [InRange]),
+	    io:format("Positions in range of at least one enemy: ~p~n", [InRange]),
 	    
 	    %% Compute the list of squares adjacent to enemies with the shortest
 	    %% distance.
@@ -260,23 +260,29 @@ move(Pos, Type, Grid) ->
 		    %% "Chosen" is here the enemy-adjacent, reachable, square
 		    %% which we chose. 
 		    [{_Len, [Chosen|_]}|_] = Nearest = lists:sort(BestReachable),
-		    
+	
+		    io:format("Nearest: ~p~n", [Nearest]),
+	    
 		    %% Note that there may be more than one path which leads
 		    %% to the square we chose to head for, so we need to look through
 		    %% all paths, and take the 
-		    [NewPos|_] =
+		    [NewPos|_] = AllStartSquares =
 			lists:sort(
 			  lists:filtermap(fun({_, [X|_] = Path}) ->
 						  if X =:= Chosen ->
-							  [Start|_] = lists:reverse(Path),
+							  [_,Start|_] = lists:reverse(Path),
 							  {true, Start};
 						     true ->
 							  false
 						  end
 					  end, Nearest)),
 		    
-		    %% io:format("All start squares: ~p~n", [AllStartSquares]),
-		    NewPos
+		    io:format("All start squares: ~p~n", [AllStartSquares]),
+		    if NewPos =:= Pos ->
+			    in_range;
+		       true ->
+			    NewPos
+		    end
 	    end
     end.
 
