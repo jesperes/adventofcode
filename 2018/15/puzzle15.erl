@@ -16,12 +16,14 @@
 
 -define(UNIT_HP, 200).
 -define(GOBLIN_ATTACK_POWER, 3).
+-define(TRACE_FILE, "erltrace.terms").
 
 -record(grid, {
 	  walls = sets:new(),
 	  units = maps:new(),
 	  width = 0,
-	  height = 0
+	  height = 0,
+	  tracefile
 	 }).
 
 main() ->
@@ -29,15 +31,23 @@ main() ->
      {part2, 0}}.
 
 part1() ->    
-    Grid = read_grid("input.txt", 3),
-    ?LOG("Start:~n~s~n", [grid_to_string(Grid)]),    
-    do_battle_until_death(1, Grid).
+    Grid0 = read_grid("input.txt", 3),
+    {ok, IoDev} = file:open(?TRACE_FILE, [write]),
+    Grid = Grid0#grid{tracefile = IoDev},
+    try
+	?LOG("Start:~n~s~n", [grid_to_string(Grid)]),    
+	do_battle_until_death(1, Grid)
+    after
+	ok = file:close(Grid#grid.tracefile)
+    end.
 
 %% do_battle_until_death(4, Grid) ->
 %%     ?LOG("Terminating at 2 rounds:~n~s~n", [grid_to_string(Grid)]),
 %%     ?LOG("Units: ~w~n", [gb_trees:to_list(Grid#grid.units)]);
 do_battle_until_death(N, Grid) ->
-    ?LOG("Doing round ~w: ~n", [N]), %% , gb_trees:to_list(Grid#grid.units)]),
+    io:format(Grid#grid.tracefile, "Doing round ~w: ~w~n", 
+	      [N, gb_trees:to_list(Grid#grid.units)]),
+    
     case do_round(Grid) of
         {winner, Type, FinalGrid} ->
             FullRounds = N - 1,
@@ -150,8 +160,8 @@ combat(Pos, Grid) ->
 	    %% Delete enemy unit if dead, otherwise update its HP
 	    NewUnits = 
 		if NewEnemyHP =< 0 ->
-			%% ?LOG("Deleted dead unit ~p at ~p, ~p units left.~n", 
-			%% 	  [EnemyType, EnemyPos, gb_trees:size(Grid#grid.units) - 1]), 
+			?LOG("Deleted dead unit ~p at ~p, ~p units left~n", 
+			     [EnemyType, EnemyPos, gb_trees:size(Grid#grid.units) - 1]), 
 			gb_trees:delete(EnemyPos, Grid#grid.units);
 		   true ->
 			gb_trees:update(EnemyPos, {EnemyType, NewEnemyHP, EnemyAP}, Grid#grid.units)
@@ -450,6 +460,7 @@ parse_grid(Binary, ElfAttackPower) ->
        width = length(First),
        height = length(Lines)
       }.
+
 
 read_grid(Filename, ElfAttackPower) ->
     {ok, Binary} = file:read_file(Filename),
