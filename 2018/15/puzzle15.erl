@@ -7,6 +7,7 @@
 
 -module(puzzle15).
 -export([main/0, part1/0, part2/0]).
+-compile([export_all]).
 
 -include_lib("eunit/include/eunit.hrl").
 
@@ -15,45 +16,15 @@
 -define(DEFAULT_ELF_ATTACK_POWER, 3).
 
 -record(grid, {
-               walls = sets:new(),
-               units = maps:new(),
-               width = 0,
-               height = 0,
-               elf_attack_power = ?DEFAULT_ELF_ATTACK_POWER,
-               elf_deaths = 0
-	 }).
-
-
-counter(Name, Fun) ->
-    {T, V} = timer:tc(Fun),
-    Map = erlang:get(counters),
-    erlang:put(counters, maps:update_with(Name, fun(Old) -> Old + T end, T, Map)),
-    V.
-
-clear_counters() ->
-    erlang:put(counters, #{}).
-
-display_counters() ->
-    Counters = erlang:get(counters),
-    Total = maps:get(total, Counters),
-    lists:foreach(
-      fun({K, V}) ->
-              io:format("~p: ~p usecs (~p%)~n", [K, V, 100 * (V / Total)])
-      end, maps:to_list(Counters)).
-
-with_counters(Fun) ->
-    clear_counters(),
-    R = counter(total, Fun),
-    display_counters(),
-    R.
-
+               board,
+               units,
+               width,
+               elf_attack_power,
+               elf_deaths
+              }).
 main() ->
-    with_counters(
-      fun() ->
-              {{part1, part1()},
-               {part2, part2()}}
-      end).
-
+    {{part1, part1()},
+     {part2, part2()}}.
 
 part1() ->
     Grid = read_grid("input.txt", ?DEFAULT_ELF_ATTACK_POWER),
@@ -67,6 +38,8 @@ do_battle_with_elf_boost(ElfAttackPower) ->
     do_battle_until_death(1, Grid, false).
 
 do_battle_until_death(N, Grid, AllowElfDeaths) ->
+    %%    io:format("Round: ~w~n", [N]),
+    
     case do_round(Grid) of
         {winner, _, FinalGrid} ->
             FullRounds = N - 1,
@@ -164,7 +137,7 @@ combat(Pos, Grid) ->
 			gb_trees:update(EnemyPos, {EnemyType, NewEnemyHP, EnemyAP, EnemyId}, Grid#grid.units)
 		end,
 
-            ElfDeath = if (NewEnemyHP =< 0) and (EnemyType =:= 'E') -> 1;
+            ElfDeath = if (NewEnemyHP =< 0) and (EnemyType =:= $E) -> 1;
                           true -> 0
                        end,
            
@@ -197,9 +170,11 @@ adjacent({Y, X}) ->
      {Y + 1, X}].
 
 is_open(Pos, Grid) ->
-    (not sets:is_element(Pos, Grid#grid.walls))
-	and (not gb_trees:is_defined(Pos, Grid#grid.units)).
-
+    case read(Grid, Pos) of
+        $. -> true;
+        _ -> false
+    end.
+        
 manhattan_dist({Y1, X1}, {Y2, X2}) ->
     abs(X1 - X2) + abs(Y1 - Y2).
 
@@ -233,7 +208,7 @@ find_path(_, Enemies, _Grid) when length(Enemies) == 0 ->
 find_path(StartPos, Enemies, Grid) ->
 
     Search = get_default_search_params(StartPos, Enemies, Grid),
-    S0 = counter('outer_find_path', fun() -> find_path(Search) end),
+    S0 = find_path(Search),
 
     case lists:sort(sets:to_list(S0#search.nearest)) of
 	[] -> no_path;
@@ -247,10 +222,7 @@ find_path(StartPos, Enemies, Grid) ->
 	       true ->
 		    %% Now, we need to find out which square to start from.
 		    Adj = open_and_adjacent(StartPos, Grid),
-                    counter('select_route', 
-                            fun() ->
-                                    select_route(Adj, ChosenPos, Grid)
-                            end)
+                    select_route(Adj, ChosenPos, Grid)
 	    end
     end.
 
@@ -267,7 +239,7 @@ select_route(Adj, ChosenPos, Grid) ->
                   Params = get_default_search_params(
                              Start, [ChosenPos], Grid),
                   P0 = find_path(Params),
-                  Ns = gb_sets:to_list(P0#search.nearest),
+                  Ns = sets:to_list(P0#search.nearest),
                   case Ns of
                       [] -> false;
                       [{_, Dist}|_] -> {true, {Dist, Start}}
@@ -344,106 +316,63 @@ find_path(Search) ->
 
 %%% Pretty-printing
 
-grid_pos_to_string(Pos, Grid) ->
-    case sets:is_element(Pos, Grid#grid.walls) of
-	true -> '#';
-	false ->
-	    case gb_trees:lookup(Pos, Grid#grid.units) of
-		{value, {Type, HP, _, _}} when HP > 0 ->
-		    Type;
-		_ ->
-		    '.'
-	    end
-    end.
-
-
-units_and_hp(Y, Grid) ->
-    Units = gb_trees:keys(Grid#grid.units),
-    UnitsOnThisLine =
-        lists:filter(fun({Y0, _}) ->
-                             Y0 == Y
-                     end, Units),
-    lists:map(
-      fun(Unit) ->
-              {Type, HP, _, _} = gb_trees:get(Unit, Grid#grid.units),
-	      if HP > 0 ->
-		      io_lib:format(" ~s(~w)", [Type, HP]);
-		 true ->
-		      []
-	      end
-      end, UnitsOnThisLine).
-
-
 grid_to_string(Grid) ->
-    AllPos =
-	sets:to_list(Grid#grid.walls) ++
-	gb_trees:keys(Grid#grid.units),
-
-    Ys = lists:map(fun({Y, _}) -> Y end, AllPos),
-    Xs = lists:map(fun({_, X}) -> X end, AllPos),
-
-    MinX = lists:min(Xs),
-    MaxX = lists:max(Xs),
-    MinY = lists:min(Ys),
-    MaxY = lists:max(Ys),
-
-    [io_lib:format("~w ", [Y]) ++
-     [io_lib:format("~s",
-		    [grid_pos_to_string({Y, X}, Grid)]) ||
-	 X <- lists:seq(MinX, MaxX)] ++ units_and_hp(Y, Grid) ++ "\n" ||
-	Y <- lists:seq(MinY, MaxY)].
+    Width = Grid#grid.width,
+    Height = erlang:byte_size(Grid#grid.board) div Width,
+    lists:map(
+      fun(Y) ->
+              lists:map(
+                fun(X) ->
+                        read(Grid, {Y, X})
+                end, lists:seq(0, Width-1))
+      end, lists:seq(0, Height-1)).
 
 %%% Parser
 
+id() ->
+    erlang:timestamp().
+
+units(Binary, Width, ElfAttackPower) ->
+    gb_trees:from_orddict(
+      lists:map(fun(Offset) ->
+                        Y = Offset div Width,
+                        X = Offset rem Width,
+                        C = binary:at(Binary, X + Y * Width),
+                        {{Y, X},
+                         {C, ?UNIT_HP, 
+                          unit_attack_power(C, ElfAttackPower),
+                          %% Use as unique key to
+                          %% distinguish different units
+                          id()}}
+                end,
+                [Offset ||
+                    {Offset, 1} <- binary:matches(Binary, [<<$E>>, <<$G>>])])).
+
+read(Grid, {Y, X} = Pos) ->
+    Units = Grid#grid.units,
+    Board = Grid#grid.board,
+    W = Grid#grid.width,
+    case gb_trees:lookup(Pos, Units) of
+        none ->
+            case binary:at(Board, X + Y * W) of
+                $E -> $.;
+                $G -> $.;
+                C -> C
+            end;
+        {value, {C, _, _, _}} ->
+            C
+    end.
+
 parse_grid(Binary, ElfAttackPower) ->
-    Str = binary_to_list(Binary),
-    [First|_] = Lines = string:tokens(Str, "\r\n"),
-
-    Fun = fun(X, Y, C, L) ->
-		  [{Y, X, list_to_atom([C])}|L]
-	  end,
-
-    {_, Items} =
-	lists:foldl(
-	  fun(Line, {Y, Acc}) ->
-		  {_, _, AccOut} =
-		      lists:foldl(
-			fun(C, {X, Y0, InnerAcc}) ->
-				{X + 1, Y0, Fun(X, Y0, C, InnerAcc)}
-			end, {0, Y, Acc}, Line),
-		  {Y + 1, AccOut}
-	  end, {0, []}, Lines),
-
-    Units = lists:filter(fun({_, _, C}) ->
-				 (C =:= 'E') or (C =:= 'G')
-			 end, Items),
-
-    Walls = lists:filter(fun({_, _, C}) ->
-				 C =:= '#'
-			 end, Items),
-
+    {Eol, 1} = binary:match(Binary, <<$\n>>),
+    W = Eol + 1,
     #grid{
-       units = gb_trees:from_orddict(
-		 lists:sort(
-		   lists:map(fun({Y, X, C}) ->
-				     {{Y, X}, 
-                                      {C, ?UNIT_HP, 
-                                       unit_attack_power(C, ElfAttackPower),
-                                       %% Use as unique key to
-                                       %% distinguish different units
-                                       erlang:timestamp()}}
-			     end, Units))),
-
-       walls = sets:from_list(
-		 lists:map(fun({Y, X, _}) ->
-				   {Y, X}
-			   end, Walls)),
-
-       width = length(First),
-       height = length(Lines),
+       board = Binary,
+       units = units(Binary, W, ElfAttackPower),
+       width = W,
+       elf_deaths = 0,
        elf_attack_power = ElfAttackPower
       }.
-
 
 read_grid(Filename, ElfAttackPower) ->
     {ok, Binary} = file:read_file(Filename),
@@ -451,8 +380,8 @@ read_grid(Filename, ElfAttackPower) ->
 
 %%% Utilities
 
-unit_attack_power('E', ElfAttackPower) -> ElfAttackPower;
-unit_attack_power('G', _) -> ?GOBLIN_ATTACK_POWER.
+unit_attack_power($E, ElfAttackPower) -> ElfAttackPower;
+unit_attack_power($G, _) -> ?GOBLIN_ATTACK_POWER.
 
 %%% Tests
 

@@ -67,7 +67,10 @@ compile(F) ->
 		    report_warnings,
 		    report_errors] ++ 
 	if HipeArch =/= undefined ->
-		[native];
+                %% native code is actually slower for several of the
+                %% puzzle solutions.
+                %% [native];
+                [];
 	   true ->
 		[]
 	end,
