@@ -1,5 +1,7 @@
 #!/usr/bin/env escript
 
+-include_lib("eunit/include/eunit.hrl").
+
 solution(1, part1) -> 470;
 solution(1, part2) -> 790;
 solution(2, part1) -> 9139;
@@ -51,24 +53,6 @@ solution(24, part2) -> 2002;
 solution(25, part1) -> 318;
 solution(25, part2) -> ok.                      %% no part 2 for day 25
 
-
-%% All puzzles run cleanly in less than 5 seconds, except these ones:
-
-%% Day 14 (Chocolate Carts) is not implemented yet
-%% Day 15 (Beverage Bandits) was only solved java
-%% Day 19 (Go With The Flow) times out
-%% Day 21 (Chronal Conversion) ??
-%% Day 22 (Mode Maze) times out
-%% Day 23 (Experimental Emergency Teleportation) cheated with python solution
-%% Day 24 (Immune System Simulator) timeout
-%% Day 25 (Four-Dimensional Adventure)
-
-%% Total time: 36.41 seconds (1456.28 msecs/puzzle)
-%% Failed:    2
-%% Timeouts:  5
-%% Skipped:   2
-%% Succeeded: 16
-
 count(What, Result) ->
     length(lists:filter(fun({W, _}) when W == What -> true;
                            (_) -> false
@@ -91,7 +75,13 @@ compile(F) ->
     compile:file(F, CompilerOpts ++ [{outdir, filename:dirname(F)}]).
 
 main(_) ->
-    true = (list_to_integer(erlang:system_info(otp_release)) >= 21),
+    OtpVersion = list_to_integer(erlang:system_info(otp_release)),
+    if OtpVersion < 21 ->
+            io:format("Erlang/OTP 21 or later is required.~n", []),
+            erlang:halt(1);
+       true ->
+            ok
+    end,
 
     Puzzles = lists:seq(1, 25),
     Dir = filename:absname("."),

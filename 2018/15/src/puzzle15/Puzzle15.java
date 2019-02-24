@@ -377,7 +377,9 @@ public class Puzzle15 {
                 int sumHP = grid.getSortedUnits().map(u -> u.hp)
                         .mapToInt(n -> n).sum();
 
-                // System.out.println("Sum of HP of remaining units: " + sumHP);
+                System.out.format("Outcome: %s * %s = %s%n", roundsFinished,
+                        sumHP, roundsFinished * sumHP);
+
                 return sumHP * roundsFinished;
             }
         }
@@ -461,6 +463,8 @@ public class Puzzle15 {
                         if (unit.attack(enemyUnit)) {
 
                             if (enemyUnit instanceof Elf && !allowElfDeaths) {
+                                System.out.println(
+                                        "First elf death at " + enemyUnit);
                                 throw new ElfDeathException();
                             }
 

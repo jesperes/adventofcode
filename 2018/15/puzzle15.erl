@@ -12,68 +12,52 @@
 -include_lib("eunit/include/eunit.hrl").
 
 -define(LOG(Fmt, Args), io:format(Fmt, Args)).
-%% -define(LOG(Fmt, Args), ok).
 
 -define(UNIT_HP, 200).
 -define(GOBLIN_ATTACK_POWER, 3).
--define(TRACE_FILE, "erltrace.terms").
+-define(DEFAULT_ELF_ATTACK_POWER, 3).
 
 -record(grid, {
-	  walls = sets:new(),
-	  units = maps:new(),
-	  width = 0,
-	  height = 0,
-	  tracefile
+               walls = sets:new(),
+               units = maps:new(),
+               width = 0,
+               height = 0,
+               elf_attack_power = ?DEFAULT_ELF_ATTACK_POWER,
+               elf_deaths = 0
 	 }).
 
 main() ->
     {{part1, part1()},
-     {part2, 0}}.
+     {part2, part2()}}.
 
 part1() ->
-    Grid0 = read_grid("input.txt", 3),
-    {ok, IoDev} = file:open(?TRACE_FILE, [write]),
-    Grid = Grid0#grid{tracefile = IoDev},
-    try
-	?LOG("Start:~n~s~n", [grid_to_string(Grid)]),
-	do_battle_until_death(1, Grid)
-    after
-	ok = file:close(Grid#grid.tracefile)
-    end.
+    Grid = read_grid("input.txt", ?DEFAULT_ELF_ATTACK_POWER),
+    do_battle_until_death(1, Grid, true).
 
-trace_output(Grid, Term) ->
-    case Grid#grid.tracefile of
-        undefined ->
-            ok;
-        TraceIo ->
-            io:format(TraceIo, "~w~n", [Term])
-    end.
+part2() ->
+    do_battle_with_elf_boost(?DEFAULT_ELF_ATTACK_POWER).
 
-do_battle_until_death(N, Grid) ->
+do_battle_with_elf_boost(ElfAttackPower) ->
+    %% ?LOG("Attempting battle with Elf attack power = ~p~n", [ElfAttackPower]),
+    Grid = read_grid("input.txt", ElfAttackPower),
+    do_battle_until_death(1, Grid, false).
 
-    trace_output(Grid,
-                 {{round, N}, gb_trees:to_list(Grid#grid.units)}),
-
+do_battle_until_death(N, Grid, AllowElfDeaths) ->
     case do_round(Grid) of
-        {winner, Type, FinalGrid} ->
+        {winner, _, FinalGrid} ->
             FullRounds = N - 1,
 	    SumHP = sum_hp(FinalGrid),
-
-            ?LOG("Winner is ~p after ~p full rounds, final grid:~n~s~n",
-                      [Type, N - 1, grid_to_string(FinalGrid)]),
-            ?LOG("Output = ~p * ~p = ~p~n",
-                      [FullRounds, SumHP, FullRounds * SumHP]),
+            %% ?LOG("Winner is ~p after ~p rounds with outcome = ~p * ~p = ~p~n", 
+            %%      [Winner, FullRounds, FullRounds, SumHP, FullRounds * SumHP]),
 	    FullRounds * SumHP;
-        NewGrid ->
-            %% ?LOG("~nAfter ~p rounds:~n~s~n", [N, grid_to_string(NewGrid)]),
-            do_battle_until_death(N + 1, NewGrid)
+        NewGrid when AllowElfDeaths or (NewGrid#grid.elf_deaths == 0) ->
+            do_battle_until_death(N + 1, NewGrid, AllowElfDeaths);
+        _ ->
+            do_battle_with_elf_boost(Grid#grid.elf_attack_power + 1)
     end.
 
 sum_hp(Grid) ->
-    %% ?LOG("~p~n", [gb_trees:to_list(Grid#grid.units)]),
-    lists:sum(lists:map(fun({_, {_, HP, _, _}}) ->
-				HP
-			end,
+    lists:sum(lists:map(fun({_, {_, HP, _, _}}) -> HP end,
                         gb_trees:to_list(Grid#grid.units))).
 
 do_round(Grid) ->
@@ -159,17 +143,17 @@ combat(Pos, Grid) ->
 	    %% Delete enemy unit if dead, otherwise update its HP
 	    NewUnits =
 		if NewEnemyHP =< 0 ->
-                        io:format("~w~n",
-                                  [{{dead, EnemyType}, {attacker, Pos}, {pos, EnemyPos}}]),
-
-                        trace_output(Grid,
-                                     {{dead, EnemyType}, {pos, EnemyPos}}),
 			gb_trees:delete(EnemyPos, Grid#grid.units);
 		   true ->
 			gb_trees:update(EnemyPos, {EnemyType, NewEnemyHP, EnemyAP, EnemyId}, Grid#grid.units)
 		end,
 
-	    Grid#grid{units = NewUnits}
+            ElfDeath = if (NewEnemyHP =< 0) and (EnemyType =:= 'E') -> 1;
+                          true -> 0
+                       end,
+           
+	    Grid#grid{units = NewUnits,
+                      elf_deaths = Grid#grid.elf_deaths + ElfDeath}
     end.
 
 %% Apply the move; moving Pos to NewPos, and recalculating the grid
@@ -238,7 +222,7 @@ find_path(StartPos, Enemies, Grid) ->
 
     case lists:sort(sets:to_list(S0#search.nearest)) of
 	[] -> no_path;
-	[Chosen|_] = AllEnemyAdj ->
+	[Chosen|_] ->
 	    {ChosenPos, _} = Chosen,
 
 	    %%?LOG("Start pos = ~p~n", [StartPos]),
@@ -465,7 +449,8 @@ parse_grid(Binary, ElfAttackPower) ->
 			   end, Walls)),
 
        width = length(First),
-       height = length(Lines)
+       height = length(Lines),
+       elf_attack_power = ElfAttackPower
       }.
 
 
@@ -527,7 +512,7 @@ move3_test() ->
 
 ex_helper(Binary) ->
     Grid = parse_grid(Binary, 3),
-    do_battle_until_death(1, Grid).
+    do_battle_until_death(1, Grid, true).
 
 ex0_test() ->
     Bin = <<"#######\n",
