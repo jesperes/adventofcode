@@ -30,24 +30,35 @@ main() ->
     {{part1, part1()},
      {part2, 0}}.
 
-part1() ->    
+part1() ->
     Grid0 = read_grid("input.txt", 3),
     {ok, IoDev} = file:open(?TRACE_FILE, [write]),
     Grid = Grid0#grid{tracefile = IoDev},
     try
-	?LOG("Start:~n~s~n", [grid_to_string(Grid)]),    
+	?LOG("Start:~n~s~n", [grid_to_string(Grid)]),
 	do_battle_until_death(1, Grid)
     after
 	ok = file:close(Grid#grid.tracefile)
     end.
 
+trace_output(Grid, Term) ->
+    case Grid#grid.tracefile of
+        undefined ->
+            ok;
+        TraceIo ->
+            io:format(TraceIo, "~w~n", [Term])
+    end.
+
+
 %% do_battle_until_death(4, Grid) ->
 %%     ?LOG("Terminating at 2 rounds:~n~s~n", [grid_to_string(Grid)]),
 %%     ?LOG("Units: ~w~n", [gb_trees:to_list(Grid#grid.units)]);
 do_battle_until_death(N, Grid) ->
-    io:format(Grid#grid.tracefile, "Doing round ~w: ~w~n", 
-	      [N, gb_trees:to_list(Grid#grid.units)]),
-    
+    ?LOG("Doing battle round ~w~n", [N]),
+
+    trace_output(Grid,
+                 {{round, N}, gb_trees:to_list(Grid#grid.units)}),
+
     case do_round(Grid) of
         {winner, Type, FinalGrid} ->
             FullRounds = N - 1,
@@ -55,7 +66,7 @@ do_battle_until_death(N, Grid) ->
 
             ?LOG("Winner is ~p after ~p full rounds, final grid:~n~s~n",
                       [Type, N - 1, grid_to_string(FinalGrid)]),
-            ?LOG("Output = ~p * ~p = ~p~n", 
+            ?LOG("Output = ~p * ~p = ~p~n",
                       [FullRounds, SumHP, FullRounds * SumHP]),
 	    FullRounds * SumHP;
         NewGrid ->
@@ -65,18 +76,18 @@ do_battle_until_death(N, Grid) ->
 
 sum_hp(Grid) ->
     %% ?LOG("~p~n", [gb_trees:to_list(Grid#grid.units)]),
-    lists:sum(lists:map(fun({_, {_, HP, _}}) -> 
+    lists:sum(lists:map(fun({_, {_, HP, _}}) ->
 				HP
-			end, 
+			end,
                         gb_trees:to_list(Grid#grid.units))).
 
 do_round(Grid) ->
     move_or_attack(gb_trees:iterator(Grid#grid.units), Grid).
 
-move_or_attack(Iter, Grid) -> 
- 
+move_or_attack(Iter, Grid) ->
+
     %% ?LOG("Grid:~n~s~n", [grid_to_string(Grid)]),
-    
+
     %% On each unit's turn, it tries to (1) MOVE into range (if it
     %% isn't already) and then (2) ATTACK (if it is in range).
 
@@ -84,15 +95,15 @@ move_or_attack(Iter, Grid) ->
 	none ->
 	    %% No more units to move in this round.
 	    Grid;
-	
+
 	{Pos, {Type, _, _}, NextIter} ->
-         
+
             %% ?LOG("~n=======[ ~p (~p) ]========~n", [Pos, Type]),
 
             %% Note that we cannot use the HP received from the
             %% iterator since the HP may have been modified due to
             %% attacks by other units.
-         
+
 	    case gb_trees:lookup(Pos, Grid#grid.units) of
 		none ->
                     %% Unit was killed before its turn.
@@ -108,7 +119,7 @@ move_or_attack(Iter, Grid) ->
 			    %% team wins.
 			    %% ?LOG("No enemies left, winner is ~p~n", [Type]),
 			    {winner, Type, Grid};
-			
+
 			no_path ->
 			    %% There is no path from this unit to any enemy.
 			    %% The unit cannot move, and ends it's turn.
@@ -122,7 +133,7 @@ move_or_attack(Iter, Grid) ->
 		    end
 	    end
     end.
-	
+
 
 combat(Pos, Grid) ->
     %% At beginning of combat, the unit considers all enemies in
@@ -130,16 +141,16 @@ combat(Pos, Grid) ->
 
     {Type, _HP, AttackPower} = gb_trees:get(Pos, Grid#grid.units),
 
-    EnemiesInRange = 
+    EnemiesInRange =
 	lists:sort(
 	  lists:filter(fun({EnemyPos, {EnemyType, _, _}}) ->
-			       (EnemyType =/= Type) 
+			       (EnemyType =/= Type)
 				   and (manhattan_dist(Pos, EnemyPos) == 1)
 		       end, gb_trees:to_list(Grid#grid.units))),
-    
-    
+
+
     %% ?LOG("Enemies in range of ~p: ~p~n", [Pos, EnemiesInRange]),
-    
+
     case EnemiesInRange of
 	[] ->
 	    %% ?LOG("No enemies in range, combat can not be done.~n", []),
@@ -150,18 +161,21 @@ combat(Pos, Grid) ->
 					end, EnemiesInRange)),
 	    [{EnemyPos, {EnemyType, EnemyHP, EnemyAP}}|_] =
 		lists:filter(fun({_, {_, HP, _}}) -> HP == MinHP end, EnemiesInRange),
-	    
-	    
+
+
 	    NewEnemyHP = EnemyHP - AttackPower,
 
-	    %% ?LOG("Attacked enemy at ~p, new enemy hp = ~p~n", 
+	    %% ?LOG("Attacked enemy at ~p, new enemy hp = ~p~n",
 	    %% 	 [EnemyPos, NewEnemyHP]),
-            
+
 	    %% Delete enemy unit if dead, otherwise update its HP
-	    NewUnits = 
+	    NewUnits =
 		if NewEnemyHP =< 0 ->
-			?LOG("Deleted dead unit ~p at ~p, ~p units left~n", 
-			     [EnemyType, EnemyPos, gb_trees:size(Grid#grid.units) - 1]), 
+                        io:format("~w~n",
+                                  [{{dead, EnemyType}, {attacker, Pos}, {pos, EnemyPos}}]),
+
+                        trace_output(Grid,
+                                     {{dead, EnemyType}, {pos, EnemyPos}}),
 			gb_trees:delete(EnemyPos, Grid#grid.units);
 		   true ->
 			gb_trees:update(EnemyPos, {EnemyType, NewEnemyHP, EnemyAP}, Grid#grid.units)
@@ -176,7 +190,7 @@ apply_move(Pos, Pos, Grid) ->
     Grid;
 apply_move(Pos, NewPos, Grid) ->
     Val = gb_trees:get(Pos, Grid#grid.units),
-    NewUnits = gb_trees:insert(NewPos, Val, 
+    NewUnits = gb_trees:insert(NewPos, Val,
 			       gb_trees:delete(Pos, Grid#grid.units)),
     Grid#grid{units = NewUnits}.
 
@@ -187,7 +201,7 @@ get_enemies_of(Type, Grid) ->
 		 true -> false
 	      end
       end, gb_trees:to_list(Grid#grid.units)).
-    
+
 adjacent({Y, X}) ->
     [{Y - 1, X},
      {Y, X - 1},
@@ -197,8 +211,8 @@ adjacent({Y, X}) ->
 is_open(Pos, Grid) ->
     (not sets:is_element(Pos, Grid#grid.walls))
 	and (not gb_trees:is_defined(Pos, Grid#grid.units)).
-	
-manhattan_dist({Y1, X1}, {Y2, X2}) ->   
+
+manhattan_dist({Y1, X1}, {Y2, X2}) ->
     abs(X1 - X2) + abs(Y1 - Y2).
 
 open_and_adjacent(Pos, Grid) ->
@@ -225,7 +239,7 @@ get_default_search_params(StartPos, Enemies, Grid) ->
        nearest = sets:new(),
        best = inf
       }.
-    
+
 find_path(_, Enemies, _Grid) when length(Enemies) == 0 ->
     no_enemies;
 find_path(StartPos, Enemies, Grid) ->
@@ -238,10 +252,10 @@ find_path(StartPos, Enemies, Grid) ->
 	[] -> no_path;
 	[Chosen|_] = AllEnemyAdj ->
 	    {ChosenPos, _} = Chosen,
-	    
+
 	    %%?LOG("Start pos = ~p~n", [StartPos]),
 	    %%?LOG("Chosen = ~p~n", [ChosenPos]),
-	    
+
 	    if StartPos =:= ChosenPos ->
 		    %% The start position was one of the adjacent
 		    %% squares, use it.
@@ -249,20 +263,20 @@ find_path(StartPos, Enemies, Grid) ->
 	       true ->
 		    %% Now, we need to find out which square to start from.
 		    Adj = open_and_adjacent(StartPos, Grid),
-		    
+
 		    %%?LOG("Choosing enemy-adjacent square ~p from ~p~n", [Chosen, AllEnemyAdj]),
 		    %%?LOG("Determining which square to start from: ~p~n", [Adj]),
-		    
+
 		    case Adj of
 			[X] -> X;
 			[_|_] ->
 			    %% We have more than one square to choose from.
 			    %% Make a search from each of the squares and see
 			    %% which one to use.
-			    
+
 			    %% All routes from any adjacent square to the choosen
 			    %% enemy-adjacent square
-			    Routes = 
+			    Routes =
 				lists:filtermap(
 				  fun(Start) ->
 					  %% ?LOG("Finding route from ~p to ~p~n", [Start, ChosenPos]),
@@ -276,25 +290,25 @@ find_path(StartPos, Enemies, Grid) ->
 					      [{_, Dist}|_] -> {true, {Dist, Start}}
 					  end
 				  end, Adj),
-			    
+
 			    %% ?LOG("All closest routes: ~p~n", [Routes]),
 			    %% case Routes of
 			    %% 	[] ->
-			    %% 	    ?LOG("No routes, this should not happen. Grid ~n~s~n", 
+			    %% 	    ?LOG("No routes, this should not happen. Grid ~n~s~n",
 			    %% 		 [grid_to_string(Grid)]);
 			    %% 	_ ->
 			    %% 	    ok
 			    %% end,
-			    
+
 			    %% Sort them on distance, and pick the best ones.
 			    SortedRoutes = lists:sort(Routes),
 			    [{Best, _}|_] = SortedRoutes,
-			    
-			    
+
+
 			    BestRoutes = lists:takewhile(fun({X, _}) ->
 								 X == Best
 							 end, SortedRoutes),
-			    
+
 			    %% Take the best route, break ties in reading order.
 			    [{_, BestStartPos}|_] = lists:sort(BestRoutes),
 
@@ -307,26 +321,26 @@ find_path(StartPos, Enemies, Grid) ->
 find_path(Search) ->
     Open = Search#search.open,
     case gb_sets:size(Open) of
-	0 -> 
+	0 ->
 	    %% ?LOG("Open set is empty, search is finished.~n", []),
 	    Search;
 	_ ->
 	    {{Dist, Elem}, Open0} = gb_sets:take_smallest(Open),
-	    
+
 	    Best = Search#search.best,
 	    Search00 = Search#search{open = Open0},
 
-	    IsAdjToEnemy = 
+	    IsAdjToEnemy =
 		lists:any(fun(P) -> manhattan_dist(P, Elem) =< 1 end,
 			  Search00#search.enemies),
-	    
+
 	    %% ?LOG("Searching node ~p at dist ~p (is adjacent: ~p)~n", [Elem, Dist, IsAdjToEnemy]),
 
 	    if IsAdjToEnemy and (Dist > Best) ->
 		    %% ?LOG("Pruning search when finding ~p at dist ~p~n", [Elem, Dist]),
 		    Search00;
 	       true ->
-		    Search0 = 
+		    Search0 =
 			if IsAdjToEnemy and (Dist < Best) ->
 				%% ?LOG("Found better solution ~p at dist ~p~n", [Elem, Dist]),
 				Search00#search{best = Dist, nearest = sets:from_list([{Elem, Dist}])};
@@ -338,15 +352,15 @@ find_path(Search) ->
 			   true ->
 				Search00
 			end,
-		    
+
 		    Adjacent = open_and_adjacent(Elem, Search0#search.grid),
-		    
-		    Search1 = 
+
+		    Search1 =
 			lists:foldl(
 			  fun(Adj, Acc) ->
 				  case sets:is_element(Adj, Acc#search.closed) of
 				      true -> Acc;
-				      false -> 
+				      false ->
 					  case gb_sets:is_element(Adj, Acc#search.open) of
 					      true -> Acc;
 					      false ->
@@ -355,34 +369,34 @@ find_path(Search) ->
 					  end
 				  end
 			  end, Search0, Adjacent),
-		    
-		    Search2 = 
-			Search1#search{closed = sets:add_element(Elem, Search1#search.closed)},
-		    
 
-		    
+		    Search2 =
+			Search1#search{closed = sets:add_element(Elem, Search1#search.closed)},
+
+
+
 		    find_path(Search2)
 	    end
-    end.	    
+    end.
 
 %%% Pretty-printing
 
 grid_pos_to_string(Pos, Grid) ->
     case sets:is_element(Pos, Grid#grid.walls) of
 	true -> '#';
-	false -> 
+	false ->
 	    case gb_trees:lookup(Pos, Grid#grid.units) of
 		{value, {Type, HP, _}} when HP > 0 ->
 		    Type;
-		_ -> 
+		_ ->
 		    '.'
 	    end
     end.
-    
+
 
 units_and_hp(Y, Grid) ->
     Units = gb_trees:keys(Grid#grid.units),
-    UnitsOnThisLine = 
+    UnitsOnThisLine =
         lists:filter(fun({Y0, _}) ->
                              Y0 == Y
                      end, Units),
@@ -396,22 +410,22 @@ units_and_hp(Y, Grid) ->
 	      end
       end, UnitsOnThisLine).
 
-    
+
 grid_to_string(Grid) ->
-    AllPos = 
+    AllPos =
 	sets:to_list(Grid#grid.walls) ++
 	gb_trees:keys(Grid#grid.units),
-    
+
     Ys = lists:map(fun({Y, _}) -> Y end, AllPos),
     Xs = lists:map(fun({_, X}) -> X end, AllPos),
-    
+
     MinX = lists:min(Xs),
     MaxX = lists:max(Xs),
     MinY = lists:min(Ys),
     MaxY = lists:max(Ys),
-    
+
     [io_lib:format("~w ", [Y]) ++
-     [io_lib:format("~s", 
+     [io_lib:format("~s",
 		    [grid_pos_to_string({Y, X}, Grid)]) ||
 	 X <- lists:seq(MinX, MaxX)] ++ units_and_hp(Y, Grid) ++ "\n" ||
 	Y <- lists:seq(MinY, MaxY)].
@@ -421,15 +435,15 @@ grid_to_string(Grid) ->
 parse_grid(Binary, ElfAttackPower) ->
     Str = binary_to_list(Binary),
     [First|_] = Lines = string:tokens(Str, "\r\n"),
-    
+
     Fun = fun(X, Y, C, L) ->
 		  [{Y, X, list_to_atom([C])}|L]
 	  end,
-    
-    {_, Items} = 
+
+    {_, Items} =
 	lists:foldl(
 	  fun(Line, {Y, Acc}) ->
-		  {_, _, AccOut} = 
+		  {_, _, AccOut} =
 		      lists:foldl(
 			fun(C, {X, Y0, InnerAcc}) ->
 				{X + 1, Y0, Fun(X, Y0, C, InnerAcc)}
@@ -440,7 +454,7 @@ parse_grid(Binary, ElfAttackPower) ->
     Units = lists:filter(fun({_, _, C}) ->
 				 (C =:= 'E') or (C =:= 'G')
 			 end, Items),
-    
+
     Walls = lists:filter(fun({_, _, C}) ->
 				 C =:= '#'
 			 end, Items),
@@ -451,7 +465,7 @@ parse_grid(Binary, ElfAttackPower) ->
 		   lists:map(fun({Y, X, C}) ->
 				     {{Y, X}, {C, ?UNIT_HP, unit_attack_power(C, ElfAttackPower)}}
 			     end, Units))),
-       
+
        walls = sets:from_list(
 		 lists:map(fun({Y, X, _}) ->
 				   {Y, X}
@@ -479,11 +493,11 @@ find_path1_test() ->
 	    "#...#.#\n",
 	    "#.G.#G#\n",
 	    "#######\n">>,
-    Grid = parse_grid(Bin, 0),    
+    Grid = parse_grid(Bin, 0),
     Enemies = get_enemies_of('E', Grid),
     ?assertEqual({1, 2}, find_path({1, 1}, Enemies, Grid)).
-    
-move2_test() ->     
+
+move2_test() ->
     Bin = <<"#########\n",
 	    "#.G...G.#\n",
 	    "#...G...#\n",
@@ -497,7 +511,7 @@ move2_test() ->
     Enemies = get_enemies_of('G', Grid),
     ?assertEqual({2, 4}, find_path({2, 4}, Enemies, Grid)).
 
-move3_test() ->        
+move3_test() ->
     Bin = <<"#######\n",
 	    "#..G..#\n",
 	    "#...G.#\n",
@@ -562,7 +576,7 @@ ex4_test() ->
 	    "#...#G#\n",
 	    "#######\n">>,
     ?assertEqual(28944, ex_helper(Bin)).
- 
+
 ex5_test() ->
     Bin = <<"#########\n",
 	    "#G......#\n",
@@ -574,4 +588,3 @@ ex5_test() ->
 	    "#.....G.#\n",
 	    "#########\n">>,
     ?assertEqual(18740, ex_helper(Bin)).
-    

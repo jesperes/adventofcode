@@ -4,8 +4,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -360,31 +362,35 @@ public class Puzzle15 {
 
         }
 
-        public int executeRounds() throws ElfDeathException {
+        public int executeRounds() throws ElfDeathException, IOException {
             currentRound = 1;
 
-            while (executeRound()) {
-                currentRound++;
+            try (BufferedWriter traceFile = new BufferedWriter(
+                    new FileWriter("javaoutput.terms"))) {
+                while (executeRound(traceFile)) {
+                    currentRound++;
+                }
+
+                // System.out.println(
+                // "Number of full rounds finished: " + roundsFinished);
+                //
+                int sumHP = grid.getSortedUnits().map(u -> u.hp)
+                        .mapToInt(n -> n).sum();
+
+                // System.out.println("Sum of HP of remaining units: " + sumHP);
+                return sumHP * roundsFinished;
             }
-
-            // System.out.println(
-            // "Number of full rounds finished: " + roundsFinished);
-            //
-            int sumHP = grid.getSortedUnits().map(u -> u.hp).mapToInt(n -> n)
-                    .sum();
-
-            // System.out.println("Sum of HP of remaining units: " + sumHP);
-            return sumHP * roundsFinished;
         }
 
-        public boolean executeRound() throws ElfDeathException {
+        public boolean executeRound(BufferedWriter traceFile)
+                throws ElfDeathException, IOException {
 
-            System.out.format("Doing round %d: [%s]%n", currentRound,
+            traceFile.write(String.format("{{round,%d},[%s]}%n", currentRound,
                     grid.getSortedUnits()
                             .map(u -> String.format("{{%d,%d},{'%c',%d,%d}}",
                                     u.y, u.x, (u instanceof Elf) ? 'E' : 'G',
                                     u.hp, u.attackPower()))
-                            .collect(Collectors.joining(",")));
+                            .collect(Collectors.joining(","))));
 
             if (TRACE) {
                 System.out.println("--------------------------------------");
@@ -461,10 +467,11 @@ public class Puzzle15 {
                             grid.kill(enemyUnit);
 
                             char c = (enemyUnit instanceof Elf) ? 'E' : 'G';
-                            System.out.format(
-                                    "Deleted dead unit '%c' at {%d,%d}, %d units left%n",
-                                    c, enemyUnit.y, enemyUnit.x,
-                                    grid.units.size());
+
+                            traceFile.write(String.format(
+                                    "{{dead,'%c'},{pos,{%d,%d}}}%n", c,
+                                    enemyUnit.y, enemyUnit.x));
+
                         } else {
                             if (TRACE)
                                 System.out.println(
