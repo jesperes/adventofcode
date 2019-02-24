@@ -76,7 +76,7 @@ do_battle_until_death(N, Grid) ->
 
 sum_hp(Grid) ->
     %% ?LOG("~p~n", [gb_trees:to_list(Grid#grid.units)]),
-    lists:sum(lists:map(fun({_, {_, HP, _}}) ->
+    lists:sum(lists:map(fun({_, {_, HP, _, _}}) ->
 				HP
 			end,
                         gb_trees:to_list(Grid#grid.units))).
@@ -96,7 +96,7 @@ move_or_attack(Iter, Grid) ->
 	    %% No more units to move in this round.
 	    Grid;
 
-	{Pos, {Type, _, _}, NextIter} ->
+	{Pos, {Type, _, _, _}, NextIter} ->
 
             %% ?LOG("~n=======[ ~p (~p) ]========~n", [Pos, Type]),
 
@@ -106,8 +106,9 @@ move_or_attack(Iter, Grid) ->
 
 	    case gb_trees:lookup(Pos, Grid#grid.units) of
 		none ->
-                    %% Unit was killed before its turn.
-		    %% ?LOG("~p unit at ~p was killed before its turn.~n", [Type, Pos]),
+                    %% Unit was killed before its turn.  ?LOG("~p unit
+		    %% at ~p was killed before its turn.~n", [Type,
+		    %% Pos]),
                     move_or_attack(NextIter, Grid);
 
 		{value, _} ->
@@ -116,14 +117,15 @@ move_or_attack(Iter, Grid) ->
 		    case find_path(Pos, Enemies, Grid) of
 			no_enemies ->
 			    %% There are no enemies left. Attacking
-			    %% team wins.
-			    %% ?LOG("No enemies left, winner is ~p~n", [Type]),
+			    %% team wins.  ?LOG("No enemies left,
+			    %% winner is ~p~n", [Type]),
 			    {winner, Type, Grid};
 
 			no_path ->
-			    %% There is no path from this unit to any enemy.
-			    %% The unit cannot move, and ends it's turn.
-			    %% ?LOG("~p unit at ~p can not reach any enemy~n", [Type, Pos]),
+			    %% There is no path from this unit to any
+			    %% enemy.  The unit cannot move, and ends
+			    %% it's turn.  ?LOG("~p unit at ~p can not
+			    %% reach any enemy~n", [Type, Pos]),
 			    move_or_attack(NextIter, Grid);
 
 			NewPos ->
@@ -139,11 +141,11 @@ combat(Pos, Grid) ->
     %% At beginning of combat, the unit considers all enemies in
     %% range, not just the one we happened to move towards.
 
-    {Type, _HP, AttackPower} = gb_trees:get(Pos, Grid#grid.units),
+    {Type, _HP, AttackPower, _} = gb_trees:get(Pos, Grid#grid.units),
 
     EnemiesInRange =
 	lists:sort(
-	  lists:filter(fun({EnemyPos, {EnemyType, _, _}}) ->
+	  lists:filter(fun({EnemyPos, {EnemyType, _, _, _}}) ->
 			       (EnemyType =/= Type)
 				   and (manhattan_dist(Pos, EnemyPos) == 1)
 		       end, gb_trees:to_list(Grid#grid.units))),
@@ -156,11 +158,11 @@ combat(Pos, Grid) ->
 	    %% ?LOG("No enemies in range, combat can not be done.~n", []),
 	    Grid;
 	_ ->
-	    MinHP = lists:min(lists:map(fun({_, {_, HP, _}}) ->
+	    MinHP = lists:min(lists:map(fun({_, {_, HP, _, _}}) ->
 						HP
 					end, EnemiesInRange)),
-	    [{EnemyPos, {EnemyType, EnemyHP, EnemyAP}}|_] =
-		lists:filter(fun({_, {_, HP, _}}) -> HP == MinHP end, EnemiesInRange),
+	    [{EnemyPos, {EnemyType, EnemyHP, EnemyAP, EnemyId}}|_] =
+		lists:filter(fun({_, {_, HP, _, _}}) -> HP == MinHP end, EnemiesInRange),
 
 
 	    NewEnemyHP = EnemyHP - AttackPower,
@@ -178,7 +180,7 @@ combat(Pos, Grid) ->
                                      {{dead, EnemyType}, {pos, EnemyPos}}),
 			gb_trees:delete(EnemyPos, Grid#grid.units);
 		   true ->
-			gb_trees:update(EnemyPos, {EnemyType, NewEnemyHP, EnemyAP}, Grid#grid.units)
+			gb_trees:update(EnemyPos, {EnemyType, NewEnemyHP, EnemyAP, EnemyId}, Grid#grid.units)
 		end,
 
 	    Grid#grid{units = NewUnits}
@@ -196,7 +198,7 @@ apply_move(Pos, NewPos, Grid) ->
 
 get_enemies_of(Type, Grid) ->
     lists:filtermap(
-      fun({EnemyPos, {EnemyType, _, _}}) ->
+      fun({EnemyPos, {EnemyType, _, _, _}}) ->
 	      if (EnemyType =/= Type) -> {true, EnemyPos};
 		 true -> false
 	      end
@@ -386,7 +388,7 @@ grid_pos_to_string(Pos, Grid) ->
 	true -> '#';
 	false ->
 	    case gb_trees:lookup(Pos, Grid#grid.units) of
-		{value, {Type, HP, _}} when HP > 0 ->
+		{value, {Type, HP, _, _}} when HP > 0 ->
 		    Type;
 		_ ->
 		    '.'
@@ -402,7 +404,7 @@ units_and_hp(Y, Grid) ->
                      end, Units),
     lists:map(
       fun(Unit) ->
-              {Type, HP, _} = gb_trees:get(Unit, Grid#grid.units),
+              {Type, HP, _, _} = gb_trees:get(Unit, Grid#grid.units),
 	      if HP > 0 ->
 		      io_lib:format(" ~s(~w)", [Type, HP]);
 		 true ->
@@ -463,7 +465,12 @@ parse_grid(Binary, ElfAttackPower) ->
        units = gb_trees:from_orddict(
 		 lists:sort(
 		   lists:map(fun({Y, X, C}) ->
-				     {{Y, X}, {C, ?UNIT_HP, unit_attack_power(C, ElfAttackPower)}}
+				     {{Y, X}, 
+                                      {C, ?UNIT_HP, 
+                                       unit_attack_power(C, ElfAttackPower),
+                                       %% Use as unique key to
+                                       %% distinguish different units
+                                       erlang:timestamp()}}
 			     end, Units))),
 
        walls = sets:from_list(
@@ -486,6 +493,15 @@ unit_attack_power('E', ElfAttackPower) -> ElfAttackPower;
 unit_attack_power('G', _) -> ?GOBLIN_ATTACK_POWER.
 
 %%% Tests
+
+pretty_print_test() ->
+    Bin = <<"#######\n",
+	    "#E..G.#\n",
+	    "#...#.#\n",
+	    "#.G.#G#\n",
+	    "#######\n">>,
+    Grid = parse_grid(Bin, 0),
+    io:format("~s~n", [grid_to_string(Grid)]).
 
 find_path1_test() ->
     Bin = <<"#######\n",
