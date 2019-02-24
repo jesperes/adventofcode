@@ -23,9 +23,37 @@
                elf_deaths = 0
 	 }).
 
+
+counter(Name, Fun) ->
+    {T, V} = timer:tc(Fun),
+    Map = erlang:get(counters),
+    erlang:put(counters, maps:update_with(Name, fun(Old) -> Old + T end, T, Map)),
+    V.
+
+clear_counters() ->
+    erlang:put(counters, #{}).
+
+display_counters() ->
+    Counters = erlang:get(counters),
+    Total = maps:get(total, Counters),
+    lists:foreach(
+      fun({K, V}) ->
+              io:format("~p: ~p usecs (~p%)~n", [K, V, 100 * (V / Total)])
+      end, maps:to_list(Counters)).
+
+with_counters(Fun) ->
+    clear_counters(),
+    R = counter(total, Fun),
+    display_counters(),
+    R.
+
 main() ->
-    {{part1, part1()},
-     {part2, part2()}}.
+    with_counters(
+      fun() ->
+              {{part1, part1()},
+               {part2, part2()}}
+      end).
+
 
 part1() ->
     Grid = read_grid("input.txt", ?DEFAULT_ELF_ATTACK_POWER),
@@ -205,7 +233,7 @@ find_path(_, Enemies, _Grid) when length(Enemies) == 0 ->
 find_path(StartPos, Enemies, Grid) ->
 
     Search = get_default_search_params(StartPos, Enemies, Grid),
-    S0 = find_path(Search),
+    S0 = counter('outer_find_path', fun() -> find_path(Search) end),
 
     case lists:sort(sets:to_list(S0#search.nearest)) of
 	[] -> no_path;
