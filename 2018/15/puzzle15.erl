@@ -219,44 +219,44 @@ find_path(StartPos, Enemies, Grid) ->
 	       true ->
 		    %% Now, we need to find out which square to start from.
 		    Adj = open_and_adjacent(StartPos, Grid),
-
-		    case Adj of
-			[X] -> X;
-			[_|_] ->
-			    %% We have more than one square to choose from.
-			    %% Make a search from each of the squares and see
-			    %% which one to use.
-
-			    %% All routes from any adjacent square to the choosen
-			    %% enemy-adjacent square
-			    Routes =
-				lists:filtermap(
-				  fun(Start) ->
-					  Params = get_default_search_params(
-						     Start, [ChosenPos], Grid),
-					  P0 = find_path(Params),
-					  Ns = sets:to_list(P0#search.nearest),
-					  case Ns of
-					      [] -> false;
-					      [{_, Dist}|_] -> {true, {Dist, Start}}
-					  end
-				  end, Adj),
-
-			    %% Sort them on distance, and pick the best ones.
-			    SortedRoutes = lists:sort(Routes),
-			    [{Best, _}|_] = SortedRoutes,
-
-
-			    BestRoutes = lists:takewhile(fun({X, _}) ->
-								 X == Best
-							 end, SortedRoutes),
-
-			    %% Take the best route, break ties in reading order.
-			    [{_, BestStartPos}|_] = lists:sort(BestRoutes),
-			    BestStartPos
-		    end
+                    counter('select_route', 
+                            fun() ->
+                                    select_route(Adj, ChosenPos, Grid)
+                            end)
 	    end
     end.
+
+select_route([X], _, _) -> X;
+select_route(Adj, ChosenPos, Grid) ->
+    %% We have more than one square to choose from.  Make a search
+    %% from each of the squares and see which one to use.
+    
+    %% All routes from any adjacent square to the choosen
+    %% enemy-adjacent square
+    Routes =
+        lists:filtermap(
+          fun(Start) ->
+                  Params = get_default_search_params(
+                             Start, [ChosenPos], Grid),
+                  P0 = find_path(Params),
+                  Ns = gb_sets:to_list(P0#search.nearest),
+                  case Ns of
+                      [] -> false;
+                      [{_, Dist}|_] -> {true, {Dist, Start}}
+                  end
+          end, Adj),
+    
+    %% Sort them on distance, and pick the best ones.
+    SortedRoutes = lists:sort(Routes),
+    [{Best, _}|_] = SortedRoutes,
+    
+    BestRoutes = lists:takewhile(fun({X, _}) ->
+                                         X == Best
+                                 end, SortedRoutes),
+    
+    %% Take the best route, break ties in reading order.
+    [{_, BestStartPos}|_] = lists:sort(BestRoutes),
+    BestStartPos.
 
 find_path(Search) ->
     Open = Search#search.open,
