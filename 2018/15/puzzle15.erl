@@ -49,12 +49,7 @@ trace_output(Grid, Term) ->
             io:format(TraceIo, "~w~n", [Term])
     end.
 
-
-%% do_battle_until_death(4, Grid) ->
-%%     ?LOG("Terminating at 2 rounds:~n~s~n", [grid_to_string(Grid)]),
-%%     ?LOG("Units: ~w~n", [gb_trees:to_list(Grid#grid.units)]);
 do_battle_until_death(N, Grid) ->
-    ?LOG("Doing battle round ~w~n", [N]),
 
     trace_output(Grid,
                  {{round, N}, gb_trees:to_list(Grid#grid.units)}),
@@ -86,8 +81,6 @@ do_round(Grid) ->
 
 move_or_attack(Iter, Grid) ->
 
-    %% ?LOG("Grid:~n~s~n", [grid_to_string(Grid)]),
-
     %% On each unit's turn, it tries to (1) MOVE into range (if it
     %% isn't already) and then (2) ATTACK (if it is in range).
 
@@ -96,44 +89,37 @@ move_or_attack(Iter, Grid) ->
 	    %% No more units to move in this round.
 	    Grid;
 
-	{Pos, {Type, _, _, _}, NextIter} ->
-
-            %% ?LOG("~n=======[ ~p (~p) ]========~n", [Pos, Type]),
+	{Pos, {Type, _, _, UnitId}, NextIter} ->
 
             %% Note that we cannot use the HP received from the
             %% iterator since the HP may have been modified due to
             %% attacks by other units.
 
 	    case gb_trees:lookup(Pos, Grid#grid.units) of
-		none ->
-                    %% Unit was killed before its turn.  ?LOG("~p unit
-		    %% at ~p was killed before its turn.~n", [Type,
-		    %% Pos]),
-                    move_or_attack(NextIter, Grid);
-
-		{value, _} ->
+		{value, {Type, _, _, UnitId}} ->
 		    Enemies = get_enemies_of(Type, Grid),
 
 		    case find_path(Pos, Enemies, Grid) of
 			no_enemies ->
 			    %% There are no enemies left. Attacking
-			    %% team wins.  ?LOG("No enemies left,
-			    %% winner is ~p~n", [Type]),
+			    %% team wins.
 			    {winner, Type, Grid};
 
 			no_path ->
 			    %% There is no path from this unit to any
-			    %% enemy.  The unit cannot move, and ends
-			    %% it's turn.  ?LOG("~p unit at ~p can not
-			    %% reach any enemy~n", [Type, Pos]),
+			    %% enemy. The unit cannot move, and ends
+			    %% it's turn.
 			    move_or_attack(NextIter, Grid);
 
 			NewPos ->
 			    GridAfterMove = apply_move(Pos, NewPos, Grid),
 			    GridAfterCombat = combat(NewPos, GridAfterMove),
 			    move_or_attack(NextIter, GridAfterCombat)
-		    end
-	    end
+		    end;
+                _ ->
+                    %% Unit was killed before its turn.
+                    move_or_attack(NextIter, Grid)
+            end
     end.
 
 
