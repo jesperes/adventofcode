@@ -6,12 +6,9 @@
 %%% Created :  2 Feb 2019 by Jesper Eskilson <jesper.eskilson@klarna.com>
 
 -module(puzzle15).
--export([main/0]).
--compile([export_all]).
+-export([main/0, part1/0, part2/0]).
 
 -include_lib("eunit/include/eunit.hrl").
-
--define(LOG(Fmt, Args), io:format(Fmt, Args)).
 
 -define(UNIT_HP, 200).
 -define(GOBLIN_ATTACK_POWER, 3).
@@ -38,7 +35,6 @@ part2() ->
     do_battle_with_elf_boost(?DEFAULT_ELF_ATTACK_POWER).
 
 do_battle_with_elf_boost(ElfAttackPower) ->
-    %% ?LOG("Attempting battle with Elf attack power = ~p~n", [ElfAttackPower]),
     Grid = read_grid("input.txt", ElfAttackPower),
     do_battle_until_death(1, Grid, false).
 
@@ -47,8 +43,6 @@ do_battle_until_death(N, Grid, AllowElfDeaths) ->
         {winner, _, FinalGrid} ->
             FullRounds = N - 1,
 	    SumHP = sum_hp(FinalGrid),
-            %% ?LOG("Winner is ~p after ~p rounds with outcome = ~p * ~p = ~p~n", 
-            %%      [Winner, FullRounds, FullRounds, SumHP, FullRounds * SumHP]),
 	    FullRounds * SumHP;
         NewGrid when AllowElfDeaths or (NewGrid#grid.elf_deaths == 0) ->
             do_battle_until_death(N + 1, NewGrid, AllowElfDeaths);
@@ -61,13 +55,10 @@ sum_hp(Grid) ->
                         gb_trees:to_list(Grid#grid.units))).
 
 do_round(Grid) ->
-    move_or_attack(gb_trees:iterator(Grid#grid.units), Grid).
+    round_per_unit(gb_trees:iterator(Grid#grid.units), Grid).
 
-move_or_attack(Iter, Grid) ->
-
-    %% On each unit's turn, it tries to (1) MOVE into range (if it
-    %% isn't already) and then (2) ATTACK (if it is in range).
-
+%% Execute move/combat actions for each unit.
+round_per_unit(Iter, Grid) ->
     case gb_trees:next(Iter) of
 	none ->
 	    %% No more units to move in this round.
@@ -93,16 +84,16 @@ move_or_attack(Iter, Grid) ->
 			    %% There is no path from this unit to any
 			    %% enemy. The unit cannot move, and ends
 			    %% it's turn.
-			    move_or_attack(NextIter, Grid);
+			    round_per_unit(NextIter, Grid);
 
 			NewPos ->
 			    GridAfterMove = apply_move(Pos, NewPos, Grid),
 			    GridAfterCombat = combat(NewPos, GridAfterMove),
-			    move_or_attack(NextIter, GridAfterCombat)
+			    round_per_unit(NextIter, GridAfterCombat)
 		    end;
                 _ ->
                     %% Unit was killed before its turn.
-                    move_or_attack(NextIter, Grid)
+                    round_per_unit(NextIter, Grid)
             end
     end.
 
@@ -136,9 +127,6 @@ combat(Pos, Grid) ->
 
 
 	    NewEnemyHP = EnemyHP - AttackPower,
-
-	    %% ?LOG("Attacked enemy at ~p, new enemy hp = ~p~n",
-	    %% 	 [EnemyPos, NewEnemyHP]),
 
 	    %% Delete enemy unit if dead, otherwise update its HP
 	    NewUnits =
@@ -215,7 +203,6 @@ get_default_search_params(StartPos, Enemies, Grid) ->
 find_path(_, Enemies, _Grid) when length(Enemies) == 0 ->
     no_enemies;
 find_path(StartPos, Enemies, Grid) ->
-    %% ?LOG("Finding shortest path from ~p to enemies ~p~n", [StartPos, Enemies]),
 
     Search = get_default_search_params(StartPos, Enemies, Grid),
     S0 = find_path(Search),
@@ -225,9 +212,6 @@ find_path(StartPos, Enemies, Grid) ->
 	[Chosen|_] ->
 	    {ChosenPos, _} = Chosen,
 
-	    %%?LOG("Start pos = ~p~n", [StartPos]),
-	    %%?LOG("Chosen = ~p~n", [ChosenPos]),
-
 	    if StartPos =:= ChosenPos ->
 		    %% The start position was one of the adjacent
 		    %% squares, use it.
@@ -235,9 +219,6 @@ find_path(StartPos, Enemies, Grid) ->
 	       true ->
 		    %% Now, we need to find out which square to start from.
 		    Adj = open_and_adjacent(StartPos, Grid),
-
-		    %%?LOG("Choosing enemy-adjacent square ~p from ~p~n", [Chosen, AllEnemyAdj]),
-		    %%?LOG("Determining which square to start from: ~p~n", [Adj]),
 
 		    case Adj of
 			[X] -> X;
@@ -251,26 +232,15 @@ find_path(StartPos, Enemies, Grid) ->
 			    Routes =
 				lists:filtermap(
 				  fun(Start) ->
-					  %% ?LOG("Finding route from ~p to ~p~n", [Start, ChosenPos]),
 					  Params = get_default_search_params(
 						     Start, [ChosenPos], Grid),
 					  P0 = find_path(Params),
 					  Ns = sets:to_list(P0#search.nearest),
-					  %% ?LOG("Routes found: ~p~n", [Ns]),
 					  case Ns of
 					      [] -> false;
 					      [{_, Dist}|_] -> {true, {Dist, Start}}
 					  end
 				  end, Adj),
-
-			    %% ?LOG("All closest routes: ~p~n", [Routes]),
-			    %% case Routes of
-			    %% 	[] ->
-			    %% 	    ?LOG("No routes, this should not happen. Grid ~n~s~n",
-			    %% 		 [grid_to_string(Grid)]);
-			    %% 	_ ->
-			    %% 	    ok
-			    %% end,
 
 			    %% Sort them on distance, and pick the best ones.
 			    SortedRoutes = lists:sort(Routes),
@@ -283,8 +253,6 @@ find_path(StartPos, Enemies, Grid) ->
 
 			    %% Take the best route, break ties in reading order.
 			    [{_, BestStartPos}|_] = lists:sort(BestRoutes),
-
-			    %% ?LOG("Chosing closest route in reading order: ~p~n", [BestStartPos]),
 			    BestStartPos
 		    end
 	    end
@@ -294,7 +262,6 @@ find_path(Search) ->
     Open = Search#search.open,
     case gb_sets:size(Open) of
 	0 ->
-	    %% ?LOG("Open set is empty, search is finished.~n", []),
 	    Search;
 	_ ->
 	    {{Dist, Elem}, Open0} = gb_sets:take_smallest(Open),
@@ -306,18 +273,14 @@ find_path(Search) ->
 		lists:any(fun(P) -> manhattan_dist(P, Elem) =< 1 end,
 			  Search00#search.enemies),
 
-	    %% ?LOG("Searching node ~p at dist ~p (is adjacent: ~p)~n", [Elem, Dist, IsAdjToEnemy]),
-
 	    if IsAdjToEnemy and (Dist > Best) ->
-		    %% ?LOG("Pruning search when finding ~p at dist ~p~n", [Elem, Dist]),
 		    Search00;
 	       true ->
 		    Search0 =
 			if IsAdjToEnemy and (Dist < Best) ->
-				%% ?LOG("Found better solution ~p at dist ~p~n", [Elem, Dist]),
-				Search00#search{best = Dist, nearest = sets:from_list([{Elem, Dist}])};
+				Search00#search{best = Dist, 
+                                                nearest = sets:from_list([{Elem, Dist}])};
 			   IsAdjToEnemy and (Dist == Best) ->
-				%% ?LOG("Found equal solution ~p at dist ~p~n", [Elem, Dist]),
 				Nearest = Search00#search.nearest,
 				Nearest0 = sets:add_element({Elem, Dist}, Nearest),
 				Search00#search{nearest = Nearest0};
@@ -467,48 +430,13 @@ unit_attack_power('G', _) -> ?GOBLIN_ATTACK_POWER.
 
 pretty_print_test() ->
     Bin = <<"#######\n",
-	    "#E..G.#\n",
-	    "#...#.#\n",
-	    "#.G.#G#\n",
-	    "#######\n">>,
-    Grid = parse_grid(Bin, 0),
-    io:format("~s~n", [grid_to_string(Grid)]).
-
-find_path1_test() ->
-    Bin = <<"#######\n",
-	    "#E..G.#\n",
-	    "#...#.#\n",
-	    "#.G.#G#\n",
-	    "#######\n">>,
-    Grid = parse_grid(Bin, 0),
-    Enemies = get_enemies_of('E', Grid),
-    ?assertEqual({1, 2}, find_path({1, 1}, Enemies, Grid)).
-
-move2_test() ->
-    Bin = <<"#########\n",
-	    "#.G...G.#\n",
-	    "#...G...#\n",
-	    "#...E..G#\n",
-	    "#.G.....#\n",
-	    "#.......#\n",
-	    "#G..G..G#\n",
-	    "#.......#\n",
-	    "#########\n">>,
-    Grid = parse_grid(Bin, 0),
-    Enemies = get_enemies_of('G', Grid),
-    ?assertEqual({2, 4}, find_path({2, 4}, Enemies, Grid)).
-
-move3_test() ->
-    Bin = <<"#######\n",
-	    "#..G..#\n",
-	    "#...G.#\n",
-	    "#.#G#G#\n",
-	    "#...#E#\n",
+	    "#.G...#\n",
+	    "#...EG#\n",
+	    "#.#.#G#\n",
+	    "#..G#E#\n",
 	    "#.....#\n",
 	    "#######\n">>,
-    Grid = parse_grid(Bin, 0),
-    Enemies = get_enemies_of('G', Grid),
-    ?assertEqual({1, 2}, find_path({1, 3}, Enemies, Grid)).
+    io:format("~s~n", [grid_to_string(parse_grid(Bin, 3))]).
 
 ex_helper(Binary) ->
     Grid = parse_grid(Binary, 3),
