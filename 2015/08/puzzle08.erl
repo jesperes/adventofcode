@@ -6,12 +6,9 @@
 %%% Created : 17 Dec 2018 by Jesper Eskilson <>
 
 -module(puzzle08).
-
 -export([start/0]).
 
-
 start() ->
-    test(),
     {ok, Binary} = file:read_file("input.txt"),
     Part1Sol = 
         lists:foldl(fun({LSize, MSize}, Acc) ->
@@ -22,7 +19,6 @@ start() ->
     
     Part2Sol =
         lists:foldl(fun({Orig, Quoted}, Acc) ->
-                            io:format("~s -> ~s~n", [Orig, Quoted]),
                             Acc + (length(Quoted) - length(Orig))
                     end, 0,
                     [{Str, "\"" ++ quote(Str) ++ "\""} || 
@@ -67,13 +63,6 @@ quote([$\\|Rest]) ->
     [$\\, $\\|quote(Rest)];
 quote([C|Rest]) ->
     [C|quote(Rest)].
-
-test() ->
-    {2, 0} = measure("\"\""),
-    {5, 3} = measure("\"abc\""),
-    {10, 7} = measure("\"aaa\\\"aaa\""),
-    
-    io:format("~s~n", [quote("\"\"")]).
    
   
 
