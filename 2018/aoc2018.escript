@@ -90,24 +90,22 @@ main(_) ->
     Dir = filename:absname("."),
 
     %% compile utility code
-    Utils = 
-	filelib:fold_files(
-	  Dir ++ "/../utils/erlang", ".*\\.erl$", false,
-	  fun(F, Acc) ->
-                  [compile(F)|Acc]
-          end, []),
+    filelib:fold_files(
+      Dir ++ "/../utils/erlang", ".*\\.erl$", false,
+      fun(F, Acc) ->
+              [compile(F)|Acc]
+      end, []),
     
-    io:format("Compile utility code: ~w~n", [Utils]),
-
     {Time, Result} =
         timer:tc(fun() ->
                          lists:map(fun(Day) ->
                                                run_puzzle(Dir, Day)
                                        end, Puzzles)
                  end),
+
     io:format("Total time: ~.2f seconds (~.2f msecs/puzzle)~n",
               [Time / 1000000, (Time / 1000) / length(Puzzles)]),
-
+    
     io:format("Failed:    ~w~n", [count(fail, Result)]),
     io:format("Skipped:   ~w~n", [count(skipped, Result)]),
     io:format("Succeeded: ~w~n", [count(ok, Result)]).
