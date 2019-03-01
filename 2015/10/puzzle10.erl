@@ -11,7 +11,7 @@
 -compile([export_all]).
 
 input() -> 
-    <<"1321131112">>.
+    "1321131112".
 
 start() ->
     test(),
@@ -22,36 +22,25 @@ part2() -> iterate(50).
 
 iterate(N) ->
     Fun = fun(_, S) -> look_and_say(S) end,
-    byte_size(lists:foldl(Fun, input(), lists:seq(1, N))).
+    length(lists:foldl(Fun, input(), lists:seq(1, N))).
 
 test() ->
-    <<"11">> = look_and_say(<<"1">>),
-    <<"21">> = look_and_say(<<"11">>),
-    <<"1211">> = look_and_say(<<"21">>).
-            
-look_and_say(Bin) ->
-    list_to_binary(look_and_say0(Bin)).
+    "11" = look_and_say("1"),
+    "21" = look_and_say("11"),
+    "1211" = look_and_say("21").
 
-look_and_say0(<<>>) -> <<>>;
-look_and_say0(<<X,Rest/binary>> = Bin) ->
-    Len = prefix_len(X, Bin),
-    {_, L2} = split_binary(Bin, Len),
-    P1 = integer_to_list(Len),
-    [P1, [X], look_and_say0(L2)].
-
-prefix_len(X, Bin) -> prefix_len(0, X, Bin, 0).
-prefix_len(I, X, Bin, Acc) when I >= byte_size(Bin) -> Acc;
-prefix_len(I, X, Bin, Acc) ->
-    case binary:at(Bin, I) of
-        X -> prefix_len(I + 1, X, Bin, Acc + 1);
-        N -> Acc
-    end.
-
-            
-
-
-
+look_and_say(List) ->
+    lists:flatten(look_and_say0(List)).
     
+look_and_say0([]) -> [];
+look_and_say0([X|_] = L) ->
+    {Len, Rest} = split_prefix(X, L, 0),
+    [integer_to_list(Len), [X], look_and_say0(Rest)].
+
+split_prefix(X, [], N) -> {N, []};
+split_prefix(X, [Y|_] = L, N) when X =/= Y -> {N, L};
+split_prefix(X, [X|Rest], N) ->
+    split_prefix(X, Rest, N + 1).
                              
 
 
