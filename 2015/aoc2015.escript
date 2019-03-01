@@ -3,10 +3,11 @@
 -include_lib("eunit/include/eunit.hrl").
 
 puzzles() ->
-    [ {"08/puzzle08.erl", {puzzle08, start, []}, {1371, 2117}             }
-    , {"09/puzzle9.erl",  {puzzle9,  start, []}, {251, 898}               }
-    , {"10/puzzle10.erl", {puzzle10, start, []}, {492982, 6989950}        }
-    , {"11/puzzle11.erl", {puzzle11, start, []}, {"cqjxxyzz", "cqkaabcc"} }
+    [ {"01/puzzle01.erl", {puzzle01, start, []}, {232, 1783}}
+    , {"08/puzzle08.erl", {puzzle08, start, []}, {1371, 2117}}
+    , {"09/puzzle9.erl",  {puzzle9,  start, []}, {251, 898}}
+    , {"10/puzzle10.erl", {puzzle10, start, []}, {492982,6989950}}
+    , {"11/puzzle11.erl", {puzzle11, start, []}, {"cqjxxyzz", "cqkaabcc"}}
     ].
     
 compiler_opts() ->
@@ -34,5 +35,5 @@ main([]) ->
                             ?assertEqual(Expected, erlang:apply(M, F, A))
                     end),
               
-              io:format("~-10w: ~w msecs~n", [M, floor(T0 / 1000.0)])
+              io:format("~-10w: ~w msecs~n", [M, T0 / 1000.0])
       end, puzzles()).
