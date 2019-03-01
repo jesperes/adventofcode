@@ -6,9 +6,7 @@
 %%% Created : 18 Dec 2018 by Jesper Eskilson <>
 
 -module(puzzle10).
-
-% -export([start/0]).
--compile([export_all]).
+-export([start/0]).
 
 input() -> 
     "1321131112".
@@ -37,7 +35,7 @@ look_and_say0([X|_] = L) ->
     {Len, Rest} = split_prefix(X, L, 0),
     [integer_to_list(Len), [X], look_and_say0(Rest)].
 
-split_prefix(X, [], N) -> {N, []};
+split_prefix(_, [], N) -> {N, []};
 split_prefix(X, [Y|_] = L, N) when X =/= Y -> {N, L};
 split_prefix(X, [X|Rest], N) ->
     split_prefix(X, Rest, N + 1).

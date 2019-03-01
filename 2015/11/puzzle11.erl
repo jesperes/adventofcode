@@ -6,8 +6,7 @@
 %%% Created : 18 Dec 2018 by Jesper Eskilson <>
 
 -module(puzzle11).
-
--compile([export_all]).
+-export([start/0]).
 
 input() ->
     "cqjxjnds".
@@ -16,7 +15,7 @@ rev(S) ->
      lists:reverse(S).
 
 increment(Pwd) ->
-    Incr = rev(increment0(rev(Pwd))).
+    rev(increment0(rev(Pwd))).
 
 increment0([]) ->
     [];
@@ -37,46 +36,47 @@ no_confusing_letters(Pwd) ->
 	 lists:member($o, Pwd) or
 	 lists:member($l, Pwd)).
 
-two_pairs(Pwd) ->
-    length([ X || X <- lists:seq($a, $z),
-		  string:find(Pwd, [X, X]) /= nomatch ]) >= 2.
-
+%% Password are always 8 chars, so there are only a handful of
+%% combinations of having two distinct pairs.
+two_pairs([A, A, B, B, _, _, _, _]) when A =/= B -> true;
+two_pairs([A, A, _, B, B, _, _, _]) when A =/= B -> true;
+two_pairs([A, A, _, _, B, B, _, _]) when A =/= B -> true;
+two_pairs([A, A, _, _, _, B, B, _]) when A =/= B -> true;
+two_pairs([A, A, _, _, _, _, B, B]) when A =/= B -> true;
+two_pairs([_, A, A, B, B, _, _, _]) when A =/= B -> true;
+two_pairs([_, A, A, _, B, B, _, _]) when A =/= B -> true;
+two_pairs([_, A, A, _, _, B, B, _]) when A =/= B -> true;
+two_pairs([_, A, A, _, _, _, B, B]) when A =/= B -> true;
+two_pairs([_, _, A, A, B, B, _, _]) when A =/= B -> true;
+two_pairs([_, _, A, A, _, B, B, _]) when A =/= B -> true;
+two_pairs([_, _, A, A, _, _, B, B]) when A =/= B -> true;
+two_pairs([_, _, _, A, A, B, B, _]) when A =/= B -> true;
+two_pairs([_, _, _, A, A, _, B, B]) when A =/= B -> true;
+two_pairs([_, _, _, _, A, A, B, B]) when A =/= B -> true;
+two_pairs(_) -> false.
 
 valid(Pwd) ->
     
-    %% * Passwords must include one increasing straight of at least three
-    %% letters, like abc, bcd, cde, and so on, up to xyz. They cannot skip
-    %% letters; abd doesn't count.
-    Rule1 = has_straight(Pwd),
-	
+    %% * Passwords must include one increasing straight of at least
+    %%   three letters, like abc, bcd, cde, and so on, up to xyz. They
+    %%   cannot skip letters; abd doesn't count.
+    %% 
     %% * Passwords may not contain the letters i, o, or l, as these
-    %% letters can be mistaken for other characters and are therefore
-    %% confusing.
-    Rule2 = no_confusing_letters(Pwd),
-    
-    %% * Passwords must contain at least two different, non-overlapping
-    %% pairs of letters, like aa, bb, or zz.
-    Rule3 = two_pairs(Pwd),
+    %%   letters can be mistaken for other characters and are
+    %%   therefore confusing.
+    %%
+    %% * Passwords must contain at least two different,
+    %%   non-overlapping pairs of letters, like aa, bb, or zz.
 
-    Rule1 and Rule2 and Rule3.
-    
-    %% if Valid ->
-    %% 	    io:format("~s is valid~n", [Pwd]),
-    %% 	    true;
-    %%    true ->
-    %% 	    io:format("~s is not valid~n", [Pwd]),
-    %% 	    false
-    %% end.
-    
+    has_straight(Pwd) and
+        no_confusing_letters(Pwd) and
+        two_pairs(Pwd).
 
 next_valid_password(Pwd) ->
     Next = increment(Pwd),
     case valid(Next) of
-        true ->
-            Next;
-        false ->
-            %% invalid password, take next
-            next_valid_password(increment(Next))
+        true -> Next;
+        false -> next_valid_password(increment(Next))
     end.
 
 start() ->
