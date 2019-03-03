@@ -4,6 +4,7 @@
 
 puzzles() ->
     [ {"01/puzzle01.erl", {puzzle01, start, []}, {232, 1783}}
+    , {"02/puzzle02.erl", {puzzle02, start, []}, {1586300, 3737498}}
     , {"08/puzzle08.erl", {puzzle08, start, []}, {1371, 2117}}
     , {"09/puzzle9.erl",  {puzzle9,  start, []}, {251, 898}}
     , {"10/puzzle10.erl", {puzzle10, start, []}, {492982,6989950}}
