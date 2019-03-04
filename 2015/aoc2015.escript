@@ -7,6 +7,7 @@ puzzles() ->
     , {"02/puzzle02.erl", {puzzle02, start, []}, {1586300, 3737498}}
     , {"03/puzzle03.erl", {puzzle03, start, []}, {2572, 2631}}
     , {"04/puzzle04.erl", {puzzle04, start, []}, {282749, 9962624}}
+    , {"05/puzzle05.erl", {puzzle05, start, []}, {238, 69}}
     , {"08/puzzle08.erl", {puzzle08, start, []}, {1371, 2117}}
     , {"09/puzzle9.erl",  {puzzle9,  start, []}, {251, 898}}
     , {"10/puzzle10.erl", {puzzle10, start, []}, {492982,6989950}}
@@ -38,5 +39,5 @@ main([]) ->
                             ?assertEqual(Expected, erlang:apply(M, F, A))
                     end),
               
-              io:format("~-10w: ~w msecs~n", [M, T0 / 1000.0])
+              io:format("~-10w: ~5w msecs~n", [M, floor(T0 / 1000.0)])
       end, puzzles()).
