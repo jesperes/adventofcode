@@ -17,7 +17,8 @@ start() ->
                   end
           end, Lines),
     
-    {part1(Instrs), part2(Instrs)}.
+    {part1(Instrs), 
+     part2(Instrs)}.
 
 toi(N) -> list_to_integer(N).
 
@@ -48,8 +49,8 @@ part2([{turn_off, From, To}|Rest], Grid) ->
 
 fold_xy(Fun, Init, {X0, Y0}, {X1, Y1}) ->
     lists:foldl(Fun, Init, 
-                [{X, Y} || X <- lists:seq(X0, X1),
-                           Y <- lists:seq(Y0, Y1)]).
+                [<<X:16, Y:16>> || X <- lists:seq(X0, X1),
+                                   Y <- lists:seq(Y0, Y1)]).
 
 grid_new() -> #{}.
 
