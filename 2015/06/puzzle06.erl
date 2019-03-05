@@ -17,43 +17,63 @@ start() ->
                   end
           end, Lines),
     
-    part1(Instrs).
+    {part1(Instrs), part2(Instrs)}.
 
 toi(N) -> list_to_integer(N).
 
 
 part1(Instrs) ->     
-    part1(Instrs, sets:new()).
+    part1(Instrs, grid_new()).
 
-part1([], Set) ->
-    sets:size(Set);
-part1([{toggle, From, To} = X|Rest], Set) ->
-    io:format("~w~n", [X]),
-    Set0 = 
-        lists:foldl(fun(Pos, Acc) ->
-                            case sets:is_element(Pos, Acc) of
-                                true ->
-                                    sets:del_element(Pos, Acc);
-                                false ->
-                                    sets:add_element(Pos, Acc)
-                            end
-                    end, Set, lights(From, To)),
-    part1(Rest, Set0);
-part1([{turn_on, From, To} = X|Rest], Set) ->
-    io:format("~w~n", [X]),
-    Set0 =
-        lists:foldl(fun(Pos, Acc) ->
-                            sets:add_element(Pos, Acc)
-                    end, Set, lights(From, To)),
-    part1(Rest, Set0);
-part1([{turn_off, From, To} = X|Rest], Set) ->
-    io:format("~w~n", [X]),
-    Set0 = 
-        lists:foldl(fun(Pos, Acc) ->
-                            sets:del_element(Pos, Acc)
-                    end, Set, lights(From, To)),
-    part1(Rest, Set0).
+part1([], Grid) ->
+    grid_size(Grid);
+part1([{toggle, From, To}|Rest], Grid) ->
+    part1(Rest, fold_xy(fun grid_toggle/2, Grid, From, To));
+part1([{turn_on, From, To}|Rest], Grid) ->
+    part1(Rest, fold_xy(fun grid_turn_on/2, Grid, From, To));
+part1([{turn_off, From, To}|Rest], Grid) ->
+    part1(Rest, fold_xy(fun grid_turn_off/2, Grid, From, To)).
 
-lights({X0, Y0}, {X1, Y1}) ->
-    [{X, Y} || X <- lists:seq(X0, X1),
-               Y <- lists:seq(Y0, Y1)].
+part2(Instrs) ->     
+    part2(Instrs, grid_new()).
+
+part2([], Grid) ->
+    grid_sum_keys(Grid);
+part2([{toggle, From, To}|Rest], Grid) ->
+    part2(Rest, fold_xy(fun grid_incr_2/2, Grid, From, To));
+part2([{turn_on, From, To}|Rest], Grid) ->
+    part2(Rest, fold_xy(fun grid_incr_1/2, Grid, From, To));
+part2([{turn_off, From, To}|Rest], Grid) ->
+    part2(Rest, fold_xy(fun grid_decr_1/2, Grid, From, To)).
+
+fold_xy(Fun, Init, {X0, Y0}, {X1, Y1}) ->
+    lists:foldl(Fun, Init, 
+                [{X, Y} || X <- lists:seq(X0, X1),
+                           Y <- lists:seq(Y0, Y1)]).
+
+grid_new() -> #{}.
+
+grid_size(Grid) -> maps:size(maps:filter(fun(_, V) -> V end, Grid)).
+
+grid_toggle(Pos, Grid) ->
+    maps:update_with(Pos, fun(V) -> not V end, true, Grid).
+
+grid_turn_on(Pos, Grid) ->
+    maps:put(Pos, true, Grid).
+
+grid_turn_off(Pos, Grid) ->
+    maps:remove(Pos, Grid).
+
+grid_incr_2(Pos, Grid) ->
+    maps:update_with(Pos, fun(V) -> V + 2 end, 2, Grid).
+
+grid_incr_1(Pos, Grid) ->
+    maps:update_with(Pos, fun(V) -> V + 1 end, 1, Grid).
+
+grid_decr_1(Pos, Grid) ->
+    maps:update_with(Pos, fun(V) -> max(V - 1, 0) end, 0, Grid).
+
+grid_sum_keys(Grid) ->                                   
+    lists:sum(maps:values(Grid)).
+     
+    
