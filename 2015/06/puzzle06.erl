@@ -35,12 +35,14 @@ process_instr([{turn_off, From, To}|Rest], Grid) ->
 
 fold_xy(Fun, Init, {X0, Y0}, {X1, Y1}) ->
     lists:foldl(Fun, Init,
-                [<<X:16, Y:16>> || X <- lists:seq(X0, X1),
-                                   Y <- lists:seq(Y0, Y1)]).
-%% -- grid abstraction --
+                [pos_to_key(X, Y)
+                 || X <- lists:seq(X0, X1),
+                    Y <- lists:seq(Y0, Y1)]).
 
-array_pos_to_index(<<X:16, Y:16>>) ->
+pos_to_key(X, Y) ->
     X + Y * 1000.
+
+%% -- grid abstraction --
 
 grid_new() -> {array:new({default, false}),
                array:new({default, 0})}.
@@ -52,18 +54,15 @@ grid_get_solution(Grid) ->
 
 grid_toggle(Pos, Grid) ->
     {Array1, Array2} = Grid,
-    Idx = array_pos_to_index(Pos),
-    {array:set(Idx, not array:get(Idx, Array1), Array1),
-     array:set(Idx, array:get(Idx, Array2) + 2, Array2)}.
+    {array:set(Pos, not array:get(Pos, Array1), Array1),
+     array:set(Pos, array:get(Pos, Array2) + 2, Array2)}.
 
 grid_turn_on(Pos, Grid) ->
     {Array1, Array2} = Grid,
-    Idx = array_pos_to_index(Pos),
-    {array:set(Idx, true, Array1),
-     array:set(Idx, array:get(Idx, Array2) + 1, Array2)}.
+    {array:set(Pos, true, Array1),
+     array:set(Pos, array:get(Pos, Array2) + 1, Array2)}.
 
 grid_turn_off(Pos, Grid) ->
     {Array1, Array2} = Grid,
-    Idx = array_pos_to_index(Pos),
-    {array:set(Idx, false, Array1),
-     array:set(Idx, max(0, array:get(Idx, Array2) - 1), Array2)}.
+    {array:set(Pos, false, Array1),
+     array:set(Pos, max(0, array:get(Pos, Array2) - 1), Array2)}.
