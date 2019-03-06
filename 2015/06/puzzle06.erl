@@ -44,65 +44,21 @@ pos_to_key(X, Y) ->
 
 %% -- grid abstraction --
 
--define(GRID_TYPE_ARRAY, true).
-%% -define(GRID_TYPE_MAP, true).
-
--ifdef(GRID_TYPE_ARRAY).
-
-grid_new() -> array:new({default, false}),
-               array:new({default, 0})}.
+grid_new() -> array:new({default, {false, 0}}).
 
 grid_get_solution(Grid) ->
-    {Array1, Array2} = Grid,
-    {length(array:sparse_to_list(Array1)),
-     lists:sum(array:sparse_to_list(Array2))}.
-
-grid_toggle(Pos, Grid) ->
-    {Array1, Array2} = Grid,     
-    
-    {case array:get(Pos, Array1) of
-         true -> array:reset(Pos, Array1);
-         false -> array:set(Pos, true, Array1)
-     end,
-     array:set(Pos, array:get(Pos, Array2) + 2, Array2)}.
-
-grid_turn_on(Pos, Grid) ->
-    {Array1, Array2} = Grid,
-    {array:set(Pos, true, Array1),
-     array:set(Pos, array:get(Pos, Array2) + 1, Array2)}.
-
-grid_turn_off(Pos, Grid) ->
-    {Array1, Array2} = Grid,
-    {array:reset(Pos, Array1),
-     array:set(Pos, max(0, array:get(Pos, Array2) - 1), Array2)}.
-
--endif.
-
--ifdef(GRID_TYPE_MAP).
-
-grid_new() -> #{}.
-
-grid_get_solution(Grid) ->
-    Values = maps:values(Grid),
+    Values = array:sparse_to_list(Grid),
     {length(lists:filter(fun({V, _}) -> V end, Values)),
      lists:sum(lists:map(fun({_, V}) -> V end, Values))}.
 
 grid_toggle(Pos, Grid) ->
-    maps:update_with(Pos, 
-                     fun({S, B}) -> 
-                             {not S, B + 2}
-                     end, {true, 2}, Grid).
+    {S, B} = array:get(Pos, Grid),
+    array:set(Pos, {not S, B + 2}, Grid).
 
 grid_turn_on(Pos, Grid) ->
-    maps:update_with(Pos, 
-                     fun({_S, B}) -> 
-                             {true, B + 1}
-                     end, {true, 1}, Grid).
+    {_, B} = array:get(Pos, Grid),
+    array:set(Pos, {true, B + 1}, Grid).
 
 grid_turn_off(Pos, Grid) ->
-    maps:update_with(Pos, 
-                     fun({_S, B}) -> 
-                             {false, max(0, B - 1)}
-                     end, {false, 0}, Grid).
-
--endif.
+    {_, B} = array:get(Pos, Grid),
+    array:set(Pos, {false, max(0, B - 1)}, Grid).
