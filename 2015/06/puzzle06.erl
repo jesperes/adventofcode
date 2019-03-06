@@ -64,5 +64,5 @@ grid_turn_on(Pos, Grid) ->
 
 grid_turn_off(Pos, Grid) ->
     {Array1, Array2} = Grid,
-    {array:set(Pos, false, Array1),
+    {array:reset(Pos, Array1),
      array:set(Pos, max(0, array:get(Pos, Array2) - 1), Array2)}.
