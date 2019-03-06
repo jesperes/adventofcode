@@ -24,27 +24,29 @@ compiler_opts() ->
     , nowarn_deprecated_function
     ].
 
+run_puzzle(Root, Ebin, {Src, {M, F, A}, Expected}) ->
+    AbsSrc = filename:join(Root, filename:dirname(Src)),
+    file:set_cwd(AbsSrc),
+    lists:foreach(fun(Erlfile) ->
+                          {ok, _} = 
+                              compile:file(
+                                filename:join(AbsSrc, Erlfile),
+                                compiler_opts() ++ [{outdir, Ebin}])
+                  end, filelib:wildcard("*.erl")),
+    {T0, _} = 
+        timer:tc(
+          fun() ->
+                  ?assertEqual(Expected, erlang:apply(M, F, A))
+          end),
+    
+    io:format("~-10w: ~5w msecs~n", [M, floor(T0 / 1000.0)]).
+    
+
 main([]) ->
     Root = filename:absname(filename:dirname(escript:script_name())),
     Ebin = filename:join(Root, "ebin"),
     filelib:ensure_dir(filename:join(Ebin, "x")),
     code:add_patha(Ebin),
-
-    lists:foreach(
-      fun({Src, {M, F, A}, Expected}) ->
-              AbsSrc = filename:join(Root, filename:dirname(Src)),
-              file:set_cwd(AbsSrc),
-              lists:foreach(fun(Erlfile) ->
-                                    {ok, _} = 
-                                        compile:file(
-                                          filename:join(AbsSrc, Erlfile),
-                                          compiler_opts() ++ [{outdir, Ebin}])
-                            end, filelib:wildcard("*.erl")),
-              {T0, _} = 
-                  timer:tc(
-                    fun() ->
-                            ?assertEqual(Expected, erlang:apply(M, F, A))
-                    end),
-              
-              io:format("~-10w: ~5w msecs~n", [M, floor(T0 / 1000.0)])
-      end, puzzles()).
+    lists:foreach(fun(P) -> 
+                          run_puzzle(Root, Ebin, P) 
+                  end, puzzles()).
