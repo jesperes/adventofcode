@@ -4,7 +4,7 @@
 start() ->
     {ok, Bin} = file:read_file("input.txt"),
     Lines = string:tokens(binary_to_list(Bin), "\n"),
-    Instrs = 
+    Instrs =
         lists:map(
           fun(Line) ->
                   case string:tokens(Line, " ,") of
@@ -16,12 +16,12 @@ start() ->
                           {turn_off, {toi(X0), toi(Y0)}, {toi(X1), toi(Y1)}}
                   end
           end, Lines),
-    
+
     process_instr(Instrs).
 
 toi(N) -> list_to_integer(N).
 
-process_instr(Instrs) ->     
+process_instr(Instrs) ->
     process_instr(Instrs, grid_new()).
 
 process_instr([], Grid) ->
@@ -34,27 +34,36 @@ process_instr([{turn_off, From, To}|Rest], Grid) ->
     process_instr(Rest, fold_xy(fun grid_turn_off/2, Grid, From, To)).
 
 fold_xy(Fun, Init, {X0, Y0}, {X1, Y1}) ->
-    lists:foldl(Fun, Init, 
+    lists:foldl(Fun, Init,
                 [<<X:16, Y:16>> || X <- lists:seq(X0, X1),
                                    Y <- lists:seq(Y0, Y1)]).
 %% -- grid abstraction --
 
-grid_new() -> #{}.
+array_pos_to_index(<<X:16, Y:16>>) ->
+    X + Y * 1000.
 
-grid_get_solution(Grid) -> 
-    maps:fold(fun(_, {Vs, Vb}, {S, B}) ->
-                      {if Vs -> S + 1; true -> S end, B + Vb}
-              end, {0, 0}, Grid).
+grid_new() -> {array:new({default, false}),
+               array:new({default, 0})}.
+
+grid_get_solution(Grid) ->
+    {Array1, Array2} = Grid,
+    {length(array:sparse_to_list(Array1)),
+     lists:sum(array:sparse_to_list(Array2))}.
 
 grid_toggle(Pos, Grid) ->
-    maps:update_with(Pos, fun({S, B}) -> {not S, B + 2} end, {true, 2}, Grid).
+    {Array1, Array2} = Grid,
+    Idx = array_pos_to_index(Pos),
+    {array:set(Idx, not array:get(Idx, Array1), Array1),
+     array:set(Idx, array:get(Idx, Array2) + 2, Array2)}.
 
 grid_turn_on(Pos, Grid) ->
-    maps:update_with(Pos, fun({_, B}) -> {true, B + 1} end, {true, 1}, Grid).
+    {Array1, Array2} = Grid,
+    Idx = array_pos_to_index(Pos),
+    {array:set(Idx, true, Array1),
+     array:set(Idx, array:get(Idx, Array2) + 1, Array2)}.
 
 grid_turn_off(Pos, Grid) ->
-    maps:update_with(Pos, fun({_, B}) -> {false, max(0, B - 1)} end, {false, 0}, Grid).
-
-
-     
-    
+    {Array1, Array2} = Grid,
+    Idx = array_pos_to_index(Pos),
+    {array:set(Idx, false, Array1),
+     array:set(Idx, max(0, array:get(Idx, Array2) - 1), Array2)}.
