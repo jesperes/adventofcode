@@ -6,16 +6,13 @@
 %%% Created : 18 Dec 2018 by  <jespe@LAPTOP-P6HKA27J>
 
 -module(puzzle13).
--compile([export_all]).
+-export([start/0]).
 
 permute([]) -> [[]];
 permute(L) -> [[X|Y] || X <- L, Y <- permute(L -- [X])].
 
 input() ->
     input("input.txt").
-
-testinput() ->
-    input("testinput.txt").
 
 input(Filename) ->
     {ok, Binary} = file:read_file(Filename),
@@ -68,9 +65,19 @@ happiness0(A, B, CostMap) ->
 	maps:get({B, A}, CostMap, 0).
 	
 start() ->
-    %%    Input = testinput(),
+    {run(false), run(true)}.
+
+run(IncludeSelf) ->
     Input = input(),
-    [First|_] = NameList = (sets:to_list(get_all_names(Input)) ++ ['Myself']),
+
+    [First|_] = NameList = 
+        case IncludeSelf of
+            true ->
+                (sets:to_list(get_all_names(Input)) ++ ['Myself']);
+            false ->
+                sets:to_list(get_all_names(Input))
+        end,
+
     CostMap = name_list_to_map(Input, #{}),
 
     %% Filter out all permutations except the once beginning with the

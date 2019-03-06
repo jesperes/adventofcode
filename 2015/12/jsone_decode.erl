@@ -67,8 +67,7 @@
         {
           object_format=?DEFAULT_OBJECT_FORMAT :: tuple | proplist | map,
           allow_ctrl_chars=false :: boolean(),
-          keys=binary :: 'binary' | 'atom' | 'existing_atom' | 'attempt_atom',
-          undefined_as_null=false :: boolean()
+          keys=binary :: 'binary' | 'atom' | 'existing_atom' | 'attempt_atom'
         }).
 -define(OPT, #decode_opt_v2).
 -type opt() :: #decode_opt_v2{}.
@@ -117,8 +116,6 @@ whitespace(<<Bin/binary>>,      Next, Nexts, Buf, Opt) ->
 -spec value(binary(), [next()], binary(), opt()) -> decode_result().
 value(<<"false", Bin/binary>>, Nexts, Buf, Opt) -> next(Bin, false, Nexts, Buf, Opt);
 value(<<"true", Bin/binary>>, Nexts, Buf, Opt)  -> next(Bin, true, Nexts, Buf, Opt);
-value(<<"null", Bin/binary>>, Nexts, Buf,
-      Opt = ?OPT{undefined_as_null = true})     -> next(Bin, undefined, Nexts, Buf, Opt);
 value(<<"null", Bin/binary>>, Nexts, Buf, Opt)  -> next(Bin, null, Nexts, Buf, Opt);
 value(<<$[, Bin/binary>>, Nexts, Buf, Opt)      -> whitespace(Bin, array, Nexts, Buf, Opt);
 value(<<${, Bin/binary>>, Nexts, Buf, Opt)      -> whitespace(Bin, object, Nexts, Buf, Opt);
@@ -197,26 +194,23 @@ string(<<C, Bin/binary>>, Base, Start, Nexts, Buf, Opt) when 16#20 =< C ->
 
 -spec unicode_string(binary(), non_neg_integer(), [next()], binary(), opt()) -> decode_result().
 unicode_string(<<N:4/binary, Bin/binary>>, Start, Nexts, Buf, Opt) ->
-    try binary_to_integer(N, 16) of
+    case binary_to_integer(N, 16) of
         High when 16#D800 =< High, High =< 16#DBFF ->
             %% surrogate pair
             case Bin of
                 <<$\\, $u, N2:4/binary, Bin2/binary>> ->
-                    try binary_to_integer(N2, 16) of
+                    case binary_to_integer(N2, 16) of
                         Low when 16#DC00 =< Low, Low =< 16#DFFF ->
                             <<Unicode/utf16>> = <<High:16, Low:16>>,
                             string(Bin2, Start, Nexts, <<Buf/binary, Unicode/utf8>>, Opt);
                         _ -> ?ERROR(unicode_string, [<<N/binary, Bin/binary>>, Start, Nexts, Buf, Opt])
-                    catch error:badarg -> ?ERROR(unicode_string, [<<N/binary, Bin/binary>>, Start, Nexts, Buf, Opt])
                     end;
                 _ -> ?ERROR(unicode_string, [<<N/binary, Bin/binary>>, Start, Nexts, Buf, Opt])
             end;
-        Unicode when 16#DC00 =< Unicode, Unicode =< 16#DFFF;  % second part of surrogate pair (without first part)
-                     0 > Unicode ->
+        Unicode when 16#DC00 =< Unicode, Unicode =< 16#DFFF ->  % second part of surrogate pair (without first part)
             ?ERROR(unicode_string, [<<N/binary, Bin/binary>>, Start, Nexts, Buf, Opt]);
         Unicode ->
             string(Bin, Start, Nexts, <<Buf/binary, Unicode/utf8>>, Opt)
-    catch error:badarg -> ?ERROR(unicode_string, [<<N/binary, Bin/binary>>, Start, Nexts, Buf, Opt])
     end;
 unicode_string(Bin, Start, Nexts, Buf, Opt) ->
     ?ERROR(unicode_string, [Bin, Start, Nexts, Buf, Opt]).
@@ -277,11 +271,7 @@ number_exponation_part(<<C, Bin/binary>>, N, DecimalOffset, ExpSign, Exp, _, Nex
     number_exponation_part(Bin, N, DecimalOffset, ExpSign, Exp * 10 + C - $0, false, Nexts, Buf, Opt);
 number_exponation_part(<<Bin/binary>>, N, DecimalOffset, ExpSign, Exp, false, Nexts, Buf, Opt) ->
     Pos = ExpSign * Exp - DecimalOffset,
-    try N * math:pow(10, Pos)
-    of Res -> next(Bin, Res, Nexts, Buf, Opt)
-    catch error:badarith ->
-        ?ERROR(number_exponation_part, [Bin, N, DecimalOffset, ExpSign, Exp, false, Nexts, Buf, Opt])
-    end;
+    next(Bin, N * math:pow(10, Pos), Nexts, Buf, Opt);
 number_exponation_part(Bin, N, DecimalOffset, ExpSign, Exp, IsFirst, Nexts, Buf, Opt) ->
     ?ERROR(number_exponation_part, [Bin, N, DecimalOffset, ExpSign, Exp, IsFirst, Nexts, Buf, Opt]).
 
@@ -304,7 +294,5 @@ parse_option([{allow_ctrl_chars,B}|T], Opt) when is_boolean(B) ->
 parse_option([{keys, K}|T], Opt)
   when K =:= binary; K =:= atom; K =:= existing_atom; K =:= attempt_atom ->
     parse_option(T, Opt?OPT{keys = K});
-parse_option([undefined_as_null|T], Opt) ->
-    parse_option(T, Opt?OPT{undefined_as_null = true});
 parse_option(List, Opt) ->
     error(badarg, [List, Opt]).

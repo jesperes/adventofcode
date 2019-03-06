@@ -9,17 +9,20 @@ puzzles() ->
     , {"04/puzzle04.erl", {puzzle04, start, []}, {282749, 9962624}}
     , {"05/puzzle05.erl", {puzzle05, start, []}, {238, 69}}
     , {"06/puzzle06.erl", {puzzle06, start, []}, {543903, 14687245}}
-    % , {"06/puzzle06b.erl", {puzzle06b, start, []}, {543903, 14687245}}
     , {"08/puzzle08.erl", {puzzle08, start, []}, {1371, 2117}}
     , {"09/puzzle9.erl",  {puzzle9,  start, []}, {251, 898}}
     , {"10/puzzle10.erl", {puzzle10, start, []}, {492982,6989950}}
     , {"11/puzzle11.erl", {puzzle11, start, []}, {"cqjxxyzz", "cqkaabcc"}}
+    , {"12/puzzle12.erl", {puzzle12, start, []}, {119433, 68466}}
+    , {"13/puzzle13.erl", {puzzle13, start, []}, {709, 668}}
     ].
     
 compiler_opts() ->
-    [verbose,
-     report_warnings,
-     report_errors].
+    [ 
+      report_warnings
+    , report_errors
+    , nowarn_deprecated_function
+    ].
 
 main([]) ->
     Root = filename:absname(filename:dirname(escript:script_name())),
@@ -31,10 +34,12 @@ main([]) ->
       fun({Src, {M, F, A}, Expected}) ->
               AbsSrc = filename:join(Root, filename:dirname(Src)),
               file:set_cwd(AbsSrc),
-              {ok, M} = 
-                  compile:file(
-                    filename:join(Root, Src),
-                    compiler_opts() ++ [{outdir, Ebin}]),
+              lists:foreach(fun(Erlfile) ->
+                                    {ok, _} = 
+                                        compile:file(
+                                          filename:join(AbsSrc, Erlfile),
+                                          compiler_opts() ++ [{outdir, Ebin}])
+                            end, filelib:wildcard("*.erl")),
               {T0, _} = 
                   timer:tc(
                     fun() ->

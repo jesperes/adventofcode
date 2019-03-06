@@ -6,7 +6,7 @@
 %%% Created : 18 Dec 2018 by  <jespe@LAPTOP-P6HKA27J>
 
 -module(puzzle12).
--compile([export_all]).
+-export([start/0]).
 
 input() ->
     {ok, Binary} = file:read_file("input.txt"),
@@ -32,7 +32,7 @@ count_nored(X) when is_binary(X) ->
     0;
 count_nored(X) when is_map(X) ->
     {IsRed, Sum} = 
-	maps:fold(fun(_,<<"red">>,{_, Acc}) -> 
+	maps:fold(fun(_,<<"red">>,{_, _Acc}) -> 
 			  {true, 0};
 		     (_,V,{IsRed, Acc}) ->
 			  {IsRed, Acc + count_nored(V)}
@@ -45,14 +45,4 @@ count_nored(X) when is_map(X) ->
     end;
 count_nored(X) when is_list(X) ->
     lists:foldl(fun(V,Acc) -> count_nored(V) + Acc end, 0, X).
-
-
-
-   
-
-    
-
-
-
-    
 	  
