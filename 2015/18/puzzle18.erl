@@ -6,48 +6,31 @@
 %%% Created : 23 Dec 2018 by  <jespe@LAPTOP-P6HKA27J>
 
 -module(puzzle18).
--compile([export_all]).
-
-%% 2330 is too high
-%% 4934 is too high
+-export([start/0]).
 
 start() ->
-    %% Bounds = {6, 6},
-    %% Grid = input("testinput.txt", 8, Bounds),
+    {run(false), run(true)}.
 
+run(CornersAlwaysOn) ->
     Bounds = {100, 100},
-    Grid = input("input.txt", 101, Bounds),
-    
+    Grid = input("input.txt", 101, Bounds, CornersAlwaysOn),
     G0 = lists:foldl(fun(_N, G) ->
-			     next_state(G, Bounds)
+			     next_state(G, Bounds, CornersAlwaysOn)
 		     end, Grid, lists:seq(1, 100)),
-    
-    print_grid(G0, Bounds),
-    sets:size(G0).
-
-
-char_at(Pos, Grid) ->
-    case sets:is_element(Pos, Grid) of
-	true -> $#;
-	false -> $.
-    end.
-
-print_grid(Grid, {MaxX, MaxY}) ->
-    L = [[char_at({X, Y}, Grid) || X <- lists:seq(0, MaxX - 1)] ++ "\n" 
-	 || Y <- lists:seq(0, MaxY - 1)],
-    io:format("~s~n", [L]).
+    maps:size(G0).
    
 match({Pos, _}, Width) ->
     {Pos rem Width, Pos div Width}.
 
-input(Filename, Width, Bounds) ->
+input(Filename, Width, Bounds, CornersAlwaysOn) ->
     {ok, Binary} = file:read_file(Filename),
-    %% Grid is represented as set of lit (#) coordinates.
-    sets:from_list([match(Match, Width) ||
+    maps:from_list([{match(Match, Width), true} ||
 		       Match <- binary:matches(Binary, <<"#">>)] 
-		   ++ corners(Bounds)).
+		   ++ corners(Bounds, CornersAlwaysOn)).
 
-corners({MaxX, MaxY}) ->
+corners(_, false) ->
+    [];
+corners({MaxX, MaxY}, true) ->
     [{0, 0},
      {MaxX - 1, 0},
      {0, MaxY - 1},
@@ -63,28 +46,28 @@ adjacent({X, Y}, {MaxX, MaxY}) ->
 	Xa < MaxX,
 	Ya < MaxY].
 	
-next_state(Grid, {MaxX, MaxY} = Bounds) ->
+next_state(Grid, {MaxX, MaxY} = Bounds, CornersAlwaysOn) ->
     Xs = 
-	[{{X, Y}, next_state0({X, Y}, Grid, Bounds)} ||
+	[{{X, Y}, next_state0({X, Y}, Grid, Bounds, CornersAlwaysOn)} ||
 	    X <- lists:seq(0, MaxX - 1),
 	    Y <- lists:seq(0, MaxY - 1)],
     lists:foldl(fun({Pos, true}, S) ->
-			sets:add_element(Pos, S);
+			maps:put(Pos, true, S);
 		   (_, S) ->
 			S
-		end, sets:new(), Xs).
+		end, #{}, Xs).
 
-next_state0(Pos, Grid, Bounds) ->
+next_state0(Pos, Grid, Bounds, CornersAlwaysOn) ->
     NumAdjOn = 
 	length(
 	  lists:filter(
 	    fun(Adj) ->
-		    sets:is_element(Adj, Grid)
+		    maps:is_key(Adj, Grid)
 	    end, adjacent(Pos, Bounds))),
     
-    IsCorner = lists:member(Pos, corners(Bounds)),     
-    IsOn = sets:is_element(Pos, Grid),
-
+    IsCorner = lists:member(Pos, corners(Bounds, CornersAlwaysOn)),     
+    IsOn = maps:is_key(Pos, Grid),
+    
     case {IsCorner, IsOn, NumAdjOn} of
 	{true, _, _} -> true;
 	{_, true, 2} -> true;

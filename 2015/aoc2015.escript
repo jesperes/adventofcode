@@ -18,6 +18,8 @@ puzzles() ->
     , {"14/puzzle14.erl", {puzzle14, start, []}, {2655, 1059}}
     , {"15/puzzle15.erl", {puzzle15, start, []}, {222870, 117936}}
     , {"16/puzzle16.erl", {puzzle16, start, []}, {213, 323}}
+    , {"17/puzzle17.erl", {puzzle17, start, []}, {1638, 17}}
+    , {"18/puzzle18.erl", {puzzle18, start, []}, {768, 781}}
     ].
     
 compiler_opts() ->

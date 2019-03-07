@@ -6,7 +6,7 @@
 %%% Created : 21 Dec 2018 by Jesper Eskilson <>
 
 -module(puzzle17).
--compile([export_all]).
+-export([start/0]).
 
 combinations([]) ->
     [];
@@ -38,8 +38,9 @@ start() ->
                           length(X) == MinLen
                             end, SortedOnLength)),
     
-    {{num_combos, length(BucketCombos)},
-     {num_shortest_combos, MinLen, NumShortestCombos}}.
+    {length(BucketCombos),
+     NumShortestCombos}.
+
     
     
 
