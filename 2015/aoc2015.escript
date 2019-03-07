@@ -21,16 +21,16 @@ puzzles() ->
     , {"17/puzzle17.erl", {puzzle17, start, []}, {1638, 17}}
     , {"18/puzzle18.erl", {puzzle18, start, []}, {768, 781}}
     , {"19/puzzle19.erl", {puzzle19, start, []}, {576, 207}}
-    , {"20/puzzle20.erl", {puzzle20, start, []}, {831600, 884520}}
+    % , {"20/puzzle20.erl", {puzzle20, start, []}, {831600, 884520}}
     , {"21/puzzle21.erl", {puzzle21, start, []}, {91, 158}}
     , {"22/puzzle22.erl", {puzzle22, start, []}, {900, 1216}}
     , {"23/puzzle23.erl", {puzzle23, start, []}, {255, 334}}
     , {"24/puzzle24.erl", {puzzle24, start, []}, {11846773891, 80393059}}
     , {"25/puzzle25.erl", {puzzle25, start, []}, 8997277}
     ].
-    
+
 compiler_opts() ->
-    [ 
+    [
       report_warnings
     , report_errors
     , nowarn_deprecated_function
@@ -41,19 +41,18 @@ run_puzzle(Root, Ebin, {Src, {M, F, A}, Expected}) ->
     file:set_cwd(AbsSrc),
 
     lists:foreach(fun(Erlfile) ->
-                          {ok, _} = 
+                          {ok, _} =
                               compile:file(
                                 filename:join(AbsSrc, Erlfile),
                                 compiler_opts() ++ [{outdir, Ebin}])
                   end, filelib:wildcard("*.erl")),
-    {T0, _} = 
+    {T0, _} =
         timer:tc(
           fun() ->
                   ?assertEqual(Expected, erlang:apply(M, F, A))
           end),
-    
+
     io:format("~-10w: ~6w msecs~n", [M, floor(T0 / 1000.0)]).
-    
 
 main([]) ->
     Root = filename:absname(filename:dirname(escript:script_name())),
@@ -61,14 +60,23 @@ main([]) ->
     filelib:ensure_dir(filename:join(Ebin, "x")),
     code:add_patha(Ebin),
 
-    lists:foreach(fun(Erlfile) ->
-                          {ok, _} = 
-                              compile:file(
-                                Erlfile,
-                                compiler_opts() ++ [{outdir, Ebin}])
-                  end, filelib:wildcard(
-                         filename:join(Root, "../utils/erlang/*.erl"))),
-    
-    lists:foreach(fun(P) -> 
-                          run_puzzle(Root, Ebin, P) 
-                  end, puzzles()).
+    {TotalTime, _} =
+        timer:tc(
+          fun() ->
+                  lists:foreach(fun(Erlfile) ->
+                                        {ok, _} =
+                                            compile:file(
+                                              Erlfile,
+                                              compiler_opts() ++ [{outdir, Ebin}])
+                                end, filelib:wildcard(
+                                       filename:join(Root, "../utils/erlang/*.erl"))),
+
+                  lists:foreach(fun(P) ->
+                                        run_puzzle(Root, Ebin, P)
+                                end, puzzles())
+          end),
+
+
+    io:format("Total time ~w seconds (~w msecs/puzzle)~n",
+              [floor(TotalTime / 1000000),
+               floor((TotalTime / 1000) / length(puzzles()))]).
