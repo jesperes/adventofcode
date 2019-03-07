@@ -1,12 +1,5 @@
-%%% @author  <jespe@LAPTOP-P6HKA27J>
-%%% @copyright (C) 2018, 
-%%% @doc
-%%%
-%%% @end
-%%% Created : 27 Dec 2018 by  <jespe@LAPTOP-P6HKA27J>
-
 -module(puzzle19).
--compile([export_all]).
+-export([start/0]).
 
 -include("input.hrl").
 -include_lib("eunit/include/eunit.hrl").
@@ -14,8 +7,7 @@
 start() ->
     Part1Sol = length(get_all_replacements(?INPUT, ?INPUT_RULES)),
     {Part2Sol, _} = part2(?INPUT, ?INPUT_RULES),
-    {{part1, Part1Sol},
-     {part2, Part2Sol}}.
+    {Part1Sol, Part2Sol}.
 
 get_all_replacements(Input, Rules) ->
     Repls = [apply_rule(Rule, Input) || Rule <- Rules],
@@ -39,13 +31,15 @@ part2(Target, Rules) ->
     Start = Target,
     End = <<"e">>,
     {ok, Path} = 
-	astar:a_star(Start, End,
+	astar:a_star(Start,
 		     fun({neighbors, Current}) ->
 			     get_all_reductions(Current, Rules);
 			({dist, _Neighbor, _Current}) ->
 			     1;
-			({cost, Neighbor, _G}) ->
-			     byte_size(Neighbor)
+			({cost, Neighbor}) ->
+			     byte_size(Neighbor);
+                        ({is_goal, Current}) ->
+                             Current =:= End
 		     end),
     
     %% The number of reductions needed is the length of the path - 1

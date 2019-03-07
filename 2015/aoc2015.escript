@@ -20,6 +20,8 @@ puzzles() ->
     , {"16/puzzle16.erl", {puzzle16, start, []}, {213, 323}}
     , {"17/puzzle17.erl", {puzzle17, start, []}, {1638, 17}}
     , {"18/puzzle18.erl", {puzzle18, start, []}, {768, 781}}
+    , {"19/puzzle19.erl", {puzzle19, start, []}, {576, 207}}
+    , {"20/puzzle20.erl", {puzzle20, start, []}, {831600, 884520}}
     ].
     
 compiler_opts() ->
@@ -32,6 +34,7 @@ compiler_opts() ->
 run_puzzle(Root, Ebin, {Src, {M, F, A}, Expected}) ->
     AbsSrc = filename:join(Root, filename:dirname(Src)),
     file:set_cwd(AbsSrc),
+
     lists:foreach(fun(Erlfile) ->
                           {ok, _} = 
                               compile:file(
@@ -44,7 +47,7 @@ run_puzzle(Root, Ebin, {Src, {M, F, A}, Expected}) ->
                   ?assertEqual(Expected, erlang:apply(M, F, A))
           end),
     
-    io:format("~-10w: ~5w msecs~n", [M, floor(T0 / 1000.0)]).
+    io:format("~-10w: ~6w msecs~n", [M, floor(T0 / 1000.0)]).
     
 
 main([]) ->
@@ -52,6 +55,15 @@ main([]) ->
     Ebin = filename:join(Root, "ebin"),
     filelib:ensure_dir(filename:join(Ebin, "x")),
     code:add_patha(Ebin),
+
+    lists:foreach(fun(Erlfile) ->
+                          {ok, _} = 
+                              compile:file(
+                                Erlfile,
+                                compiler_opts() ++ [{outdir, Ebin}])
+                  end, filelib:wildcard(
+                         filename:join(Root, "../utils/erlang/*.erl"))),
+    
     lists:foreach(fun(P) -> 
                           run_puzzle(Root, Ebin, P) 
                   end, puzzles()).

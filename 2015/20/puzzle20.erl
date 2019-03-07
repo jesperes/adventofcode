@@ -6,27 +6,26 @@
 %%% Created : 30 Dec 2018 by Jesper Eskilson <>
 
 -module(puzzle20).
--compile([export_all]).
+-export([start/0]).
 
 start() ->
-    Elves = 1000000,
-    start(Elves, 36000000).
+    {part1(),
+     part2()}.
 
-start(Elves, Limit) ->
+part1() ->
+    Elves = 1000000,
+    Limit = 36000000,
     Houses = maps:new(),
     NumHouses = Elves,
 
     H0 = 
         lists:foldl(fun(Elf, AccIn) ->
-                            deliver(Elf, AccIn, NumHouses)
+                            deliver1(Elf, AccIn, NumHouses)
                     end, Houses, lists:seq(1, Elves)),
     
-    HouseNr = find_lowest_house_number(Limit, H0),
+    find_lowest_house_number(Limit, H0).
 
-    io:format("Number of elves = ~p, first house getting ~p presents is house number ~p~n", 
-              [Elves, Limit, HouseNr]).
-
-deliver(Elf, Houses, NumHouses) ->
+deliver1(Elf, Houses, NumHouses) ->
     lists:foldl(fun(House, AccIn) ->
                         maps:update_with(House, fun(V) ->
                                                         V + Elf * 10
@@ -49,3 +48,34 @@ find_lowest_house_number(HouseNum, PresentLimit, Houses) ->
         _ ->
             no_such_house
     end.
+
+part2() ->
+    Limit = 36000000,
+    deliver2(1, #{}, Limit).
+
+deliver2(Elf, Houses, Input) ->
+    %% Have an elf deliver all his 50 presents.
+    H0 = deliver_to_houses(Elf, Elf, 1, Houses),
+    
+    %% The house with the same number as the elf which has just
+    %% finished delivering presents will not get any more presents,
+    %% since the next elf will start at "Elf + 1" delivering presents.
+    %% So now we know that this house will not receive any more
+    %% presents.
+    N = maps:get(Elf, H0),
+    if N >= Input ->
+            Elf;
+       true ->
+            H1 = maps:remove(Elf, H0),
+            deliver2(Elf + 1, H1, Input)
+    end.
+
+deliver_to_houses(_Elf, _HouseNum, NumHousesDeliveredTo, Houses) when NumHousesDeliveredTo > 50 ->
+    Houses;
+deliver_to_houses(Elf, HouseNum, NumHousesDeliveredTo, Houses) ->
+    NumPresents = Elf * 11,
+
+    H0 = maps:update_with(HouseNum, 
+                          fun(V) -> V + NumPresents end,
+                          NumPresents, Houses),
+    deliver_to_houses(Elf, HouseNum + Elf, NumHousesDeliveredTo + 1, H0).
