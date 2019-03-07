@@ -13,4 +13,4 @@ start() ->
               [X, Y, Z] = LineFun(Line),
               {A1 + 2*X*Y + 2*Y*Z + 2*Z*X + lists:min([X*Y, Y*Z, Z*X]),
                A2 + 2*lists:min([X+Y, Y+Z, Z+X]) + X*Y*Z}
-      end, {0, 0}, string:tokens(binary_to_list(Bin), "\n")).
+      end, {0, 0}, string:tokens(binary_to_list(Bin), "\n\r")).

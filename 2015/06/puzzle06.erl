@@ -3,7 +3,7 @@
 
 start() ->
     {ok, Bin} = file:read_file("input.txt"),
-    Lines = string:tokens(binary_to_list(Bin), "\n"),
+    Lines = string:tokens(binary_to_list(Bin), "\n\r"),
     Instrs =
         lists:map(
           fun(Line) ->
