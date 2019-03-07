@@ -6,10 +6,7 @@
 %%% Created : 19 Dec 2018 by Jesper Eskilson <>
 
 -module(puzzle14).
--compile([export_all]).
-
-input() ->
-    input("input.txt").
+-export([start/0]).
 
 input(Filename) ->
     {ok, Binary} = file:read_file(Filename),
@@ -27,11 +24,8 @@ input(Filename) ->
                         distance => 0}
               end, string:tokens(binary_to_list(Binary), "\n\r")).
 
-testinput() ->
-    input("testinput.txt").
-    
 start() ->
-    Input = input(),
+    Input = input("input.txt"),
     Seconds = 2503,
     States = 
 	lists:foldl(fun(_N, Acc) ->
@@ -41,8 +35,8 @@ start() ->
 
     
 
-    {{max_dist, max_distance(States)},
-     {max_points, max_points(States)}}.
+    {max_distance(States),
+     max_points(States)}.
 
 max_distance(States) ->
     lists:foldl(fun(#{distance := Dist}, Max) when Dist > Max ->

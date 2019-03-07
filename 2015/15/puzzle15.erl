@@ -6,7 +6,7 @@
 %%% Created : 19 Dec 2018 by  <jespe@LAPTOP-P6HKA27J>
 
 -module(puzzle15).
--compile([export_all]).
+-export([start/0]).
 
 input(List) ->
     lists:foldl(fun(X, Map) ->
@@ -30,12 +30,6 @@ input(List) ->
 
 properties() ->
      [capacity, durability, flavor, texture].
-
-permute([]) -> [[]];
-permute(L) -> [[X|Y] || X <- L, Y <- permute(L -- [X])].
-
-zero_if_negative(X) when X < 0 -> 0;
-zero_if_negative(X) -> X.
 
 ingredient_amount([X1, _, _, _], 'Sugar') -> X1;
 ingredient_amount([_, X2, _, _], 'Sprinkles') -> X2;
@@ -70,23 +64,10 @@ score(Amounts, Ingredients) ->
 	      end
       end, 1, properties()).
 
-test() ->
-    List = ["Butterscotch: capacity -1, durability -2, flavor 6, texture 3, calories 8",
-	    "Cinnamon: capacity 2, durability 3, flavor -2, texture -1, calories 3"],
-
-    Ingredients = input(List),
-    Combinations = 
-	[[X1, X2] ||
-	    X1 <- lists:seq(1, 100),
-	    X2 <- lists:seq(1, 100),
-	    X1 + X2 == 100],
-    
-    lists:max(
-      lists:map(fun(Amounts) ->
-			score(Amounts, Ingredients)
-		end, Combinations)).
-
 start() ->
+    {part1(), part2()}.
+
+part1() ->
     List = ["Sugar: capacity 3, durability 0, flavor 0, texture -3, calories 2",
 	    "Sprinkles: capacity -3, durability 3, flavor 0, texture 0, calories 9",
 	    "Candy: capacity -1, durability 0, flavor 4, texture 0, calories 1",
@@ -139,7 +120,7 @@ score2(Amounts, Ingredients) ->
     {Score, Calories}.
 	
 
-start2() ->
+part2() ->
     List = ["Sugar: capacity 3, durability 0, flavor 0, texture -3, calories 2",
 	    "Sprinkles: capacity -3, durability 3, flavor 0, texture 0, calories 9",
 	    "Candy: capacity -1, durability 0, flavor 4, texture 0, calories 1",
@@ -155,11 +136,12 @@ start2() ->
 	    X1 + X2 + X3 + X4 == 100],
  
     lists:max(
-      lists:filter(fun({Score, Cal}) when Cal == 500 ->
-			   true;
-		      (_) ->
-			   false
-		   end, 
-		   lists:map(fun(Amounts) ->
-				     score2(Amounts, Ingredients)
-			     end, Combinations))).
+      lists:filtermap(
+        fun({Score, Cal}) when Cal == 500 ->
+                {true, Score};
+           (_) ->
+                false
+        end, 
+        lists:map(fun(Amounts) ->
+                          score2(Amounts, Ingredients)
+                  end, Combinations))).
