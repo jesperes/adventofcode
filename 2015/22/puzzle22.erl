@@ -1,5 +1,5 @@
 -module(puzzle22).
--compile([export_all]).
+-export([start/0]).
 -include_lib("eunit/include/eunit.hrl").
 
 spells() ->
@@ -28,8 +28,8 @@ state(HP, Mana, BossHP, BossDamage, Pen) ->
      }.
 
 start() ->
-    {{part1, start_part1(50, 500, 51, 9)},
-     {part2, start_part2(50, 500, 51, 9)}}.
+    {start_part1(50, 500, 51, 9),
+     start_part2(50, 500, 51, 9)}.
 
 start_part1(HP, Mana, BossHP, BossDamage) ->
     battle(player, state(HP, Mana, BossHP, BossDamage, 0)).

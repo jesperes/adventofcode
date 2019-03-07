@@ -1,12 +1,12 @@
 %%% @author  <jespe@LAPTOP-P6HKA27J>
-%%% @copyright (C) 2018, 
+%%% @copyright (C) 2018,
 %%% @doc
 %%%
 %%% @end
 %%% Created : 31 Dec 2018 by  <jespe@LAPTOP-P6HKA27J>
 
 -module(puzzle21).
--compile([export_all]).
+-export([start/0]).
 -include_lib("eunit/include/eunit.hrl").
 
 -record(combatant, {
@@ -64,7 +64,7 @@ player({Weapon, Rings, Armor}) ->
     WeaponCost = maps:get(cost, WeaponInfo),
 
     %% 0-2 rings can be selected, and can yield both armor and damage.
-    {RingDamage, RingArmor, RingCost} = 
+    {RingDamage, RingArmor, RingCost} =
 	lists:foldl(fun(Ring, {DamageIn, ArmorIn, CostIn}) ->
 			    RingInfo = maps:get(Ring, Inv),
 			    D = maps:get(damage, RingInfo, 0),
@@ -77,12 +77,12 @@ player({Weapon, Rings, Armor}) ->
     {ArmorArmor, ArmorCost} =
 	case Armor of
 	    [] -> {0, 0};
-	    [A] -> 
+	    [A] ->
 		ArmorInfo = maps:get(A, Inv),
 		{maps:get(armor, ArmorInfo),
 		 maps:get(cost, ArmorInfo)}
 	end,
-    
+
     #combatant{hp = 100,
 	       damage = WeaponDamage + RingDamage,
 	       armor = ArmorArmor + RingArmor,
@@ -90,19 +90,20 @@ player({Weapon, Rings, Armor}) ->
 	       name = player
 	       }.
 
-start() ->    
-    Combos = 
+start() ->
+    {part1(), part2()}.
+
+part1() ->
+    Combos =
 	[{Weapon, Rings, Armor} ||
 	    Weapon <- weapons(),
 	    Rings <- combinations(rings()) ++ [[]],
 	    length(Rings) =< 2,
 	    Armor <- [[A] || A <- armors()] ++ [[]]],
-    
-    io:format("Total number of combos: ~p~n", [length(Combos)]),
 
     %% Battle the boss using all combinations, and filter out the ones
     %% where we win.
-    WinningCombos = 
+    WinningCombos =
 	lists:filtermap(fun(Equipment) ->
 				Boss = boss(),
 				Player = player(Equipment),
@@ -113,30 +114,28 @@ start() ->
 					false
 				end
 			end, Combos),
-    
-    io:format("Number of winning combos: ~p~n", [length(WinningCombos)]),
-    
+
     %% Find the combo with lowest cost
-    lists:foldl(fun({#combatant{cost = Cost} = Player, Equipment}, {OldMin, _, _})
-		      when Cost < OldMin ->
-			{Cost, Player, Equipment};
-		   (_, Acc) ->
-			Acc
-		end, {10000000, undef, undef}, WinningCombos).
-			
-start2() ->    
-    Combos = 
+    {Cost, _, _} = 
+        lists:foldl(fun({#combatant{cost = Cost} = Player, Equipment}, {OldMin, _, _})
+                          when Cost < OldMin ->
+                            {Cost, Player, Equipment};
+                       (_, Acc) ->
+                            Acc
+                    end, {10000000, undef, undef}, WinningCombos),
+    Cost.
+
+part2() ->
+    Combos =
 	[{Weapon, Rings, Armor} ||
 	    Weapon <- weapons(),
 	    Rings <- combinations(rings()) ++ [[]],
 	    length(Rings) =< 2,
 	    Armor <- [[A] || A <- armors()] ++ [[]]],
-    
-    io:format("Total number of combos: ~p~n", [length(Combos)]),
 
     %% Battle the boss using all combinations, and filter out the ones
     %% where we lose.
-    LosingCombos = 
+    LosingCombos =
 	lists:filtermap(fun(Equipment) ->
 				Boss = boss(),
 				Player = player(Equipment),
@@ -147,16 +146,17 @@ start2() ->
 					false
 				end
 			end, Combos),
-    
-    io:format("Number of losing combos: ~p~n", [length(LosingCombos)]),
-    
+
     %% Find the combo with lowest cost
-    lists:foldl(fun({#combatant{cost = Cost} = Player, Equipment}, {OldMax, _, _})
-		      when Cost > OldMax ->
-			{Cost, Player, Equipment};
-		   (_, Acc) ->
-			Acc
-		end, {0, undef, undef}, LosingCombos).
+    {Cost, _, _} = 
+        lists:foldl(fun({#combatant{cost = Cost} = Player, Equipment}, {OldMax, _, _})
+                          when Cost > OldMax ->
+                            {Cost, Player, Equipment};
+                       (_, Acc) ->
+                            Acc
+                    end, {0, undef, undef}, LosingCombos),
+    Cost.
+
 
 battle(Attacker, #combatant{hp = HP} = Defender) ->
     Damage = damage_dealt(Attacker, Defender),
@@ -165,7 +165,7 @@ battle(Attacker, #combatant{hp = HP} = Defender) ->
     %% 	      [Attacker#combatant.name,
     %% 	       Damage,
     %% 	       Def0#combatant.name,
-    %% 	       Def0#combatant.hp]),	    
+    %% 	       Def0#combatant.hp]),
     if Def0#combatant.hp =< 0 ->
 	    {winner, Attacker#combatant.name};
        true ->
@@ -193,6 +193,3 @@ battle_test() ->
     Player = #combatant{hp = 8, damage = 5, armor = 5, name = player},
     Boss = #combatant{hp = 12, damage = 7, armor = 2, name = boss},
     ?assertEqual({winner, player}, battle(Player, Boss)).
-
-
-		  

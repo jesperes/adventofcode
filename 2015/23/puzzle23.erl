@@ -1,16 +1,16 @@
 -module(puzzle23).
--compile([export_all]).
+-export([start/0]).
 -include_lib("eunit/include/eunit.hrl").
 
 start() ->
     Prog = parse(real_data()),
-    {{part1, execute_program(Prog, #{pc => 0, a => 0, b => 0})},
-     {part2, execute_program(Prog, #{pc => 0, a => 1, b => 0})}}.
+    {execute_program(Prog, #{pc => 0, a => 0, b => 0}),
+     execute_program(Prog, #{pc => 0, a => 1, b => 0})}.
 
 execute_program(Prog, #{pc := PC} = Regs) ->
     case maps:get(PC, Prog, eop) of
         eop -> 
-            maps:remove(pc, Regs);
+            maps:get(b, Regs);
         Instr -> 
             Regs0 = execute_instr(Instr, Regs),
             execute_program(Prog, Regs0)
