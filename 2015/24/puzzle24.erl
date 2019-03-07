@@ -1,5 +1,5 @@
 -module(puzzle24).
--compile([export_all]).
+-export([start/0]).
 
 %% To avoid combinatorial explosions when looking for possible
 %% combination of packages for the first group, we assume that group A
@@ -11,8 +11,8 @@ packages() -> [1, 2, 3, 7, 11, 13, 17, 19, 23, 31, 37, 41, 43, 47,
                109, 113].
 
 start() ->
-    {{part1, start_common(3)},
-     {part2, start_common(4)}}.
+    {start_common(3),
+     start_common(4)}.
 
 start_common(Groups) ->
     Packages = packages(),

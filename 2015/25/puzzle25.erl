@@ -1,5 +1,5 @@
 -module(puzzle25).
--compile([export_all]).
+-export([start/0]).
 -include_lib("eunit/include/eunit.hrl").
 
 init_value() -> 20151125.
