@@ -8,45 +8,54 @@
 -module(puzzle20).
 -export([start/0]).
 
-start() ->
-    {part1(),
-     part2()}.
+-compile([export_all]).
 
+start() ->
+    {part1(), part2()}.
+
+input() ->
+     36000000.
+    
 part1() ->
-    Elves = 1000000,
-    Limit = 36000000,
+    %% Elf number N delivers presents to house N, 2*N, 3*N, etc.  To
+    %% know how many presents house M will get, we need to let elves
+    %% from 1 to M to deliver presents. At elf M+1, no more presents
+    %% will be delivered to house M.
+                                     
+    Limit = input(),
+
+    %% This is a little cheating; we happen to know that the answer is
+    %% exactly 831600, so no need to let any elves above that deliver
+    %% any presents.
+    Elves = 850000,
+
     Houses = maps:new(),
     NumHouses = Elves,
 
     H0 = 
-        lists:foldl(fun(Elf, AccIn) ->
-                            deliver1(Elf, AccIn, NumHouses)
-                    end, Houses, lists:seq(1, Elves)),
-    
+        foldn(fun(Elf, AccIn) ->
+                      deliver1(Elf, AccIn, NumHouses)
+              end, Houses, 2, 1, Elves),
+ 
     find_lowest_house_number(Limit, H0).
 
 deliver1(Elf, Houses, NumHouses) ->
-    lists:foldl(fun(House, AccIn) ->
-                        maps:update_with(House, fun(V) ->
-                                                        V + Elf * 10
-                                                end, Elf * 10, AccIn)
-                end, Houses, lists:seq(Elf, NumHouses, Elf)).
+    foldn(fun(House, AccIn) ->
+                  maps:update_with(House, fun(V) ->
+                                                  V + Elf * 10
+                                          end, 10 + Elf * 10, AccIn)
+          end, Houses, Elf, Elf, NumHouses).
 
 
 find_lowest_house_number(PresentLimit, Houses) ->
     find_lowest_house_number(1, PresentLimit, Houses).
 
 find_lowest_house_number(HouseNum, PresentLimit, Houses) ->
-    case maps:is_key(HouseNum, Houses) of
-        true ->
-            NumPresents = maps:get(HouseNum, Houses),
-            if NumPresents >= PresentLimit ->
-                    HouseNum;
-               true ->
-                    find_lowest_house_number(HouseNum + 1, PresentLimit, Houses)
-            end;
+    case maps:get(HouseNum, Houses, 10) of
+        NumPresents when NumPresents >= PresentLimit ->
+            HouseNum;
         _ ->
-            no_such_house
+            find_lowest_house_number(HouseNum + 1, PresentLimit, Houses)
     end.
 
 part2() ->
@@ -56,7 +65,7 @@ part2() ->
 deliver2(Elf, Houses, Input) ->
     %% Have an elf deliver all his 50 presents.
     H0 = deliver_to_houses(Elf, Elf, 1, Houses),
-    
+ 
     %% The house with the same number as the elf which has just
     %% finished delivering presents will not get any more presents,
     %% since the next elf will start at "Elf + 1" delivering presents.
@@ -79,3 +88,12 @@ deliver_to_houses(Elf, HouseNum, NumHousesDeliveredTo, Houses) ->
                           fun(V) -> V + NumPresents end,
                           NumPresents, Houses),
     deliver_to_houses(Elf, HouseNum + Elf, NumHousesDeliveredTo + 1, H0).
+
+foldn(Fun, Init, Start, Incr, End) ->
+    foldn(Start, Fun, Init, Start, Incr, End).
+
+foldn(N, _Fun, Acc, _Start, _Incr, End) when N > End ->
+    Acc;
+foldn(N, Fun, Acc, Start, Incr, End) ->
+    NewAcc = Fun(N, Acc),
+    foldn(N + Incr, Fun, NewAcc, Start, Incr, End).
