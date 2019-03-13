@@ -10,90 +10,63 @@
 
 -compile([export_all]).
 
+-define(CHUNKSIZE, 10000).
+-define(LIMIT, 36000000).
+
 start() ->
     {part1(), part2()}.
 
-input() ->
-     36000000.
-    
 part1() ->
-    %% Elf number N delivers presents to house N, 2*N, 3*N, etc.  To
-    %% know how many presents house M will get, we need to let elves
-    %% from 1 to M to deliver presents. At elf M+1, no more presents
-    %% will be delivered to house M.
-                                     
-    Limit = input(),
-
-    %% This is a little cheating; we happen to know that the answer is
-    %% exactly 831600, so no need to let any elves above that deliver
-    %% any presents.
-    Elves = 850000,
-
-    Houses = maps:new(),
-    NumHouses = Elves,
-
-    H0 = 
-        foldn(fun(Elf, AccIn) ->
-                      deliver1(Elf, AccIn, NumHouses)
-              end, Houses, 2, 1, Elves),
- 
-    find_lowest_house_number(Limit, H0).
-
-deliver1(Elf, Houses, NumHouses) ->
-    foldn(fun(House, AccIn) ->
-                  maps:update_with(House, fun(V) ->
-                                                  V + Elf * 10
-                                          end, 10 + Elf * 10, AccIn)
-          end, Houses, Elf, Elf, NumHouses).
-
-
-find_lowest_house_number(PresentLimit, Houses) ->
-    find_lowest_house_number(1, PresentLimit, Houses).
-
-find_lowest_house_number(HouseNum, PresentLimit, Houses) ->
-    case maps:get(HouseNum, Houses, 10) of
-        NumPresents when NumPresents >= PresentLimit ->
-            HouseNum;
-        _ ->
-            find_lowest_house_number(HouseNum + 1, PresentLimit, Houses)
-    end.
+    deliver(1, ?LIMIT).
 
 part2() ->
-    Limit = 36000000,
-    deliver2(1, #{}, Limit).
+    ok.
 
-deliver2(Elf, Houses, Input) ->
-    %% Have an elf deliver all his 50 presents.
-    H0 = deliver_to_houses(Elf, Elf, 1, Houses),
- 
-    %% The house with the same number as the elf which has just
-    %% finished delivering presents will not get any more presents,
-    %% since the next elf will start at "Elf + 1" delivering presents.
-    %% So now we know that this house will not receive any more
-    %% presents.
-    N = maps:get(Elf, H0),
-    if N >= Input ->
-            Elf;
-       true ->
-            H1 = maps:remove(Elf, H0),
-            deliver2(Elf + 1, H1, Input)
+%% Deliver presents to houses in the range [StartHouse, StartHouse +
+%% ChunkSize).
+deliver(StartHouse, Limit) ->
+    %% If StartHouse is 1, ChunkSize == 1000, then we are going to
+    %% deliver presents to houses 1..1000. Elf number 1000 is the last
+    %% elf which is going to deliver presents.
+    LastElf = LastHouse = StartHouse + ?CHUNKSIZE - 1,
+
+    Presents = 
+        foldn(fun(ElfNum, Acc) ->
+                      %% Find the first house this elf should deliver
+                      %% presents to
+                      FirstHouse = StartHouse + (ElfNum - (StartHouse rem ElfNum)),
+                      foldn(
+                        fun(House, InnerAcc) ->
+                                map_increment(House, ElfNum * 10, InnerAcc)
+                        end, Acc, FirstHouse, LastHouse, ElfNum)
+                          
+              end, map_new(), 1, LastElf, 1),
+    
+    case map_get_smallest_house(?LIMIT, Presents) of
+        undef ->
+            deliver(StartHouse + ?CHUNKSIZE, Limit);
+        House ->
+            House
     end.
 
-deliver_to_houses(_Elf, _HouseNum, NumHousesDeliveredTo, Houses) when NumHousesDeliveredTo > 50 ->
-    Houses;
-deliver_to_houses(Elf, HouseNum, NumHousesDeliveredTo, Houses) ->
-    NumPresents = Elf * 11,
+foldn(Fun, Init, Start, End, Incr) ->
+    foldn(Start, Fun, Init, Start, End, Incr).
 
-    H0 = maps:update_with(HouseNum, 
-                          fun(V) -> V + NumPresents end,
-                          NumPresents, Houses),
-    deliver_to_houses(Elf, HouseNum + Elf, NumHousesDeliveredTo + 1, H0).
-
-foldn(Fun, Init, Start, Incr, End) ->
-    foldn(Start, Fun, Init, Start, Incr, End).
-
-foldn(N, _Fun, Acc, _Start, _Incr, End) when N > End ->
+foldn(N, _Fun, Acc, _Start, End, _Incr) when N > End ->
     Acc;
-foldn(N, Fun, Acc, Start, Incr, End) ->
+foldn(N, Fun, Acc, Start, End, Incr) ->
     NewAcc = Fun(N, Acc),
-    foldn(N + Incr, Fun, NewAcc, Start, Incr, End).
+    foldn(N + Incr, Fun, NewAcc, Start, End, Incr).
+
+map_new() -> #{}.
+
+map_increment(Key, Incr, Map) ->
+    maps:update_with(Key, fun(V) -> V + Incr end, Incr, Map).
+
+map_get_smallest_house(Limit, Map) ->
+    maps:fold(
+      fun(K, V, AccIn) when (V >= Limit) and (K < AccIn) -> K;
+         (_, _, AccIn) -> AccIn
+      end, undef, Map).
+    
+
