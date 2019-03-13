@@ -13,15 +13,16 @@
 
 -define(CHUNKSIZE, 10000).
 -define(LIMIT, 36000000).
+-define(UPPER, 900000).
+-define(LOWER, 800000).
 
 start() ->
-    {part1(), part2()}.
+    P1 = part1(),
+    P2 = part2(),
+    {P1, P2}.
 
-part1() ->
-    deliver(1).
-
-part2() ->
-    ok.
+part1() -> deliver(1).
+part2() -> deliver2(1, #{}).
 
 %% Deliver presents to houses in the range [StartHouse, StartHouse +
 %% ChunkSize).
@@ -38,12 +39,13 @@ deliver(StartHouse) ->
                       FirstHouse = StartHouse + (ElfNum - (StartHouse rem ElfNum)),
                       NumPresents = ElfNum * 10,
                       foldn(
-                        fun(House, InnerAcc) ->
+                        fun(House, InnerAcc) when (House < ?LOWER) or (House > ?UPPER) ->
+                                InnerAcc;
+                           (House, InnerAcc) ->
                                 maps:update_with(House, 
                                                  fun(V) -> V + NumPresents end, 
                                                  NumPresents, 
                                                  InnerAcc)
-                                %% map_increment(House, ElfNum * 10, InnerAcc)
                         end, Acc, FirstHouse, LastHouse, ElfNum)
                           
               end, #{}, 1, LastElf, 1),
@@ -57,6 +59,27 @@ deliver(StartHouse) ->
         House -> House
     end.
 
+deliver2(Elf, Map) ->
+    NumPresents = Elf * 11,
+    Map1 = 
+        foldn(fun(House, Acc) when (House < ?LOWER) or (House > ?UPPER) ->
+                      Acc;
+                 (House, Acc) ->
+                      maps:update_with(House, 
+                                       fun(V) -> V + NumPresents end, 
+                                       NumPresents, Acc)
+              end, Map, Elf, Elf * 50, Elf),
+    
+    %% When this elf is finished, the house with that number will not
+    %% receive any more presents.
+
+    N = maps:get(Elf, Map1, 0),
+    if N >= ?LIMIT ->
+            Elf;
+       true ->
+            deliver2(Elf + 1, maps:remove(Elf, Map1))
+    end.
+
 foldn(Fun, Init, Start, End, Incr) ->
     foldn(Start, Fun, Init, Start, End, Incr).
 
@@ -65,5 +88,6 @@ foldn(N, _Fun, Acc, _Start, End, _Incr) when N > End ->
 foldn(N, Fun, Acc, Start, End, Incr) ->
     NewAcc = Fun(N, Acc),
     foldn(N + Incr, Fun, NewAcc, Start, End, Incr).
+
 
 
