@@ -9,6 +9,7 @@ puzzles() ->
     , {"04/puzzle04.erl", {puzzle04, start, []}, {282749, 9962624}}
     , {"05/puzzle05.erl", {puzzle05, start, []}, {238, 69}}
     , {"06/puzzle06.erl", {puzzle06, start, []}, {543903, 14687245}}
+    , {"07/puzzle07.erl", {puzzle07, start, []}, {956, 40149}}
     , {"08/puzzle08.erl", {puzzle08, start, []}, {1371, 2117}}
     , {"09/puzzle9.erl",  {puzzle9,  start, []}, {251, 898}}
     , {"10/puzzle10.erl", {puzzle10, start, []}, {492982,6989950}}
@@ -21,7 +22,7 @@ puzzles() ->
     , {"17/puzzle17.erl", {puzzle17, start, []}, {1638, 17}}
     , {"18/puzzle18.erl", {puzzle18, start, []}, {768, 781}}
     , {"19/puzzle19.erl", {puzzle19, start, []}, {576, 207}}
-    % , {"20/puzzle20.erl", {puzzle20, start, []}, {831600, 884520}}
+    , {"20/puzzle20.erl", {puzzle20, start, []}, {831600, 884520}}
     , {"21/puzzle21.erl", {puzzle21, start, []}, {91, 158}}
     , {"22/puzzle22.erl", {puzzle22, start, []}, {900, 1216}}
     , {"23/puzzle23.erl", {puzzle23, start, []}, {255, 334}}

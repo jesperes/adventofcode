@@ -8,74 +8,86 @@
 -module(puzzle20).
 -export([start/0]).
 
+
+-compile([export_all]).
+
+-define(CHUNKSIZE, 10000).
+-define(LIMIT, 36000000).
+-define(UPPER, 900000).
+-define(LOWER, 800000).
+
 start() ->
-    {part1(),
-     part2()}.
+    P1 = part1(),
+    P2 = part2(),
+    {P1, P2}.
 
-part1() ->
-    Elves = 1000000,
-    Limit = 36000000,
-    Houses = maps:new(),
-    NumHouses = Elves,
+part1() -> deliver(1).
+part2() -> deliver2(1, #{}).
 
-    H0 = 
-        lists:foldl(fun(Elf, AccIn) ->
-                            deliver1(Elf, AccIn, NumHouses)
-                    end, Houses, lists:seq(1, Elves)),
+%% Deliver presents to houses in the range [StartHouse, StartHouse +
+%% ChunkSize).
+deliver(StartHouse) ->
+    %% If StartHouse is 1, ChunkSize == 1000, then we are going to
+    %% deliver presents to houses 1..1000. Elf number 1000 is the last
+    %% elf which is going to deliver presents.
+    LastElf = LastHouse = StartHouse + ?CHUNKSIZE - 1,
+
+    Presents = 
+        foldn(fun(ElfNum, Acc) ->
+                      %% Find the first house this elf should deliver
+                      %% presents to
+                      FirstHouse = StartHouse + (ElfNum - (StartHouse rem ElfNum)),
+                      NumPresents = ElfNum * 10,
+                      foldn(
+                        fun(House, InnerAcc) when (House < ?LOWER) or (House > ?UPPER) ->
+                                InnerAcc;
+                           (House, InnerAcc) ->
+                                maps:update_with(House, 
+                                                 fun(V) -> V + NumPresents end, 
+                                                 NumPresents, 
+                                                 InnerAcc)
+                        end, Acc, FirstHouse, LastHouse, ElfNum)
+                          
+              end, #{}, 1, LastElf, 1),
     
-    find_lowest_house_number(Limit, H0).
-
-deliver1(Elf, Houses, NumHouses) ->
-    lists:foldl(fun(House, AccIn) ->
-                        maps:update_with(House, fun(V) ->
-                                                        V + Elf * 10
-                                                end, Elf * 10, AccIn)
-                end, Houses, lists:seq(Elf, NumHouses, Elf)).
-
-
-find_lowest_house_number(PresentLimit, Houses) ->
-    find_lowest_house_number(1, PresentLimit, Houses).
-
-find_lowest_house_number(HouseNum, PresentLimit, Houses) ->
-    case maps:is_key(HouseNum, Houses) of
-        true ->
-            NumPresents = maps:get(HouseNum, Houses),
-            if NumPresents >= PresentLimit ->
-                    HouseNum;
-               true ->
-                    find_lowest_house_number(HouseNum + 1, PresentLimit, Houses)
-            end;
-        _ ->
-            no_such_house
+    case maps:fold(
+           fun(K, V, AccIn) when (V >= ?LIMIT) and (K < AccIn) -> K;
+              (_, _, AccIn) -> AccIn
+           end, undef, Presents) 
+    of
+        undef -> deliver(StartHouse + ?CHUNKSIZE);
+        House -> House
     end.
 
-part2() ->
-    Limit = 36000000,
-    deliver2(1, #{}, Limit).
-
-deliver2(Elf, Houses, Input) ->
-    %% Have an elf deliver all his 50 presents.
-    H0 = deliver_to_houses(Elf, Elf, 1, Houses),
+deliver2(Elf, Map) ->
+    NumPresents = Elf * 11,
+    Map1 = 
+        foldn(fun(House, Acc) when (House < ?LOWER) or (House > ?UPPER) ->
+                      Acc;
+                 (House, Acc) ->
+                      maps:update_with(House, 
+                                       fun(V) -> V + NumPresents end, 
+                                       NumPresents, Acc)
+              end, Map, Elf, Elf * 50, Elf),
     
-    %% The house with the same number as the elf which has just
-    %% finished delivering presents will not get any more presents,
-    %% since the next elf will start at "Elf + 1" delivering presents.
-    %% So now we know that this house will not receive any more
-    %% presents.
-    N = maps:get(Elf, H0),
-    if N >= Input ->
+    %% When this elf is finished, the house with that number will not
+    %% receive any more presents.
+
+    N = maps:get(Elf, Map1, 0),
+    if N >= ?LIMIT ->
             Elf;
        true ->
-            H1 = maps:remove(Elf, H0),
-            deliver2(Elf + 1, H1, Input)
+            deliver2(Elf + 1, maps:remove(Elf, Map1))
     end.
 
-deliver_to_houses(_Elf, _HouseNum, NumHousesDeliveredTo, Houses) when NumHousesDeliveredTo > 50 ->
-    Houses;
-deliver_to_houses(Elf, HouseNum, NumHousesDeliveredTo, Houses) ->
-    NumPresents = Elf * 11,
+foldn(Fun, Init, Start, End, Incr) ->
+    foldn(Start, Fun, Init, Start, End, Incr).
 
-    H0 = maps:update_with(HouseNum, 
-                          fun(V) -> V + NumPresents end,
-                          NumPresents, Houses),
-    deliver_to_houses(Elf, HouseNum + Elf, NumHousesDeliveredTo + 1, H0).
+foldn(N, _Fun, Acc, _Start, End, _Incr) when N > End ->
+    Acc;
+foldn(N, Fun, Acc, Start, End, Incr) ->
+    NewAcc = Fun(N, Acc),
+    foldn(N + Incr, Fun, NewAcc, Start, End, Incr).
+
+
+
