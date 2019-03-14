@@ -1,12 +1,14 @@
 package common;
 
-public class Pair<T0, T1> {
+public class Triple<T0, T1, T2> {
     public final T0 x;
     public final T1 y;
+    public final T2 z;
 
-    public Pair(T0 first, T1 second) {
-        this.x = first;
-        this.y = second;
+    public Triple(T0 x, T1 y, T2 z) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
     }
 
     @Override
@@ -15,6 +17,7 @@ public class Pair<T0, T1> {
         int result = 1;
         result = prime * result + ((x == null) ? 0 : x.hashCode());
         result = prime * result + ((y == null) ? 0 : y.hashCode());
+        result = prime * result + ((z == null) ? 0 : z.hashCode());
         return result;
     }
 
@@ -27,7 +30,7 @@ public class Pair<T0, T1> {
         if (getClass() != obj.getClass())
             return false;
         @SuppressWarnings("rawtypes")
-        Pair other = (Pair) obj;
+        Triple other = (Triple) obj;
         if (x == null) {
             if (other.x != null)
                 return false;
@@ -37,6 +40,11 @@ public class Pair<T0, T1> {
             if (other.y != null)
                 return false;
         } else if (!y.equals(other.y))
+            return false;
+        if (z == null) {
+            if (other.z != null)
+                return false;
+        } else if (!z.equals(other.z))
             return false;
         return true;
     }
