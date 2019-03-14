@@ -8,11 +8,11 @@
 -module(puzzle20).
 -export([start/0]).
 
-
--compile([export_all]).
-
 -define(CHUNKSIZE, 10000).
 -define(LIMIT, 36000000).
+
+%% This is a little cheating based on knowledge about the solutions,
+%% but it allows us to keep the runtime down to < 10s.
 -define(UPPER, 900000).
 -define(LOWER, 800000).
 
