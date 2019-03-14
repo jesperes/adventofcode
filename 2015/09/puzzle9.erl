@@ -8,7 +8,7 @@
 
 realinput() ->
     {ok, Binary} = file:read_file("input.txt"),
-    Tokens = string:tokens(binary_to_list(Binary), "\n"),
+    Tokens = string:tokens(binary_to_list(Binary), "\n\r"),
     lists:map(fun(Line) ->
                       [From, "to", To, "=", Dist] = string:tokens(Line, " "),
                       {list_to_atom(From),

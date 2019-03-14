@@ -15,14 +15,14 @@ start() ->
                             (LSize - MSize) + Acc
                     end, 0,
                     [measure(Str) || 
-                        Str <- string:tokens(binary_to_list(Binary), "\n")]),
+                        Str <- string:tokens(binary_to_list(Binary), "\n\r")]),
     
     Part2Sol =
         lists:foldl(fun({Orig, Quoted}, Acc) ->
                             Acc + (length(Quoted) - length(Orig))
                     end, 0,
                     [{Str, "\"" ++ quote(Str) ++ "\""} || 
-                        Str <- string:tokens(binary_to_list(Binary), "\n")]),
+                        Str <- string:tokens(binary_to_list(Binary), "\n\r")]),
    
     {Part1Sol, Part2Sol}.
  

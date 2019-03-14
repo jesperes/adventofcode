@@ -41,7 +41,7 @@ execute_instr({jio, Reg, Offset}, Regs) ->
 
 parse(Binary) ->
     P = lists:foldl(fun parse_line/2, #{pc => 0},
-                    string:tokens(binary_to_list(Binary), "\n")),
+                    string:tokens(binary_to_list(Binary), "\n\r")),
     maps:remove(pc, P). %% pc is only used temporarily during parsing
 
 parse_line(Line, #{pc := PC} = Prog) ->
