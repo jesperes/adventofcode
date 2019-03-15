@@ -33,10 +33,13 @@ public class Day04 {
     public void testDay04() throws Exception {
         int p1 = 0;
         int p2 = 0;
+        StringBuilder s = new StringBuilder(INPUT);
 
         for (int i = 1;; i++) {
-            byte[] input = (INPUT + Integer.toString(i)).getBytes();
-            byte[] digest = md5.digest(input);
+            s.setLength(INPUT.length());
+            s.append(String.valueOf(i));
+
+            byte[] digest = md5.digest(s.toString().getBytes());
 
             if (p1 == 0 && isPart1Solution(digest)) {
                 p1 = i;
