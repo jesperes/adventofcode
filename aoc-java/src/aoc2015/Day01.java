@@ -2,8 +2,8 @@ package aoc2015;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.BufferedReader;
 import java.io.FileReader;
-import java.io.Reader;
 
 import org.junit.Test;
 
@@ -13,7 +13,8 @@ public class Day01 {
         int floor = 0;
         int basementPos = 0;
 
-        try (Reader reader = new FileReader("inputs/2015/day01.txt")) {
+        try (BufferedReader reader = new BufferedReader(
+                new FileReader("inputs/2015/day01.txt"))) {
             int c;
             int i = 0;
             while ((c = reader.read()) != -1) {
