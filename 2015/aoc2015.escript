@@ -53,7 +53,7 @@ run_puzzle(Root, Ebin, {Src, {M, F, A}, Expected}) ->
                   ?assertEqual(Expected, erlang:apply(M, F, A))
           end),
 
-    io:format("~-10w: ~8w msecs~n", [M, T0 / 1000.0]).
+    io:format("~-10w: ~12w msecs~n", [M, T0 / 1000.0]).
 
 main([]) ->
     Root = filename:absname(filename:dirname(escript:script_name())),
