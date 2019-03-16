@@ -2,11 +2,13 @@
 	<target name="run">
 		<javac srcdir="${basedir}/src" source="1.8" target="1.8" includeantruntime="true" destdir="${basedir}/bin">
 			<classpath location="${basedir}/junit.jar" />
+			<classpath location="${basedir}/gson.jar" />
 		</javac>
 
 		<junit printsummary="on" haltonfailure="true" haltonerror="true" showoutput="true">
 			<classpath location="${basedir}/bin" />
 			<classpath location="${basedir}/junit.jar" />
+			<classpath location="${basedir}/gson.jar" />
 			<classpath location="${basedir}/hamcrest.jar" />
 
 			<formatter type="plain" usefile="false" />
