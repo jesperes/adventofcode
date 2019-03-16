@@ -6,15 +6,15 @@
 %%% Created :  7 Jan 2019 by Jesper Eskilson <jesper.eskilson@klarna.com>
 
 -module(puzzle13).
--compile([export_all]).
+-export([start/0]).
 
 start() ->
     start(50, 1364, 25).
 
-start(Depth, Fav, Size) ->  
+start(Depth, Fav, _Size) ->  
     Start = {1, 1},
     Goal = {31, 39},
-    Path = 
+    {_, Path} = 
         astar2:astar(Start, Goal,
                      fun(Node) -> cost(Node, Goal) end,
                      fun(Curr) -> neighbors(Curr, Fav) end,
@@ -22,26 +22,7 @@ start(Depth, Fav, Size) ->
 
     Reachable = search_to_depth(Start, Depth, Fav),
 
-    S = [[pos_to_str({X,Y}, Start, Reachable, Fav) 
-          || X <- lists:seq(0, Size)] ++ "\n"
-         || Y <- lists:seq(0, Size)],
-    io:format("~s~n", [S]),
-
-    {{part1, length(Path) - 1},
-     {part2, sets:size(search_to_depth(Start, Depth, Fav))}}.
-
-pos_to_str(Pos, Start, _Reachable, _Fav) when Pos == Start -> "S";
-pos_to_str(Pos, _Start, Reachable, Fav) ->
-    case is_wall(Pos, Fav) of
-        true -> "#";
-        false -> 
-            case sets:is_element(Pos, Reachable) of
-                true ->
-                    "X";
-                false ->
-                    " "
-            end
-    end.
+    {length(Path) - 1, sets:size(Reachable)}.
 
 bitcount(V)    -> bitcount(V, 0).
 bitcount(0, C) -> C;

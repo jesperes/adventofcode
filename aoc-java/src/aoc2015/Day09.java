@@ -5,9 +5,6 @@ import static org.junit.Assert.assertEquals;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -16,29 +13,9 @@ import java.util.Set;
 
 import org.junit.Test;
 
+import common.Combinatorics;
+
 public class Day09 {
-
-    <T> List<List<T>> permutations(Collection<T> list) {
-        List<List<T>> perms = new ArrayList<List<T>>();
-
-        if (list.size() == 0) {
-            perms.add(Collections.emptyList());
-        } else {
-            for (T elem : list) {
-                List<T> rest = new ArrayList<>();
-                rest.addAll(list);
-                rest.remove(elem);
-
-                for (List<T> subperm : permutations(rest)) {
-                    List<T> perm = new ArrayList<>();
-                    perm.add(elem);
-                    perm.addAll(subperm);
-                    perms.add(perm);
-                }
-            }
-        }
-        return perms;
-    }
 
     String makeKey(String s1, String s2) {
         if (s1.compareTo(s2) < 0) {
@@ -76,7 +53,7 @@ public class Day09 {
             }
         }
 
-        List<List<String>> permutations = permutations(cities);
+        List<List<String>> permutations = Combinatorics.permutations(cities);
 
         int minRouteLen = Integer.MAX_VALUE;
         int maxRouteLen = Integer.MIN_VALUE;

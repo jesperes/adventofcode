@@ -33,10 +33,10 @@ find_nth_key(Prefix, CurrIdx, CurrKey, KeyNum, Cache) ->
 
 %% Find the next "key", starting at index N. Returns {Index, Cache}.
 find_next_key(Prefix, N, Cache) ->
-    %% io:format("Finding next 3-sequence...~n", []),
+    io:format("Finding next 3-sequence...~n", []),
     {S3, Char, Cache0} = find_next_md5_with_sequence(Prefix, N, inf, 3, any, Cache),
 
-    %% io:format("Found 3-sequence at ~w, proceeding with 5-sequence...~n", [S3]),
+    io:format("Found 3-sequence at ~w, proceeding with 5-sequence...~n", [S3]),
     
     case find_next_md5_with_sequence(Prefix, S3 + 1, S3 + 1000, 5, Char, Cache0) of
         {false, Cache1} ->

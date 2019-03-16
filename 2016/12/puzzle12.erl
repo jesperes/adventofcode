@@ -7,23 +7,11 @@
 %%% Created : 17 Dec 2018 by Jesper Eskilson <>
 %%%-------------------------------------------------------------------
 -module(puzzle12).
-
 -export([start/0]).
 
-testprog() ->
-    #{0 => {cpy, 41, a},
-      1 => {inc, a},
-      2 => {inc, a},
-      3 => {dec, a},
-      4 => {jnz, a, 2},
-      5 => {dec, a}}.
-
-arg(S) ->           
-    case re:run(S, "\\d+") of
-        {match, _} ->
-            list_to_integer(S);
-        _ ->
-            list_to_atom(S)
+arg(S) ->   
+    try list_to_integer(S)
+    catch error:badarg -> list_to_atom(S)
     end.
 
 inputprog() ->
@@ -46,14 +34,13 @@ inputprog() ->
     InstrMap.
 
 start() ->
-    %% execute(0, testprog(), #{}).
-    execute(0, inputprog(), #{c => 1}).
-    %% inputprog().
+    Prog = inputprog(),
+    #{a := A1} = execute(0, Prog, #{}),
+    #{a := A2} = execute(0, Prog, #{c => 1}),
+    {A1, A2}.
 
-read_reg(X, Regs) when is_number(X) ->
-    X;
-read_reg(X, Regs) when is_atom(X) ->
-    maps:get(X, Regs, 0).
+read_reg(X, _) when is_number(X) -> X;
+read_reg(X, Regs) when is_atom(X) -> maps:get(X, Regs, 0).
 
 execute(Pc, Instrs, Regs) ->
     Instr = maps:get(Pc, Instrs, eop),

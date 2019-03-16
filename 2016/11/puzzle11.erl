@@ -6,7 +6,8 @@
 %%% Created :  4 Jan 2019 by Jesper Eskilson <jesper.eskilson@klarna.com>
 
 -module(puzzle11).
--compile([export_all]).
+-export([start/0]).
+
 -include_lib("eunit/include/eunit.hrl").
 
 -define(ELEVATOR, 'E').
@@ -73,24 +74,24 @@ realdata() ->
 
 start() ->
     {
-      {part1_test, number_of_moves(testdata(), part1)},
-      {part1, number_of_moves(realdata(), part1)},
-      {part2, number_of_moves(realdata(), part2)}
+     %% {part1_test, number_of_moves(testdata(), part1)},
+     number_of_moves(realdata(), part1),
+     number_of_moves(realdata(), part2)
     }.
 
 number_of_moves(Data, Part) ->
     {Time, Result} = timer:tc(fun() ->
 				      number_of_moves0(Data, Part)
 			      end),
-    io:format("Time: ~w secs~n", [Time / 1000000.0]),
+    %% io:format("Time: ~w secs~n", [Time / 1000000.0]),
     Result.
 
 number_of_moves0(Data, Part) ->
     {Names, Start} = parse(Data, Part),
 
-    io:format("Initial state:~n", []),
-    print(Names, Start),
-    io:format("Searching...~n", []),
+    %% io:format("Initial state:~n", []),
+    %% print(Names, Start),
+    %% io:format("Searching...~n", []),
     case astar2:astar(Start, endstate(Names),
 		      fun cost/1,
 		      fun(Bits) ->
@@ -99,7 +100,7 @@ number_of_moves0(Data, Part) ->
 		      fun distance/2) of
 	search_exhausted ->
 	    no_solution;
-	Path ->
+	{_, Path} ->
 	    length(Path) - 1
     end.
 
