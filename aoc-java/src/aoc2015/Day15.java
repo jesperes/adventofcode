@@ -1,10 +1,13 @@
 package aoc2015;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 
 import org.junit.Test;
 
@@ -33,7 +36,13 @@ public class Day15 {
 
         for (int i1 = 0; i1 <= 100; i1++) {
             for (int i2 = 0; i2 <= 100; i2++) {
+                if (i1 + i2 > 100)
+                    continue;
+
                 for (int i3 = 0; i3 <= 100; i3++) {
+                    if (i1 + i2 + i3 > 100)
+                        continue;
+
                     for (int i4 = 0; i4 <= 100; i4++) {
                         if (i1 + i2 + i3 + i4 == 100) {
                             combos.add(Arrays.asList(i1, i2, i3, i4));
@@ -44,6 +53,15 @@ public class Day15 {
         }
 
         return combos;
+    }
+
+    int getProperty(List<Integer> combos, List<Ingredient> ingredients,
+            Function<Ingredient, Integer> fun) {
+        int propsum = 0;
+        for (int i = 0; i < combos.size(); i++) {
+            propsum += combos.get(i) * fun.apply(ingredients.get(i));
+        }
+        return Math.max(0, propsum);
     }
 
     @Test
@@ -57,11 +75,6 @@ public class Day15 {
 
             while ((line = reader.readLine()) != null) {
                 String[] s = line.split("[ :,]");
-
-                for (int i = 0; i < s.length; i++) {
-                    System.out.format("s[%d] = %s\n", i, s[i]);
-                }
-
                 String name = s[0];
                 int capacity = Integer.valueOf(s[3]);
                 int durability = Integer.valueOf(s[6]);
@@ -73,5 +86,31 @@ public class Day15 {
                 ingredients.add(ingr);
             }
         }
+
+        int max = Integer.MIN_VALUE;
+        int maxCal500 = Integer.MIN_VALUE;
+
+        for (List<Integer> combo : get4IngredientCombos()) {
+
+            int capacity = getProperty(combo, ingredients,
+                    ingr -> ingr.capacity);
+            int durability = getProperty(combo, ingredients,
+                    ingr -> ingr.durability);
+            int flavor = getProperty(combo, ingredients, ingr -> ingr.flavor);
+            int texture = getProperty(combo, ingredients, ingr -> ingr.texture);
+            int calories = getProperty(combo, ingredients,
+                    ingr -> ingr.calories);
+
+            int score = capacity * durability * flavor * texture;
+            if (score > max)
+                max = score;
+
+            if (calories == 500 && score > maxCal500) {
+                maxCal500 = score;
+            }
+        }
+
+        assertEquals(222870, max);
+        assertEquals(117936, maxCal500);
     }
 }
