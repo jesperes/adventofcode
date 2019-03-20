@@ -10,6 +10,7 @@
 			<classpath location="${basedir}/junit.jar" />
 			<classpath location="${basedir}/gson.jar" />
 			<classpath location="${basedir}/hamcrest.jar" />
+			<classpath location="${basedir}/guava-23.0.jar" />
 
 			<formatter type="plain" usefile="false" />
 			<test name="aoc2015.Aoc2015Suite"/>
