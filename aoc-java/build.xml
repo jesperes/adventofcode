@@ -3,6 +3,7 @@
 		<javac srcdir="${basedir}/src" source="1.8" target="1.8" includeantruntime="true" destdir="${basedir}/bin">
 			<classpath location="${basedir}/junit.jar" />
 			<classpath location="${basedir}/gson.jar" />
+			<classpath location="${basedir}/guava-23.0.jar" />
 		</javac>
 
 		<junit printsummary="on" haltonfailure="true" haltonerror="true" showoutput="true">
