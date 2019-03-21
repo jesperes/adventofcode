@@ -2,18 +2,16 @@
 -export([start/0]).
 
 start() ->
-    Input = "yzbqklnj",
-    {part1(Input, 0),
-     part2(Input, 0)}.
+    part("yzbqklnj", 0, undef).
 
-part1(Input, N) ->
+part(Input, N, P1) ->
     case erlang:md5(Input ++ integer_to_list(N)) of
-        <<0, 0, 0:4, _/bitstring>> -> N;
-        _ -> part1(Input, N + 1)
-    end.
-
-part2(Input, N) ->
-    case erlang:md5(Input ++ integer_to_list(N)) of
-        <<0, 0, 0, _/binary>> -> N;
-        _ -> part2(Input, N + 1)
+        <<0, 0, 0, _/binary>> -> 
+            %% Found part 2, we are done
+            {P1, N};
+        <<0, 0, 0:4, _/bitstring>> when P1 =:= undef -> 
+            %% Found part 1 solution, continue with part 2.
+            part(Input, N + 1, N);
+        _ -> 
+            part(Input, N + 1, P1)
     end.
