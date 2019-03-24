@@ -27,7 +27,7 @@ abstract public class AStarSearch<T extends Comparable<T>> {
      * @param node
      * @return
      */
-    abstract boolean isGoal(T node);
+    abstract public boolean isGoal(T node);
 
     /**
      * Return the neighbors of the given node.
@@ -35,7 +35,7 @@ abstract public class AStarSearch<T extends Comparable<T>> {
      * @param node
      * @return
      */
-    abstract Collection<T> neighbors(T node);
+    abstract public Collection<T> neighbors(T node);
 
     /**
      * Return the distance from the current node to the given neighbor.
@@ -44,13 +44,15 @@ abstract public class AStarSearch<T extends Comparable<T>> {
      * @param nbr
      * @return
      */
-    abstract int distance(T curr, T nbr);
+    abstract public int distance(T curr, T nbr);
 
-    public List<T> search(T start) {
+    public final List<T> search(T start) {
         Set<T> closedSet = new HashSet<>();
         TreeSet<T> openSet = new TreeSet<>();
         Map<T, T> cameFrom = new HashMap<>();
         Map<T, Integer> gScore = new HashMap<>();
+
+        openSet.add(start);
         gScore.put(start, 0);
 
         while (!openSet.isEmpty()) {
@@ -70,7 +72,8 @@ abstract public class AStarSearch<T extends Comparable<T>> {
 
                 if (!openSet.contains(nbr)) // new node
                     openSet.add(nbr);
-                else if (tentativeGScore >= gScore.get(nbr))
+                else if (tentativeGScore >= gScore.getOrDefault(nbr,
+                        Integer.MAX_VALUE))
                     continue;
 
                 // best path
