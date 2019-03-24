@@ -5,67 +5,52 @@
 -include_lib("eunit/include/eunit.hrl").
 
 start() ->
-    Part1Sol = length(get_all_replacements(?INPUT, ?INPUT_RULES)),
-    {Part2Sol, _} = part2(?INPUT, ?INPUT_RULES),
-    {Part1Sol, Part2Sol}.
+    {part1(), part2()}.
+
+part1() ->
+    length(get_all_replacements(?INPUT, ?INPUT_RULES)).
+
+part2() ->
+    %% This uses the trick described in
+    %% https://www.reddit.com/r/adventofcode/comments/3xflz8/day_19_solutions/cy4etju
+    %% which describes how to compute the minimal number of steps
+    %% needed without having to actually figure out which
+    %% substitutions to make.
+    lists:foldl(fun(C, Steps) ->
+                        S0 = case is_lower(C) of
+                                 false -> Steps + 1;
+                                 true -> Steps
+                             end,
+
+                        case C of
+                            $( -> S0 - 1;
+                            $) -> S0 - 1;
+                            $, -> S0 - 2;
+                            _ -> S0
+                        end
+
+                end, -1, replace_paren(binary_to_list(?INPUT))).
+
+replace_paren([]) ->
+    [];
+replace_paren([$A,$r|Rest]) ->
+    [$(|replace_paren(Rest)];
+replace_paren([$R,$n|Rest]) ->
+    [$)|replace_paren(Rest)];
+replace_paren([$Y|Rest]) ->
+    [$,|replace_paren(Rest)];
+replace_paren([X|Rest]) ->
+    [X|replace_paren(Rest)].
+
+is_lower(C) when (C >= $a) and (C =< $z) ->
+    true;
+is_lower(_) ->
+    false.
 
 get_all_replacements(Input, Rules) ->
     Repls = [apply_rule(Rule, Input) || Rule <- Rules],
     sets:to_list(sets:from_list(lists:flatten(Repls))).
 
 apply_rule({F, T}, Input) ->
-    [binary:replace(Input, F, T, [{scope, Pos}]) || Pos <- binary:matches(Input, F)].
-
-get_all_reductions(Input, Rules) ->
-    Repls = [apply_reduction(Rule, Input) || Rule <- Rules],
-    sets:to_list(sets:from_list(lists:flatten(Repls))).
-    
-apply_reduction({F, T}, Input) ->
-    [binary:replace(Input, T, F, [{scope, Pos}]) || Pos <- binary:matches(Input, T)].
-
-part1(Input, Rules) ->
-    length(get_all_replacements(Input, Rules)).
-
-part2(Target, Rules) ->
-    %% Search backwards, starting with the string we want to produce.
-    Start = Target,
-    End = <<"e">>,
-    {ok, Path} = 
-	astar:a_star(Start,
-		     fun({neighbors, Current}) ->
-			     get_all_reductions(Current, Rules);
-			({dist, _Neighbor, _Current}) ->
-			     1;
-			({cost, Neighbor}) ->
-			     byte_size(Neighbor);
-                        ({is_goal, Current}) ->
-                             Current =:= End
-		     end),
-    
-    %% The number of reductions needed is the length of the path - 1
-    %% since the path includes the start node.
-    {length(Path) - 1, Path}.
-
-part2_test() ->    
-    Rules = [
-	     {<<"e">>, <<"H">>},
-	     {<<"e">>, <<"O">>},
-	     {<<"H">>, <<"HO">>},
-	     {<<"H">>, <<"OH">>},
-	     {<<"O">>, <<"HH">>}
-	    ],
-    
-    ?assertMatch({3, _}, part2(<<"HOH">>, Rules)),
-    ?assertMatch({6, _}, part2(<<"HOHOHO">>, Rules)).
-
-get_all_reductions_test() ->
-    Rules = [{<<"A">>, <<"XX">>},
-	     {<<"B">>, <<"YY">>},
-	     {<<"C">>, <<"ZZ">>}],
-    Input = <<"XXYYZZ">>,
-    get_all_reductions(Input, Rules).
-
-part1_test() ->
-    ?assertEqual(4, part1(?TEST_INPUT, ?TEST_INPUT_RULES)),
-    ?assertEqual(576, part1(?INPUT, ?INPUT_RULES)).
-
+    [binary:replace(Input, F, T, [{scope, Pos}])
+     || Pos <- binary:matches(Input, F)].

@@ -1,19 +1,4 @@
 
--define(TEST_INPUT, <<"HOH">>).
--define(TEST_INPUT_RULES, [{<<"H">>, <<"HO">>},
-			   {<<"H">>, <<"OH">>},
-			   {<<"O">>, <<"HH">>}]).
-
--define(TEST_PART2, <<"HOHOHO">>).
--define(TEST_INPUT_RULES_PART2, 
-	[
-	 {<<"e">>, <<"H">>},
-	 {<<"e">>, <<"O">>},
-	 {<<"H">>, <<"HO">>},
-	 {<<"H">>, <<"OH">>},
-	 {<<"O">>, <<"HH">>}
-	]).
-
 -define(INPUT, <<"ORnPBPMgArCaCaCaSiThCaCaSiThCaCaPBSiRnFArRnFArCaCaSiThCaCaSiThCaCaCaCaCaCaSiRnFYFArSiRnMgArCaSiRnPTiTiBFYPBFArSiRnCaSiRnTiRnFArSiAlArPTiBPTiRnCaSiAlArCaPTiTiBPMgYFArPTiRnFArSiRnCaCaFArRnCaFArCaSiRnSiRnMgArFYCaSiRnMgArCaCaSiThPRnFArPBCaSiRnMgArCaCaSiThCaSiRnTiMgArFArSiThSiThCaCaSiRnMgArCaCaSiRnFArTiBPTiRnCaSiAlArCaPTiRnFArPBPBCaCaSiThCaPBSiThPRnFArSiThCaSiThCaSiThCaPTiBSiRnFYFArCaCaPRnFArPBCaCaPBSiRnTiRnFArCaPRnFArSiRnCaCaCaSiThCaRnCaFArYCaSiRnFArBCaCaCaSiThFArPBFArCaSiRnFArRnCaCaCaFArSiRnFArTiRnPMgArF">>).
 
 -define(INPUT_RULES, 
