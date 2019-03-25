@@ -72,7 +72,8 @@ battle(boss, State, CurrentBest) ->
     if BossHP =< 0 ->
             maps:get(mana_spent, S0);
        true ->
-            battle(player, S0#{hp => HP + Armor - Damage}, CurrentBest)
+            EffDamage = max(1, Damage - Armor),
+            battle(player, S0#{hp => HP - EffDamage}, CurrentBest)
     end.
 
 %%% ============================================================
