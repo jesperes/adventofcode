@@ -3,12 +3,10 @@ package aoc2015;
 import static org.junit.Assert.assertEquals;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.junit.Test;
 
@@ -102,22 +100,14 @@ public class Day22 {
             this.activeEffects = new HashMap<>(activeEffects);
         }
 
-        public State(int hp, int mana) {
+        public State(int hp, int mana, int hpPenalty) {
             this.hp = hp;
             this.mana = mana;
             this.manaSpent = 0;
             this.bossHp = HP;
             this.bossDamage = DAMAGE;
             this.armor = 0;
-            this.hpPenalty = 0;
-        }
-
-        @Override
-        public String toString() {
-            return "State [hp=" + hp + ", mana=" + mana + ", manaSpent="
-                    + manaSpent + ", bossHp=" + bossHp + ", bossDamage="
-                    + bossDamage + ", armor=" + armor + ", hpPenalty="
-                    + hpPenalty + ", activeEffects=" + activeEffects + "]";
+            this.hpPenalty = hpPenalty;
         }
 
         public State copy() {
@@ -125,13 +115,13 @@ public class Day22 {
                     hpPenalty, activeEffects);
         }
 
-        private boolean validSpell(Spell spell) {
-            return !activeEffects.containsKey(spell) && spell.cost <= mana;
-        }
-
         private Collection<Spell> validSpells() {
-            return Arrays.stream(Spell.values()).filter(s -> validSpell(s))
-                    .collect(Collectors.toList());
+            List<Spell> spells = new ArrayList<>();
+            for (Spell s : Spell.values()) {
+                if (!activeEffects.containsKey(s) && s.cost <= mana)
+                    spells.add(s);
+            }
+            return spells;
         }
 
         private static State applyEffectsTo(State orig) {
@@ -169,6 +159,10 @@ public class Day22 {
         }
     }
 
+    int battlePlayer(State state) {
+        return battlePlayer(state, Integer.MAX_VALUE);
+    }
+
     int battlePlayer(State state, int currentBest) {
         state.applyPart2Penalty();
 
@@ -197,8 +191,6 @@ public class Day22 {
 
     int battleBoss(State state, int currentBest) {
         if (state.bossHp <= 0) {
-            if (state.manaSpent < currentBest)
-                System.out.println("Boss dies, mana spent: " + state.manaSpent);
             return state.manaSpent;
         } else {
             State s0 = State.applyEffectsTo(state);
@@ -212,13 +204,7 @@ public class Day22 {
 
     @Test
     public void testDay22() throws Exception {
-        System.out.println("Part 1");
-        State state = new State(50, 500);
-        assertEquals(900, battlePlayer(state, Integer.MAX_VALUE));
-
-        System.out.println("Part 2");
-        state = new State(50, 500);
-        state.hpPenalty = 1;
-        assertEquals(1216, battlePlayer(state, Integer.MAX_VALUE));
+        assertEquals(900, battlePlayer(new State(50, 500, 0)));
+        assertEquals(1216, battlePlayer(new State(50, 500, 1)));
     }
 }
