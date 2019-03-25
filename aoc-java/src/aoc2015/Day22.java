@@ -146,7 +146,7 @@ public class Day22 {
                 spell.applyEffect(newstate);
 
                 int timer = newstate.activeEffects.get(spell);
-                if (timer <= 0) {
+                if (timer <= 1) {
                     newstate.activeEffects.remove(spell);
                 } else {
                     newstate.activeEffects.put(spell, timer - 1);
@@ -177,7 +177,7 @@ public class Day22 {
         } else {
             State s0 = State.applyEffectsTo(state);
 
-            for (Spell spell : state.validSpells()) {
+            for (Spell spell : s0.validSpells()) {
                 State s1 = State.applySpellTo(s0, spell);
 
                 if (s1.manaSpent > currentBest) {
@@ -202,6 +202,9 @@ public class Day22 {
             return state.manaSpent;
         } else {
             State s0 = State.applyEffectsTo(state);
+            if (s0.bossHp <= 0) {
+                return s0.manaSpent;
+            }
             s0.hp -= Math.max(1, s0.bossDamage - s0.armor);
             return battlePlayer(s0, currentBest);
         }
