@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import org.junit.Test;
 
@@ -16,89 +17,97 @@ public class Day23 {
         hlf {
             @Override
             public Instr<?, ?> parse(String[] line) {
-                return new Instr<String, Void>(this, line[1], null) {
-                    @Override
-                    public int execute(Map<String, Integer> regs, int pc) {
-                        regs.put(arg1, regs.getOrDefault(arg1, 0) / 2);
-                        return pc + 1;
-                    }
-                };
+                return new ArithmInstr(this, line[1], v -> v / 2);
             }
         },
         tpl {
             @Override
             public Instr<?, ?> parse(String[] line) {
-                return new Instr<String, Void>(this, line[1], null) {
-                    @Override
-                    public int execute(Map<String, Integer> regs, int pc) {
-                        regs.put(arg1, regs.getOrDefault(arg1, 0) * 3);
-                        return pc + 1;
-                    }
-                };
+                return new ArithmInstr(this, line[1], v -> v * 3);
             }
         },
         inc {
             @Override
             public Instr<?, ?> parse(String[] line) {
-                return new Instr<String, Void>(this, line[1], null) {
-                    @Override
-                    public int execute(Map<String, Integer> regs, int pc) {
-                        regs.put(arg1, regs.getOrDefault(arg1, 0) + 1);
-                        return pc + 1;
-                    }
-                };
+                return new ArithmInstr(this, line[1], v -> v + 1);
             }
         },
         jmp {
             @Override
             public Instr<?, ?> parse(String[] line) {
-                return new Instr<Integer, Void>(this, Integer.valueOf(line[1]),
-                        null) {
-
-                    @Override
-                    public int execute(Map<String, Integer> regs, int pc) {
-                        return pc + arg1;
-                    }
-                };
+                return new JumpInstr(this, Integer.valueOf(line[1]));
             }
-
         },
         jio {
             @Override
             public Instr<?, ?> parse(String[] line) {
-                return new Instr<String, Integer>(this, line[1],
-                        Integer.valueOf(line[2])) {
-                    @Override
-                    public int execute(Map<String, Integer> regs, int pc) {
-                        if (regs.getOrDefault(arg1, 0) == 1) {
-                            return pc + arg2;
-                        } else {
-                            return pc + 1;
-                        }
-                    }
-                };
+                return new CondJumpInstr(this, line[1],
+                        Integer.valueOf(line[2]), v -> v == 1);
             }
-
         },
         jie {
             @Override
             public Instr<?, ?> parse(String[] line) {
-                return new Instr<String, Integer>(this, line[1],
-                        Integer.valueOf(line[2])) {
-                    @Override
-                    public int execute(Map<String, Integer> regs, int pc) {
-                        if (regs.getOrDefault(arg1, 0) % 2 == 0) {
-                            return pc + arg2;
-                        } else {
-                            return pc + 1;
-                        }
-                    }
-                };
+                return new CondJumpInstr(this, line[1],
+                        Integer.valueOf(line[2]), v -> v % 2 == 0);
             }
         };
 
         public Instr<?, ?> parse(String[] line) {
             return null;
+        }
+    }
+
+    /**
+     * hlf, tpl, and inc
+     */
+    static class ArithmInstr extends Instr<String, Void> {
+        private Function<Integer, Integer> fun;
+
+        public ArithmInstr(Op op, String arg1, Function<Integer, Integer> fun) {
+            super(op, arg1, null);
+            this.fun = fun;
+        }
+
+        @Override
+        public int execute(Map<String, Integer> regs, int pc) {
+            regs.put(arg1, fun.apply(regs.getOrDefault(arg1, 0)));
+            return pc + 1;
+        }
+    }
+
+    /**
+     * jmp
+     */
+    static class JumpInstr extends Instr<Integer, Void> {
+        public JumpInstr(Op op, Integer arg1) {
+            super(op, arg1, null);
+        }
+
+        @Override
+        public int execute(Map<String, Integer> regs, int pc) {
+            return pc + arg1;
+        }
+    }
+
+    /**
+     * jio and jie
+     */
+    static class CondJumpInstr extends Instr<String, Integer> {
+        private Function<Integer, Boolean> fun;
+
+        public CondJumpInstr(Op op, String arg1, Integer arg2,
+                Function<Integer, Boolean> fun) {
+            super(op, arg1, arg2);
+            this.fun = fun;
+        }
+
+        @Override
+        public int execute(Map<String, Integer> regs, int pc) {
+            if (fun.apply(regs.getOrDefault(arg1, 0)))
+                return pc + arg2;
+            else
+                return pc + 1;
         }
     }
 
