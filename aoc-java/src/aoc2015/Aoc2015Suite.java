@@ -29,7 +29,8 @@ import org.junit.runners.Suite;
     Day21.class,
     Day22.class,
     Day23.class,
-    Day24.class
+    Day24.class,
+    Day25.class
     })
 public class Aoc2015Suite {
 }
