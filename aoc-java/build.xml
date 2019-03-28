@@ -15,6 +15,7 @@
 
 			<formatter type="plain" usefile="false" />
 			<test name="aoc2015.Aoc2015Suite"/>
+			<test name="aoc2016.Aoc2016Suite"/>
 		</junit>
 	</target>
 </project>

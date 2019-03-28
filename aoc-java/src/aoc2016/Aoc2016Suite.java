@@ -5,7 +5,8 @@ import org.junit.runners.Suite;
 
 // @formatter:off
 @RunWith(Suite.class)
-@Suite.SuiteClasses({ 
+@Suite.SuiteClasses({
+    Day01.class
     })
 public class Aoc2016Suite {
 }
