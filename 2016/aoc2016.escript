@@ -3,8 +3,10 @@
 -include_lib("eunit/include/eunit.hrl").
 
 puzzles() ->
-    [ %% {"11/puzzle11.erl", {puzzle11, start, []}, {"cqjxxyzz", "cqkaabcc"}}
-      {"12/puzzle12.erl", {puzzle12, start, []}, {318003,9227657}}
+    [
+      {"01/puzzle01.erl", {puzzle01, start, []}, {278, 161}}
+    %% , {"11/puzzle11.erl", {puzzle11, start, []}, {"cqjxxyzz", "cqkaabcc"}}
+    , {"12/puzzle12.erl", {puzzle12, start, []}, {318003,9227657}}
     , {"13/puzzle13.erl", {puzzle13, start, []}, {86,127}}
     ].
 

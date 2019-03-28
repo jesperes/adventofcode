@@ -29,7 +29,7 @@ public class Day01 {
 
             String input = reader.readLine();
             for (String s : input.split("[ ,]+")) {
-                dir = ((s.charAt(0) == 'R' ? dir + 1 : dir - 1) + 4) % 4;
+                dir = (s.charAt(0) == 'R' ? dir + 1 : dir + 3) % 4;
                 int steps = Integer.valueOf(s.substring(1));
                 int dx = 0, dy = 0;
 
