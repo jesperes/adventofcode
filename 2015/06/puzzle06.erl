@@ -1,6 +1,8 @@
 -module(puzzle06).
 -export([start/0]).
 
+-compile(export_all).
+
 start() ->
     {ok, Bin} = file:read_file("input.txt"),
     Lines = string:tokens(binary_to_list(Bin), "\n\r"),
@@ -21,6 +23,17 @@ start() ->
 
 toi(N) -> list_to_integer(N).
 
+%% process_instr(Instrs) ->
+%%     process_instr(Instrs, []).
+
+%% process_instr([], Grid) ->
+%%     Grid;
+%% process_instr([{_, From, To}|Rest], Grid) ->
+%%     process_instr(Rest, fold_xy(fun grid_nop/2, Grid, From, To)).
+
+%% grid_nop(Pos, _) ->
+%%     nop.
+
 process_instr(Instrs) ->
     process_instr(Instrs, grid_new()).
 
@@ -35,12 +48,23 @@ process_instr([{turn_off, From, To}|Rest], Grid) ->
 
 fold_xy(Fun, Init, {X0, Y0}, {X1, Y1}) ->
     lists:foldl(Fun, Init,
-                [pos_to_key(X, Y)
-                 || X <- lists:seq(X0, X1),
+                [X + Y * 1000 ||
+                    X <- lists:seq(X0, X1),
                     Y <- lists:seq(Y0, Y1)]).
 
-pos_to_key(X, Y) ->
-    X + Y * 1000.
+%% fold_xy(Fun, Init, {X0, Y0}, {X1, Y1}) ->
+%%     fold_xy0(Fun, Init, X0, X1, Y0, Y1).
+
+%% fold_xy0(_Fun, Acc, X, X, _, _) ->
+%%     Acc;
+%% fold_xy0(Fun, Acc, X0, X1, Y0, Y1) ->
+%%     Acc1 = fold_xy1(Fun, Acc, X0, Y0, Y1),
+%%     fold_xy0(Fun, Acc1, X0 + 1, X1, Y0, Y1).
+
+%% fold_xy1(_Fun, Acc, _, Y, Y) ->
+%%     Acc;
+%% fold_xy1(Fun, Acc, X, Y0, Y1) ->
+%%     fold_xy1(Fun, Fun(X + Y0 * 1000, Acc), X, Y0 + 1, Y1).
 
 %% -- grid abstraction --
 
