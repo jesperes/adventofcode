@@ -5,6 +5,7 @@
 puzzles() ->
     [ {"01/puzzle01.erl", {puzzle01, start, []}, {278, 161}}
     , {"02/puzzle02.erl", {puzzle02, start, []}, {"56983", "8B8B1"}}
+    , {"03/puzzle03.erl", {puzzle03, start, []}, {917, 1649}}
       %% , {"11/puzzle11.erl", {puzzle11, start, []}, {"cqjxxyzz", "cqkaabcc"}}
     , {"12/puzzle12.erl", {puzzle12, start, []}, {318003,9227657}}
     , {"13/puzzle13.erl", {puzzle13, start, []}, {86,127}}
