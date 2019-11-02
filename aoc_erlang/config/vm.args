@@ -1,0 +1,6 @@
+-sname aoc_erlang
+
+-setcookie aoc_erlang_cookie
+
++K true
++A30
