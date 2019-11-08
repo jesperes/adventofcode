@@ -5,7 +5,7 @@
 %%% @end
 %%% Created :  2 Nov 2019 by Jesper Eskilson <jesper.eskilson@klarna.com>
 
--module(aoc_inputs).
+-module(inputs).
 
 -export([ get_as_binary/2
         , get_as_string/2
@@ -34,6 +34,9 @@ get_input_dir() ->
 -spec get_input_filename(Year :: integer(), Day :: integer()) ->
                             file:filename().
 get_input_filename(Year, Day) ->
-  filename:join([get_input_dir(),
-                 integer_to_list(Year),
-                 io_lib:format("input~2..0B.txt", [Day])]).
+  Filename =
+    filename:join([get_input_dir(),
+                   integer_to_list(Year),
+                   io_lib:format("input~2..0B.txt", [Day])]),
+  true = filelib:is_file(Filename),
+  Filename.

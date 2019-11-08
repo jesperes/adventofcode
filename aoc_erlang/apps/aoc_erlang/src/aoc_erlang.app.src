@@ -1,15 +1,14 @@
 {application, aoc_erlang,
- [{description, "An OTP application"},
+ [{description, "AdventOfCode solutions in Erlang"},
   {vsn, "0.1.0"},
   {registered, []},
-  {mod, { aoc_erlang_app, []}},
+  {mod, []},
   {applications,
    [kernel,
     stdlib
    ]},
   {env,[]},
   {modules, []},
-
   {maintainers, []},
   {licenses, ["Apache 2.0"]},
   {links, []}
