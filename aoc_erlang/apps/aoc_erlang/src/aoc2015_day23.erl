@@ -5,8 +5,14 @@
 main_test_() ->
   Prog = parse(inputs:get_as_binary(2015, 23)),
 
-  [ fun() -> ?assertMatch(255, execute_program(Prog, #{pc => 0, a => 0, b => 0})) end
-  , fun() -> ?assertMatch(334, execute_program(Prog, #{pc => 0, a => 1, b => 0})) end
+  [ {"Part 1",
+     fun() ->
+         ?assertMatch(255, execute_program(Prog, #{pc => 0, a => 0, b => 0}))
+     end}
+  , {"Part 2",
+     fun() ->
+         ?assertMatch(334, execute_program(Prog, #{pc => 0, a => 1, b => 0}))
+     end}
   ].
 
 execute_program(Prog, #{pc := PC} = Regs) ->

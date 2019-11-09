@@ -2,24 +2,30 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
-main_test() ->
+main_test_() ->
   List = inputs:get_as_lines(2015, 8),
 
-  ?assertEqual(
-     1371,
-     lists:foldl(fun({LSize, MSize}, Acc) ->
-                     (LSize - MSize) + Acc
-                 end, 0,
-                 [measure(Str) ||
-                   Str <- List])),
-
-  ?assertEqual(
-     2117,
-     lists:foldl(fun({Orig, Quoted}, Acc) ->
-                     Acc + (length(Quoted) - length(Orig))
-                 end, 0,
-                 [{Str, "\"" ++ quote(Str) ++ "\""} ||
-                   Str <- List])).
+  [ {"Part 1",
+     fun() ->
+         ?assertEqual(
+            1371,
+            lists:foldl(fun({LSize, MSize}, Acc) ->
+                            (LSize - MSize) + Acc
+                        end, 0,
+                        [measure(Str) ||
+                          Str <- List]))
+     end}
+  , {"Part 2",
+     fun() ->
+         ?assertEqual(
+            2117,
+            lists:foldl(fun({Orig, Quoted}, Acc) ->
+                            Acc + (length(Quoted) - length(Orig))
+                        end, 0,
+                        [{Str, "\"" ++ quote(Str) ++ "\""} ||
+                          Str <- List]))
+     end}
+  ].
 
 measure(Str) ->
   measure(Str, before).

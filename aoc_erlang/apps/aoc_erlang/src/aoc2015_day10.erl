@@ -6,11 +6,10 @@ input() ->
   "1321131112".
 
 main_test_() ->
-  {timeout, 60,
-   [ fun simple/0
-   , fun part1/0
-   , fun part2/0
-   ]}.
+  [ {"Part 1", fun part1/0}
+  , {"Part 2", fun part2/0}
+  , {"Unit tests", fun simple/0}
+  ].
 
 part1() -> ?assertEqual(492982, iterate(40)).
 

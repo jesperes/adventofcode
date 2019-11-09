@@ -11,8 +11,8 @@
 -define(LOWER, 800000).
 
 main_test_() ->
-  [ {"Part1", fun() -> ?assertEqual(831600, part1()) end}
-  , {"Part2", fun() -> ?assertEqual(884520, part2()) end}
+  [ {"Part 1", fun() -> ?assertEqual(831600, part1()) end}
+  , {"Part 2", fun() -> ?assertEqual(884520, part2()) end}
   ].
 
 part1() -> deliver(1).

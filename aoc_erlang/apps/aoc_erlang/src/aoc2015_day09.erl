@@ -37,9 +37,9 @@ distance([_], _Map) -> 0;
 distance([A,B|Rest], Map) ->
   maps:get(city_pair(A, B), Map) + distance([B|Rest], Map).
 
-main_test_() ->
-  [ fun() -> main(realinput()) end
-  , fun() -> main(testinput()) end
+day09_test_() ->
+  [ {"Part 1 & 2", fun() -> ?assertEqual({251,898}, main(realinput())) end}
+  , {"Test inputs", fun() -> ?assertEqual({605,982}, main(testinput())) end}
   ].
 
 main(Input) ->

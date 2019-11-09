@@ -4,8 +4,8 @@
 
 day15_test_() ->
   {timeout, 10,
-   [ {"Part1", fun() -> ?assertEqual(222870, part1()) end}
-   , {"Part2", fun() -> ?assertEqual(117936, part2()) end}
+   [ {"Part 1", fun() -> ?assertEqual(222870, part1()) end}
+   , {"Part 2", fun() -> ?assertEqual(117936, part2()) end}
    ]}.
 
 input(List) ->

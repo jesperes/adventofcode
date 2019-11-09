@@ -25,8 +25,8 @@ main_test_() ->
           end
       end, List),
 
-  [ fun() -> ?assertEqual(709, run(false, Input)) end
-  , fun() -> ?assertEqual(668, run(true, Input)) end
+  [ {"Part 1", fun() -> ?assertEqual(709, run(false, Input)) end}
+  , {"Part 2", fun() -> ?assertEqual(668, run(true, Input)) end}
   ].
 
 run(IncludeSelf, Input) ->

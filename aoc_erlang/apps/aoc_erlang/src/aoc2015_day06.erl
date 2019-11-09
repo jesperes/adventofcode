@@ -3,8 +3,8 @@
 -include_lib("eunit/include/eunit.hrl").
 
 %% This solution runs in ~15 seconds, but eunit times out at 5 secs.
-main_with_timeout_test_() ->
-  {timeout, 60, fun main/0}.
+main_test_() ->
+  {"Part 1 & 2", timeout, 20, fun main/0}.
 
 main() ->
   Lines = inputs:get_as_lines(2015, 6),

@@ -2,15 +2,14 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
-input() ->
-  "cqjxjnds".
+main_test_() ->
+  Input = "cqjxjnds",
+  P1 = "cqjxxyzz",
+  P2 = "cqkaabcc",
 
-main_test() ->
-  NextValid = next_valid_password(input()),
-  ?assertEqual("cqjxxyzz", NextValid),
-
-  NextNextValid = next_valid_password(NextValid),
-  ?assertEqual("cqkaabcc", NextNextValid).
+  [ {"Part 1", fun() -> ?assertEqual(P1, next_valid_password(Input)) end}
+  , {"Part 2", fun() -> ?assertEqual(P2, next_valid_password(P1)) end}
+  ].
 
 rev(S) ->
   lists:reverse(S).

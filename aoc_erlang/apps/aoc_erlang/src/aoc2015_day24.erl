@@ -12,12 +12,12 @@ packages() -> [1, 2, 3, 7, 11, 13, 17, 19, 23, 31, 37, 41, 43, 47,
                109, 113].
 
 main_test_() ->
-  [ {"Part1", fun() ->
-                  ?assertEqual(11846773891, start_common(3))
-              end}
-  , {"Part2", fun() ->
-                  ?assertEqual(80393059, start_common(4))
-              end}
+  [ {"Part 1", fun() ->
+                   ?assertEqual(11846773891, start_common(3))
+               end}
+  , {"Part 2", fun() ->
+                   ?assertEqual(80393059, start_common(4))
+               end}
   ].
 
 start_common(Groups) ->

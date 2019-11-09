@@ -52,8 +52,8 @@
 	]).
 
 main_test_() ->
-  [ {"Part1", fun() -> ?assertEqual(576, part1()) end}
-  , {"Part2", fun() -> ?assertEqual(207, part2()) end}
+  [ {"Part 1", fun() -> ?assertEqual(576, part1()) end}
+  , {"Part 2", fun() -> ?assertEqual(207, part2()) end}
   ].
 
 part1() ->

@@ -3,8 +3,8 @@
 -include_lib("eunit/include/eunit.hrl").
 
 main_test_() ->
-  [ fun() -> ?assertEqual(768, run(false)) end
-  , fun() -> ?assertEqual(781, run(true)) end
+  [ {"Part 1", fun() -> ?assertEqual(768, run(false)) end}
+  , {"Part 2", fun() -> ?assertEqual(781, run(true)) end}
   ].
 
 run(CornersAlwaysOn) ->
@@ -70,6 +70,5 @@ next_state0(Pos, Grid, Bounds, CornersAlwaysOn) ->
     {_, true, 3} -> true;
     {_, true, _} -> false;
     {_, false, 3} -> true;
-    {_, false, _} -> false;
-    {_, _, _} -> false
+    {_, false, _} -> false
   end.

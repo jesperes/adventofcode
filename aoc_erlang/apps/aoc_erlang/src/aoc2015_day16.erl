@@ -31,8 +31,8 @@ matches2(_, AuntVal, MfcSamValue)           -> AuntVal == MfcSamValue.
 main_test_() ->
   Binary = inputs:get_as_binary(2015, 16),
 
-  [ fun() -> ?assertEqual(213, find(Binary, fun matches1/3)) end
-  , fun() -> ?assertEqual(323, find(Binary, fun matches2/3)) end
+  [ {"Part 1", fun() -> ?assertEqual(213, find(Binary, fun matches1/3)) end}
+  , {"Part 2", fun() -> ?assertEqual(323, find(Binary, fun matches2/3)) end}
   ].
 
 find(Binary, MatchFun) ->

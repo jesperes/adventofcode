@@ -84,8 +84,8 @@ player({Weapon, Rings, Armor}) ->
             }.
 
 main_test_() ->
-  [ {"Part1", fun() -> ?assertEqual(91, part1()) end}
-  , {"Part2", fun() -> ?assertEqual(158, part2()) end}
+  [ {"Part 1", fun() -> ?assertEqual(91, part1()) end}
+  , {"Part 2", fun() -> ?assertEqual(158, part2()) end}
   ].
 
 part1() ->
@@ -176,13 +176,16 @@ damage_dealt(Attacker, Defender) ->
 %%% Unit tests
 %%% ============================================================
 
-damage_dealt_test_() ->
-  [
-   ?_assertEqual(5, damage_dealt(#combatant{damage = 8}, #combatant{armor = 3})),
-   ?_assertEqual(1, damage_dealt(#combatant{damage = 8}, #combatant{armor = 100}))
+unit_test_() ->
+  [ {"Damage dealt", fun damage_dealt/0}
+  , {"Battle tests", fun battling/0}
   ].
 
-battle_test() ->
+damage_dealt() ->
+  ?_assertEqual(5, damage_dealt(#combatant{damage = 8}, #combatant{armor = 3})),
+  ?_assertEqual(1, damage_dealt(#combatant{damage = 8}, #combatant{armor = 100})).
+
+battling() ->
   Player = #combatant{hp = 8, damage = 5, armor = 5, name = player},
   Boss = #combatant{hp = 12, damage = 7, armor = 2, name = boss},
   ?assertEqual({winner, player}, battle(Player, Boss)).

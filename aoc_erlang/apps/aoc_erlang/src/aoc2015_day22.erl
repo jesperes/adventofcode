@@ -28,8 +28,8 @@ state(HP, Mana, BossHP, BossDamage, Pen) ->
    }.
 
 main_test_() ->
-  [ {"Part1", fun() -> ?assertEqual(900, start_part1(50, 500, 51, 9)) end}
-  , {"Part2", fun() -> ?assertEqual(1216, start_part2(50, 500, 51, 9)) end}
+  [ {"Part 1", fun() -> ?assertEqual(900, start_part1(50, 500, 51, 9)) end}
+  , {"Part 2", fun() -> ?assertEqual(1216, start_part2(50, 500, 51, 9)) end}
   ].
 
 start_part1(HP, Mana, BossHP, BossDamage) ->
@@ -143,18 +143,16 @@ apply_spell(Spell, State) ->
 %%% Tests
 %%% ============================================================
 
-part1_ex1_test() ->
-    Result = start_part1(10, 250, 13, 8),
-    ?assertEqual(226, Result).
+unit_test_() ->
+  {"Test inputs",
+   [ {"Example 1", fun part1_ex1/0}
+   , {"Example 2", fun part1_ex2/0}
+   ]}.
 
-part1_ex2_test() ->
-    Result = start_part1(10, 250, 14, 8),
-    ?assertEqual(641, Result).
+part1_ex1() ->
+  Result = start_part1(10, 250, 13, 8),
+  ?assertEqual(226, Result).
 
-part1_full_test() ->
-    Result = start_part1(50, 500, 51, 9),
-    ?assertEqual(900, Result).
-
-part2_full_test() ->
-    Result = start_part2(50, 500, 51, 9),
-    ?assertEqual(1216, Result).
+part1_ex2() ->
+  Result = start_part1(10, 250, 14, 8),
+  ?assertEqual(641, Result).

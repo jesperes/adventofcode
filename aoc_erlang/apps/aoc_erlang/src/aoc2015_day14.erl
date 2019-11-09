@@ -2,7 +2,7 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
-main_test() ->
+main_test_() ->
   Lines = inputs:get_as_lines(2015, 14),
   Input =
     lists:map(
@@ -20,16 +20,17 @@ main_test() ->
             distance => 0}
       end, Lines),
 
-    Seconds = 2503,
+  Seconds = 2503,
 
-  States =
-    lists:foldl(fun(_N, Acc) ->
-                    A = iterate(Acc),
-                    award_points(A)
-                end, Input, lists:seq(1, Seconds)),
-
-  ?assertEqual(2655, max_distance(States)),
-  ?assertEqual(1059, max_points(States)).
+  {"Part 1 & 2",
+   fun() ->
+       States = lists:foldl(fun(_N, Acc) ->
+                                A = iterate(Acc),
+                                award_points(A)
+                            end, Input, lists:seq(1, Seconds)),
+       ?assertEqual(2655, max_distance(States)),
+       ?assertEqual(1059, max_points(States))
+   end}.
 
 max_distance(States) ->
   lists:foldl(fun(#{distance := Dist}, Max) when Dist > Max ->

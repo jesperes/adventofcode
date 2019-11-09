@@ -15,6 +15,11 @@ count_floors(<<$(,Rest/binary>>, Acc, Pos, Neg) ->
 count_floors(<<$),Rest/binary>>, Acc, Pos, Neg) ->
   count_floors(Rest, Acc - 1, Pos + 1, Neg).
 
-main_test() ->
+main_test_() ->
   Bin = inputs:get_as_binary(2015, 1),
-  {232, 1783} = count_floors(Bin, 0, 0, undef).
+  %% We compute parts 1 and 2 in the same pass.
+  [ {"Part 1 & 2",
+     fun() -> ?assertEqual({232, 1783},
+                           count_floors(Bin, 0, 0, undef))
+     end}
+  ].

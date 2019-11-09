@@ -3,13 +3,11 @@
 -include_lib("eunit/include/eunit.hrl").
 
 main_test_() ->
-  {timeout, 60,
+  {"Part 1 & 2", timeout, 20,
    fun() ->
        {282749, 9962624} = part("yzbqklnj", 0, undef)
    end}.
 
--spec part(string(), integer(), integer() | 'undef') ->
-              {integer(), integer()}.
 part(Input, N, P1) ->
   case erlang:md5(Input ++ integer_to_list(N)) of
     <<0, 0, 0, _/binary>> ->

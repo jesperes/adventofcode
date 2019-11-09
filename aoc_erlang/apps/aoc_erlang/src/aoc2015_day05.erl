@@ -2,11 +2,12 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
-main_test() ->
+main_test_() ->
   Bin = inputs:get_as_binary(2015, 5),
   Words = string:tokens(binary_to_list(Bin), "\n"),
-  ?assertEqual(238, part1(Words)),
-  ?assertEqual(69, part2(Words)).
+  [ {"Part 1", fun() -> ?assertEqual(238, part1(Words)) end}
+  , {"Part 2", fun() -> ?assertEqual(69, part2(Words)) end}
+  ].
 
 part1(Words) ->
   length(lists:filter(fun is_nice_string/1, Words)).

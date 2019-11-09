@@ -4,27 +4,35 @@
 
 -type pos() :: { integer(), integer() }.
 
--spec part1_test() -> integer().
-part1_test() ->
+main_test_() ->
   List = inputs:get_as_string(2015, 3),
   StartPos = {0, 0},
+
+  [ {"Part 1",
+     fun() ->
+         ?assertEqual(2572, part1(List, StartPos))
+     end}
+  , {"Part 2",
+     fun() ->
+         ?assertEqual(2631, part2(List, StartPos))
+     end}
+  ].
+
+part1(List, StartPos) ->
   {_, Presents} =
     lists:foldl(fun(C, {Pos, Map}) ->
                     NewPos = next_pos(C, Pos),
                     {NewPos, incr_map_cntr(NewPos, Map)}
                 end, {StartPos, #{StartPos => 1}}, List),
-  2572 = maps:size(Presents).
+  maps:size(Presents).
 
--spec part2_test() -> integer().
-part2_test() ->
-  List = inputs:get_as_string(2015, 3),
-  StartPos = {0, 0},
+part2(List, StartPos) ->
   {{_, _}, Presents} =
     lists:foldl(fun(C, {{Pos, PosOther}, Map}) ->
                     NewPos = next_pos(C, Pos),
                     {{PosOther, NewPos}, incr_map_cntr(NewPos, Map)}
                 end, {{StartPos, StartPos}, #{StartPos => 2}}, List),
-  2631 = maps:size(Presents).
+  maps:size(Presents).
 
 -spec incr_map_cntr(pos(), map()) -> map().
 incr_map_cntr(Key, Map) ->

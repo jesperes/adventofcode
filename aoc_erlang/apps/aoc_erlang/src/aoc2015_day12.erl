@@ -4,8 +4,8 @@
 
 main_test_() ->
   Obj = jsone:decode(inputs:get_as_binary(2015, 12)),
-  [ fun() -> ?assertEqual(119433, count(Obj)) end
-  , fun() -> ?assertEqual(68466, count_nored(Obj)) end
+  [ {"Part 1", fun() -> ?assertEqual(119433, count(Obj)) end}
+  , {"Part 2", fun() -> ?assertEqual(68466, count_nored(Obj)) end}
   ].
 
 count(X) when is_number(X) ->

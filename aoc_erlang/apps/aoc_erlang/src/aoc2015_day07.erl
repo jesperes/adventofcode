@@ -2,17 +2,24 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
-main_test() ->
+main_test_() ->
   Lines = inputs:get_as_lines(2015, 7),
   List = lists:map(fun(Line) ->
                        list_to_tuple(lists:map(fun c/1, string:tokens(Line, " ")))
                    end, Lines),
 
-  A = propagate_signals(List, #{}),
-  ?assertEqual(956, A),
+  Part1Sol = 956,
+  Part2Sol = 40149,
 
-  A1 = propagate_signals(List, #{b => A}),
-  ?assertEqual(40149, A1).
+  [ {"Part 1",
+     fun() ->
+         ?assertEqual(Part1Sol, propagate_signals(List, #{}))
+     end}
+  , {"Part 2",
+     fun() ->
+         ?assertEqual(Part2Sol, propagate_signals(List, #{b => Part1Sol}))
+     end}
+  ].
 
 c(S) ->
   try list_to_integer(S)
