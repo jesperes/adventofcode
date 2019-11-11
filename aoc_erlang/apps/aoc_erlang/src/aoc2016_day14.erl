@@ -5,31 +5,15 @@
 -define(KEY_STRETCH, 2016).
 -define(INPUT, "ahsbgdzn").
 
--export([find_nth_key/6]).
-
-%% compute_indexes(Fun, Indexes) ->
-%%   lists:foreach(
-%%     fun(Index) ->
-%%         Fun(?INPUT, list_to_atom(?INPUT), Index)
-%%     end, Indexes).
-
-%% compute_caches_test_() ->
-%%   Indexes = lists:seq(1, 24000),
-
-%%   {"Computing hashes...",
-%%    [ {"Part 1", fun() -> compute_indexes(fun hash_at/3, Indexes) end}
-%%    , {"Part 2", timeout, 500, fun() -> compute_indexes(fun hash_at2/3, Indexes) end}
-%%    ]}.
-
 main_test_() ->
   [ {"Test input (abc)",
-     {timeout, 60,
+     {timeout, 10,
       ?_assertEqual(22728, find_nth_key("abc", 'abc', 64, fun hash_at/3))}}
   , {"Part 1",
-     {timeout, 60,
+     {timeout, 10,
       ?_assertEqual(23890, find_nth_key(?INPUT, list_to_atom(?INPUT), 64, fun hash_at/3))}}
   , {"Part 2",
-     timeout, 500,
+     timeout, 120,
      ?_assertEqual(22696, find_nth_key(?INPUT, list_to_atom(?INPUT), 64, fun hash_at2/3))}
   ].
 
@@ -40,10 +24,10 @@ find_nth_key(Salt, SaltA, KeyLimit, HashFun, Index, CurrKey) ->
   %% ?debugFmt("Checking key ~p at index ~p", [CurrKey, Index]),
   case is_key(Salt, SaltA, Index, HashFun) of
     true when CurrKey =:= KeyLimit ->
-      ?debugFmt("Found final key ~p at index ~p", [CurrKey, Index]),
+      %% ?debugFmt("Found final key ~p at index ~p", [CurrKey, Index]),
       Index;
     true ->
-      ?debugFmt("Found key ~p at index ~p", [CurrKey, Index]),
+      %% ?debugFmt("Found key ~p at index ~p", [CurrKey, Index]),
       find_nth_key(Salt, SaltA, KeyLimit, HashFun, Index + 1, CurrKey + 1);
     false ->
       %% ?debugFmt("Hash at index ~p is not key.", [Index]),
@@ -84,27 +68,10 @@ md5(S) ->
   %% ?debugFmt("md5(~p) -> ~p (RAW)", [S, digest_to_hexstring(Hash)]),
   Hash.
 
-to_hex(N) when N =< 9 -> N + 48;
-to_hex(N) when N >= 16#a -> N + 87.
-
-%% digest_to_hexstring(<<>>) ->
-%%   <<>>;
-%% digest_to_hexstring(<<N:4,Rest/bits>>) when N =< 9 ->
-%%   Hex = N + 48,
-%%   <<Hex, (digest_to_hexstring(Rest))/binary>>;
-%% digest_to_hexstring(<<N:4,Rest/bits>>) when N >= 16#a ->
-%%   Hex = N + 87,
-%%   <<Hex, (digest_to_hexstring(Rest))/binary>>.
-
 digest_to_hexstring(Binary) ->
-  digest_to_hexstring(Binary, <<>>).
-
-digest_to_hexstring(<<>>, Acc) ->
-  Acc;
-digest_to_hexstring(<<N:4,Rest/bits>>, Acc) when N =< 9 ->
-  digest_to_hexstring(Rest, <<Acc/binary, (N+48)>>);
-digest_to_hexstring(<<N:4,Rest/bits>>, Acc) when N >= 16#a ->
-  digest_to_hexstring(Rest, <<Acc/binary, (N+87)>>).
+  << << (if N =< 9 -> N + $0;
+            true -> N + $a - 10
+         end):8 >> || <<N:4>> <= Binary >>.
 
 %% Compute the hash at the given Index.
 hash_at(Salt, SaltA, Index) ->
@@ -194,11 +161,3 @@ is_key2_test_() ->
   [ {timeout, 60, ?_assertNot(is_key("abc", 'abc', 5, fun hash_at2/3))}
   , {timeout, 60, ?_assert(is_key("abc", 'abc', 10, fun hash_at2/3))}
   ].
-
--compile([export_all]).
-prof() ->
-  eprof:start(),
-  eprof:profile(fun() ->
-                    find_nth_key("abc", 'abc', 1, fun hash_at2/3)
-                end),
-  eprof:analyze().

@@ -36,9 +36,9 @@ to_hexb(<<N:4>>) ->
   <<(N+87)>>.
 
 to_hexstring3(Binary) ->
-  << (if N =< 9 -> N+48;
-         true -> N+87
-      end) || <<N:4/bits>> <= Binary >>.
+  << << (if N =< 9 -> N + $0;
+            true -> N + $a - 10
+         end):8 >> || <<N:4>> <= Binary >>.
 
 impls() ->
   [ to_hexstring1
