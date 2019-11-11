@@ -5,27 +5,48 @@
 -define(KEY_STRETCH, 2016).
 -define(INPUT, "ahsbgdzn").
 
-%% main_test_() ->
-%%   [ {"Part 1",
-%%      ?_assertEqual(23890, find_nth_key(?INPUT, list_to_atom(?INPUT), 64, fun hash_at/3))}
-%%   %% , {"Part 2",
-%%   %%    timeout, 500,
-%%   %%    ?_assertEqual(23890, find_nth_key(?INPUT, list_to_atom(?INPUT), 64, fun hash_at2/3))}
-%%   ].
+-export([find_nth_key/6]).
+
+%% compute_indexes(Fun, Indexes) ->
+%%   lists:foreach(
+%%     fun(Index) ->
+%%         Fun(?INPUT, list_to_atom(?INPUT), Index)
+%%     end, Indexes).
+
+%% compute_caches_test_() ->
+%%   Indexes = lists:seq(1, 24000),
+
+%%   {"Computing hashes...",
+%%    [ {"Part 1", fun() -> compute_indexes(fun hash_at/3, Indexes) end}
+%%    , {"Part 2", timeout, 500, fun() -> compute_indexes(fun hash_at2/3, Indexes) end}
+%%    ]}.
+
+main_test_() ->
+  [ {"Test input (abc)",
+     {timeout, 60,
+      ?_assertEqual(22728, find_nth_key("abc", 'abc', 64, fun hash_at/3))}}
+  , {"Part 1",
+     {timeout, 60,
+      ?_assertEqual(23890, find_nth_key(?INPUT, list_to_atom(?INPUT), 64, fun hash_at/3))}}
+  , {"Part 2",
+     timeout, 500,
+     ?_assertEqual(22696, find_nth_key(?INPUT, list_to_atom(?INPUT), 64, fun hash_at2/3))}
+  ].
 
 find_nth_key(Salt, SaltA, KeyLimit, HashFun) ->
   find_nth_key(Salt, SaltA, KeyLimit, HashFun, 0, 1).
 
 find_nth_key(Salt, SaltA, KeyLimit, HashFun, Index, CurrKey) ->
-  ?debugFmt("Checking key ~p at index ~p", [CurrKey, Index]),
+  %% ?debugFmt("Checking key ~p at index ~p", [CurrKey, Index]),
   case is_key(Salt, SaltA, Index, HashFun) of
     true when CurrKey =:= KeyLimit ->
+      ?debugFmt("Found final key ~p at index ~p", [CurrKey, Index]),
       Index;
     true ->
       ?debugFmt("Found key ~p at index ~p", [CurrKey, Index]),
       find_nth_key(Salt, SaltA, KeyLimit, HashFun, Index + 1, CurrKey + 1);
     false ->
-      ?debugFmt("Hash at index ~p is not key.", [Index]),
+      %% ?debugFmt("Hash at index ~p is not key.", [Index]),
       find_nth_key(Salt, SaltA, KeyLimit, HashFun, Index + 1, CurrKey)
   end.
 
@@ -38,7 +59,7 @@ is_key(Salt, SaltA, Index, HashFun) ->
     false -> false;
     C ->
       lists:any(fun(Idx5) ->
-                    ?debugFmt("Checking has5 on index ~p", [Idx5]),
+                    %% ?debugFmt("Checking has5 on index ~p", [Idx5]),
                     has5(HashFun(Salt, SaltA, Idx5), C)
                 end, lists:seq(Index + 1, Index + 1000))
   end.
@@ -49,73 +70,118 @@ is_key(Salt, SaltA, Index, HashFun) ->
 md5(Key, S) ->
   case get(Key) of
     undefined ->
-      Hash = md5_nocache(S),
+      Hash = md5(S),
+      %% ?debugFmt("md5(~p, ~p) -> ~p", [Key, S, digest_to_hexstring(Hash)]),
       put(Key, Hash),
       Hash;
     Hash ->
-      ?debugFmt("Cache hit on ~p (~p) -> ~p", [Key, S, Hash]),
+      %% ?debugFmt("md5(~p, ~p) -> ~p (CACHED)", [Key, S, digest_to_hexstring(Hash)]),
       Hash
   end.
 
-%% Uncached md5.
-md5_nocache(S) ->
-  lists:flatten([io_lib:format("~2.16.0b", [N])
-                 || <<N>> <= erlang:md5(S)]).
+md5(S) ->
+  Hash = erlang:md5(S),
+  %% ?debugFmt("md5(~p) -> ~p (RAW)", [S, digest_to_hexstring(Hash)]),
+  Hash.
 
+to_hex(N) when N =< 9 -> N + 48;
+to_hex(N) when N >= 16#a -> N + 87.
+
+%% digest_to_hexstring(<<>>) ->
+%%   <<>>;
+%% digest_to_hexstring(<<N:4,Rest/bits>>) when N =< 9 ->
+%%   Hex = N + 48,
+%%   <<Hex, (digest_to_hexstring(Rest))/binary>>;
+%% digest_to_hexstring(<<N:4,Rest/bits>>) when N >= 16#a ->
+%%   Hex = N + 87,
+%%   <<Hex, (digest_to_hexstring(Rest))/binary>>.
+
+digest_to_hexstring(Binary) ->
+  digest_to_hexstring(Binary, <<>>).
+
+digest_to_hexstring(<<>>, Acc) ->
+  Acc;
+digest_to_hexstring(<<N:4,Rest/bits>>, Acc) when N =< 9 ->
+  digest_to_hexstring(Rest, <<Acc/binary, (N+48)>>);
+digest_to_hexstring(<<N:4,Rest/bits>>, Acc) when N >= 16#a ->
+  digest_to_hexstring(Rest, <<Acc/binary, (N+87)>>).
+
+%% Compute the hash at the given Index.
 hash_at(Salt, SaltA, Index) ->
   md5({SaltA, Index}, Salt ++ integer_to_list(Index)).
 
 %% Hash function for part 2, where we repeat md5 hashing 2016 times.
 hash_at2(Salt, SaltA, Index) ->
-  hash_at2(Salt, SaltA, Index, ?KEY_STRETCH, hash_at(Salt, SaltA, Index)).
+  Key = {stretched, SaltA, Index},
+  case get(Key) of
+    undefined ->
+      %% ?debugFmt("Computing stretched hash for index ~p", [Index]),
+      Hash = hash_at2(Salt, SaltA, Index, ?KEY_STRETCH, hash_at(Salt, SaltA, Index)),
+      put(Key, Hash),
+      Hash;
+    Hash ->
+      %% ?debugFmt("Stretched has for index ~p already computed...", [Index]),
+      Hash
+  end.
 
 hash_at2(_Salt, _SaltA, _Index, 0, Acc) ->
   Acc;
 hash_at2(Salt, SaltA, Index, N, Acc) ->
-  hash_at2(Salt, SaltA, Index, N - 1, md5({SaltA, Index, N}, Acc)).
+  hash_at2(Salt, SaltA, Index, N - 1, md5(digest_to_hexstring(Acc))).
 
 %%% Helpers
 
-%% If Hash has a 3-letter sequence of any letter, return it.
-has3([]) -> false;
-has3([_]) -> false;
-has3([_,_]) -> false;
-has3([C,C,C|_Rest]) -> C;
-has3([_|Rest]) -> has3(Rest).
+%% Returns if the given MD5 digest has a 3-letter sequence. Returns
+%% the letter or the atom 'false' if no such sequence is found. Note
+%% that converting the MD5 digest to a string is not necessary; we can
+%% check for 3- and 5-sequences on the raw binary.
+has3(Binary) when bit_size(Binary) < 12 ->
+  false; %% Less than 3 chars left (3 * 4)
+has3(<<C:4,C:4,C:4,_/bitstring>>) ->
+  C;
+has3(<<_:4,Rest/bitstring>>) ->
+  has3(Rest).
 
 %% If Hash has a 5-letter sequence of C, return true, otherwise return
 %% false.
-has5([], _) -> false;
-has5([_], _) -> false;
-has5([_, _], _) -> false;
-has5([_, _, _], _) -> false;
-has5([_, _, _, _], _) -> false;
-has5([C, C, C, C, C|_], C) -> true;
-has5([_|Rest], C) -> has5(Rest, C).
+has5(Binary, _) when bit_size(Binary) < 20 ->
+  false; %% Less than 5 chars left (5 * 4)
+has5(<<C:4,C:4,C:4,C:4,C:4,_/bitstring>>, C) ->
+  true;
+has5(<<_:4,Rest/bitstring>>, C) ->
+  has5(Rest, C).
 
 %% ------------------------------------------------------------
 %% Unit tests
 %% ------------------------------------------------------------
 
 has3_test_() ->
-  [ ?_assertEqual($b, has3("aabbbcc"))
-  , ?_assertEqual($c, has3("aabbccc"))
-  , ?_assertEqual($c, has3("ccc"))
-  , ?_assertNot(has3("aabb"))
-  , ?_assertNot(has3(""))
-  , ?_assertNot(has3("a"))
-  , ?_assertNot(has3("aa"))
-  , ?_assertNot(has3("ab"))
+  [ ?_assertNot(        has3(md5("abc0")))
+  , ?_assertEqual(8,    has3(md5("abc18")))
+  , ?_assertEqual(16#e, has3(md5("abc39")))
+  , ?_assertEqual(9,    has3(md5("abc92")))
   ].
 
 has5_test_() ->
-  [ ?_assert(has5("aacccccbb", $c))
-  , ?_assertNot(has5("aabbbbbccc", $c))
+  [ ?_assertNot(has5(md5("abc0"),   0))
+  , ?_assert(   has5(md5("abc816"), 16#e))
+  , ?_assert(   has5(md5("abc200"), 9))
   ].
 
 hash_at_test_() ->
-  ?_assertEqual("577571be4de9dcce85a041ba0410f29f",
-                hash_at("abc", 'abc', 0)).
+  [
+   %% The second of these should hit the cache.
+   ?_assertEqual(md5("abc0"), hash_at("abc", 'abc', 0)),
+   ?_assertEqual(md5("abc0"), hash_at("abc", 'abc', 0))
+  ].
+
+digest_to_hexstring_test_() ->
+  ?_assertEqual(<<"577571be4de9dcce85a041ba0410f29f">>,
+                digest_to_hexstring(md5("abc0"))).
+
+hash_at2_test_() ->
+  ?_assertMatch(<<16#a1,16#07,16#ff,_/bitstring>>,
+                hash_at2("abc", 'abc', 0)).
 
 is_key_test_() ->
   [ ?_assertNot(is_key("abc", 'abc', 18))
@@ -124,16 +190,15 @@ is_key_test_() ->
   , ?_assert(is_key("abc", 'abc', 92))
   ].
 
-hash_at2_test_() ->
-  ?_assertEqual("a107ff634856bb300138cac6568c0f24",
-                hash_at2("abc", 'abc', 0)).
+is_key2_test_() ->
+  [ {timeout, 60, ?_assertNot(is_key("abc", 'abc', 5, fun hash_at2/3))}
+  , {timeout, 60, ?_assert(is_key("abc", 'abc', 10, fun hash_at2/3))}
+  ].
 
-prof_test_() ->
-  {timeout, 3600,
-   fun() ->
-       eprof:start(),
-       eprof:profile(fun() ->
-                         find_nth_key("abc", 'abc', 1, fun hash_at2/3)
-                     end),
-       eprof:analyze()
-   end}.
+-compile([export_all]).
+prof() ->
+  eprof:start(),
+  eprof:profile(fun() ->
+                    find_nth_key("abc", 'abc', 1, fun hash_at2/3)
+                end),
+  eprof:analyze().
