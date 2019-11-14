@@ -4,7 +4,7 @@
 
 %% This solution runs in ~15 seconds, but eunit times out at 5 secs.
 main_test_() ->
-  {"Part 1 & 2", timeout, 20, fun main/0}.
+  {"Part 1 & 2", timeout, 60, fun main/0}.
 
 main() ->
   Lines = inputs:get_as_lines(2015, 6),
