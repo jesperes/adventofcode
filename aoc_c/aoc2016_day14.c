@@ -5,47 +5,63 @@
 #include <stdlib.h>
 #include <string.h>
 
-unsigned char *md5(char *in) {
-  MD5_CTX ctx;
-  unsigned char digest[16];
-  unsigned char *buf = malloc(33);
-  MD5_Init(&ctx);
-  MD5_Update(&ctx, in, strlen(in));
-  MD5_Final(digest, &ctx);
-  for (int i = 0; i < 16; i++) {
-    sprintf((char *)&buf[i * 2], "%02x", digest[i]);
-  }
-  return buf;
-}
-
 #define MAX_HASHES 100000
 #define NTH_KEY 64
-// #define INPUT "abc"
+#define TEST_INPUT "abc"
 #define INPUT "ahsbgdzn"
 
 char *hashes[MAX_HASHES];
 
-char *md5_cached(int i) {
-  if (hashes[i] == NULL) {
-    MD5_CTX ctx;
-    unsigned char digest[16];
-    char buf[64];
-
-    hashes[i] = malloc(33);
-
-    sprintf(buf, "%s%d", INPUT, i);
-
-    MD5_Init(&ctx);
-    MD5_Update(&ctx, buf, strlen(buf));
-    MD5_Final(digest, &ctx);
-
-    for (int j = 0; j < 16; j++) {
-      sprintf((char *)&hashes[i][j * 2], "%02x", digest[j]);
+void reinit_cache() {
+  for (int i = 0; i < MAX_HASHES; i++) {
+    if (hashes[i] != NULL) {
+      free(hashes[i]);
     }
 
-    hashes[i][32] = 0;
+    hashes[i] = NULL;
+  }
+}
+
+void md5_hexdigest(char *input, char *outbuf) {
+  MD5_CTX ctx;
+  unsigned char digest[16];
+
+  MD5_Init(&ctx);
+  MD5_Update(&ctx, input, strlen(input));
+  MD5_Final(digest, &ctx);
+
+  for (int j = 0; j < 16; j++) {
+    sprintf((char *)&outbuf[j * 2], "%02x", digest[j]);
   }
 
+  outbuf[32] = 0;
+  // printf("md5_hexdigest(%s) -> %s\n", input, outbuf);
+}
+
+char *md5_cached(char *input, int i) {
+  if (hashes[i] == NULL) {
+    char buf[64];
+    sprintf(buf, "%s%d", input, i);
+    hashes[i] = malloc(33);
+    md5_hexdigest(buf, hashes[i]);
+  }
+
+  return hashes[i];
+}
+
+char *md5_cached_part2(char *input, int i) {
+  if (hashes[i] == NULL) {
+    char buf[64];
+    sprintf(buf, "%s%d", input, i);
+    hashes[i] = malloc(33);
+    md5_hexdigest(buf, hashes[i]);
+
+    for (int j = 0; j < 2016; j++) {
+      md5_hexdigest(hashes[i], hashes[i]);
+    }
+  }
+
+  // printf("md5_cached_part2: %d -> %s\n", i, hashes[i]);
   return hashes[i];
 }
 
@@ -72,23 +88,24 @@ bool has5(char *hash, char c) {
   return false;
 }
 
-int_solution_t aoc2016_day14() {
+int aoc2016_day14() {
+  /*
+   * Part 1
+   */
 
-  for (int i = 0; i < MAX_HASHES; i++) {
-    hashes[i] = NULL;
-  }
+  reinit_cache();
 
   int keys_found = 0;
   int nth_key = -1;
 
   for (int i = 0; keys_found < NTH_KEY; i++) {
-    char *hash = md5_cached(i);
+    char *hash = md5_cached(INPUT, i);
     char c3 = has3(hash);
     if (c3 != -1) {
       // check if any of the next 1000 hashes contain
       // a 5-letter sequence of
       for (int j = i + 1; j <= i + 1000; j++) {
-        char *hash5 = md5_cached(j);
+        char *hash5 = md5_cached(INPUT, j);
         if (has5(hash5, c3)) {
           keys_found++;
           nth_key = i;
@@ -98,10 +115,42 @@ int_solution_t aoc2016_day14() {
     }
   }
 
-  int_solution_t sol;
+  aoc_assert("Part 1", nth_key == 23890);
 
-  sol.part1 = nth_key;
-  sol.part2 = -1;
+  /*
+   * Part 2
+   */
 
-  return sol;
+  reinit_cache();
+  aoc_assert("Part 2 (test)", strcmp(md5_cached_part2(TEST_INPUT, 0),
+                                     "a107ff634856bb300138cac6568c0f24") == 0);
+
+  reinit_cache();
+  keys_found = 0;
+  nth_key = -1;
+
+  for (int i = 0; keys_found < NTH_KEY; i++) {
+    char *hash = md5_cached_part2(INPUT, i);
+    char c3 = has3(hash);
+    if (c3 != -1) {
+      // printf("Found 3-sequence %c at index %d\n", c3, i);
+
+      // check if any of the next 1000 hashes contain
+      // a 5-letter sequence of
+      for (int j = i + 1; j <= i + 1000; j++) {
+        char *hash5 = md5_cached_part2(INPUT, j);
+        if (has5(hash5, c3)) {
+          //printf("Found 5-sequence %c at index %d, this is key %d\n", c3, i,
+          //       keys_found + 1);
+          keys_found++;
+          nth_key = i;
+          break;
+        }
+      }
+    }
+  }
+
+  aoc_assert("Part 2", nth_key == 22696);
+
+  return 0;
 }

@@ -15,7 +15,6 @@ next_password_char1(<<0,0,0:4,A:4,_/bitstring>>) ->
 next_password_char1(_) ->
   false.
 
-
 next_password_char2(<<0,0,0:4,A:4,B:4,_/bitstring>>) when A < 8 ->
   {A, to_hex(B)};
 next_password_char2(_) ->
@@ -25,7 +24,7 @@ hash(Input, Index) ->
   erlang:md5(Input ++ integer_to_list(Index)).
 
 password1(Input) ->
-   password1("", Input, 0).
+  password1("", Input, 0).
 password1(Password, _, _) when length(Password) =:= 8 ->
   lists:reverse(Password);
 password1(Password, Input, Index) ->
@@ -65,8 +64,8 @@ hash_test_() ->
   ].
 
 main_test_() ->
-  [ {"Test input (part 1)", ?_assertEqual("18f47a30", password1("abc"))}
+  [ {"Test input (part 1)", timeout, 60, ?_assertEqual("18f47a30", password1("abc"))}
   , {"Test input (part 2)", timeout, 60, ?_assertEqual("05ace8e3", password2("abc"))}
-  , {"Part 1", ?_assertEqual("4543c154", password1(?INPUT))}
+  , {"Part 1", timeout, 60, ?_assertEqual("4543c154", password1(?INPUT))}
   , {"Part 2", timeout, 60, ?_assertEqual("1050cbbd", password2(?INPUT))}
   ].
