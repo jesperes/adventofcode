@@ -1,4 +1,5 @@
 -module(aoc2016_day05).
+-export([profile/0]).
 
 -include_lib("eunit/include/eunit.hrl").
 
@@ -7,65 +8,49 @@
 to_hex(X) when X < 10 -> X + $0;
 to_hex(X) -> X + $a - 10.
 
-%% "A hash indicates the next character in the password if its
-%% hexadecimal representation starts with five zeroes. If it does, the
-%% sixth character in the hash is the next character of the password."
-next_password_char1(<<0,0,0:4,A:4,_/bitstring>>) ->
-  to_hex(A);
-next_password_char1(_) ->
-  false.
-
-next_password_char2(<<0,0,0:4,A:4,B:4,_/bitstring>>) when A < 8 ->
-  {A, to_hex(B)};
-next_password_char2(_) ->
+next_password_char(<<0,0,0:4,A:4,B:4,_/bitstring>>) ->
+  {A, B};
+next_password_char(_) ->
   false.
 
 hash(Input, Index) ->
   erlang:md5(Input ++ integer_to_list(Index)).
 
-password1(Input) ->
-  password1("", Input, 0).
-password1(Password, _, _) when length(Password) =:= 8 ->
-  lists:reverse(Password);
-password1(Password, Input, Index) ->
-  case next_password_char1(hash(Input, Index)) of
-    false ->
-      password1(Password, Input, Index + 1);
-    A ->
-      password1([A|Password], Input, Index + 1)
-  end.
+-spec password(Input :: string()) -> { Password1 :: string(),
+                                       Password2 :: string() }.
+password(Input) ->
+  password("", #{}, Input, 0).
 
-password2(Input) ->
-  password2(#{}, Input, 0).
-
-password2(Password, Input, Index) ->
-  case maps:size(Password) of
-    8 ->
-      lists:map(fun({_, X}) -> X end, lists:sort(maps:to_list(Password)));
+password(P1, P2, Input, Index) ->
+  case {length(P1), maps:size(P2)} of
+    {8, 8} -> {lists:reverse(P1),
+               lists:map(fun({_, X}) -> to_hex(X) end,
+                         lists:sort(maps:to_list(P2)))};
     _ ->
-      case next_password_char2(hash(Input, Index)) of
+      case next_password_char(hash(Input, Index)) of
+        {A, B} ->
+          NewP1 = if length(P1) < 8 -> [to_hex(A)|P1];
+                     true -> P1
+                  end,
+          NewP2 = if A < 8 ->
+                      maps:update_with(A, fun(Old) -> Old end,
+                                       B, P2);
+                     true ->
+                      P2
+                  end,
+          %% io:format("P1: ~w -> ~w, P2: ~w -> ~w~n", [P1, NewP1, P2, NewP2]),
+          password(NewP1, NewP2, Input, Index + 1);
         false ->
-          password2(Password, Input, Index + 1);
-        {PIndex, Char} ->
-          case maps:is_key(PIndex, Password) of
-            true ->
-              password2(Password, Input, Index + 1);
-            false ->
-              password2(maps:put(PIndex, Char, Password),
-                        Input, Index + 1)
-          end
+          password(P1, P2, Input, Index + 1)
       end
   end.
 
 hash_test_() ->
-  [ ?_assertNot(next_password_char1(hash("abc", 0)))
-  , ?_assertEqual($1, next_password_char1(hash("abc", 3231929)))
-  , ?_assertEqual({1, $5}, next_password_char2(hash("abc", 3231929)))
+  [ ?_assertNot(next_password_char(hash("abc", 0)))
+  , ?_assertEqual({1, 5}, next_password_char(hash("abc", 3231929)))
   ].
 
 main_test_() ->
-  [ {"Test input (part 1)", timeout, 60, ?_assertEqual("18f47a30", password1("abc"))}
-  , {"Test input (part 2)", timeout, 60, ?_assertEqual("05ace8e3", password2("abc"))}
-  , {"Part 1", timeout, 60, ?_assertEqual("4543c154", password1(?INPUT))}
-  , {"Part 2", timeout, 60, ?_assertEqual("1050cbbd", password2(?INPUT))}
+  [ {"Test input", timeout, 60, ?_assertEqual({"18f47a30", "05ace8e3"}, password("abc"))}
+  , {"Part 1 & 2", timeout, 60, ?_assertEqual({"4543c154", "1050cbbd"}, password(?INPUT))}
   ].
