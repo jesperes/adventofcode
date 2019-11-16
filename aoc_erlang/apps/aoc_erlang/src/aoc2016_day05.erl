@@ -1,5 +1,4 @@
 -module(aoc2016_day05).
--export([profile/0]).
 
 -include_lib("eunit/include/eunit.hrl").
 
