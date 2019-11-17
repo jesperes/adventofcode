@@ -7,7 +7,7 @@ input() ->
 
 main_test_() ->
   [ {"Part 1", fun part1/0}
-  , {"Part 2", fun part2/0}
+  , {"Part 2", timeout, 60, fun part2/0}
   , {"Unit tests", fun simple/0}
   ].
 
