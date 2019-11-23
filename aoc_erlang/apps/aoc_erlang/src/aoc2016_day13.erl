@@ -1,5 +1,4 @@
 -module(aoc2016_day13).
-
 -include_lib("eunit/include/eunit.hrl").
 
 main_test_() ->
@@ -31,8 +30,7 @@ bitcount(V, C) -> bitcount(V band (V - 1), C + 1).
 is_wall({X, Y}, Fav) ->
   bitcount((X*X + 3*X + 2*X*Y + Y + Y*Y + Fav)) rem 2 == 1.
 
-%%% A* search algorithm callbacks
-
+%% A* search algorithm callbacks
 distance(_, _) -> 1.
 cost({X0,Y0}, {X1,Y1}) -> abs(X0 - X1) + abs(Y0 - Y1).
 neighbors({X, Y}, Fav) ->
@@ -45,11 +43,10 @@ neighbors({X, Y}, Fav) ->
      {X, Y + 1},
      {X, Y - 1}]).
 
-%%% Part 2: enumerate all positions reachable using max 50 steps.  Use
-%%% a depth-first search, but keep track of the depth at which each
-%%% node was found so we can revisit nodes when seen at an earlier
-%%% depth.
-
+%% Part 2: enumerate all positions reachable using max 50 steps.  Use
+%% a depth-first search, but keep track of the depth at which each
+%% node was found so we can revisit nodes when seen at an earlier
+%% depth.
 search_to_depth(Start, Depth, Fav) ->
   Visited = search_to_depth(Start, 1, Depth, Fav, #{Start => 0}),
   sets:from_list(maps:keys(Visited)).

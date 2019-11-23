@@ -68,11 +68,6 @@ md5(S) ->
   %% ?debugFmt("md5(~p) -> ~p (RAW)", [S, digest_to_hexstring(Hash)]),
   Hash.
 
-digest_to_hexstring(Binary) ->
-  << << (if N =< 9 -> N + $0;
-            true -> N + $a - 10
-         end):8 >> || <<N:4>> <= Binary >>.
-
 %% Compute the hash at the given Index.
 hash_at(Salt, SaltA, Index) ->
   md5({SaltA, Index}, Salt ++ integer_to_list(Index)).
@@ -94,7 +89,7 @@ hash_at2(Salt, SaltA, Index) ->
 hash_at2(_Salt, _SaltA, _Index, 0, Acc) ->
   Acc;
 hash_at2(Salt, SaltA, Index, N, Acc) ->
-  hash_at2(Salt, SaltA, Index, N - 1, md5(digest_to_hexstring(Acc))).
+  hash_at2(Salt, SaltA, Index, N - 1, md5(digest:digest_to_hexstring(Acc))).
 
 %%% Helpers
 
@@ -122,6 +117,8 @@ has5(<<_:4,Rest/bitstring>>, C) ->
 %% Unit tests
 %% ------------------------------------------------------------
 
+-ifdef(EUNIT).
+
 has3_test_() ->
   [ ?_assertNot(        has3(md5("abc0")))
   , ?_assertEqual(8,    has3(md5("abc18")))
@@ -144,7 +141,7 @@ hash_at_test_() ->
 
 digest_to_hexstring_test_() ->
   ?_assertEqual(<<"577571be4de9dcce85a041ba0410f29f">>,
-                digest_to_hexstring(md5("abc0"))).
+                digest:digest_to_hexstring(md5("abc0"))).
 
 hash_at2_test_() ->
   ?_assertMatch(<<16#a1,16#07,16#ff,_/bitstring>>,
@@ -161,3 +158,5 @@ is_key2_test_() ->
   [ {timeout, 60, ?_assertNot(is_key("abc", 'abc', 5, fun hash_at2/3))}
   , {timeout, 60, ?_assert(is_key("abc", 'abc', 10, fun hash_at2/3))}
   ].
+
+-endif.

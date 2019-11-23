@@ -166,6 +166,8 @@ ex_search(Grid, Size) ->
       Path
   end.
 
+-ifdef(EUNIT).
+
 t1_test() ->
   Grid = <<"S....#....",
            ".....#....",
@@ -213,3 +215,5 @@ t4_test() ->
            "..#.G">>,
 
   ?assertEqual(search_exhausted, ex_search(Grid, 5)).
+
+-endif.

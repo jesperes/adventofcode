@@ -1,5 +1,4 @@
 -module(aoc2016_day12).
-
 -include_lib("eunit/include/eunit.hrl").
 
 arg(S) ->
@@ -8,7 +7,7 @@ arg(S) ->
   end.
 
 inputprog() ->
-  Lines = inputs:get_as_lines(2016, 12),
+  Binary = inputs:get_as_binary(2016, 12),
   Instrs =
     lists:map(fun(Line) ->
                   case string:tokens(Line, " ") of
@@ -17,22 +16,14 @@ inputprog() ->
                     [A, B] ->
                       {list_to_atom(A), arg(B)}
                   end
-              end, Lines),
+              end,
+              string:tokens(binary_to_list(Binary), "\n")),
 
   {_, InstrMap} =
     lists:foldl(fun(Instr, {N, Map}) ->
                     {N + 1, maps:put(N, Instr, Map)}
                 end, {0, #{}}, Instrs),
   InstrMap.
-
-main_test_() ->
-  Prog = inputprog(),
-  P1 = 318003,
-  P2 = 9227657,
-
-  [ {"Part 1", ?_assertMatch(#{a := P1}, execute(0, Prog, #{}))}
-  , {"Part 2", ?_assertMatch(#{a := P2}, execute(0, Prog, #{c => 1}))}
-  ].
 
 read_reg(X, _) when is_number(X) -> X;
 read_reg(X, Regs) when is_atom(X) -> maps:get(X, Regs, 0).
@@ -56,3 +47,9 @@ execute(Pc, Instrs, Regs) ->
     eop ->
       Regs
   end.
+
+main_test_() ->
+  Prog = inputprog(),
+  [ {"Part 1", ?_assertMatch(#{a := 318003}, execute(0, Prog, #{}))}
+  , {"Part 2", ?_assertMatch(#{a := 9227657}, execute(0, Prog, #{c => 1}))}
+  ].
