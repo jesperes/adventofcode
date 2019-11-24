@@ -50,6 +50,5 @@ hash_test_() ->
   ].
 
 main_test_() ->
-  [ {"Test input", timeout, 60, ?_assertEqual({"18f47a30", "05ace8e3"}, password("abc"))}
-  , {"Part 1 & 2", timeout, 60, ?_assertEqual({"4543c154", "1050cbbd"}, password(?INPUT))}
-  ].
+  {"Part 1 & 2", timeout, 60,
+   ?_assertEqual({"4543c154", "1050cbbd"}, password(?INPUT))}.

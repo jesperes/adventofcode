@@ -2,43 +2,11 @@
 
 These are my solutions to the AdventOfCode (https://adventofcode.com).
 
-## Java
-
-To run the Java solutions:
-
-```
-    $ cd aoc-java
-    $ ant
-```
-
 ## Erlang
 
-To run the Erlang solutions:
-
-```
-    $ cd YEAR
-    $ ./aocYEAR.escript
-```
-
-OTP 21 is required for 2018 solutions.
-
-## Completeness
-
-### 2015
-
-* Java (all 25)
-* Erlang (all 25)
-
-### 2018
-
-* Erlang (all 25)
-
-### Other
-
-Various other years/days are also solved, but not included in the
-scripts to run easily.
-
-## Performance
-
-2015 solutions for Java have a total runtime of <10 s. Erlang
-solutions typically average 2s per puzzle, with spikes upwards 15s.
+* 2015 puzzles are all finished
+* 2016 day 11 part 2 is too slow (> 20 minutes)
+* 2016 day 20 not implemented
+* 2016 day 21 not implemented
+* 2016 day 23 tests fail
+* 2016 day 24 tests fail
