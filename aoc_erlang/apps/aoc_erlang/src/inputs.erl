@@ -10,6 +10,7 @@
 -export([ get_as_binary/2
         , get_as_string/2
         , get_as_lines/2
+        , parse_lines/3
         ]).
 
 -spec get_as_binary(Year :: integer(), Day :: integer()) -> binary().
@@ -24,6 +25,17 @@ get_as_string(Year, Day) ->
 -spec get_as_lines(Year :: integer(), Day :: integer()) -> list(string()).
 get_as_lines(Year, Day) ->
   string:tokens(get_as_string(Year, Day), "\n\r").
+
+
+-spec parse_lines(Binary :: binary(),
+                  Delims :: string(),
+                  Fun :: fun()) ->
+                     list(term()).
+parse_lines(Binary, Delims, Fun) ->
+  lists:map(fun(Line) ->
+                Fun(string:tokens(Line, Delims))
+            end,
+            string:tokens(binary_to_list(Binary), "\n\r")).
 
 %% Internal functions
 
