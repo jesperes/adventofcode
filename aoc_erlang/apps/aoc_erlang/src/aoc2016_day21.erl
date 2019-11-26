@@ -116,7 +116,7 @@ string_op_test_() ->
 main_test_() ->
   Input = get_input(),
   [ {"Part 1", ?_assertEqual("cbeghdaf", part1("abcdefgh", Input))}
-  , {"Part 2", ?_assertEqual("bacdefgh", part2("fbgdceah", Input))}
+  , {"Part 2", timeout, 60, ?_assertEqual("bacdefgh", part2("fbgdceah", Input))}
   ].
 
 %%%_* Emacs ====================================================================

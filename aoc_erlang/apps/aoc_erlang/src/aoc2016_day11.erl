@@ -64,7 +64,6 @@ main_test_() ->
   Input = inputs:get_as_binary(2016, 11),
 
   [ {"Part 1", timeout, 10, fun() -> number_of_moves(Input, part1) end}
-  , fun() -> ?debugMsg("Skipping part 2 (too slow)") end
     %% Part 2 is unbearably slow.
     %% , {"Part 2", fun() -> number_of_moves(Input, part2) end}
   ].

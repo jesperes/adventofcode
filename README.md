@@ -6,4 +6,3 @@ These are my solutions to the AdventOfCode (https://adventofcode.com).
 
 * 2015 puzzles are all finished
 * 2016 day 11 part 2 is too slow (> 20 minutes)
-* 2016 day 24 tests fail

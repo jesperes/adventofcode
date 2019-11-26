@@ -177,15 +177,13 @@ damage_dealt(Attacker, Defender) ->
 %%% ============================================================
 
 unit_test_() ->
-  [ {"Damage dealt", fun damage_dealt/0}
-  , {"Battle tests", fun battling/0}
-  ].
-
-damage_dealt() ->
-  ?_assertEqual(5, damage_dealt(#combatant{damage = 8}, #combatant{armor = 3})),
-  ?_assertEqual(1, damage_dealt(#combatant{damage = 8}, #combatant{armor = 100})).
-
-battling() ->
   Player = #combatant{hp = 8, damage = 5, armor = 5, name = player},
   Boss = #combatant{hp = 12, damage = 7, armor = 2, name = boss},
-  ?assertEqual({winner, player}, battle(Player, Boss)).
+
+  [ {"Damage dealt",
+     [ ?_assertEqual(5, damage_dealt(#combatant{damage = 8}, #combatant{armor = 3}))
+     , ?_assertEqual(1, damage_dealt(#combatant{damage = 8}, #combatant{armor = 100}))
+     ]}
+  , {"Battle tests",
+     ?_assertEqual({winner, player}, battle(Player, Boss))}
+  ].
