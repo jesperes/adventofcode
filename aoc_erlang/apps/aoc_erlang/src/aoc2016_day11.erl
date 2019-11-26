@@ -170,6 +170,7 @@ check_items(Items) ->
 parse(Binary) ->
   parse(Binary, part1).
 
+-dialyzer({no_match, parse/2}).
 parse(Binary, Part) ->
   Lines = string:tokens(binary_to_list(Binary), "\n\r"),
   E = [{?ELEVATOR, ?BOTTOM_FLOOR}|lists:foldl(fun parse_line/2, [], Lines)],
