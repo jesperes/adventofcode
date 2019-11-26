@@ -45,7 +45,7 @@
 				<version>2.22.0</version>
 				<configuration>
 					<includes>
-						<include>**/*Suite.java</include>
+						<include>**/Day*.java</include>
 					</includes>
 				</configuration>
 			</plugin>
