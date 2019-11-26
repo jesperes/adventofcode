@@ -12,6 +12,22 @@
 -export([astar/5]).
 -include_lib("eunit/include/eunit.hrl").
 
+-type search_node() :: term().
+-type cost_fun() :: fun((search_node()) -> integer()).
+-type nbr_fun() :: fun((search_node()) -> list(search_node())).
+-type dist_fun() :: fun((search_node(), search_node()) -> integer()).
+-type end_fun() :: fun((search_node()) -> boolean()).
+
+-type astar_result() ::
+        {Distance :: integer(),
+         Path :: list(search_node())}
+      | 'search_exhausted'.
+
+-spec astar(Start :: search_node(),
+            End :: search_node(),
+            CostFn :: cost_fun(),
+            NbrFn :: nbr_fun(),
+            DistFn :: dist_fun()) -> astar_result().
 astar(Start, End, CostFn, NbrFn, DistFn) ->
   case is_function(End) of
     true ->
@@ -21,6 +37,11 @@ astar(Start, End, CostFn, NbrFn, DistFn) ->
              fun(E) -> E == End end)
   end.
 
+-spec astar0(Start :: search_node(),
+             CostFn :: cost_fun(),
+             NbrFn :: nbr_fun(),
+             DistFn :: dist_fun(),
+             EndFn :: end_fun()) -> astar_result().
 astar0(Start, CostFn, NbrFn, DistFn, EndFn) ->
   OC = #{Start => open},
   CF = maps:new(),		    %% CameFrom
@@ -28,6 +49,14 @@ astar0(Start, CostFn, NbrFn, DistFn, EndFn) ->
   Fs = gb_sets:singleton({CostFn(Start), Start}),
   astar0(OC, CF, Gs, Fs, CostFn, NbrFn, DistFn, EndFn).
 
+-spec astar0(OC :: map(),
+             CF :: map(),
+             Gs :: map(),
+             Fs :: gb_sets:set(),
+             CostFn :: cost_fun(),
+             NbrFn :: nbr_fun(),
+             DistFn :: dist_fun(),
+             EndFn :: end_fun()) -> astar_result().
 astar0(OC, CF, Gs, Fs, CostFn, NbrFn, DistFn, EndFn) ->
   case gb_sets:size(Fs) of
     0 ->
@@ -51,7 +80,20 @@ astar0(OC, CF, Gs, Fs, CostFn, NbrFn, DistFn, EndFn) ->
       end
   end.
 
+%% State to keep when folding over the list of neighbors.
+-type nbr_fold_state() ::
+        { Curr :: search_node(),
+          OC :: map(),
+          CF :: map(),
+          Gs :: map(),
+          Fs :: gb_sets:set(),
+          CostFn :: cost_fun(),
+          DistFn :: dist_fun()}.
+
 %% Function to fold over the neighbors in the recursive step.
+-spec astar_nbr(Nbr :: search_node(),
+                AccIn :: nbr_fold_state()) ->
+                   nbr_fold_state().
 astar_nbr(Nbr, {Curr, OC, CF, Gs, Fs, CostFn, DistFn} = AccIn) ->
   case maps:get(Nbr, OC, open) of
     closed ->
@@ -87,6 +129,8 @@ astar_nbr(Nbr, {Curr, OC, CF, Gs, Fs, CostFn, DistFn} = AccIn) ->
   end.
 
 %%% Helper functions
+-spec path_recon(Curr :: search_node(),
+                 CF :: map()) -> list(search_node()).
 path_recon(Curr, CF) ->
   case maps:is_key(Curr, CF) of
     true ->  [Curr|path_recon(maps:get(Curr, CF), CF)];
@@ -131,18 +175,18 @@ ex_search(Grid, Size) ->
                            end, AdjFn(Curr))
           end,
 
-  PosToStrFn =
-    fun({X, Y}, Path) ->
-        case lists:member({X,Y}, Path) of
-          true -> $x;
-          false -> binary:at(Grid, Y * Size + X)
-        end
-    end,
+  %% PosToStrFn =
+  %%   fun({X, Y}, Path) ->
+  %%       case lists:member({X,Y}, Path) of
+  %%         true -> $x;
+  %%         false -> binary:at(Grid, Y * Size + X)
+  %%       end
+  %%   end,
 
   DistFn = fun({Xa, Ya}, {Xb, Yb}) -> abs(Xa - Xb) + abs(Ya - Yb) end,
 
   Repeat = 1000,
-  {Time, _} =
+  {_Time, _} =
     timer:tc(fun() ->
                  lists:foreach(
                    fun(_N) ->
@@ -157,10 +201,9 @@ ex_search(Grid, Size) ->
     search_exhausted ->
       search_exhausted;
     {_, Path} ->
-      X = [[PosToStrFn({X,Y}, Path) ||
-             X <- lists:seq(0, Size - 1)] ++ "\n" ||
-            Y <- lists:seq(0, Size - 1)],
-
+      %% _X = [[PosToStrFn({X,Y}, Path) ||
+      %%         X <- lists:seq(0, Size - 1)] ++ "\n" ||
+      %%        Y <- lists:seq(0, Size - 1)],
       %% ?debugFmt("Path length: ~w", [length(Path)]),
       %% ?debugFmt("Path:~n~s~n", [X]),
       Path
