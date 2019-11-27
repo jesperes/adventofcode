@@ -5,7 +5,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import common.Utils;
+import common.AocPuzzle;
 
 /**
  * This variant of the 2016 Day 9 problem will compute the length of the
@@ -16,7 +16,11 @@ import common.Utils;
  * @author jespe
  *
  */
-public class Day09 {
+public class Day09 extends AocPuzzle {
+
+    public Day09() {
+        super(2016, 9);
+    }
 
     final static int MARKER_NUMCHAR = 0;
     final static int MARKER_REPEATCOUNT = 1;
@@ -86,7 +90,7 @@ public class Day09 {
 
     @Test
     public void testPart2() throws Exception {
-        String str = Utils.readFile("inputs/2016/day09.txt");
+        String str = getInputAsString();
         long x = computeDecompressedLengthOf(str, 0, str.length());
         System.out.println("Decompressed length: " + x);
     }
