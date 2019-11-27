@@ -1,6 +1,8 @@
-package utils;
+package common;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.stream.Collectors;
@@ -23,6 +25,18 @@ public class Utils {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(
                 cls.getClassLoader().getResourceAsStream(name)))) {
             return reader.lines().collect(Collectors.joining("\n"));
+        }
+    }
+
+    public static String readFile(String filename) throws IOException {
+        File f = new File(filename);
+        try (BufferedReader r = new BufferedReader(new FileReader(f))) {
+            StringBuilder b = new StringBuilder();
+            r.lines().forEach(line -> {
+                b.append(line);
+                b.append("\n");
+            });
+            return b.toString();
         }
     }
 }

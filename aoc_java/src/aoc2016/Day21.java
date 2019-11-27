@@ -1,6 +1,7 @@
 package aoc2016;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -16,8 +17,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.junit.Test;
-// egadhbfc
-// egadhbfc is wrong
 
 public class Day21 {
 
@@ -128,12 +127,12 @@ public class Day21 {
         rotate(s, "right", 1 + index + (index >= 4 ? 1 : 0));
     }
 
-    public static void main(String[] args) throws Exception {
-        scramble("abcde", "testinput.txt");
-        scramble("abcdefgh", "input.txt");
-
-        part2();
-    }
+//    public static void main(String[] args) throws Exception {
+//        scramble("abcde", "testinput.txt");
+//        scramble("abcdefgh", "input.txt");
+//
+//        part2();
+//    }
 
     public static String scramble(String s, String filename) throws Exception {
         StringBuilder string = new StringBuilder(s);
@@ -173,18 +172,6 @@ public class Day21 {
             for (int i = 0; i < n; i++)
                 permutation(prefix + str.charAt(i),
                         str.substring(0, i) + str.substring(i + 1, n), acc);
-        }
-    }
-
-    public static void part2() throws Exception {
-        String password = "fbgdceah";
-        List<String> list = permutation(password);
-        for (String s : list) {
-            String p = scramble(s, "input.txt");
-            if (p.equals(password)) {
-                System.out.println(">> " + s);
-                break;
-            }
         }
     }
 
@@ -228,6 +215,21 @@ public class Day21 {
 
     @Test
     public void testPart1() throws Exception {
-        assertEquals("cbeghdaf", scramble("abcdefgh", "input.txt"));
+        assertEquals("cbeghdaf", scramble("abcdefgh", "inputs/2016/day21.txt"));
     }
+
+    @Test
+    public void testPart2() throws Exception {
+        String scrambled = "fbgdceah";
+        List<String> list = permutation(scrambled);
+        for (String s : list) {
+            String p = scramble(s, "inputs/2016/day21.txt");
+            if (p.equals(scrambled)) {
+                assertEquals("bacdefgh", s);
+                return;
+            }
+        }
+        fail();
+    }
+
 }

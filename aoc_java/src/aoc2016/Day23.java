@@ -17,7 +17,7 @@ public class Day23 {
     }
 
     public static void main(String[] args) throws IOException {
-        String[] prog = parseProgram("input.txt");
+        String[] prog = parseProgram("inputs/2016/day23.txt");
         int[] regs = new int[4];
         interpret(prog, 0, regs);
     }
