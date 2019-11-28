@@ -3,6 +3,7 @@ package aoc2017;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class Day09 {
@@ -15,7 +16,6 @@ public class Day09 {
         boolean cancelNextChar = false;
         int nestingLevel = 0;
         int score = 0;
-        int numGarbage = 0;
 
         for (char c : input.toCharArray()) {
             if (isGarbage) {
@@ -30,8 +30,6 @@ public class Day09 {
                 } else if (c == '>') {
                     isGarbage = false;
                     continue;
-                } else {
-                    numGarbage++;
                 }
 
                 // any other characters within garbage is ignored
@@ -54,7 +52,9 @@ public class Day09 {
             }
         }
 
-        if (nestingLevel != 0) {
+        if (nestingLevel != 0)
+
+        {
             fail("Mismatched {, }, nesting level at end was " + nestingLevel);
         }
 
@@ -62,15 +62,18 @@ public class Day09 {
             fail("String ended in garbage");
         }
 
-        System.out.format("Score = %d (garbage == %d)%n", score, numGarbage);
-
         return score;
     }
 
     @Test
     public void testPart1_full() throws Exception {
         int score = interpret(PUZZLE_INPUT);
-        System.out.println("[Day09]: Score: " + score);
+        assertEquals(7616, score);
+    }
+
+    @Test
+    @Ignore("not implemented")
+    public void testPart2() throws Exception {
     }
 
     @Test

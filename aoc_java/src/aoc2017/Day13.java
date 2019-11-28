@@ -225,10 +225,9 @@ public class Day13 extends AocPuzzle {
         Map<Integer, Firewall> firewalls = getLongInput();
         int maxDepth = getMaxDepth(firewalls);
         int maxRange = getMaxRange(firewalls);
-
-        System.out.println("[Day13]: Total severity: "
-                + computeSeverity(firewalls, maxDepth, maxRange, 0, false)
-                        .orElse(0).intValue());
+        int part1 = computeSeverity(firewalls, maxDepth, maxRange, 0, false)
+                .orElse(0).intValue();
+        assertEquals(788, part1);
     }
 
     @Test
@@ -236,8 +235,7 @@ public class Day13 extends AocPuzzle {
         Map<Integer, Firewall> firewalls = getLongInput();
         int maxDepth = getMaxDepth(firewalls);
         int maxRange = getMaxRange(firewalls);
-
-        System.out.println("[Day13]: Minimum delay to avoid collision: "
-                + computeDelayUntilNotCaught(firewalls, maxDepth, maxRange));
+        int part2 = computeDelayUntilNotCaught(firewalls, maxDepth, maxRange);
+        assertEquals(3905748, part2);
     }
 }

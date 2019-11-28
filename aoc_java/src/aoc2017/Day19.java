@@ -210,7 +210,5 @@ public class Day19 extends AocPuzzle {
         int steps = followTube(input, builder);
         assertEquals("EPYDUXANIT", builder.toString());
         assertEquals(17544, steps);
-        System.out.println("Day19: letters = " + builder.toString());
-        System.out.println("Day19 (part 2): steps = " + steps);
     }
 }

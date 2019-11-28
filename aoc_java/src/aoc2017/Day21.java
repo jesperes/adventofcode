@@ -311,14 +311,14 @@ public class Day21 extends AocPuzzle {
                 }
             }
 
-            System.out.format(
-                    "[%d] Splitting %dx%d matrix of %dx%d submatrices of size %dx%d -> %dx%d matrix of %dx%d submatrices of size %dx%d%n",
-                    i, matrix.length, matrix.length, //
-                    numSubMatrices, numSubMatrices, //
-                    subsize, subsize, //
-                    newmatrix.length, newmatrix.length, numSubMatrices,
-                    numSubMatrices, //
-                    newSubSize, newSubSize);
+//            System.out.format(
+//                    "[%d] Splitting %dx%d matrix of %dx%d submatrices of size %dx%d -> %dx%d matrix of %dx%d submatrices of size %dx%d%n",
+//                    i, matrix.length, matrix.length, //
+//                    numSubMatrices, numSubMatrices, //
+//                    subsize, subsize, //
+//                    newmatrix.length, newmatrix.length, numSubMatrices,
+//                    numSubMatrices, //
+//                    newSubSize, newSubSize);
 
             // printGrid(matrixToPattern(matrix));
 
@@ -416,7 +416,7 @@ public class Day21 extends AocPuzzle {
     @Test
     public void testFractalArtSmall() throws Exception {
         char[][] art = fractalArt(START_PATTERN, RULES, 2);
-        printGrid(matrixToPattern(art));
+        // printGrid(matrixToPattern(art));
         assertEquals(12, getPixels(art));
     }
 
@@ -424,14 +424,16 @@ public class Day21 extends AocPuzzle {
     public void testLargeInput() throws Exception {
         String[] rules = getInputAsLines().toArray(n -> new String[n]);
         char[][] art = fractalArt(START_PATTERN, rules, 5);
-        printGrid(matrixToPattern(art));
+        assertEquals(205, getPixels(art));
+        // printGrid(matrixToPattern(art));
+
     }
 
     @Test
     public void testLargeInput_Part2() throws Exception {
         String[] rules = getInputAsLines().toArray(n -> new String[n]);
         char[][] art = fractalArt(START_PATTERN, rules, 18);
-        printGrid(matrixToPattern(art));
-        System.out.println("Pixels: " + getPixels(art));
+        // printGrid(matrixToPattern(art));
+        assertEquals(3389823, getPixels(art));
     }
 }

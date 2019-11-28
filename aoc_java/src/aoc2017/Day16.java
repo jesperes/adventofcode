@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import common.AocPuzzle;
@@ -227,37 +226,7 @@ public class Day16 extends AocPuzzle {
     @Test
     public void testInputFull() throws Exception {
         performDance(fullActors, fullInput);
-        System.out
-                .println("[Day16] Final positions: " + new String(fullActors));
         assertArrayEquals("kbednhopmfcjilag".toCharArray(), fullActors);
-    }
-
-    /*
-     * Brute-force solution is not feasible. Time per iteration is ~300000ns,
-     * meaning ~83 hours.
-     */
-    @Test
-    @Ignore
-    public void testInputFull_Part2_BruteForce() throws Exception {
-        int repeat = 1_000_000_000;
-
-        long t0 = System.nanoTime();
-        for (int i = 0; i < repeat; i++) {
-            if (i % 1000 == 0) {
-                long elapsed = System.nanoTime() - t0;
-                System.out.format("Iteration %d (%s ns / iteration)%n", i,
-                        elapsed / (i + 1));
-            }
-            performDance(fullActors, fullInput);
-        }
-
-        String state = new String(fullActors);
-
-        System.out.format(
-                "[Day16] Position after %d repetitions (part 2, brute force): %s%n",
-                repeat, state);
-
-        assertEquals("fbmcgdnjakpioelh", state);
     }
 
     @Test
@@ -285,10 +254,6 @@ public class Day16 extends AocPuzzle {
                 state = newState;
             }
         }
-
-        System.out.format(
-                "[Day16] Position after %d repetitions (part 2): %s%n", repeat,
-                state);
 
         assertEquals("fbmcgdnjakpioelh", state);
     }

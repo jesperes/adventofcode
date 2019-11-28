@@ -15,9 +15,9 @@ import org.junit.Test;
 
 import common.AocPuzzle;
 
-public class Day20 extends AocPuzzle {
+public class Day20_Part1 extends AocPuzzle {
 
-    public Day20() {
+    public Day20_Part1() {
         super(2017, 20);
     }
 
@@ -160,6 +160,6 @@ public class Day20 extends AocPuzzle {
             }
         });
 
-        particles.stream().forEach(System.out::println);
+        assertEquals(457, particles.get(0).id);
     }
 }

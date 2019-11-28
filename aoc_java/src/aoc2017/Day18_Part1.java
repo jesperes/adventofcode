@@ -3,7 +3,6 @@ package aoc2017;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,8 +10,8 @@ import org.junit.Test;
 
 import common.AocPuzzle;
 
-public class Day18 extends AocPuzzle {
-    public Day18() {
+public class Day18_Part1 extends AocPuzzle {
+    public Day18_Part1() {
         super(2017, 18);
     }
 
@@ -51,18 +50,12 @@ public class Day18 extends AocPuzzle {
 
     private long interpret(String[] list) {
 
-        System.out.format("Interpreting %d instructions.%n", list.length);
-        System.out.println("-----------------------------------");
-
         long freq = -1;
 
         for (int pc = 0; pc < list.length; pc++) {
 
             String str = list[pc];
             String[] words = str.split(" ");
-
-            System.out.format("PC [%d] %s (%s)%n", pc, Arrays.toString(words),
-                    registers);
 
             Instr instr = Instr.valueOf(words[0]);
 
@@ -83,11 +76,7 @@ public class Day18 extends AocPuzzle {
                         fail("PC out of bounds");
                     }
 
-                    System.out.println("PC jump to " + pc);
                     pc--; // compensate for "pc++" in loop
-                } else {
-                    System.out.println(
-                            "PC jump skipped, op is not > zero: " + value);
                 }
                 break;
             }
@@ -108,11 +97,7 @@ public class Day18 extends AocPuzzle {
             case rcv: {
                 long value = readValue(words[1]);
                 if (value != 0L) {
-                    System.out
-                            .println("Recovering sound with frequency " + freq);
                     return freq;
-                } else {
-                    System.out.println("rcv skipped, op is zero: " + words[1]);
                 }
                 break;
             }
@@ -124,7 +109,6 @@ public class Day18 extends AocPuzzle {
             }
             case snd: {
                 freq = readValue(words[1]);
-                System.out.println("Setting frequency to " + freq);
                 break;
             }
             default:
@@ -144,7 +128,6 @@ public class Day18 extends AocPuzzle {
     @Test
     public void testFull() throws Exception {
         long freq = interpret(getInputAsLines().toArray(n -> new String[n]));
-        System.out.println("Day 18: frequency = " + freq);
         assertEquals(7071L, freq);
     }
 }

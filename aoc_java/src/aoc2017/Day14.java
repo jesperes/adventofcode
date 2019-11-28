@@ -166,8 +166,7 @@ public class Day14 {
     @Test
     public void testFull() throws Exception {
         long numberOfOnes = computeNumberOfOnes(input2);
-        System.out.println(
-                "Day14: Number of ones in " + input2 + ": " + numberOfOnes);
+        assertEquals(8230, numberOfOnes);
     }
 
     @Test
@@ -179,7 +178,6 @@ public class Day14 {
     @Test
     public void testColorGrid2() throws Exception {
         int[][] grid = createColorGrid(input2);
-        System.out.println("Day14: Number of regions: " + assignColors(grid));
-        // printGrid(grid);
+        assertEquals(1103, assignColors(grid));
     }
 }

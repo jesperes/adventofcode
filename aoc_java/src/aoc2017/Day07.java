@@ -191,9 +191,9 @@ public class Day07 extends AocPuzzle {
             childWeights.put(deviatingNode.name,
                     childWeights.get(deviatingNode.name) + delta);
 
-            System.out.format(
-                    "The node %s weighing %d is unbalanced. Its correct weight should be %d%n",
-                    deviatingNode.name, deviatingNode.weight, adjustedWeight);
+//            System.out.format(
+//                    "The node %s weighing %d is unbalanced. Its correct weight should be %d%n",
+//                    deviatingNode.name, deviatingNode.weight, adjustedWeight);
         }
 
         return node.weight + childWeights.values().stream()

@@ -190,16 +190,10 @@ public class Day20_Part2 extends AocPuzzle {
             int newsize = particles.size();
 
             if (newsize != size) {
-                System.out.format(
-                        "In step %d, %d particles collided and were removed, leaving %d particles.%n",
-                        i, size - newsize, newsize);
                 lastCollision = i;
             }
 
             if (i - lastCollision >= steps) {
-                System.out.format(
-                        "No collisions in %d steps. Returning remaining particle: %d%n",
-                        i - lastCollision, particles.size());
                 return particles.size();
             }
 
@@ -228,6 +222,6 @@ public class Day20_Part2 extends AocPuzzle {
                 .map(line -> new Particle(line, particleid.getAndIncrement()))
                 .collect(Collectors.toList());
 
-        removeCollidingParticles(particles, 1000);
+        assertEquals(448, removeCollidingParticles(particles, 1000));
     }
 }

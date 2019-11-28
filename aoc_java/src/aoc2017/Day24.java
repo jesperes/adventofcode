@@ -231,15 +231,6 @@ public class Day24 extends AocPuzzle {
         List<Component> strongest = getStrongestBridge(allBridges);
         List<Component> longest = getLongestBridge(allBridges);
 
-        System.out.println("Strongest bridge has length: " + strongest.size());
-        System.out.println(
-                "Strongest bridge has strength " + strength(strongest));
-        System.out.println("Strongest bridge: " + strongest);
-
-        System.out.println("Longest bridge has length " + longest.size());
-        System.out.println("Longest bridge has strength " + strength(longest));
-        System.out.println("Longest bridge: " + longest);
-
         assertEquals(2006, strength(strongest));
         assertEquals(1994, strength(longest));
     }

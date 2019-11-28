@@ -111,9 +111,11 @@ public class Day12 extends AocPuzzle {
     public void testLarge() throws Exception {
         String input = getInputAsString();
         Map<Integer, Set<Integer>> graph = computeGraph(input);
-        System.out.println("[Day12] Size of program group 0: "
-                + getConnectedSet(graph, 0).size());
-        System.out.println("[Day12] Total number of groups: "
-                + getTotalNumberOfGroups(graph));
+
+        int part1 = getConnectedSet(graph, 0).size();
+        assertEquals(141, part1);
+
+        int part2 = getTotalNumberOfGroups(graph);
+        assertEquals(171, part2);
     }
 }

@@ -3,16 +3,19 @@ package aoc2017;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 import org.junit.Test;
 
-public class Day08 {
+import common.AocPuzzle;
+
+public class Day08 extends AocPuzzle {
+
+    public Day08() {
+        super(2017, 8);
+    }
 
     // @formatter:off
 	String PUZZLE_INPUT = 
@@ -83,19 +86,14 @@ public class Day08 {
             }
         }
 
-        System.out.println("Variable values are: " + variables);
-
         int maxValue = Integer.MIN_VALUE;
-        String maxVariable = null;
+
         for (Entry<String, Integer> e : variables.entrySet()) {
             if (e.getValue() > maxValue) {
                 maxValue = e.getValue();
-                maxVariable = e.getKey();
             }
         }
 
-        System.out.format("Largest variable is %s = %d%n", maxVariable,
-                maxValue);
         return maxValue;
     }
 
@@ -103,8 +101,6 @@ public class Day08 {
 
         Map<String, Integer> variables = new HashMap<>();
         int maxValue = Integer.MIN_VALUE;
-        String maxVariable = null;
-
         for (String line : input.split("[\\r\\n]")) {
             String[] elems = line.split(" ");
             if (elems.length != 7)
@@ -159,7 +155,6 @@ public class Day08 {
                 }
 
                 if (value > maxValue) {
-                    maxVariable = var;
                     maxValue = value;
                 }
 
@@ -167,8 +162,6 @@ public class Day08 {
             }
         }
 
-        System.out.format("Largest variable is %s = %d%n", maxVariable,
-                maxValue);
         return maxValue;
     }
 
@@ -184,24 +177,11 @@ public class Day08 {
 
     @Test
     public void testPart1_full() throws Exception {
-        try (BufferedReader inputReader = new BufferedReader(
-                new InputStreamReader(getClass().getClassLoader()
-                        .getResourceAsStream("2017/input08.txt")))) {
-
-            System.out.println("[Day08]: Largest value: " + interpret(
-                    inputReader.lines().collect(Collectors.joining("\n"))));
-        }
+        assertEquals(6611, interpret(getInputAsString()));
     }
 
     @Test
     public void testPart2_full() throws Exception {
-        try (BufferedReader inputReader = new BufferedReader(
-                new InputStreamReader(getClass().getClassLoader()
-                        .getResourceAsStream("2017/input08.txt")))) {
-
-            System.out.println("[Day08]: Largest value (part 2): "
-                    + interpret_part2(inputReader.lines()
-                            .collect(Collectors.joining("\n"))));
-        }
+        assertEquals(6619, interpret_part2(getInputAsString()));
     }
 }

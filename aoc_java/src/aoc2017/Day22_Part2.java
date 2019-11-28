@@ -191,14 +191,9 @@ public class Day22_Part2 extends AocPuzzle {
 
         Cluster cluster = new Cluster(map);
 
-        System.out.println(cluster);
-
         for (int i = 0; i < 100; i++) {
             cluster.burst();
-            // System.out.println(cluster);
         }
-
-        System.out.println(cluster);
         assertEquals(26, cluster.getNumInfections());
     }
 
@@ -225,7 +220,6 @@ public class Day22_Part2 extends AocPuzzle {
             cluster.burst();
         }
 
-        System.out.println(cluster);
-        System.out.println("Num infections: " + cluster.getNumInfections());
+        assertEquals(2512079, cluster.getNumInfections());
     }
 }

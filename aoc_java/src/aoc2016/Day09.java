@@ -91,7 +91,6 @@ public class Day09 extends AocPuzzle {
     @Test
     public void testPart2() throws Exception {
         String str = getInputAsString();
-        long x = computeDecompressedLengthOf(str, 0, str.length());
-        System.out.println("Decompressed length: " + x);
+        assertEquals(11558231665L, computeDecompressedLengthOf(str, 0, str.length()));
     }
 }

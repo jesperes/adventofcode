@@ -1,11 +1,6 @@
 package aoc2017;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 
 import org.junit.Test;
 
@@ -27,11 +22,12 @@ public class Day11 extends AocPuzzle {
     static class Position {
         int x = 0;
         int y = 0;
+        int z = 0;
 
         public Position() {
         }
 
-        public Position(int x, int y) {
+        public Position(int x, int y, int z) {
             this.x = x;
             this.y = y;
         }
@@ -39,131 +35,99 @@ public class Day11 extends AocPuzzle {
         public Position(Position other) {
             this.x = other.x;
             this.y = other.y;
-        }
-
-        @Override
-        public int hashCode() {
-            return Integer.hashCode(x) * Integer.hashCode(y);
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            Position p = (Position) obj;
-            return x == p.x && y == p.y;
+            this.z = other.z;
         }
 
         @Override
         public String toString() {
-            return String.format("(%d,%d)", x, y);
+            return String.format("(%d,%d,%d)", x, y, z);
         }
 
         public static void move(Position pos, Direction dir) {
             switch (dir) {
             case n:
-                pos.y -= 2;
-                break;
-            case ne:
-                pos.x++;
-                pos.y--;
-                break;
-            case se:
-                pos.x++;
                 pos.y++;
+                pos.z--;
                 break;
             case s:
-                pos.y += 2;
+                pos.y--;
+                pos.z++;
+                break;
+            case ne:
+                pos.z--;
+                pos.x++;
                 break;
             case sw:
+                pos.z++;
                 pos.x--;
-                pos.y++;
                 break;
             case nw:
-                pos.y--;
+                pos.y++;
                 pos.x--;
                 break;
+            case se:
+                pos.y--;
+                pos.x++;
+                break;
             default:
-                fail("unknown direction " + dir);
-                return;
+                break;
             }
+        }
+
+        public int distanceTo(Position o) {
+            return (Math.abs(x - o.x) + Math.abs(y - o.y) + Math.abs(z - o.z))
+                    / 2;
         }
     }
 
-    int computeDistance(String turns) {
+    class Result {
+        Position pos;
+        int dist;
+        int maxDist;
+
+        public Result(Position pos, int dist, int maxDist) {
+            this.pos = pos;
+            this.dist = dist;
+            this.maxDist = maxDist;
+        }
+
+        @Override
+        public String toString() {
+            return "Result [pos=" + pos + ", dist=" + dist + ", maxDist="
+                    + maxDist + "]";
+        }
+    }
+
+    Result computeDistance(String turns) {
         Position pos = new Position();
+        Position startPos = new Position();
+
+        int maxDist = Integer.MIN_VALUE;
 
         for (String dir : turns.split(",")) {
             Position.move(pos, Direction.valueOf(dir));
-        }
-
-        System.out.format("Final position: %s%n", pos);
-
-        return computeDistanceTo(pos);
-    }
-
-    /**
-     * 
-     * @param dest
-     * @return
-     */
-    private int computeDistanceTo(Position pos) {
-        Set<Position> visited = new HashSet<>();
-        Direction[] directions = Arrays.stream("n,ne,se,s,sw,nw".split(","))
-                .map(s -> Direction.valueOf(s)).toArray(n -> new Direction[n]);
-
-        Set<Position> tovisit = new HashSet<>();
-        tovisit.add(new Position());
-        int dist = 0;
-
-        while (true) {
-            System.out.format("Checking %d positions at distance %s%n",
-                    tovisit.size(), dist);
-
-            for (Position visit : tovisit) {
-                if (visit.equals(pos)) {
-                    System.out.println("Match: " + visit);
-                    return dist;
-                }
-
-                visited.add(visit);
+            int currentDistance = pos.distanceTo(startPos);
+            if (currentDistance > maxDist) {
+                maxDist = currentDistance;
             }
-
-            tovisit.clear();
-
-            for (Position p : visited) {
-                for (Direction dir : directions) {
-
-                    Position newpos = new Position(p);
-                    Position.move(newpos, dir);
-
-                    // Skip positions which are in the wrong direction
-                    if ((newpos.x > p.x && pos.x < p.x)
-                            || (newpos.y > p.y && pos.y < p.y)
-                            || (newpos.x < p.x && pos.x > p.x)
-                            || (newpos.y < p.y && pos.y > p.y)) {
-                        continue;
-                    }
-
-                    if (!visited.contains(newpos)) {
-                        tovisit.add(newpos);
-                    }
-                }
-            }
-
-            dist++;
         }
+        int dist = pos.distanceTo(startPos);
+
+        return new Result(pos, dist, maxDist);
     }
 
     @Test
-    public void testPart1_small() throws Exception {
-        assertEquals(3, computeDistance("ne,ne,ne"));
-        assertEquals(0, computeDistance("ne,ne,sw,sw"));
-        assertEquals(2, computeDistance("ne,ne,s,s"));
-        assertEquals(3, computeDistance("se,sw,se,sw,sw"));
+    public void testExamples() throws Exception {
+        assertEquals(3, computeDistance("ne,ne,ne").dist);
+        assertEquals(0, computeDistance("ne,ne,sw,sw").dist);
+        assertEquals(2, computeDistance("ne,ne,s,s").dist);
+        assertEquals(3, computeDistance("se,sw,se,sw,sw").dist);
     }
 
     @Test
-    public void testPart1_full() throws Exception {
-        System.out.println("[Day11] Steps (part 1): "
-                + computeDistance(getInputAsString()));
+    public void testPuzzle() throws Exception {
+        Result result = computeDistance(getInputAsString());
+        assertEquals(685, result.dist); // Part 1
+        assertEquals(1457, result.maxDist); // Part 2
     }
 }

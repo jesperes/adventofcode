@@ -9,9 +9,9 @@ import org.junit.Test;
 
 import common.AocPuzzle;
 
-public class Day22 extends AocPuzzle {
+public class Day22_Part1 extends AocPuzzle {
 
-    public Day22() {
+    public Day22_Part1() {
         super(2017, 22);
     }
 

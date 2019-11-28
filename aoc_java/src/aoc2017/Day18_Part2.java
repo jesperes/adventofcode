@@ -162,16 +162,10 @@ public class Day18_Part2 extends AocPuzzle {
         Program prog1 = programs[1];
 
         while (true) {
-            // System.out.println("Executing program 0");
             int steps0 = prog0.execute();
-
-            // System.out.println("Executing program 1");
             int steps1 = prog1.execute();
 
             if (steps0 == 0 && steps1 == 0) {
-                System.out.println("Programs are deadlocked.");
-                System.out.println("Send count program 0: " + prog0.sendCount);
-                System.out.println("Send count program 1: " + prog1.sendCount);
                 return;
             }
         }
@@ -199,7 +193,6 @@ public class Day18_Part2 extends AocPuzzle {
 
         int prog1SendCount = programs[1].sendCount;
 
-        System.out.println("Day 18: Program 1 send count: " + prog1SendCount);
         assertEquals(8001, prog1SendCount);
     }
 }

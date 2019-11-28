@@ -1,5 +1,7 @@
 package aoc2017;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -7,9 +9,9 @@ import org.junit.Test;
 
 import common.AocPuzzle;
 
-public class Day23 extends AocPuzzle {
+public class Day23_Part1 extends AocPuzzle {
 
-    public Day23() {
+    public Day23_Part1() {
         super(2017, 23);
     }
 
@@ -85,6 +87,6 @@ public class Day23 extends AocPuzzle {
         Interpreter interpreter = new Interpreter();
         interpreter.interpret(program);
 
-        System.out.println("Instruction statistics: " + interpreter.getStats());
+        assertEquals(6724L, (long) interpreter.stats.get(Op.mul));
     }
 }
