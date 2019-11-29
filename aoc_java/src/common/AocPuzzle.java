@@ -46,6 +46,10 @@ public abstract class AocPuzzle {
         }
     }
 
+    protected final char[] getInputAsCharArray() throws IOException {
+        return getInputAsString().toCharArray();
+    }
+
     protected final List<String> getInputAsLines() throws IOException {
         try (BufferedReader r = new BufferedReader(
                 new FileReader(getInputFile()))) {
