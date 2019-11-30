@@ -134,4 +134,4 @@ spiral(I, N, SpiralMemory, Delta) ->
   end.
 
 main_test_() ->
-  ?_assertEqual(363010, spiral(361527)).
+  {"Part 2", timeout, 60, ?_assertEqual(363010, spiral(361527))}.

@@ -34,8 +34,8 @@ Day  | 2015 | 2016 | 2017 | 2018 | 2019
 2    | EJ   | E    | E    | EJ   |
 3    | EJ   | E    | E    | E    |
 4    | EJ   | E    |  J   | E    |
-5    | EJ   | E    |  J   |  J   |
-6    | EJ   | E    |  J   |      |
+5    | EJ   | E    |  J   | EJ   |
+6    | EJ   | E    |  J   | E    |
 7    | EJ   | E    |  J   |      |
 8    | EJ   | E    |  J   |      |
 9    | EJ   | EJ   |      |      |

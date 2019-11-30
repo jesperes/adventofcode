@@ -90,4 +90,4 @@ spiral(I, N, Map, Delta) ->
   spiral(I + 1, N, spiralmemory_add(I, ActualNewCoord, Map), ActualNewDelta).
 
 main_test_() ->
-  ?_assertEqual(326, spiral(361527)).
+  {"Part 1", timeout, 60, ?_assertEqual(326, spiral(361527))}.
