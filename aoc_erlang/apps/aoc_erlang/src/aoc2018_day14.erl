@@ -6,7 +6,8 @@
 main_test_() ->
   Input = 633601,
   [ {"Part 1", ?_assertEqual("5115114101", start1(Input))}
-  , {"Part 2", ?_assertEqual(20310465, start2(integer_to_list(Input)))}
+  , {"Part 2", timeout, 60,
+     ?_assertEqual(20310465, start2(integer_to_list(Input)))}
   ].
 
 start1(Input) ->

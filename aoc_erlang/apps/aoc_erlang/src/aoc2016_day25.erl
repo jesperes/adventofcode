@@ -69,7 +69,7 @@ is_alternating([X, X|_]) ->
 %%% Tests
 
 main_test_() ->
-  {"Part 1", ?_assertMatch({found, 180}, find_clock_input())}.
+  {"Part 1", timeout, 60, ?_assertMatch({found, 180}, find_clock_input())}.
 
 %%% Parser
 
