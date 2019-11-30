@@ -13,8 +13,6 @@ captcha([X,X|Xs], First, Acc) ->
 captcha([_,Y|Xs], First, Acc) ->
   captcha([Y|Xs], First, Acc).
 
-captcha([]) ->
-  0;
 captcha(S = [X|_]) ->
   captcha(S, X, 0).
 
