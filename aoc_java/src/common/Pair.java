@@ -1,8 +1,8 @@
 package common;
 
 public class Pair<T0, T1> {
-    public final T0 x;
-    public final T1 y;
+    public T0 x;
+    public T1 y;
 
     public Pair(T0 first, T1 second) {
         this.x = first;

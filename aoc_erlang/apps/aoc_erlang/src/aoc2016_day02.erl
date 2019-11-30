@@ -5,8 +5,10 @@
 main_test_() ->
   Lines = inputs:get_as_lines(2016, 2),
 
-  [ {"Part 1", fun() -> lists:map(fun do_line1/1, Lines) end}
-  , {"Part 2", fun() -> lists:map(fun do_line2/1, Lines) end}
+  [ {"Part 1",
+     ?_assertEqual("56983", lists:map(fun do_line1/1, Lines))}
+  , {"Part 2",
+     ?_assertEqual("8B8B1", lists:map(fun do_line2/1, Lines))}
   ].
 
 do_line1(Line) -> do_line(Line, fun move/2, 5).

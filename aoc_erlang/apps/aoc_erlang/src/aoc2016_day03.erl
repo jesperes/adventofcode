@@ -13,8 +13,10 @@ main_test_() ->
            list_to_integer(C)}
       end, Lines),
 
-  [ {"Part 1", fun() -> count_triangles(Triangles) end}
-  , {"Part 2", fun() -> count_triangles(flip(Triangles)) end}
+  [ {"Part 1",
+     ?_assertEqual(917, count_triangles(Triangles))}
+  , {"Part 2",
+     ?_assertEqual(1649, count_triangles(flip(Triangles)))}
   ].
 
 count_triangles(L) ->

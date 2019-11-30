@@ -60,4 +60,5 @@ public abstract class AocPuzzle {
     protected final Stream<String> getInputAsStream() throws IOException {
         return getInputAsReader().lines();
     }
+
 }
