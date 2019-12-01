@@ -49,11 +49,6 @@ public class Day13 extends AocPuzzle {
             this.range = Integer.valueOf(elems[1].trim());
         }
 
-        public Firewall(Firewall input) {
-            this.depth = input.depth;
-            this.range = input.range;
-        }
-
         public boolean isAtTop(int time) {
             /*
              * Is the scanner at top? It will be at the top every ((range * 2) -

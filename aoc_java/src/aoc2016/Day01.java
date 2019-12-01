@@ -2,6 +2,7 @@ package aoc2016;
 
 import static java.lang.Math.abs;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -28,6 +29,8 @@ public class Day01 {
             visited.add(key(x, y));
 
             String input = reader.readLine();
+            assertNotNull(input);
+
             for (String s : input.split("[ ,]+")) {
                 dir = (s.charAt(0) == 'R' ? dir + 1 : dir + 3) % 4;
                 int steps = Integer.valueOf(s.substring(1));

@@ -26,19 +26,6 @@ public class Day25 {
             this.value = value;
             this.direction = direction;
         }
-
-        public void setNext(State next) {
-            this.next = next;
-        }
-
-        @Override
-        public String toString() {
-            return String.format(
-                    "if (val == %d) then val = %d, move %s then goto %s",
-                    condition, value, direction == DIR_RIGHT ? "right" : "left",
-                    next.name);
-        }
-
     }
 
     static class State {
@@ -48,17 +35,6 @@ public class Day25 {
         public State(String name, Action[] actions) {
             this.name = name;
             this.actions = actions;
-        }
-
-        @Override
-        public String toString() {
-            StringBuilder builder = new StringBuilder();
-            builder.append(String.format("State %s:%n", name));
-            for (Action a : actions) {
-                builder.append("  " + a);
-                builder.append("\n");
-            }
-            return builder.toString();
         }
     }
 
@@ -144,9 +120,6 @@ public class Day25 {
             for (int i = 1; i < steps; i++) {
                 int value = tape.readValue(cursor);
                 Action action = getStateActionForInput(currentState, value);
-                // System.out.format("Read value %d at position %s. Action:
-                // %s%n",
-                // value, cursor, action);
                 tape.writeValue(cursor, action.value);
                 cursor += action.direction;
                 if (!states.containsKey(action.next.name))
@@ -154,9 +127,6 @@ public class Day25 {
                             "No such state: " + action.next.name);
                 currentState = states.get(action.next.name);
             }
-
-//            System.out.format("In state %s: %s%n", currentState.name,
-//                    tape.toString(cursor, -5, 5));
         }
 
         @Override

@@ -179,8 +179,6 @@ public class Day22_Part2 extends AocPuzzle {
             case 3: // West
                 current = new Coord(current.x - 1, current.y);
                 break;
-            default:
-                throw new AssertionError();
             }
         }
     }

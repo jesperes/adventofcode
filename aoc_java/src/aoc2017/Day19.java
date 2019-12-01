@@ -190,7 +190,6 @@ public class Day19 extends AocPuzzle {
                 p = p.getPosition(dir);
                 continue;
             }
-
         }
     }
 

@@ -181,6 +181,11 @@ public class Day15 extends AocPuzzle {
         }
 
         @Override
+        public int hashCode() {
+            return Integer.hashCode(x) ^ Integer.hashCode(y);
+        }
+
+        @Override
         public boolean equals(Object obj) {
             Position other = (Position) obj;
             return x == other.x && y == other.y;
