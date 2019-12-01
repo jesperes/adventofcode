@@ -9,6 +9,9 @@ function fuel_part1(mass)
     return int(mass / 3) - 2
 }
 
+# For part 2, we need to add fuel for the fuel we just added, and so
+# on. Fuel weighing zero or negative count as zero.
+
 function fuel_part2(mass)
 {
     f = fuel_part1(mass)
