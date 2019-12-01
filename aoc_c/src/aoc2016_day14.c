@@ -1,9 +1,9 @@
-#include "aoc2016.h"
 #include "md5.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #define MAX_HASHES 100000
 #define NTH_KEY 64
@@ -35,7 +35,6 @@ void md5_hexdigest(char *input, char *outbuf) {
   }
 
   outbuf[32] = 0;
-  // printf("md5_hexdigest(%s) -> %s\n", input, outbuf);
 }
 
 char *md5_cached(char *input, int i) {
@@ -88,7 +87,8 @@ bool has5(char *hash, char c) {
   return false;
 }
 
-int aoc2016_day14() {
+int main() {
+
   /*
    * Part 1
    */
@@ -115,15 +115,17 @@ int aoc2016_day14() {
     }
   }
 
-  aoc_assert("Part 1", nth_key == 23890);
+  assert(nth_key == 23890);
 
   /*
    * Part 2
    */
 
   reinit_cache();
-  aoc_assert("Part 2 (test)", strcmp(md5_cached_part2(TEST_INPUT, 0),
-                                     "a107ff634856bb300138cac6568c0f24") == 0);
+
+
+  assert(strcmp(md5_cached_part2(TEST_INPUT, 0),
+                "a107ff634856bb300138cac6568c0f24") == 0);
 
   reinit_cache();
   keys_found = 0;
@@ -150,7 +152,7 @@ int aoc2016_day14() {
     }
   }
 
-  aoc_assert("Part 2", nth_key == 22696);
+  assert(nth_key == 22696);
 
   return 0;
 }

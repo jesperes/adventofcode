@@ -60,14 +60,14 @@ int scan_command(FILE *f, struct Instr *instr)
   } else {
     assert(0);
   }
-  
+
   return 1;
 }
-                 
 
-int main()
+
+int main(int argc, char **argv)
 {
-  FILE *f = fopen("input.txt", "r");
+  FILE *f = fopen(argv[1], "r");
   if (f == NULL) {
     perror("fopen");
     exit(1);
@@ -75,7 +75,7 @@ int main()
 
   struct Instr instr;
   struct State state[1000][1000] = {0};
-  
+
   while (scan_command(f, &instr)) {
     for (int x = instr.from.x; x <= instr.to.x; x++) {
       for (int y = instr.from.y; y <= instr.to.y; y++) {
@@ -110,6 +110,6 @@ int main()
     }
   }
 
-  printf("Lights on: %d\n", lights_on);
-  printf("Total brightness: %d\n", total_brightness);
+  assert(lights_on == 543903);
+  assert(total_brightness == 14687245);
 }
