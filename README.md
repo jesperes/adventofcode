@@ -1,5 +1,7 @@
 # Advent of code
 
+[![Build Status](https://travis-ci.org/jesperes/adventofcode.svg?branch=master)](https://travis-ci.org/jesperes/adventofcode)
+
 These are my solutions to the AdventOfCode (https://adventofcode.com).
 
 ## Erlang
