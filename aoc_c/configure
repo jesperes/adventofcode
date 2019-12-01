@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# Travis CI default script to build C stuff is "./configure && make &&
+# make test", so this script is to "emulate" the "configure" script.
+
+set -ex
+(mkdir -p build && cd build && cmake ..)
