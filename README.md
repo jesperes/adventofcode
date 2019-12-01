@@ -42,19 +42,19 @@ Day  | 2015 | 2016 | 2017 | 2018 | 2019
 10   | EJ   | E    |  J   | E    |
 11   | EJ   |      |  J   | E    |
 12   | EJ   | E    |  J   | E    |
-13   | EJ   | E    |  J   | E    |
-14   | EJ   | EJ   |  J   | E    |
-15   | EJ   | E    |  J   | E    |
+13   | EJ   | E    |  J   | EJ   |
+14   | EJ   | EJ   |  J   | EJ   |
+15   | EJ   | E    |  J   | EJ   |
 16   | EJ   | E    |  J   | E    |
 17   | EJ   | E    |  J   | E    |
 18   | EJ   | E    |  J   | E    |
 19   | EJ   | EJ   |  J   | E    |
 20   | EJ   | E    |  J   | E    |
 21   | EJ   | EJ   |  J   | E    |
-22   | EJ   | E    |  J   | E    |
+22   | EJ   | E    |  J   | EJ   |
 23   | EJ   | EJ   |      | E    |
-24   | EJ   | E    |  J   | E    |
-25   | EJ   | E    |  J   | E    |
+24   | EJ   | E    |  J   | EJ   |
+25   | EJ   | E    |  J   | EJ   |
 
 In some cases, blanks means that the solution is incomplete, or runs
 too slowly.

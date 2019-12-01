@@ -1,15 +1,30 @@
-import static org.junit.jupiter.api.Assertions.assertEquals;
+package aoc2018;
+
+import static org.junit.Assert.assertEquals;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
-// 974 is too high
+import common.AocPuzzle;
+import common.Dijkstra;
+import common.Graph;
+import common.Node;
 
-public class Puzzle22 {
+public class Day22 extends AocPuzzle {
+
+    int depth = 5913;
+    Pos target = new Pos(8, 701);
+    Pos start = new Pos(0, 0);
+    Map<Pos, RegionType> map = new HashMap<Pos, RegionType>();
+
+    public Day22() {
+        super(2018, 22);
+    }
 
     static class Pos {
         long x;
@@ -87,25 +102,6 @@ public class Puzzle22 {
         return RegionType.values()[(int) (level % 3)];
     }
 
-    public static void main(String[] args) {
-        // int depth = 510;
-        // Pos target = new Pos(10, 10);
-
-        int depth = 5913;
-        Pos target = new Pos(8, 701);
-        Pos start = new Pos(0, 0);
-        Map<Pos, RegionType> map = new HashMap<Pos, RegionType>();
-
-        int rl = riskLevel(start, target, depth, map);
-        System.out.println("Risk level: " + rl);
-
-        /*
-         * Part 2: finding shortest path with weighted edges.
-         */
-        long sp = findShortestPath(start, target, depth, map);
-        System.out.println("Shortest path: " + sp);
-    }
-
     static class NodeData {
         long x;
         long y;
@@ -146,7 +142,6 @@ public class Puzzle22 {
         for (long x = start.x; x <= target.x + 100; x++) {
             for (long y = start.y; y <= target.y + 100; y++) {
                 Pos pos = new Pos(x, y);
-                RegionType rt = regionType(pos, depth);
                 for (Tool tool : Tool.values()) {
                     NodeData payload = new NodeData(pos.x, pos.y, tool);
                     Node<NodeData> node = new Node<>(payload);
@@ -238,5 +233,16 @@ public class Puzzle22 {
         assertEquals(RegionType.Wet, regionType(new Pos(1, 0), 510));
         assertEquals(RegionType.Rocky, regionType(new Pos(0, 1), 510));
         assertEquals(RegionType.Narrow, regionType(new Pos(1, 1), 510));
+    }
+
+    @Test
+    public void testPart1() throws Exception {
+        assertEquals(6256, riskLevel(start, target, depth, map));
+    }
+
+    @Test
+    @Ignore("fails")
+    public void testPart2() throws Exception {
+        assertEquals(973, findShortestPath(start, target, depth, map));
     }
 }

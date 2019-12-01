@@ -1,9 +1,8 @@
+package aoc2018;
+
 import static org.junit.Assert.assertEquals;
 
-import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,7 +16,13 @@ import java.util.regex.Pattern;
 
 import org.junit.Test;
 
-public class Puzzle24 {
+import common.AocPuzzle;
+
+public class Day24 extends AocPuzzle {
+    public Day24() {
+        super(2018, 24);
+    }
+
     static Pattern pattern = Pattern.compile(
             "(\\d+) units each with (\\d+) hit points (\\((.*)\\) )?with an attack that does (\\d+) (\\w+) damage at initiative (\\d+)");
 
@@ -198,26 +203,16 @@ public class Puzzle24 {
 
     @Test
     public void testPart1() throws Exception {
-        assertEquals(new BattleResult(5216L, 0, Army.Infection),
-                run("testinput.txt"));
-        assertEquals(new BattleResult(25088L, 0, Army.Infection),
-                run("input.txt"));
+        assertEquals(new BattleResult(25088L, 0, Army.Infection), run());
     }
 
     @Test
     public void testPart2() throws Exception {
-        assertEquals(51, findLowestBoost("testinput.txt"));
-        assertEquals(2002, findLowestBoost("input.txt"));
+        assertEquals(2002, findLowestBoost());
     }
 
-    @Test
-    public void testPart2_extra() throws Exception {
-        run("input.txt", 59);
-    }
-
-    private static BattleResult run(String filename)
-            throws FileNotFoundException, IOException {
-        return run(filename, 0);
+    private BattleResult run() throws FileNotFoundException, IOException {
+        return run(0);
     }
 
     private static int numUnits(List<ArmyGroup> list, Army army) {
@@ -225,9 +220,9 @@ public class Puzzle24 {
                 .sum();
     }
 
-    private static BattleResult run(String filename, int boost)
+    private BattleResult run(int boost)
             throws FileNotFoundException, IOException {
-        List<ArmyGroup> armyGroups = parse(filename, boost);
+        List<ArmyGroup> armyGroups = parse(boost);
 
         int stalemateAttempts = 5;
 
@@ -294,75 +289,67 @@ public class Puzzle24 {
         }
     }
 
-    private static List<ArmyGroup> parse(String filename, int boost)
+    private List<ArmyGroup> parse(int boost)
             throws FileNotFoundException, IOException {
-        File inputfile = new File(filename);
         List<ArmyGroup> groups = new ArrayList<>();
 
-        try (BufferedReader reader = new BufferedReader(
-                new FileReader(inputfile))) {
-            String line = null;
-            Army army = null;
-            int currid = 0;
-            while ((line = reader.readLine()) != null) {
-                if (line.contains("Immune System:")) {
-                    army = Army.ImmuneSystem;
-                    currid = 1;
-                } else if (line.contains("Infection")) {
-                    army = Army.Infection;
-                    currid = 1;
-                } else {
-                    Matcher m = pattern.matcher(line);
-                    if (m.matches()) {
-                        int units = Integer.valueOf(m.group(1));
-                        int hp = Integer.valueOf(m.group(2));
-                        int damage = Integer.valueOf(m.group(5));
-                        if (army == Army.ImmuneSystem)
-                            damage += boost;
-                        DamageType damageType = DamageType.valueOf(m.group(6));
-                        int initiative = Integer.valueOf(m.group(7));
+        Army army = null;
+        int currid = 0;
+        for (String line : getInputAsLines()) {
+            if (line.contains("Immune System:")) {
+                army = Army.ImmuneSystem;
+                currid = 1;
+            } else if (line.contains("Infection")) {
+                army = Army.Infection;
+                currid = 1;
+            } else {
+                Matcher m = pattern.matcher(line);
+                if (m.matches()) {
+                    int units = Integer.valueOf(m.group(1));
+                    int hp = Integer.valueOf(m.group(2));
+                    int damage = Integer.valueOf(m.group(5));
+                    if (army == Army.ImmuneSystem)
+                        damage += boost;
+                    DamageType damageType = DamageType.valueOf(m.group(6));
+                    int initiative = Integer.valueOf(m.group(7));
 
-                        List<DamageType> weakTo = new ArrayList<>();
-                        List<DamageType> immuneTo = new ArrayList<>();
+                    List<DamageType> weakTo = new ArrayList<>();
+                    List<DamageType> immuneTo = new ArrayList<>();
 
-                        String weaknesses = m.group(4);
-                        if (weaknesses != null) {
-                            for (String s : weaknesses.split(";")) {
-                                String s0 = s.trim();
-                                if (s0.startsWith("weak to")) {
-                                    for (String weakness : s0
-                                            .substring("weak to ".length())
-                                            .split(",")) {
-                                        weakTo.add(DamageType
-                                                .valueOf(weakness.trim()));
-                                    }
+                    String weaknesses = m.group(4);
+                    if (weaknesses != null) {
+                        for (String s : weaknesses.split(";")) {
+                            String s0 = s.trim();
+                            if (s0.startsWith("weak to")) {
+                                for (String weakness : s0
+                                        .substring("weak to ".length())
+                                        .split(",")) {
+                                    weakTo.add(DamageType
+                                            .valueOf(weakness.trim()));
                                 }
-                                if (s0.startsWith("immune to")) {
-                                    for (String immunity : s0
-                                            .substring("immune to ".length())
-                                            .split(",")) {
-                                        immuneTo.add(DamageType
-                                                .valueOf(immunity.trim()));
-                                    }
+                            }
+                            if (s0.startsWith("immune to")) {
+                                for (String immunity : s0
+                                        .substring("immune to ".length())
+                                        .split(",")) {
+                                    immuneTo.add(DamageType
+                                            .valueOf(immunity.trim()));
                                 }
                             }
                         }
-                        groups.add(new ArmyGroup(army, currid++, units, hp,
-                                damage, damageType, initiative, immuneTo,
-                                weakTo));
                     }
+                    groups.add(new ArmyGroup(army, currid++, units, hp, damage,
+                            damageType, initiative, immuneTo, weakTo));
                 }
             }
         }
-
         return groups;
     }
 
-    private static long findLowestBoost(String filename)
-            throws FileNotFoundException, IOException {
+    private long findLowestBoost() throws FileNotFoundException, IOException {
         int boost = 0;
         while (boost < 2000) {
-            BattleResult result = run(filename, boost);
+            BattleResult result = run(boost);
             if (result.winner.equals(Army.ImmuneSystem)) {
                 System.out.println(result.winnerUnits);
                 return result.winnerUnits;

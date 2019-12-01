@@ -2,32 +2,28 @@
 
 1. Awk
 
-Languages
+List of languages:
 
-[ ] Bash
-[ ] C
-[ ] C#
-[ ] C++
-[ ] CMake
-
-[ ] Elixir
-[ ] Erlang
-[ ] GNU Make
-[ ] Go
-[ ] Groovy
-
-[ ] Haskell
-[ ] Java
-[ ] JavaScript
-[ ] Lua
-[ ] Pascal
-
-[ ] Prolog
-[ ] Python
-[ ] Ruby
-[ ] Rust
-[ ] SQL
-
-[ ] Scheme
-[ ] Scratch
-[X] Awk
+- [X] Awk
+- [ ] Bash
+- [ ] C
+- [ ] C#
+- [ ] C++
+- [ ] CMake
+- [ ] Elixir
+- [ ] Erlang
+- [ ] GNU Make
+- [ ] Go
+- [ ] Groovy
+- [ ] Haskell
+- [ ] Java
+- [ ] JavaScript
+- [ ] Lua
+- [ ] Pascal
+- [ ] Prolog
+- [ ] Python
+- [ ] Ruby
+- [ ] Rust
+- [ ] SQL
+- [ ] Scheme
+- [ ] Scratch

@@ -1,21 +1,21 @@
-package puzzle13;
+package aoc2018;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.FileWriter;
+import static org.junit.Assert.assertEquals;
+
 import java.io.IOException;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
-public class Puzzle13 {
+import org.junit.Test;
 
-    static boolean STOP_ON_FIRST_COLLISION = false;
-    static String INPUT = "input.txt";
+import common.AocPuzzle;
 
-    static Writer trace;
+public class Day13 extends AocPuzzle {
+
+    public Day13() {
+        super(2018, 13);
+    }
 
     static class Cart implements Comparable<Cart> {
         char dir;
@@ -122,61 +122,59 @@ public class Puzzle13 {
         return '?';
     }
 
-    public static void main(String[] args) throws Exception {
+    /**
+     * Run carts until finished. If continueOnCollision is false, returns the
+     * first cart colliding (part 1). Otherwise, runs until all carts have
+     * collided (and been removed), and returns the last cart left.
+     */
+    public Cart runCarts(boolean continueOnCollision) throws Exception {
 
         List<Cart> carts = new ArrayList<>();
 
-        trace = new FileWriter("trace.log");
+        List<String> lines = getInputAsLines();
+        List<List<Character>> grid = new ArrayList<>();
 
-        try (BufferedReader r = new BufferedReader(new FileReader(INPUT))) {
-            List<String> lines = r.lines().collect(Collectors.toList());
-            List<List<Character>> grid = new ArrayList<>();
+        int y = 0;
 
-            int y = 0;
+        for (String line : lines) {
 
-            for (String line : lines) {
+            char[] chars = line.toCharArray();
+            List<Character> gridline = new ArrayList<>();
 
-                char[] chars = line.toCharArray();
-                List<Character> gridline = new ArrayList<>();
+            for (int i = 0; i < chars.length; i++) {
+                char c = chars[i];
 
-                for (int i = 0; i < chars.length; i++) {
-                    char c = chars[i];
+                switch (c) {
+                case 'v':
+                case '^':
+                    carts.add(new Cart(i, y, c, -1));
+                    chars[i] = '|';
+                    break;
 
-                    switch (c) {
-                    case 'v':
-                    case '^':
-                        carts.add(new Cart(i, y, c, -1));
-                        chars[i] = '|';
-                        break;
-
-                    case '<':
-                    case '>':
-                        carts.add(new Cart(i, y, c, -1));
-                        chars[i] = '-';
-                        break;
-                    default:
-                        break;
-                    }
-                    gridline.add(chars[i]);
+                case '<':
+                case '>':
+                    carts.add(new Cart(i, y, c, -1));
+                    chars[i] = '-';
+                    break;
+                default:
+                    break;
                 }
-
-                grid.add(gridline);
-                y++;
+                gridline.add(chars[i]);
             }
 
-            int i = 1;
-            while (numCarts(carts) > 1) {
-                moveCarts(grid, carts, i++);
-            }
-
-            Cart last = remaining(carts);
-
-            System.out.format("Last remaining cart is at %d,%d%n", last.x,
-                    last.y);
-
-            trace.close();
-
+            grid.add(gridline);
+            y++;
         }
+
+        int i = 1;
+        while (numCarts(carts) > 1) {
+            Cart collided = moveCarts(grid, carts, i++, continueOnCollision);
+            if (collided != null) {
+                return collided;
+            }
+        }
+
+        return remaining(carts);
     }
 
     static Cart remaining(List<Cart> carts) {
@@ -187,31 +185,26 @@ public class Puzzle13 {
         return carts.stream().filter(c -> !c.obliterated).count();
     }
 
-    static void moveCarts(List<List<Character>> grid, List<Cart> carts,
-            int round) throws Exception {
+    Cart moveCarts(List<List<Character>> grid, List<Cart> carts, int round,
+            boolean continueOnCollision) throws Exception {
         Collections.sort(carts);
 
-        trace.write(String.format("begin round %d\n", round));
         for (Cart cart : carts) {
             if (cart.obliterated)
                 continue;
 
-            String pos1 = cart.toString();
-
-            moveCart(cart, carts, grid);
-
-            String pos2 = cart.toString();
-
-            if (!cart.obliterated)
-                trace.write(
-                        String.format("  moved cart %s -> %s%n", pos1, pos2));
+            Cart collided = moveCart(cart, carts, grid, continueOnCollision);
+            if (collided != null) {
+                return collided;
+            }
         }
 
-        trace.write(String.format("end round %d\n", round));
+        return null;
     }
 
-    private static void moveCart(Cart cart, List<Cart> carts,
-            List<List<Character>> grid) throws IOException {
+    private Cart moveCart(Cart cart, List<Cart> carts,
+            List<List<Character>> grid, boolean continueOnCollision)
+            throws IOException {
         switch (cart.dir) {
         case '<':
             cart.x--;
@@ -232,17 +225,13 @@ public class Puzzle13 {
                 continue;
 
             if (other.x == cart.x && other.y == cart.y && other != cart) {
+                // Collision!
 
-                if (STOP_ON_FIRST_COLLISION) {
-                    System.out.format("Collision at %d,%d%n", cart.x, cart.y);
-                    System.exit(0);
-                } else {
-                    trace.write(String.format("  collision at %d,%d%n", cart.x,
-                            cart.y));
+                if (continueOnCollision) {
                     cart.obliterated = true;
                     other.obliterated = true;
-                    trace.write(String.format("    obliterated: %s%n", cart));
-                    trace.write(String.format("    obliterated: %s%n", other));
+                } else {
+                    return cart;
                 }
             }
         }
@@ -277,5 +266,21 @@ public class Puzzle13 {
             // Nothing to do, we just continue in the same direction.
             break;
         }
+
+        return null;
+    }
+
+    @Test
+    public void testPart1() throws Exception {
+        Cart cart = runCarts(false);
+        assertEquals(94, cart.x);
+        assertEquals(78, cart.y);
+    }
+
+    @Test
+    public void testPart2() throws Exception {
+        Cart cart = runCarts(true);
+        assertEquals(26, cart.x);
+        assertEquals(85, cart.y);
     }
 }

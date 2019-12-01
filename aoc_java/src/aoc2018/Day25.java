@@ -1,9 +1,9 @@
+package aoc2018;
+
 import static java.lang.Math.abs;
 import static org.junit.Assert.assertEquals;
 
-import java.io.BufferedReader;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -13,7 +13,13 @@ import java.util.stream.Collectors;
 
 import org.junit.Test;
 
-public class Puzzle25 {
+import common.AocPuzzle;
+
+public class Day25 extends AocPuzzle {
+
+    public Day25() {
+        super(2018, 25);
+    }
 
     static private final int MAX_CONSTELLATION_DISTANCE = 3;
 
@@ -89,37 +95,15 @@ public class Puzzle25 {
         }
     }
 
-    private static List<Point> parsePointFile(String filename)
+    private List<Point> parsePointFile()
             throws FileNotFoundException, IOException {
-        try (BufferedReader reader = new BufferedReader(
-                new FileReader(filename))) {
-            return reader.lines().map(line -> new Point(line))
-                    .collect(Collectors.toList());
-        }
-    }
-
-    public static void main(String[] args)
-            throws FileNotFoundException, IOException {
-        List<Point> points = parsePointFile("testinput.txt");
-
-        collectConstellations(points);
+        return getInputAsStream().map(line -> new Point(line))
+                .collect(Collectors.toList());
     }
 
     @Test
-    public void testPart1_testinput() throws Exception {
-        List<Point> points = parsePointFile("testinput.txt");
-        assertEquals(2, collectConstellations(points));
-    }
-
-    @Test
-    public void testPart1_testinput2() throws Exception {
-        List<Point> points = parsePointFile("testinput2.txt");
-        assertEquals(4, collectConstellations(points));
-    }
-
-    @Test
-    public void testPart1_realinput() throws Exception {
-        List<Point> points = parsePointFile("input.txt");
+    public void testPart() throws Exception {
+        List<Point> points = parsePointFile();
         assertEquals(318, collectConstellations(points));
     }
 
@@ -149,8 +133,6 @@ public class Puzzle25 {
 
         } while (merges > 0);
 
-        System.out
-                .println("Number of constellations: " + constellations.size());
         return constellations.size();
     }
 }

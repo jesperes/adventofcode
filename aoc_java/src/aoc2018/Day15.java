@@ -1,13 +1,7 @@
-package puzzle15;
+package aoc2018;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,16 +17,22 @@ import java.util.stream.Stream;
 
 import org.junit.Test;
 
+import common.AocPuzzle;
+
 /*
  * Alternate approach.
  */
-public class Puzzle15 {
+public class Day15 extends AocPuzzle {
 
-    class ElfDeathException extends Exception {
+    public Day15() {
+        super(2018, 15);
     }
 
-    static final boolean TRACE = false;
-    static int ELF_ATTACK_POWER = 3;
+    class ElfDeathException extends Exception {
+        private static final long serialVersionUID = 1L;
+    }
+
+    int ELF_ATTACK_POWER = 3;
 
     @FunctionalInterface
     interface PosCallback {
@@ -45,11 +45,8 @@ public class Puzzle15 {
         // The collection of elves and goblins still alive
         List<Unit> units = new ArrayList<>();
 
-        Grid(String filename) throws FileNotFoundException, IOException {
-            try (BufferedReader r = new BufferedReader(
-                    new FileReader(filename))) {
-                parseInput(r.lines().collect(Collectors.toList()));
-            }
+        Grid() throws IOException {
+            parseInput(getInputAsLines());
         }
 
         // Return a stream of all positions adjacent to the given position.
@@ -211,8 +208,6 @@ public class Puzzle15 {
         }
 
         public void move(Position newPos) {
-            if (TRACE)
-                System.out.format("[MOVE] %s -> %s%n", this, newPos);
             x = newPos.x;
             y = newPos.y;
         }
@@ -365,85 +360,39 @@ public class Puzzle15 {
         public int executeRounds() throws ElfDeathException, IOException {
             currentRound = 1;
 
-            try (BufferedWriter traceFile = new BufferedWriter(
-                    new FileWriter("javaoutput.terms"))) {
-                while (executeRound(traceFile)) {
-                    currentRound++;
-                }
-
-                // System.out.println(
-                // "Number of full rounds finished: " + roundsFinished);
-                //
-                int sumHP = grid.getSortedUnits().map(u -> u.hp)
-                        .mapToInt(n -> n).sum();
-
-                System.out.format("Outcome: %s * %s = %s%n", roundsFinished,
-                        sumHP, roundsFinished * sumHP);
-
-                return sumHP * roundsFinished;
+            while (executeRound()) {
+                currentRound++;
             }
+
+            return grid.getSortedUnits().map(u -> u.hp).mapToInt(n -> n).sum()
+                    * roundsFinished;
         }
 
-        public boolean executeRound(BufferedWriter traceFile)
-                throws ElfDeathException, IOException {
-
-            traceFile.write(String.format("{{round,%d},[%s]}%n", currentRound,
-                    grid.getSortedUnits()
-                            .map(u -> String.format("{{%d,%d},{'%c',%d,%d}}",
-                                    u.y, u.x, (u instanceof Elf) ? 'E' : 'G',
-                                    u.hp, u.attackPower()))
-                            .collect(Collectors.joining(","))));
-
-            if (TRACE) {
-                System.out.println("--------------------------------------");
-            }
+        public boolean executeRound() throws ElfDeathException, IOException {
 
             for (Unit unit : grid.getSortedUnits()
                     .collect(Collectors.toList())) {
 
-                if (TRACE) {
-                    System.out.println("-- Begin turn for " + unit);
-                    System.out.println(grid);
-                }
-
                 if (unit.hp <= 0) {
-                    if (TRACE)
-                        System.out.println(
-                                "Unit was killed before it could take its turn.");
                     continue;
                 }
 
                 if (!grid.getSortedUnits().filter(e -> unit.isEnemy(e))
                         .findAny().isPresent()) {
-                    if (TRACE)
-                        System.out
-                                .println("No enemies present, combat is over!");
                     return false;
                 }
 
                 Optional<Path> pathToNearestEnemy = selectEnemyToAttack(unit);
 
                 if (!pathToNearestEnemy.isPresent()) {
-                    if (TRACE)
-                        System.out.println("No paths to enemies found.");
                     continue;
                 }
 
                 if (pathToNearestEnemy.get().positions.size() > 0) {
-                    if (TRACE) {
-                        System.out.println("[MOVE] Moving towards enemy along "
-                                + pathToNearestEnemy.get());
-                        System.out.println(grid
-                                .toString(pathToNearestEnemy.get().positions));
-                    }
                     unit.move(pathToNearestEnemy.get().positions.get(0));
                 }
 
                 if (attackEnabled) {
-                    if (TRACE) {
-                        System.out.println("Path to nearest enemy: "
-                                + pathToNearestEnemy.get());
-                    }
 
                     // Adjacent to at least one enemy. Select the one
                     // with lowest hp, break ties on reading order.
@@ -456,42 +405,16 @@ public class Puzzle15 {
                         Position pos = toAttack.get();
                         Unit enemyUnit = grid.getUnitAt(pos);
 
-                        if (TRACE)
-                            System.out.println(
-                                    "[ATTACK] Attacking enemy: " + enemyUnit);
-
                         if (unit.attack(enemyUnit)) {
 
                             if (enemyUnit instanceof Elf && !allowElfDeaths) {
-                                System.out.println(
-                                        "First elf death at " + enemyUnit);
                                 throw new ElfDeathException();
                             }
 
                             grid.kill(enemyUnit);
-
-                            char c = (enemyUnit instanceof Elf) ? 'E' : 'G';
-
-                            traceFile.write(String.format(
-                                    "{{dead,'%c'},{pos,{%d,%d}}}%n", c,
-                                    enemyUnit.y, enemyUnit.x));
-
-                        } else {
-                            if (TRACE)
-                                System.out.println(
-                                        "[ATTACK] Enemy unit: " + enemyUnit);
                         }
-                    } else {
-                        if (TRACE)
-                            System.out.println(
-                                    "[ATTACK] Nothing to attack here.");
                     }
                 }
-            }
-
-            if (TRACE) {
-                System.out.format("==== After round %d ====%n", currentRound);
-                System.out.println(grid);
             }
 
             roundsFinished++;
@@ -511,6 +434,7 @@ public class Puzzle15 {
                 }
             }
         };
+
         Comparator<Path> pathComparator = new Comparator<Path>() {
             @Override
             public int compare(Path o1, Path o2) {
@@ -526,11 +450,7 @@ public class Puzzle15 {
                     .min(pathComparator);
         }
 
-        // Find the shortest path from 'source' to 'target'.
         public Optional<Path> findShortestPath(Unit source, Position target) {
-            // System.out.format("Finding shortest path from %s to %s%n",
-            // source,
-            // target);
 
             Set<Position> visited = new TreeSet<>(); // closed set
             Queue<PathElem> queue = new LinkedList<>(); // open set
@@ -539,8 +459,6 @@ public class Puzzle15 {
 
             while (!queue.isEmpty()) {
                 PathElem p = queue.poll();
-
-                // System.out.println("Queue size: " + queue.size());
 
                 if (p.equals(target)) {
                     /*
@@ -559,12 +477,6 @@ public class Puzzle15 {
                     }
 
                     Collections.reverse(shortestPath.positions);
-                    // System.out.format(
-                    // "Found shortest path from %s to %s with length %d and
-                    // steps: %s%n",
-                    // source, target, shortestPath.length,
-                    // shortestPath.positions);
-                    // System.out.println(grid.toString(shortestPath.positions));
                     return Optional.of(shortestPath);
                 } else {
                     PathElem p0 = p;
@@ -583,86 +495,30 @@ public class Puzzle15 {
         }
     }
 
-    public int runTestCase(String filename)
-            throws FileNotFoundException, IOException, ElfDeathException {
-        return runTestCase(filename, true);
-    }
-
-    public int runTestCase(String filename, boolean allowElfDeaths)
-            throws FileNotFoundException, IOException, ElfDeathException {
-        Grid grid = new Grid(filename);
+    public int runTestCase(boolean allowElfDeaths)
+            throws IOException, ElfDeathException {
+        Grid grid = new Grid();
         GameEngine engine = new GameEngine(grid);
         engine.allowElfDeaths = allowElfDeaths;
         return engine.executeRounds();
     }
 
     @Test
-    public void testInput4() throws Exception {
-        assertEquals(27730, runTestCase("testinput4.txt"));
-    }
-
-    @Test
-    public void testInput5() throws Exception {
-        assertEquals(36334, runTestCase("testinput5.txt"));
-    }
-
-    @Test
-    public void testInput6() throws Exception {
-        assertEquals(39514, runTestCase("testinput6.txt"));
-    }
-
-    @Test
-    public void testInput7() throws Exception {
-        assertEquals(27755, runTestCase("testinput7.txt"));
-    }
-
-    @Test
-    public void testInput8() throws Exception {
-        assertEquals(28944, runTestCase("testinput8.txt"));
-    }
-
-    @Test
-    public void testInput9() throws Exception {
-        assertEquals(18740, runTestCase("testinput9.txt"));
-    }
-
-    @Test
-    public void testInput10() throws Exception {
-        assertEquals(10804, runTestCase("testinput10.txt"));
-    }
-
-    @Test
     public void testPart1() throws Exception {
-        assertEquals(237996, runTestCase("input.txt"));
+        assertEquals(237996, runTestCase(true));
     }
 
     @Test
-    public void testPart2Input4() throws Exception {
-        ELF_ATTACK_POWER = 15;
-        try {
-            assertEquals(4988, runTestCase("testinput4.txt", false));
-        } catch (ElfDeathException e) {
-            fail("An elf died!");
-        }
-    }
-
-    @Test
-    public void testPart2RealInput() throws Exception {
+    public void testPart2() throws Exception {
         ELF_ATTACK_POWER = 4;
+        int outcome;
 
         while (true) {
             try {
-                System.out.println("ELF_ATTACK_POWER: " + ELF_ATTACK_POWER);
-                int outcome = runTestCase("input.txt", false);
-                System.out.format("Elf attack power %d was super effective!%n",
-                        ELF_ATTACK_POWER);
-                System.out.println("Outcome: " + outcome);
-                break;
+                outcome = runTestCase(false);
+                assertEquals(69700, outcome);
+                return;
             } catch (ElfDeathException e) {
-                System.out.format(
-                        "Elf attack power %d was too feeble, increasing... %n",
-                        ELF_ATTACK_POWER);
-
                 ELF_ATTACK_POWER++;
             }
         }

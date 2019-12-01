@@ -1,17 +1,25 @@
-package puzzle14;
+package aoc2018;
 
 import static org.junit.Assert.assertEquals;
 
-public class Puzzle14 {
+import org.junit.Test;
 
-    public static void main(String[] args) {
-        String answer1 = part1(633601);
-        System.out.format("Part 1 answer: %s%n", answer1);
-        assertEquals("5115114101", answer1);
+import common.AocPuzzle;
 
-        int answer2 = part2("633601");
-        System.out.format("Part 2 answer: %d%n", answer2);
-        assertEquals(20310465, answer2);
+public class Day14 extends AocPuzzle {
+
+    public Day14() {
+        super(2018, 14);
+    }
+
+    @Test
+    public void testPart1() throws Exception {
+        assertEquals("5115114101", part1(633601));
+    }
+
+    @Test
+    public void testPart2() throws Exception {
+        assertEquals(20310465, part2("633601"));
     }
 
     private static String part1(int input) {
