@@ -1,5 +1,7 @@
 # One language per day
 
+1. Awk
+
 Languages
 
 [ ] Bash
@@ -28,4 +30,4 @@ Languages
 
 [ ] Scheme
 [ ] Scratch
-[ ] Awk
+[X] Awk
