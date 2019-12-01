@@ -7,6 +7,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
@@ -61,4 +62,7 @@ public abstract class AocPuzzle {
         return getInputAsReader().lines();
     }
 
+    protected final IntStream getInputAsIntStream() throws IOException {
+        return getInputAsStream().mapToInt(Integer::valueOf);
+    }
 }

@@ -10,6 +10,7 @@
 -export([ get_as_binary/2
         , get_as_string/2
         , get_as_lines/2
+        , get_as_ints/2
         , parse_lines/3
         ]).
 
@@ -26,6 +27,8 @@ get_as_string(Year, Day) ->
 get_as_lines(Year, Day) ->
   string:tokens(get_as_string(Year, Day), "\n\r").
 
+get_as_ints(Year, Day) ->
+  lists:map(fun erlang:list_to_integer/1, get_as_lines(Year, Day)).
 
 -spec parse_lines(Binary :: binary(),
                   Delims :: string(),
