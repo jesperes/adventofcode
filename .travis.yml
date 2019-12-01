@@ -1,0 +1,9 @@
+dist: bionic
+
+matrix:
+  include:
+    #- language: java
+    #  before_script: cd aoc_java
+    - language: erlang
+      otp_release: 22.1
+      before_script: cd aoc_erlang

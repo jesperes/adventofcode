@@ -20,7 +20,7 @@ import common.IntPair;
 public class Day02 extends AocPuzzle {
 
     public Day02() throws IOException {
-        super(2019, 2);
+        super(2018, 2);
     }
 
     private int part1() throws IOException {

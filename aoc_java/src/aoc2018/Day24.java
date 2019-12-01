@@ -351,7 +351,6 @@ public class Day24 extends AocPuzzle {
         while (boost < 2000) {
             BattleResult result = run(boost);
             if (result.winner.equals(Army.ImmuneSystem)) {
-                System.out.println(result.winnerUnits);
                 return result.winnerUnits;
             } else {
                 boost++;

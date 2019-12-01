@@ -18,7 +18,7 @@ import common.AocPuzzle;
 public class Day01 extends AocPuzzle {
 
     public Day01() throws IOException {
-        super(2019, 1);
+        super(2018, 1);
     }
 
     private long part1() throws IOException {

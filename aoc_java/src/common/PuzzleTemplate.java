@@ -9,9 +9,9 @@ import org.junit.Test;
 /**
  * AoC puzzle template
  */
-public class DayXX extends AocPuzzle {
+public class PuzzleTemplate extends AocPuzzle {
 
-    public DayXX() throws IOException {
+    public PuzzleTemplate() throws IOException {
         super(2019, 1);
     }
 
