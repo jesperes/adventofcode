@@ -21,16 +21,12 @@ find_nth_key(Salt, SaltA, KeyLimit, HashFun) ->
   find_nth_key(Salt, SaltA, KeyLimit, HashFun, 0, 1).
 
 find_nth_key(Salt, SaltA, KeyLimit, HashFun, Index, CurrKey) ->
-  %% ?debugFmt("Checking key ~p at index ~p", [CurrKey, Index]),
   case is_key(Salt, SaltA, Index, HashFun) of
     true when CurrKey =:= KeyLimit ->
-      %% ?debugFmt("Found final key ~p at index ~p", [CurrKey, Index]),
       Index;
     true ->
-      %% ?debugFmt("Found key ~p at index ~p", [CurrKey, Index]),
       find_nth_key(Salt, SaltA, KeyLimit, HashFun, Index + 1, CurrKey + 1);
     false ->
-      %% ?debugFmt("Hash at index ~p is not key.", [Index]),
       find_nth_key(Salt, SaltA, KeyLimit, HashFun, Index + 1, CurrKey)
   end.
 
@@ -43,7 +39,6 @@ is_key(Salt, SaltA, Index, HashFun) ->
     false -> false;
     C ->
       lists:any(fun(Idx5) ->
-                    %% ?debugFmt("Checking has5 on index ~p", [Idx5]),
                     has5(HashFun(Salt, SaltA, Idx5), C)
                 end, lists:seq(Index + 1, Index + 1000))
   end.
@@ -55,11 +50,9 @@ md5(Key, S) ->
   case get(Key) of
     undefined ->
       Hash = md5(S),
-      %% ?debugFmt("md5(~p, ~p) -> ~p", [Key, S, digest_to_hexstring(Hash)]),
       put(Key, Hash),
       Hash;
     Hash ->
-      %% ?debugFmt("md5(~p, ~p) -> ~p (CACHED)", [Key, S, digest_to_hexstring(Hash)]),
       Hash
   end.
 
@@ -77,12 +70,10 @@ hash_at2(Salt, SaltA, Index) ->
   Key = {stretched, SaltA, Index},
   case get(Key) of
     undefined ->
-      %% ?debugFmt("Computing stretched hash for index ~p", [Index]),
       Hash = hash_at2(Salt, SaltA, Index, ?KEY_STRETCH, hash_at(Salt, SaltA, Index)),
       put(Key, Hash),
       Hash;
     Hash ->
-      %% ?debugFmt("Stretched has for index ~p already computed...", [Index]),
       Hash
   end.
 
