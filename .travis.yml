@@ -3,18 +3,22 @@ dist: bionic
 matrix:
   include:
     - language: java
+      name: Advent of Code (Java solutions)
       before_script: cd aoc_java
       jdk: openjdk11
 
     - language: erlang
+      name: Advent of Code (Erlang solutions)
       before_script: cd aoc_erlang
       otp_release: 22.1
 
     - language: c
+      name: Advent of Code (C solutions)
       before_script: cd aoc_c
       compiler: clang
 
     - language: generic
+      name: Advent of Code (2019 one-language-per-day challenge)
       before_install:
         - sudo apt-get update
         - sudo apt-get -y install groovy
