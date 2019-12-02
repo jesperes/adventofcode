@@ -13,3 +13,10 @@ matrix:
     - language: c
       before_script: cd aoc_c
       compiler: clang
+
+    - language: generic
+      before_install:
+        - sudo apt-get update
+        - sudo apt-get -y groovy
+      before_script: cd olpd_2019
+      script: make
