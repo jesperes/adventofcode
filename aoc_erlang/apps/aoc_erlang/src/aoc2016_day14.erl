@@ -40,26 +40,14 @@ is_key(Salt, SaltA, Index, HashFun) ->
                 end, lists:seq(Index + 1, Index + 1000))
   end.
 
-%% Compute the md5 hash of S, and cache it using Key.  Use process
-%% dictionary to cache hash values (they never
-%% change). http://rosettacode.org/wiki/MD5#Erlang
-md5(Key, S) ->
-  case get(Key) of
-    undefined ->
-      Hash = md5(S),
-      put(Key, Hash),
-      Hash;
-    Hash ->
-      Hash
-  end.
-
-%% Compute the hash at the given Index.
-hash_at(Salt, SaltA, Index) ->
-  md5({SaltA, Index}, Salt ++ integer_to_list(Index)).
+%% Compute the hash at the given Index. For part 1 of the puzzle, we
+%% don't really need to cache the values.
+hash_at(Salt, _SaltA, Index) ->
+  md5(Salt ++ integer_to_list(Index)).
 
 %% Hash function for part 2, where we repeat md5 hashing 2016 times.
 hash_at2(Salt, SaltA, Index) ->
-  Key = {stretched, SaltA, Index},
+  Key = {SaltA, Index},
   case get(Key) of
     undefined ->
       Hash = hash_at2(Salt, SaltA, Index, ?KEY_STRETCH, hash_at(Salt, SaltA, Index)),
@@ -72,7 +60,7 @@ hash_at2(Salt, SaltA, Index) ->
 hash_at2(_Salt, _SaltA, _Index, 0, Acc) ->
   Acc;
 hash_at2(Salt, SaltA, Index, N, Acc) ->
-  hash_at2(Salt, SaltA, Index, N - 1, md5(digest_to_hexstring(Acc))).
+  hash_at2(Salt, SaltA, Index, N - 1, erlang:md5(digest_to_hexstring(Acc))).
 
 %%% Helpers
 
