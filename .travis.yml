@@ -17,6 +17,6 @@ matrix:
     - language: generic
       before_install:
         - sudo apt-get update
-        - sudo apt-get -y groovy
+        - sudo apt-get -y install groovy
       before_script: cd olpd_2019
       script: make
