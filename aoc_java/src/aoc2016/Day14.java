@@ -125,17 +125,6 @@ public class Day14 {
     }
 
     @Test
-    public void testMD5_part1() throws Exception {
-        assertEquals("577571be4de9dcce85a041ba0410f29f", md5("abc", 0, false));
-        assertEquals("0034e0923cc38887a57bd7b1d4f953df", md5("abc", 18, false));
-    }
-
-    @Test
-    public void testMD5_part2() throws Exception {
-        assertEquals("a107ff634856bb300138cac6568c0f24", md5("abc", 0, true));
-    }
-
-    @Test
     public void testPart1() throws Exception {
         assertEquals(23890, findKey("ahsbgdzn", 0, 64, false));
     }

@@ -22,6 +22,8 @@ void reinit_cache() {
   }
 }
 
+#define TO_HEXB(X) (char)(((X) <= 9) ? ((X) + 48) : ((X) + 87))
+
 void md5_hexdigest(char *input, char *outbuf) {
   MD5_CTX ctx;
   unsigned char digest[16];
@@ -31,7 +33,8 @@ void md5_hexdigest(char *input, char *outbuf) {
   MD5_Final(digest, &ctx);
 
   for (int j = 0; j < 16; j++) {
-    sprintf((char *)&outbuf[j * 2], "%02x", digest[j]);
+    outbuf[j * 2] = TO_HEXB((digest[j] & 0xf0) >> 4);
+    outbuf[j * 2 + 1] = TO_HEXB(digest[j] & 0x0f);
   }
 
   outbuf[32] = 0;
@@ -60,7 +63,6 @@ char *md5_cached_part2(char *input, int i) {
     }
   }
 
-  // printf("md5_cached_part2: %d -> %s\n", i, hashes[i]);
   return hashes[i];
 }
 
@@ -92,6 +94,10 @@ int main() {
   /*
    * Part 1
    */
+
+  // Just a sanity check that our md5 implementation works.
+  assert(strcmp(md5_cached("abc", 0),
+                "577571be4de9dcce85a041ba0410f29f") == 0);
 
   reinit_cache();
 
@@ -135,15 +141,12 @@ int main() {
     char *hash = md5_cached_part2(INPUT, i);
     char c3 = has3(hash);
     if (c3 != -1) {
-      // printf("Found 3-sequence %c at index %d\n", c3, i);
 
       // check if any of the next 1000 hashes contain
       // a 5-letter sequence of
       for (int j = i + 1; j <= i + 1000; j++) {
         char *hash5 = md5_cached_part2(INPUT, j);
         if (has5(hash5, c3)) {
-          //printf("Found 5-sequence %c at index %d, this is key %d\n", c3, i,
-          //       keys_found + 1);
           keys_found++;
           nth_key = i;
           break;
