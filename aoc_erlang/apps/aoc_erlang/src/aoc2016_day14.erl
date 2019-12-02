@@ -72,7 +72,7 @@ hash_at2(Salt, SaltA, Index) ->
 hash_at2(_Salt, _SaltA, _Index, 0, Acc) ->
   Acc;
 hash_at2(Salt, SaltA, Index, N, Acc) ->
-  hash_at2(Salt, SaltA, Index, N - 1, md5(digest:digest_to_hexstring(Acc))).
+  hash_at2(Salt, SaltA, Index, N - 1, md5(digest_to_hexstring(Acc))).
 
 %%% Helpers
 
@@ -95,6 +95,18 @@ has5(<<C:4,C:4,C:4,C:4,C:4,_/bitstring>>, C) ->
   true;
 has5(<<_:4,Rest/bitstring>>, C) ->
   has5(Rest, C).
+
+md5(S) ->
+  erlang:md5(S).
+
+%% Convert a binary digest (i.e. output from erlang:md5/1) to a
+%% lower-case hexadecimal string binary. This is where the program
+%% spends most of its time.
+-spec digest_to_hexstring(binary()) -> binary().
+digest_to_hexstring(Binary) ->
+  << << (if N =< 9 -> N + $0;
+            true -> N + 87
+         end):8 >> || <<N:4>> <= Binary >>.
 
 %% ------------------------------------------------------------
 %% Unit tests
@@ -124,7 +136,7 @@ hash_at_test_() ->
 
 digest_to_hexstring_test_() ->
   ?_assertEqual(<<"577571be4de9dcce85a041ba0410f29f">>,
-                digest:digest_to_hexstring(md5("abc0"))).
+                digest_to_hexstring(md5("abc0"))).
 
 hash_at2_test_() ->
   ?_assertMatch(<<16#a1,16#07,16#ff,_/bitstring>>,
