@@ -6,10 +6,7 @@
 -define(INPUT, "ahsbgdzn").
 
 main_test_() ->
-  [ {"Test input (abc)",
-     {timeout, 60,
-      ?_assertEqual(22728, find_nth_key("abc", 'abc', 64, fun hash_at/3))}}
-  , {"Part 1",
+  [ {"Part 1",
      {timeout, 60,
       ?_assertEqual(23890, find_nth_key(?INPUT, list_to_atom(?INPUT), 64, fun hash_at/3))}}
   , {"Part 2",
@@ -55,11 +52,6 @@ md5(Key, S) ->
     Hash ->
       Hash
   end.
-
-md5(S) ->
-  Hash = erlang:md5(S),
-  %% ?debugFmt("md5(~p) -> ~p (RAW)", [S, digest_to_hexstring(Hash)]),
-  Hash.
 
 %% Compute the hash at the given Index.
 hash_at(Salt, SaltA, Index) ->
