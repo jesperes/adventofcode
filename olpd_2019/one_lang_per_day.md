@@ -5,7 +5,6 @@
 
 List of languages:
 
-- [X] Awk
 - [ ] Bash
 - [ ] C
 - [ ] C#
@@ -15,10 +14,10 @@ List of languages:
 - [ ] Erlang
 - [ ] GNU Make
 - [ ] Go
-- [X] Groovy
 - [ ] Haskell
 - [ ] Java
 - [ ] JavaScript
+- [ ] Kotlin
 - [ ] Lua
 - [ ] Pascal
 - [ ] Prolog
@@ -28,3 +27,6 @@ List of languages:
 - [ ] SQL
 - [ ] Scheme
 - [ ] Scratch
+- [ ] Xtend
+- [X] Awk
+- [X] Groovy
