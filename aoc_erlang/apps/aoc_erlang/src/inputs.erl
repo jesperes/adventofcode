@@ -21,7 +21,7 @@ get_as_binary(Year, Day) ->
 
 -spec get_as_string(Year :: integer(), Day :: integer()) -> string().
 get_as_string(Year, Day) ->
-  binary_to_list(get_as_binary(Year, Day)).
+  binary_to_string(get_as_binary(Year, Day)).
 
 -spec get_as_lines(Year :: integer(), Day :: integer()) -> list(string()).
 get_as_lines(Year, Day) ->
@@ -38,9 +38,13 @@ parse_lines(Binary, Delims, Fun) ->
   lists:map(fun(Line) ->
                 Fun(string:tokens(Line, Delims))
             end,
-            string:tokens(binary_to_list(Binary), "\n\r")).
+            string:tokens(binary_to_string(Binary), "\n\r")).
 
 %% Internal functions
+
+%% Convert a binary to a flattened, trimmed list.
+binary_to_string(Bin) ->
+  string:trim(lists:flatten(binary_to_list(Bin))).
 
 -spec get_input_dir() -> file:filename().
 get_input_dir() ->
