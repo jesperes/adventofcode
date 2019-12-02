@@ -1,6 +1,7 @@
 # One language per day
 
 1. Awk
+2. Groovy
 
 List of languages:
 
@@ -14,7 +15,7 @@ List of languages:
 - [ ] Erlang
 - [ ] GNU Make
 - [ ] Go
-- [ ] Groovy
+- [X] Groovy
 - [ ] Haskell
 - [ ] Java
 - [ ] JavaScript

@@ -27,6 +27,5 @@ function fuel_part2(mass)
 }
 
 END {
-    printf "Part1: %d\n", mass1
-    printf "Part2: %d\n", mass2
+    exit (mass1 == 3368364 && mass2 == 5049684) ? 0 : 1
 }
