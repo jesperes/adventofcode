@@ -2,6 +2,7 @@
 
 1. Awk
 2. Groovy
+3. Java
 
 List of languages:
 
@@ -15,7 +16,6 @@ List of languages:
 - [ ] GNU Make
 - [ ] Go
 - [ ] Haskell
-- [ ] Java
 - [ ] JavaScript
 - [ ] Kotlin
 - [ ] Lua
@@ -30,3 +30,4 @@ List of languages:
 - [ ] Xtend
 - [X] Awk
 - [X] Groovy
+- [X] Java

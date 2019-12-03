@@ -8,4 +8,8 @@ public class IntPair extends Pair<Integer, Integer> {
     public static IntPair pair(int x, int y) {
         return new IntPair(x, y);
     }
+
+    public IntPair copy() {
+        return new IntPair(x, y);
+    }
 }

@@ -5,3 +5,5 @@ day1:
 
 day2:
 	cd day02 && groovy day02.groovy
+
+# Day 3: see java solutions
