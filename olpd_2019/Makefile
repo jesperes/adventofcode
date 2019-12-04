@@ -1,9 +1,23 @@
-all: day1 day2
+ALL=\
+	day01 \
+	day02 \
+	day04
 
-day1:
-	cd day01 && awk -f day01.awk < input.txt
+all: $(ALL)
+.PHONY: $(ALL)
+.SILENT:
 
-day2:
-	cd day02 && groovy day02.groovy
+PROGRESS=@echo -n "$@... "
+TIME=time --format='OK (elapsed time: %E)'
 
-# Day 3: see java solutions
+day01:
+	$(PROGRESS)
+	cd day01 && $(TIME) awk -f day01.awk < input.txt
+
+day02:
+	$(PROGRESS)
+	cd day02 && $(TIME) groovy day02.groovy 2>&1 | grep -v "^WARNING:"
+
+day04:
+	$(PROGRESS)
+	gcc -Wall -Werror -Wextra -O3 day04/day04.c -o day04/day04 && $(TIME) ./day04/day04

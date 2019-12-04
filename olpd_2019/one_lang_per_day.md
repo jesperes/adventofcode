@@ -2,17 +2,16 @@
 
 1. Awk
 2. Groovy
-3. Java
+3. ??
+4. C
 
 List of languages:
 
 - [ ] Bash
-- [ ] C
 - [ ] C#
 - [ ] C++
 - [ ] CMake
 - [ ] Elixir
-- [ ] Erlang
 - [ ] GNU Make
 - [ ] Go
 - [ ] Haskell
@@ -29,5 +28,7 @@ List of languages:
 - [ ] Scratch
 - [ ] Xtend
 - [X] Awk
+- [X] Erlang
 - [X] Groovy
 - [X] Java
+- [X] C
