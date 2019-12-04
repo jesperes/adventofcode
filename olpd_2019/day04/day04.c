@@ -1,61 +1,35 @@
 #include <stdio.h>
-#include <stdbool.h>
 #include <string.h>
-
-bool is_part1(char *buf)
-{
-  int len = strlen(buf);
-  bool has_same = false;
-  bool has_decreasing = false;
-
-  for (int i = 0; i < len - 1; i++) {
-    char c1 = buf[i];
-    char c2 = buf[i+1];
-
-    if (c1 == c2) {
-      has_same = true;
-    }
-
-    if (c2 < c1) {
-      has_decreasing = true;
-      break;
-    }
-  }
-
-  return has_same && !has_decreasing;
-}
-
-#define IS_C(N) (buf[N] == c)
-#define NOT_C(N) (buf[N] != c)
-
-bool is_part2(char *buf)
-{
-  for (char c = '0'; c <= '9'; c++) {
-    if ((            IS_C(0) && IS_C(1) && NOT_C(2)) ||
-        (NOT_C(0) && IS_C(1) && IS_C(2) && NOT_C(3)) ||
-        (NOT_C(1) && IS_C(2) && IS_C(3) && NOT_C(4)) ||
-        (NOT_C(2) && IS_C(3) && IS_C(4) && NOT_C(5)) ||
-        (NOT_C(3) && IS_C(4) && IS_C(5)            )) {
-      return true;
-    }
-  }
-  return false;
-}
 
 int main()
 {
-  int start = 402328;
-  int end = 864247;
-  char buf[10];
+  int lower = 402328;
+  int upper = 864247;
+  char s[7];
   int part1 = 0;
   int part2 = 0;
 
-  for (int n = start; n <= end; n++) {
-    sprintf(buf, "%d", n);
+  for (int i = lower; i <= upper; i++) {
+    sprintf(s, "%d", i);
 
-    if (is_part1(buf)) {
+    char a = s[0];
+    char b = s[1];
+    char c = s[2];
+    char d = s[3];
+    char e = s[4];
+    char f = s[5];
+
+    if (a > b || b > c || c > d || d > e || e > f)
+      continue;
+
+    if (a == b || b == c || c == d || d == e || e == f) {
       part1++;
-      if (is_part2(buf))
+
+      if ((a == b && b != c) ||
+          (a != b && b == c && c != d) ||
+          (b != c && c == d && d != e) ||
+          (c != d && d == e && e != f) ||
+          (d != e && e == f))
         part2++;
     }
   }
