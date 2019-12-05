@@ -40,7 +40,15 @@ public class Day05 extends AocPuzzle {
         super(2019, 5);
     }
 
-    int read(int[] prog, int param, int mode) {
+    /**
+     * Read a parameter from memory.
+     * 
+     * @param prog  The program
+     * @param param The parameter value
+     * @param mode  The addressing mode, MODE_POS or MODE_IMM.
+     * @return
+     */
+    private int r(int[] prog, int param, int mode) {
         return (mode == MODE_POS) ? prog[param] : param;
     }
 
@@ -52,109 +60,83 @@ public class Day05 extends AocPuzzle {
      * @param input   Sent to the input instruction.
      * @return The output of the last output instruction.
      */
-    private int executeIntCode(int[] prog, int input) {
+    private int execute(int[] p, int input, boolean diagnostics) {
         int pc = 0;
         int output = 0;
 
         while (true) {
-            int op0 = prog[pc] % 100;
-            int mode1 = (prog[pc] / 100) % 10;
-            int mode2 = (prog[pc] / 1000) % 10;
+            int op0 = p[pc] % 100;
+            int m1 = (p[pc] / 100) % 10;
+            int m2 = (p[pc] / 1000) % 10;
 
             if (op0 == OP_END)
                 return output;
 
+            int op1 = p[pc + 1];
+
             switch (op0) {
             case OP_ADD: {
-                int op1 = prog[pc + 1];
-                int op2 = prog[pc + 2];
-                int op3 = prog[pc + 3];
-                prog[op3] = read(prog, op1, mode1) + read(prog, op2, mode2);
+                int op2 = p[pc + 2];
+                int op3 = p[pc + 3];
+                p[op3] = r(p, op1, m1) + r(p, op2, m2);
                 pc += 4;
                 break;
             }
             case OP_MUL: {
-                int op1 = prog[pc + 1];
-                int op2 = prog[pc + 2];
-                int op3 = prog[pc + 3];
-                prog[op3] = read(prog, op1, mode1) * read(prog, op2, mode2);
+                int op2 = p[pc + 2];
+                int op3 = p[pc + 3];
+                p[op3] = r(p, op1, m1) * r(p, op2, m2);
                 pc += 4;
                 break;
             }
             case OP_JUMP_IF_TRUE: {
-                int op1 = prog[pc + 1];
-                int op2 = prog[pc + 2];
-                if (read(prog, op1, mode1) != 0) {
-                    pc = read(prog, op2, mode2);
-                } else {
-                    pc += 3;
-                }
+                int op2 = p[pc + 2];
+                pc = (r(p, op1, m1) != 0) ? r(p, op2, m2) : pc + 3;
                 break;
             }
             case OP_JUMP_IF_FALSE: {
-                int op1 = prog[pc + 1];
-                int op2 = prog[pc + 2];
-                if (read(prog, op1, mode1) == 0) {
-                    pc = read(prog, op2, mode2);
-                } else {
-                    pc += 3;
-                }
+                int op2 = p[pc + 2];
+                pc = (r(p, op1, m1) == 0) ? r(p, op2, m2) : pc + 3;
                 break;
             }
             case OP_LESS_THAN: {
-                int op1 = prog[pc + 1];
-                int op2 = prog[pc + 2];
-                int op3 = prog[pc + 3];
-
-                prog[op3] = (read(prog, op1, mode1) < read(prog, op2, mode2))
-                        ? 1
-                        : 0;
+                int op2 = p[pc + 2];
+                int op3 = p[pc + 3];
+                p[op3] = (r(p, op1, m1) < r(p, op2, m2)) ? 1 : 0;
                 pc += 4;
                 break;
             }
             case OP_EQUALS: {
-                int op1 = prog[pc + 1];
-                int op2 = prog[pc + 2];
-                int op3 = prog[pc + 3];
-
-                prog[op3] = (read(prog, op1, mode1) == read(prog, op2, mode2))
-                        ? 1
-                        : 0;
+                int op2 = p[pc + 2];
+                int op3 = p[pc + 3];
+                p[op3] = (r(p, op1, m1) == r(p, op2, m2)) ? 1 : 0;
                 pc += 4;
                 break;
             }
             case OP_INPUT: {
-                int op1 = prog[pc + 1];
-                prog[op1] = input;
+                p[op1] = input;
                 pc += 2;
                 break;
             }
             case OP_OUTPUT: {
-                int op1 = prog[pc + 1];
-                output = read(prog, op1, mode1);
-                if (part1) {
-                    if (prog[pc + 2] % 100 == OP_END) {
-                        return output;
-                    } else {
-                        assertEquals(0, output);
-                        pc += 2;
-                        break;
-                    }
-                } else {
-                    return output;
-                }
+                // All but the very last output must be 0.
+                assertEquals(0, output);
+                output = r(p, op1, m1);
+                pc += 2;
+                break;
             }
             default:
                 fail();
+                break;
             }
         }
     }
 
-    int[] parseIntCode() throws IOException {
-        return parseIntCode(getInputAsString());
+    int[] parse() throws IOException {
+        return parse(getInputAsString());
     }
 
-    int[] parseIntCode(String input) {
+    int[] parse(String input) {
         String[] s = input.trim().split(",");
         int[] prog = new int[s.length];
         for (int i = 0; i < prog.length; i++) {
@@ -169,30 +151,30 @@ public class Day05 extends AocPuzzle {
 
     @Test
     public void testPart1() throws Exception {
-        int[] prog = parseIntCode();
-        assertEquals(16348437, executeIntCode(prog, 1));
-    }
-
-    @Test
-    public void testPart2() throws Exception {
-        part1 = false;
-        int[] prog = parseIntCode();
-        assertEquals(6959377, executeIntCode(prog, 5));
+        int[] prog = parse();
+        assertEquals(16348437, execute(prog, 1, true));
     }
 
     @Test
     public void testExample1() {
-        int[] prog = parseIntCode("3,0,4,0,99");
+        int[] prog = parse("3,0,4,0,99");
         int x = 42;
-        assertEquals(x, executeIntCode(prog, x));
+        assertEquals(x, execute(prog, x, true));
         assertArrayEquals(new int[] { x, 0, 4, 0, 99 }, prog);
     }
 
     @Test
     public void testExample2() {
-        int[] prog = parseIntCode("1002,4,3,4,33");
-        assertEquals(0, executeIntCode(prog, 0));
+        int[] prog = parse("1002,4,3,4,33");
+        assertEquals(0, execute(prog, 0, true));
         assertArrayEquals(new int[] { 1002, 4, 3, 4, 99 }, prog);
+    }
+
+    @Test
+    public void testPart2() throws Exception {
+        part1 = false;
+        int[] prog = parse();
+        assertEquals(6959377, execute(prog, 5, false));
     }
 
     @Test
@@ -200,8 +182,8 @@ public class Day05 extends AocPuzzle {
         part1 = false;
         // Tests for "equal to 8"
         String progstr = "3,9,8,9,10,9,4,9,99,-1,8";
-        assertEquals(0, executeIntCode(parseIntCode(progstr), 1)); // 1 != 8
-        assertEquals(1, executeIntCode(parseIntCode(progstr), 8)); // 1 == 8
+        assertEquals(0, execute(parse(progstr), 1, false));
+        assertEquals(1, execute(parse(progstr), 8, false));
     }
 
     @Test
@@ -209,9 +191,9 @@ public class Day05 extends AocPuzzle {
         part1 = false;
         // Tests for "less than 8"
         String progstr = "3,9,7,9,10,9,4,9,99,-1,8";
-        assertEquals(1, executeIntCode(parseIntCode(progstr), 1)); // 1 < 8
-        assertEquals(0, executeIntCode(parseIntCode(progstr), 8)); // !(8 < 8)
-        assertEquals(0, executeIntCode(parseIntCode(progstr), 9)); // !(9 < 8)
+        assertEquals(1, execute(parse(progstr), 1, false));
+        assertEquals(0, execute(parse(progstr), 8, false));
+        assertEquals(0, execute(parse(progstr), 9, false));
     }
 
     @Test
@@ -219,8 +201,8 @@ public class Day05 extends AocPuzzle {
         part1 = false;
         // Tests for "equal to zero"
         String progstr = "3,12,6,12,15,1,13,14,13,4,13,99,-1,0,1,9";
-        assertEquals(0, executeIntCode(parseIntCode(progstr), 0)); // 0 == 0
-        assertEquals(1, executeIntCode(parseIntCode(progstr), 42)); // 42 != 0
+        assertEquals(0, execute(parse(progstr), 0, false));
+        assertEquals(1, execute(parse(progstr), 42, false));
     }
 
     @Test
@@ -233,9 +215,9 @@ public class Day05 extends AocPuzzle {
         // single number. The program will then output 999 if the input value is
         // below 8, output 1000 if the input value is equal to 8, or output 1001
         // if the input value is greater than 8.
-        assertEquals(999, executeIntCode(parseIntCode(progstr), 7));
-        assertEquals(1000, executeIntCode(parseIntCode(progstr), 8));
-        assertEquals(1001, executeIntCode(parseIntCode(progstr), 9));
+        assertEquals(999, execute(parse(progstr), 7, false));
+        assertEquals(1000, execute(parse(progstr), 8, false));
+        assertEquals(1001, execute(parse(progstr), 9, false));
     }
 
 }
