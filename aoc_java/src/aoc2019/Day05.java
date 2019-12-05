@@ -12,7 +12,7 @@ import common.AocPuzzle;
 
 /**
  * Day 5: Sunny with a Chance of Asteroids
- * 
+ *
  * (Contination of the Day 2 IntCode puzzle)
  */
 public class Day05 extends AocPuzzle {
@@ -42,7 +42,7 @@ public class Day05 extends AocPuzzle {
 
     /**
      * Read a parameter from memory.
-     * 
+     *
      * @param prog  The program
      * @param param The parameter value
      * @param mode  The addressing mode, MODE_POS or MODE_IMM.
@@ -55,7 +55,7 @@ public class Day05 extends AocPuzzle {
     /**
      * Executes the given Intcode program. Returns the possibly modified
      * program.
-     * 
+     *
      * @param program The program.
      * @param input   Sent to the input instruction.
      * @return The output of the last output instruction.
