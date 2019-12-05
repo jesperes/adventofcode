@@ -34,7 +34,7 @@ public class Day05 extends AocPuzzle {
     static final int OP_LESS_THAN = 7;
     static final int OP_EQUALS = 8;
 
-    static boolean part1 = true;
+    boolean part1 = true;
 
     public Day05() throws IOException {
         super(2019, 5);
