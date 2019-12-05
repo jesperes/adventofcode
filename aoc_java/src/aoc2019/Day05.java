@@ -41,11 +41,7 @@ public class Day05 extends AocPuzzle {
     }
 
     int read(int[] prog, int param, int mode) {
-        if (mode == MODE_POS) {
-            return prog[param];
-        } else {
-            return param;
-        }
+        return (mode == MODE_POS) ? prog[param] : param;
     }
 
     /**
@@ -58,14 +54,12 @@ public class Day05 extends AocPuzzle {
      */
     private int executeIntCode(int[] prog, int input) {
         int pc = 0;
-        int cntr = 0;
         int output = 0;
 
         while (true) {
             int op0 = prog[pc] % 100;
             int mode1 = (prog[pc] / 100) % 10;
             int mode2 = (prog[pc] / 1000) % 10;
-            cntr++;
 
             if (op0 == OP_END)
                 return output;
@@ -108,9 +102,6 @@ public class Day05 extends AocPuzzle {
                 break;
             }
             case OP_LESS_THAN: {
-                // Opcode 7 is less than: if the first parameter is less than
-                // the second parameter, it stores 1 in the position given by
-                // the third parameter. Otherwise, it stores 0.
                 int op1 = prog[pc + 1];
                 int op2 = prog[pc + 2];
                 int op3 = prog[pc + 3];
@@ -141,7 +132,6 @@ public class Day05 extends AocPuzzle {
             case OP_OUTPUT: {
                 int op1 = prog[pc + 1];
                 output = read(prog, op1, mode1);
-                // System.out.println("OUTPUT: " + output);
                 if (part1) {
                     if (prog[pc + 2] % 100 == OP_END) {
                         return output;
@@ -153,14 +143,11 @@ public class Day05 extends AocPuzzle {
                 } else {
                     return output;
                 }
-                // break;
             }
             default:
                 fail();
             }
-
         }
-
     }
 
     int[] parseIntCode() throws IOException {
