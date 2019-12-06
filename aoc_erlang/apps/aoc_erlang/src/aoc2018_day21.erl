@@ -13,8 +13,8 @@
 %%
 
 main_test_() ->
-  [ {"Part 1", ?_assertEqual(4682012, part1())}
-  , {"Part 2", ?_assertEqual(5363733, part2())}
+  [ {"Part 1", timeout, 60, ?_assertEqual(4682012, part1())}
+  , {"Part 2", timeout, 60, ?_assertEqual(5363733, part2())}
   ].
 
 part1() ->
