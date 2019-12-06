@@ -1,7 +1,8 @@
 ALL=\
 	day01 \
 	day02 \
-	day04
+	day04 \
+	day04-clpfd
 
 all: $(ALL)
 .PHONY: $(ALL)
@@ -21,3 +22,7 @@ day02:
 day04:
 	$(PROGRESS)
 	gcc -Wall -Werror -Wextra -O3 day04/day04.c -o day04/day04 && $(TIME) ./day04/day04
+
+day04-clpfd:
+	$(PROGRESS)
+	cd day04 && $(TIME) swipl day04.pl

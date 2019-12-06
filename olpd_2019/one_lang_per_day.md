@@ -1,9 +1,13 @@
 # One language per day
 
-1. Awk
-2. Groovy
-3. ??
-4. C
+| Day | Erlang | Java | OLPD      |
+|-----|--------|------|-----------|
+| 1   | X      | X    | Awk       |
+| 2   | X      | X    | Groovy    |
+| 3   | X      | X    |           |
+| 4   | X      | X    | C, Prolog |
+| 5   | X      | X    |           |
+| 6   | X      |      |           |
 
 List of languages:
 
@@ -18,8 +22,6 @@ List of languages:
 - [ ] JavaScript
 - [ ] Kotlin
 - [ ] Lua
-- [ ] Pascal
-- [ ] Prolog
 - [ ] Python
 - [ ] Ruby
 - [ ] Rust
@@ -27,8 +29,10 @@ List of languages:
 - [ ] Scheme
 - [ ] Scratch
 - [ ] Xtend
+
 - [X] Awk
 - [X] Erlang
 - [X] Groovy
 - [X] Java
 - [X] C
+- [X] Prolog
