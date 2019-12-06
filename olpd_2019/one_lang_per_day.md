@@ -2,7 +2,7 @@
 
 | Day | Erlang | Java | OLPD      |
 |-----|--------|------|-----------|
-| 1   | X      | X    | Awk       |
+| 1   | X      | X    | C, Awk    |
 | 2   | X      | X    | Groovy    |
 | 3   | X      | X    |           |
 | 4   | X      | X    | C, Prolog |
