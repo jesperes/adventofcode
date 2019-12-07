@@ -6,33 +6,30 @@
 
 -export([profile/0]).
 
-%% ****** Process <0.733.0>    -- 100.00 % of profiled time ***
-%% FUNCTION                                                    CALLS        %       TIME  [uS / CALLS]
-%% --------                                                    -----  -------       ----  [----------]
-%% aoc2016_day14:'-main_test_/0-fun-3-'/1                      23412     0.01      21932  [      0.94]
-%% aoc2016_day14:find_key/5                                    47980     0.01      26137  [      0.54]
-%% erlang:'++'/2                                               48017     0.01      41114  [      0.86]
-%% erlang:integer_to_list/1                                    47980     0.01      45829  [      0.96]
-%% aoc2016_day14:has3/1                                      1406742     0.08     306807  [      0.22]
-%% aoc2016_day14:has5/1                                      1391171     0.11     389012  [      0.28]
-%% aoc2016_day14:md5_stretched/2                            47224021     2.03    7353875  [      0.16]
-%% aoc2016_day14:md5_to_hexstring/1                         47200608     3.77   13682732  [      0.29]
-%% aoc2016_day14:md5/1                                      47248597     4.01   14559478  [      0.31]
-%% erlang:md5/1                                             47248597     5.73   20780954  [      0.44]
-%% aoc2016_day14:digest_to_hexstring/1                      47200610     5.80   21027578  [      0.45]
-%% aoc2016_day14:'-digest_to_hexstring/1-lbc$^0/2-0-'/2   1557620130    78.43  284548517  [      0.18]
+-define(USE_NIF, 1).
+
+-ifdef(USE_NIF).
+-on_load(init/0).
+
+realpath(S) ->
+  string:trim(os:cmd(io_lib:format("realpath '~s'", [S]))).
+
+find_file(Name) ->
+  NS = realpath(Name),
+  case filelib:is_file(NS) of
+    true -> NS;
+    false -> find_file(realpath(filename:join("..", Name)))
+  end.
+
+init() ->
+  File = find_file("c_src/aoc2016_day14.so"),
+  ok = erlang:load_nif(filename:rootname(File), 0).
+
+-endif.
 
 profile() ->
   eprof:profile(fun() -> aoc2016_day14:test() end),
   eprof:analyze().
-
-main_test_() ->
-  [ {"Part 1",
-     ?_assertEqual(23890, find_key(?INPUT, fun erlang:md5/1))}
-  , {"Part 2",
-     timeout, 600,
-     ?_assertEqual(22696, find_key(?INPUT, fun(S) -> md5_stretched(S, 2016) end))}
-  ].
 
 find_key(Salt, HashFun) ->
   find_key(Salt, HashFun, 0, #{}, []).
@@ -97,7 +94,9 @@ md5_stretched(S, 0) ->
 md5_stretched(S, N) ->
   md5_stretched(digest_to_hexstring(erlang:md5(S)), N - 1).
 
-digest_to_hexstring(Binary) ->
+%% This is where this puzzle spends 90% of its time, converting
+%% binaries to hexstrings. Implemented as a NIF.
+digest_to_hexstring(Binary) when byte_size(Binary) == 16 ->
   << << (if N =< 9 -> N + $0;
             true -> N + 87
          end):8 >> || <<N:4>> <= Binary >>.
@@ -105,6 +104,14 @@ digest_to_hexstring(Binary) ->
 %% ------------------------------------------------------------
 %% Unit tests
 %% ------------------------------------------------------------
+
+main_test_() ->
+  [ {"Part 1",
+     ?_assertEqual(23890, find_key(?INPUT, fun erlang:md5/1))}
+  , {"Part 2",
+     timeout, 600,
+     ?_assertEqual(22696, find_key(?INPUT, fun(S) -> md5_stretched(S, 2016) end))}
+  ].
 
 has3_test_() ->
   [ ?_assertNot(        has3(erlang:md5("abc0")))
@@ -120,8 +127,11 @@ has5_test_() ->
   ].
 
 digest_to_hexstring_test_() ->
-  ?_assertEqual(<<"577571be4de9dcce85a041ba0410f29f">>,
-                digest_to_hexstring(erlang:md5("abc0"))).
+  [?_assertEqual(<<"577571be4de9dcce85a041ba0410f29f">>,
+                 digest_to_hexstring(erlang:md5("abc0"))),
+   ?_assertException(error, _, digest_to_hexstring(0)),
+   ?_assertException(error, _, digest_to_hexstring(<<>>))
+  ].
 
 md5_stretched_test_() ->
   ?_assertEqual(<<"a107ff634856bb300138cac6568c0f24">>,
