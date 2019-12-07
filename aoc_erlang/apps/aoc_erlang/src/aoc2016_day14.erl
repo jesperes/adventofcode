@@ -24,11 +24,11 @@
 
 profile() ->
   eprof:profile(fun() -> aoc2016_day14:test() end),
-  eprof:analysze().
+  eprof:analyze().
 
 main_test_() ->
   [ {"Part 1",
-     ?_assertEqual(23890, find_key(?INPUT, fun md5/1))}
+     ?_assertEqual(23890, find_key(?INPUT, fun erlang:md5/1))}
   , {"Part 2",
      timeout, 600,
      ?_assertEqual(22696, find_key(?INPUT, fun(S) -> md5_stretched(S, 2016) end))}
@@ -92,13 +92,10 @@ has5(<<C:4,C:4,C:4,C:4,C:4,_/bitstring>>) ->
 has5(<<_:4,Rest/bitstring>>) ->
   has5(Rest).
 
-md5(S) ->
-  erlang:md5(S).
-
 md5_stretched(S, 0) ->
-  md5(S);
+  erlang:md5(S);
 md5_stretched(S, N) ->
-  md5_stretched(digest_to_hexstring(md5(S)), N - 1).
+  md5_stretched(digest_to_hexstring(erlang:md5(S)), N - 1).
 
 digest_to_hexstring(Binary) ->
   << << (if N =< 9 -> N + $0;
@@ -110,21 +107,21 @@ digest_to_hexstring(Binary) ->
 %% ------------------------------------------------------------
 
 has3_test_() ->
-  [ ?_assertNot(        has3(md5("abc0")))
-  , ?_assertEqual(8,    has3(md5("abc18")))
-  , ?_assertEqual(16#e, has3(md5("abc39")))
-  , ?_assertEqual(9,    has3(md5("abc92")))
+  [ ?_assertNot(        has3(erlang:md5("abc0")))
+  , ?_assertEqual(8,    has3(erlang:md5("abc18")))
+  , ?_assertEqual(16#e, has3(erlang:md5("abc39")))
+  , ?_assertEqual(9,    has3(erlang:md5("abc92")))
   ].
 
 has5_test_() ->
-  [ ?_assertNot(        has5(md5("abc0")))
-  , ?_assertEqual(16#e, has5(md5("abc816")))
-  , ?_assertEqual(9,    has5(md5("abc200")))
+  [ ?_assertNot(        has5(erlang:md5("abc0")))
+  , ?_assertEqual(16#e, has5(erlang:md5("abc816")))
+  , ?_assertEqual(9,    has5(erlang:md5("abc200")))
   ].
 
 digest_to_hexstring_test_() ->
   ?_assertEqual(<<"577571be4de9dcce85a041ba0410f29f">>,
-                digest_to_hexstring(md5("abc0"))).
+                digest_to_hexstring(erlang:md5("abc0"))).
 
 md5_stretched_test_() ->
   ?_assertEqual(<<"a107ff634856bb300138cac6568c0f24">>,
