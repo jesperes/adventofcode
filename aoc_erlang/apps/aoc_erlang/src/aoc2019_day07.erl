@@ -19,23 +19,6 @@
 -define(MODE_POS, 0).
 -define(MODE_IMM, 1).
 
-describe(X) when X >= 100 -> describe(X rem 100);
-describe(?OP_ADD) -> add;
-describe(?OP_MUL) -> mul;
-describe(?OP_INPUT) -> input;
-describe(?OP_OUTPUT) -> output;
-describe(?OP_JUMP_IF_FALSE) -> jump_if_false;
-describe(?OP_JUMP_IF_TRUE) -> jump_if_true;
-describe(?OP_LESS_THAN) -> less_than;
-describe(?OP_EQUALS) -> equals;
-describe(?OP_END) -> 'end'.
-
-describe_mode(?MODE_POS) -> pos;
-describe_mode(?MODE_IMM) -> imm.
-
-%% -define(trace(Fmt, Args), io:format("?TRACE: " ++ Fmt ++ "~n", Args)).
--define(trace(Fmt, Args), ok).
-
 %% This is identical to the day 5 solution, except it can take a list
 %% of inputs with one element for each executed input instruction.
 -spec execute(Prog :: map(),
@@ -45,34 +28,13 @@ execute(Prog, In) ->
   execute(Prog, 0, In, 0).
 
 execute(Prog, PC, In, Out) ->
-  ?trace("", []),
-  ?trace("--- execute PC=~p INPUTS=~p---", [PC, In]),
-
-  R = fun(K) ->
-          V = maps:get(K, Prog, undefined),
-          ?trace("pc=~p reading from pos ~p -> ~p", [PC, K, V]),
-          V
-      end,
-  W = fun(K, V) ->
-          ?trace("pc=~p writing value ~p -> pos ~p", [PC, V, K]),
-          maps:put(K, V, Prog)
-      end,
+  R = fun(K) -> maps:get(K, Prog, undefined) end,
+  W = fun(K, V) -> maps:put(K, V, Prog) end,
 
   %% Read with addressing mode
-  RM = fun(K, ?MODE_POS) ->
-           ?trace("pc=~p addr mode POSITIONAL", [PC]),
-           R(K);
-          (K, ?MODE_IMM) ->
-           ?trace("pc=~p addr mode IMMEDIATE", [PC]),
-           K
+  RM = fun(K, ?MODE_POS) -> R(K);
+          (K, ?MODE_IMM) -> K
        end,
-
-  ?trace("prog ~s",
-        [lists:map(fun({K, V}) when K =:= PC ->
-                       io_lib:format("~p:(~p=~p) ", [K, V, describe(R(K))]);
-                      ({K, V}) ->
-                       io_lib:format("~p:~p ", [K, V])
-                   end, lists:sort(maps:to_list(Prog)))]),
 
   %% Decode the opcode into instruction and addressing mode
   RPC = R(PC),
@@ -84,14 +46,6 @@ execute(Prog, PC, In, Out) ->
   Op1 = R(PC + 1),
   Op2 = R(PC + 2),
   Op3 = R(PC + 3),
-
-  ?trace("pc=~p instr=~p op1=~p (~p) op2=~p (~p) op3=~p",
-        [ PC
-        , describe(Op0)
-        , Op1, describe_mode(M1)
-        , Op2, describe_mode(M2)
-        , Op3
-        ]),
 
   case Op0 of
     ?OP_ADD ->
@@ -120,13 +74,11 @@ execute(Prog, PC, In, Out) ->
       end;
     ?OP_INPUT ->
       [Input|Rest] = In,
-      ?trace("Reading input ~p -> writing to pos ~p", [Input, Op1]),
       execute(W(Op1, Input), PC + 2, Rest, Out);
     ?OP_OUTPUT ->
       %% Out should always be 0, except for the very last, which is
       %% what we return.
       ?assertEqual(0, Out),
-      ?trace("Reading output from pos ~p -> ~p", [Op1, RM(Op1, M1)]),
       execute(Prog, PC + 2, In, RM(Op1, M1));
     ?OP_END ->
       Out
@@ -137,19 +89,14 @@ execute(Prog, PC, In, Out) ->
 chained_execute(_Prog, Input1, []) ->
   Input1;
 chained_execute(Prog, Input1, [Input2|Rest]) ->
-  ?trace("=======================================================", []),
-  ?trace("Executing with input1 = ~p, input2 = ~p", [Input1, Input2]),
   Output = execute(Prog, [Input2, Input1]),
-  ?trace("Output = ~p", [Output]),
   chained_execute(Prog, Output, Rest).
 
 find_best_phase_setting(Prog) ->
-  PhaseSettings =
+  ThrustLevels =
     [begin
        PS = [X1, X2, X3, X4, X5],
-       Output = chained_execute(Prog, 0, PS),
-       %% ?debugFmt("Phase setting ~p -> ~p", [PS, Output]),
-       {Output, PS}
+       chained_execute(Prog, 0, PS)
      end ||
       X1 <- lists:seq(0,4),
       X2 <- lists:seq(0,4),
@@ -161,9 +108,7 @@ find_best_phase_setting(Prog) ->
       X3 =/= X4, X3 =/= X5,
       X4 =/= X5],
 
-  [{Best, _}|_] = lists:reverse(lists:sort(PhaseSettings)),
-  %% ?debugFmt("Best phase setting ~p (output ~p) for ~p", [PhaseSetting, Best, Prog]),
-  Best.
+  lists:max(ThrustLevels).
 
 %%% --- Helpers ---
 
@@ -180,7 +125,7 @@ get_input(InputStr) ->
 %% --- Tests ---
 main_test_() ->
   Prog = get_input(),
-  {"Part 1", ?_assertEqual(unknown, find_best_phase_setting(Prog))}.
+  {"Part 1", ?_assertEqual(70597, find_best_phase_setting(Prog))}.
 
 %% --- Part 1 examples ---
 
