@@ -5,69 +5,75 @@
 -define(KEY_STRETCH, 2016).
 -define(INPUT, "ahsbgdzn").
 
+%% ****** Process <0.733.0>    -- 100.00 % of profiled time ***
+%% FUNCTION                                                    CALLS        %       TIME  [uS / CALLS]
+%% --------                                                    -----  -------       ----  [----------]
+%% aoc2016_day14:'-main_test_/0-fun-3-'/1                      23412     0.01      21932  [      0.94]
+%% aoc2016_day14:find_key/5                                    47980     0.01      26137  [      0.54]
+%% erlang:'++'/2                                               48017     0.01      41114  [      0.86]
+%% erlang:integer_to_list/1                                    47980     0.01      45829  [      0.96]
+%% aoc2016_day14:has3/1                                      1406742     0.08     306807  [      0.22]
+%% aoc2016_day14:has5/1                                      1391171     0.11     389012  [      0.28]
+%% aoc2016_day14:md5_stretched/2                            47224021     2.03    7353875  [      0.16]
+%% aoc2016_day14:md5_to_hexstring/1                         47200608     3.77   13682732  [      0.29]
+%% aoc2016_day14:md5/1                                      47248597     4.01   14559478  [      0.31]
+%% erlang:md5/1                                             47248597     5.73   20780954  [      0.44]
+%% aoc2016_day14:digest_to_hexstring/1                      47200610     5.80   21027578  [      0.45]
+%% aoc2016_day14:'-digest_to_hexstring/1-lbc$^0/2-0-'/2   1557620130    78.43  284548517  [      0.18]
+
+
 main_test_() ->
   [ {"Part 1",
-     {timeout, 60,
-      ?_assertEqual(23890, find_nth_key(?INPUT, list_to_atom(?INPUT), 64, fun hash_at/3))}}
+     ?_assertEqual(23890, find_key(?INPUT, fun md5/1))}
   , {"Part 2",
      timeout, 600,
-     ?_assertEqual(22696, find_nth_key(?INPUT, list_to_atom(?INPUT), 64, fun hash_at2/3))}
+     ?_assertEqual(22696, find_key(?INPUT, fun(S) -> md5_stretched(S, 2016) end))}
   ].
 
-find_nth_key(Salt, SaltA, KeyLimit, HashFun) ->
-  find_nth_key(Salt, SaltA, KeyLimit, HashFun, 0, 1).
+find_key(Salt, HashFun) ->
+  find_key(Salt, HashFun, 0, #{}, []).
 
-find_nth_key(Salt, SaltA, KeyLimit, HashFun, Index, CurrKey) ->
-  case is_key(Salt, SaltA, Index, HashFun) of
-    true when CurrKey =:= KeyLimit ->
-      Index;
-    true ->
-      find_nth_key(Salt, SaltA, KeyLimit, HashFun, Index + 1, CurrKey + 1);
-    false ->
-      find_nth_key(Salt, SaltA, KeyLimit, HashFun, Index + 1, CurrKey)
+find_key(Salt, HashFun, N, Threes, Keys) ->
+  Digest = HashFun(Salt ++ integer_to_list(N)),
+
+  Keys0 =
+    case has5(Digest) of
+      false -> Keys;
+      C5 ->
+        %% Get list of indices which have a matching 3-sequence
+        NewKeys =
+          lists:filter(fun(I) ->
+                           (N - I) =< 1000
+                       end, maps:get(C5, Threes, [])),
+
+        %%?debugFmt("Found 5-sequence of ~w at ~w, adding new keys ~w",
+        %%          [C5, N, NewKeys]),
+
+        lists:sort(NewKeys ++ Keys)
+    end,
+
+  case length(Keys0) of
+    L when L >= 64 ->
+      %% We have found (at least) 64 keys, so return the 64th.
+      %% Eventually we must continue until we find a 5-sequence which
+      %% is more than 1000 indexes larger than the largest key we
+      %% have.
+      lists:nth(64, Keys0);
+    _ ->
+      Threes0 =
+        case has3(Digest) of
+          false -> Threes;
+          C3 ->
+            %% ?debugFmt("Found 3-sequence of ~w at ~p", [C3, N]),
+            maps:update_with(
+              C3,
+              fun(Old) -> [N|Old] end,
+              [N], Threes)
+        end,
+
+      find_key(Salt, HashFun, N + 1, Threes0, Keys0)
   end.
 
-%% Return true if the hash at the given index is a key.
-is_key(Salt, SaltA, Index) ->
-  is_key(Salt, SaltA, Index, fun hash_at/3).
-
-is_key(Salt, SaltA, Index, HashFun) ->
-  case has3(HashFun(Salt, SaltA, Index)) of
-    false -> false;
-    C ->
-      lists:any(fun(Idx5) ->
-                    has5(HashFun(Salt, SaltA, Idx5), C)
-                end, lists:seq(Index + 1, Index + 1000))
-  end.
-
-%% Compute the hash at the given Index. For part 1 of the puzzle, we
-%% don't really need to cache the values.
-hash_at(Salt, _SaltA, Index) ->
-  md5(Salt ++ integer_to_list(Index)).
-
-%% Hash function for part 2, where we repeat md5 hashing 2016 times.
-hash_at2(Salt, SaltA, Index) ->
-  Key = {SaltA, Index},
-  case get(Key) of
-    undefined ->
-      Hash = hash_at2(Salt, SaltA, Index, ?KEY_STRETCH, hash_at(Salt, SaltA, Index)),
-      put(Key, Hash),
-      Hash;
-    Hash ->
-      Hash
-  end.
-
-hash_at2(_Salt, _SaltA, _Index, 0, Acc) ->
-  Acc;
-hash_at2(Salt, SaltA, Index, N, Acc) ->
-  hash_at2(Salt, SaltA, Index, N - 1, erlang:md5(digest_to_hexstring(Acc))).
-
-%%% Helpers
-
-%% Returns if the given MD5 digest has a 3-letter sequence. Returns
-%% the letter or the atom 'false' if no such sequence is found. Note
-%% that converting the MD5 digest to a string is not necessary; we can
-%% check for 3- and 5-sequences on the raw binary.
 has3(Binary) when bit_size(Binary) < 12 ->
   false; %% Less than 3 chars left (3 * 4)
 has3(<<C:4,C:4,C:4,_/bitstring>>) ->
@@ -75,22 +81,24 @@ has3(<<C:4,C:4,C:4,_/bitstring>>) ->
 has3(<<_:4,Rest/bitstring>>) ->
   has3(Rest).
 
-%% If Hash has a 5-letter sequence of C, return true, otherwise return
-%% false.
-has5(Binary, _) when bit_size(Binary) < 20 ->
+has5(Binary) when bit_size(Binary) < 20 ->
   false; %% Less than 5 chars left (5 * 4)
-has5(<<C:4,C:4,C:4,C:4,C:4,_/bitstring>>, C) ->
-  true;
-has5(<<_:4,Rest/bitstring>>, C) ->
-  has5(Rest, C).
+has5(<<C:4,C:4,C:4,C:4,C:4,_/bitstring>>) ->
+  C;
+has5(<<_:4,Rest/bitstring>>) ->
+  has5(Rest).
 
 md5(S) ->
   erlang:md5(S).
 
-%% Convert a binary digest (i.e. output from erlang:md5/1) to a
-%% lower-case hexadecimal string binary. This is where the program
-%% spends most of its time.
--spec digest_to_hexstring(binary()) -> binary().
+md5_to_hexstring(S) ->
+  digest_to_hexstring(md5(S)).
+
+md5_stretched(S, 0) ->
+  md5(S);
+md5_stretched(S, N) ->
+  md5_stretched(md5_to_hexstring(S), N - 1).
+
 digest_to_hexstring(Binary) ->
   << << (if N =< 9 -> N + $0;
             true -> N + 87
@@ -100,8 +108,6 @@ digest_to_hexstring(Binary) ->
 %% Unit tests
 %% ------------------------------------------------------------
 
--ifdef(EUNIT).
-
 has3_test_() ->
   [ ?_assertNot(        has3(md5("abc0")))
   , ?_assertEqual(8,    has3(md5("abc18")))
@@ -110,36 +116,15 @@ has3_test_() ->
   ].
 
 has5_test_() ->
-  [ ?_assertNot(has5(md5("abc0"),   0))
-  , ?_assert(   has5(md5("abc816"), 16#e))
-  , ?_assert(   has5(md5("abc200"), 9))
-  ].
-
-hash_at_test_() ->
-  [
-   %% The second of these should hit the cache.
-   ?_assertEqual(md5("abc0"), hash_at("abc", 'abc', 0)),
-   ?_assertEqual(md5("abc0"), hash_at("abc", 'abc', 0))
+  [ ?_assertNot(        has5(md5("abc0")))
+  , ?_assertEqual(16#e, has5(md5("abc816")))
+  , ?_assertEqual(9,    has5(md5("abc200")))
   ].
 
 digest_to_hexstring_test_() ->
   ?_assertEqual(<<"577571be4de9dcce85a041ba0410f29f">>,
                 digest_to_hexstring(md5("abc0"))).
 
-hash_at2_test_() ->
-  ?_assertMatch(<<16#a1,16#07,16#ff,_/bitstring>>,
-                hash_at2("abc", 'abc', 0)).
-
-is_key_test_() ->
-  [ ?_assertNot(is_key("abc", 'abc', 18))
-  , ?_assert(is_key("abc", 'abc', 39))
-  , ?_assertNot(is_key("abc", 'abc', 40))
-  , ?_assert(is_key("abc", 'abc', 92))
-  ].
-
-is_key2_test_() ->
-  [ {timeout, 60, ?_assertNot(is_key("abc", 'abc', 5, fun hash_at2/3))}
-  , {timeout, 60, ?_assert(is_key("abc", 'abc', 10, fun hash_at2/3))}
-  ].
-
--endif.
+md5_stretched_test_() ->
+  ?_assertEqual(<<"a107ff634856bb300138cac6568c0f24">>,
+                digest_to_hexstring(md5_stretched("abc0", 2016))).
