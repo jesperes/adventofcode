@@ -1,9 +1,10 @@
 -module(aoc2016_day14).
-
 -include_lib("eunit/include/eunit.hrl").
 
 -define(KEY_STRETCH, 2016).
 -define(INPUT, "ahsbgdzn").
+
+-export([profile/0]).
 
 %% ****** Process <0.733.0>    -- 100.00 % of profiled time ***
 %% FUNCTION                                                    CALLS        %       TIME  [uS / CALLS]
@@ -21,6 +22,9 @@
 %% aoc2016_day14:digest_to_hexstring/1                      47200610     5.80   21027578  [      0.45]
 %% aoc2016_day14:'-digest_to_hexstring/1-lbc$^0/2-0-'/2   1557620130    78.43  284548517  [      0.18]
 
+profile() ->
+  eprof:profile(fun() -> aoc2016_day14:test() end),
+  eprof:analysze().
 
 main_test_() ->
   [ {"Part 1",
@@ -91,13 +95,10 @@ has5(<<_:4,Rest/bitstring>>) ->
 md5(S) ->
   erlang:md5(S).
 
-md5_to_hexstring(S) ->
-  digest_to_hexstring(md5(S)).
-
 md5_stretched(S, 0) ->
   md5(S);
 md5_stretched(S, N) ->
-  md5_stretched(md5_to_hexstring(S), N - 1).
+  md5_stretched(digest_to_hexstring(md5(S)), N - 1).
 
 digest_to_hexstring(Binary) ->
   << << (if N =< 9 -> N + $0;
