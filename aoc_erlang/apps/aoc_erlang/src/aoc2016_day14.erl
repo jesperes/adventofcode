@@ -9,20 +9,11 @@
 -define(USE_NIF, 1).
 
 -ifdef(USE_NIF).
+
 -on_load(init/0).
 
-realpath(S) ->
-  string:trim(os:cmd(io_lib:format("realpath '~s'", [S]))).
-
-find_file(Name) ->
-  NS = realpath(Name),
-  case filelib:is_file(NS) of
-    true -> NS;
-    false -> find_file(realpath(filename:join("..", Name)))
-  end.
-
 init() ->
-  File = find_file("c_src/aoc2016_day14.so"),
+  File = filename:join(?NIF_DIR, "aoc2016_day14.so"),
   ok = erlang:load_nif(filename:rootname(File), 0).
 
 -endif.
@@ -46,10 +37,6 @@ find_key(Salt, HashFun, N, Threes, Keys) ->
           lists:filter(fun(I) ->
                            (N - I) =< 1000
                        end, maps:get(C5, Threes, [])),
-
-        %%?debugFmt("Found 5-sequence of ~w at ~w, adding new keys ~w",
-        %%          [C5, N, NewKeys]),
-
         lists:sort(NewKeys ++ Keys)
     end,
 
@@ -65,7 +52,6 @@ find_key(Salt, HashFun, N, Threes, Keys) ->
         case has3(Digest) of
           false -> Threes;
           C3 ->
-            %% ?debugFmt("Found 3-sequence of ~w at ~p", [C3, N]),
             maps:update_with(
               C3,
               fun(Old) -> [N|Old] end,
