@@ -7,11 +7,12 @@
 -define(W, 25).
 -define(H, 6).
 -define(LSIZE, 150). %% Number of pixels per layer
--define(NUMLAYERS, 100).
 
 -define(BLACK, $0).
 -define(WHITE, $1).
 -define(TRANSPARENT, $2).
+
+layers() -> lists:seq(0, 99).
 
 %% === [ Part 1 ] ===
 
@@ -20,13 +21,7 @@ part1(Binary) ->
     lists:min(
       lists:map(
         fun(Layer) ->
-            %% Indexes of the pixels belonging to this layer.
-            LayerPixels =
-              lists:seq(Layer * ?LSIZE,
-                        (Layer + 1) * ?LSIZE - 1),
-
-            %% Fold this fun over all the pixels belonging to the
-            %% layer, counting the number of 0s, 1s, and 2s.
+            %% Count 0/1/2 in this layer
             Fun = fun(N, {N0, N1, N2} = Acc) ->
                       case binary:at(Binary, N) of
                         $0 -> {N0 + 1, N1, N2};
@@ -35,24 +30,25 @@ part1(Binary) ->
                         _ -> Acc
                       end
                   end,
-            lists:foldl(Fun, {0, 0, 0}, LayerPixels)
-        end, lists:seq(0, ?NUMLAYERS - 1))),
+            lists:foldl(Fun, {0, 0, 0},
+                        lists:seq(Layer * ?LSIZE,
+                                  (Layer + 1) * ?LSIZE - 1))
+        end, layers())),
   Ones * Twos.
 
 %% === [ Part 2 ] ===
 
 part2(Binary) ->
   lists:flatten(
-    [[compute_pixel_at({X, Y}, Binary) ||
+    [[pixel_at({X, Y}, Binary) ||
        X <- lists:seq(0, ?W - 1)] ++ "\n" ||
       Y <- lists:seq(0, ?H - 1)]).
 
-compute_pixel_at({X, Y}, Binary) ->
-  compose(
-    lists:map(fun(Layer) ->
-                  Index = Layer * ?LSIZE + Y * ?W + X,
-                  binary:at(Binary, Index)
-              end, lists:seq(0, ?NUMLAYERS - 1))).
+pixel_at({X, Y}, Binary) ->
+  compose(lists:map(
+            fun(Layer) ->
+                binary:at(Binary, Layer * ?LSIZE + Y * ?W + X)
+            end, layers())).
 
 compose([?WHITE|_]) -> $#;
 compose([?BLACK|_]) -> $\ ;
