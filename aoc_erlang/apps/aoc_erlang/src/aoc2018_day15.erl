@@ -15,7 +15,7 @@
 
 main_test_() ->
   Input = inputs:get_as_binary(2018, 15),
-  [ {"Part 1", ?_assertEqual(237996, part1(Input))}
+  [ {"Part 1", timeout, 60, ?_assertEqual(237996, part1(Input))}
   , {"Part 2", timeout, 60, ?_assertEqual(69700, part2(Input))}
   ].
 

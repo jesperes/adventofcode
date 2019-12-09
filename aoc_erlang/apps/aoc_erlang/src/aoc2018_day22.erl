@@ -4,8 +4,8 @@
 main_test_() ->
   Target = {8, 701, 1}, %% 1 == torch
   Grid = compute_grid(150, 800, 5913, Target),
-  [ {"Part 1", ?_assertEqual(6256, part1(Grid))}
-  , {"Part 2", ?_assertEqual(973, part2(Grid))}
+  [ {"Part 1", timeout, 60, ?_assertEqual(6256, part1(Grid))}
+  , {"Part 2", timeout, 60, ?_assertEqual(973, part2(Grid))}
   ].
 
 compute_grid_cell(X, Grid) ->

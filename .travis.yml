@@ -10,6 +10,7 @@ matrix:
     - language: erlang
       name: Erlang solutions
       before_script: cd aoc_erlang
+      script: rebar3 do compile,eunit,ct
       otp_release: 22.1
 
     - language: c
