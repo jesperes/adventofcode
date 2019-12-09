@@ -3,6 +3,8 @@
 -include_lib("stdlib/include/assert.hrl").
 
 -export([ all/0
+        , init_per_suite/1
+        , end_per_suite/1
         , day_1/1
         , day_2/1
         , day_3/1
@@ -25,6 +27,15 @@ all() ->
   , day_8
   , day_9
   ].
+
+init_per_suite(Config) ->
+  lists:keystore(start_time, 1, Config,
+                 {start_time, erlang:system_time(microsecond)}).
+
+end_per_suite(Config) ->
+  {start_time, Start} = lists:keyfind(start_time, 1, Config),
+  Now = erlang:system_time(microsecond),
+  ct:print("Elapsed time: ~p seconds", [(Now - Start) / 1000000]).
 
 day_1(_Config) -> ?assertEqual(ok, eunit:test(aoc2019_day01, [verbose])).
 day_2(_Config) -> ?assertEqual(ok, eunit:test(aoc2019_day02, [verbose])).
