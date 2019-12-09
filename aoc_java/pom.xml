@@ -46,7 +46,7 @@
 					<printSummary>true</printSummary>
 					<runOrder>alphabetical</runOrder>
 					<includes>
-						<include>**/Day*.java</include>
+						<include>**/Aoc20*Suite.java</include>
 					</includes>
 				</configuration>
 			</plugin>
