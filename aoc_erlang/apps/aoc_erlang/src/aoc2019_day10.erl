@@ -51,11 +51,12 @@ direction({X0, Y0}, {X1, Y1}) ->
 -spec get_input() -> list(asteroid()).
 get_input() ->
   Binary = inputs:get_as_binary(2019, 10),
-  %% Grid is 33 chars wide (+ newline)
-  parse_grid(Binary, 33).
+  %% Grid is 34 chars wide (+ newline)
+  parse_grid(Binary, 34).
 
 -spec parse_grid(binary(), Width :: integer()) -> list(asteroid()).
 parse_grid(Binary, Width) ->
+  ?assertEqual($\n, binary:at(Binary, Width)),
   lists:map(fun({Start, _} = _Match) ->
                 %% +1 is for the newline.
                 {_X = Start rem (Width + 1), _Y = Start div (Width + 1)}
