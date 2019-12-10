@@ -20,31 +20,91 @@ part1(Asteroids) ->
   %% a map of (integer() -> list(Asteroids)), where the integer is the
   %% slope (direction), and the list contains all the asteroids which
   %% lie along that line.
-  AstroidsGroupedByVisibility =
+  AsteroidsGroupedByVisibility =
     lists:foldl(
       fun({A, B, Dir}, Map) ->
+          Dist = distance(A, B),
           maps:update_with(
             A, fun(OldMap) ->
                    maps:update_with(
                      Dir, fun(OldList) ->
-                              [B|OldList]
-                          end, [B], OldMap)
-               end, #{Dir => [B]}, Map)
+                              [{Dist, B}|OldList]
+                          end, [{Dist, B}], OldMap)
+               end, #{Dir => [{Dist, B}]}, Map)
       end, #{}, AsteroidDirs),
 
-  maps:fold(fun(K, V, {_, Max, _} = Acc) ->
-                case maps:size(V) of
-                  Len when Len > Max -> {K, Len, V};
-                  _ -> Acc
-                end
-            end, {undef, 0, []}, AstroidsGroupedByVisibility).
+  %% Find answer to part 1: the asteroids where we can see most other
+  %% asteroids.
+  {_, Part1, VisibleAsteroids} =
+    maps:fold(fun(K, V, {_, Max, _} = Acc) ->
+                  case maps:size(V) of
+                    Len when Len > Max -> {K, Len, V};
+                    _ -> Acc
+                  end
+              end, {undef, 0, []}, AsteroidsGroupedByVisibility),
 
-part2(_Input) ->
-  ?debugMsg("Not implemented."),
-  0.
+  %% Find out which asteroids we should fire at, and in which order.
+  %% Part 2 solution is to find the 200th destroyed
+  %% asteroid. Fortunately, we only need to fire at the closest
+  %% asteroids; as 200 < 334 (which is the number of visible
+  %% asteroids.
+  FiringOrder =
+    lists:map(fun(Dir) ->
+                  lists:min(maps:get(Dir, VisibleAsteroids))
+              end, lists:sort(maps:keys(VisibleAsteroids))),
 
+  Part2 = fire_ze_huge_lazer(FiringOrder, 1),
+  {Part1, Part2}.
+
+fire_ze_huge_lazer([], _) ->
+  not_enough_asteroids; %% This should only happen with tests
+fire_ze_huge_lazer([{_, {X, Y}}|Orders], N) ->
+  case N of
+    200 -> X * 100 + Y;
+    _ -> fire_ze_huge_lazer(Orders, N + 1)
+  end.
+
+%% ---- [ Helpers ] ----
+
+distance({X0, Y0}, {X1, Y1}) ->
+  math:sqrt(math:pow(X1 - X0, 2) +
+              math:pow(Y1 - Y0, 2)).
+
+%% When using floats as keys, we need to make sure there are no
+%% rounding errors.
+f_to_i(F) -> floor(F * 1000000).
+
+%% Return the angle (in radians) of the vector {X0,Y0} -> {X1, Y1}.
 direction({X0, Y0}, {X1, Y1}) ->
-  floor(math:atan2(Y1 - Y0, X1 - X0) * 1000000).
+  Dx = X1 - X0,
+  Dy = Y1 - Y0,
+  Pi = 3.141592653589793,
+  %% This yuck is to get an angle where 0 is north, and increases
+  %% clock-wise.
+  Z = math:atan2(-Dy, Dx) + 3*Pi/2,
+  Z0 = if Z > 2*Pi -> Z - 2*Pi;
+          true -> Z
+       end,
+  f_to_i(2*Pi - Z0).
+
+dir_test_() ->
+  Pi = 3.141592653589793,
+  Pi2 = (2 * f_to_i(Pi)),
+
+  [ ?_assertEqual(0, direction({0, 0}, {0, -1}))       % N
+  , ?_assertEqual(785398, direction({0, 0}, {1, -1}))  % NW
+  , ?_assertEqual(1570796, direction({0, 0}, {1, 0}))  % E
+  , ?_assertEqual(2356194, direction({0, 0}, {1, 1}))  % SE
+  , ?_assertEqual(3141592, direction({0, 0}, {0, 1}))  % S
+  , ?_assertEqual(3926990, direction({0, 0}, {-1, 1})) % SW
+  , ?_assertEqual(4712388, direction({0, 0}, {-1, 0})) % W
+  , ?_assertEqual(5497787, direction({0, 0}, {-1, -1})) % NW
+  , ?_assert(begin
+               Pi2 = (2 * f_to_i(Pi)),
+               D = direction({0, 0}, {-1, -100}),
+               (D >= 0) and (D < Pi2)
+             end)
+  ].
 
 %% Input reader (place downloaded input file in
 %% priv/inputs/2019/input10.txt).
@@ -57,26 +117,15 @@ get_input() ->
 -spec parse_grid(binary(), Width :: integer()) -> list(asteroid()).
 parse_grid(Binary, Width) ->
   ?assertEqual($\n, binary:at(Binary, Width)),
-  lists:map(fun({Start, _} = _Match) ->
-                %% +1 is for the newline.
-                {_X = Start rem (Width + 1), _Y = Start div (Width + 1)}
+  lists:map(fun({Offset, _} = _Match) ->
+                {Offset rem (Width + 1), Offset div (Width + 1)}
             end, binary:matches(Binary, <<"#">>)).
 
 %% Tests
 
-%% Too high: (You guessed 337.)
-%% Too high: (You guessed 336.)
-%% Wrong:    (You guessed 335.)
-%% Wrong:    (You guessed 333.)
-%% Too low:  (You guessed 330.)
-%% Guessed correct answer: 334, but code still gives 337...
-
 main_test_() ->
   Input = get_input(),
-
-  [ {"Part 1", ?_assertMatch({_, 334, _}, part1(Input))}
-    %%   , {"Part 2", ?_assertEqual(0, part2(Input))}
-  ].
+  {"Part 1 & 2", ?_assertMatch({334, 1119}, part1(Input))}.
 
 ex1_test_() ->
   Binary = <<".#..#\n",
@@ -85,7 +134,7 @@ ex1_test_() ->
              "....#\n",
              "...##\n">>,
   Asteroids = parse_grid(Binary, 5),
-  ?_assertMatch({{3,4}, 8, _}, part1(Asteroids)).
+  ?_assertMatch({8, _}, part1(Asteroids)).
 
 ex2_test_() ->
   Binary = <<"......#.#.\n",
@@ -99,7 +148,7 @@ ex2_test_() ->
              "##...#..#.\n",
              ".#....####\n">>,
   Asteroids = parse_grid(Binary, 10),
-  ?_assertMatch({{5, 8}, 33, _}, part1(Asteroids)).
+  ?_assertMatch({33, _}, part1(Asteroids)).
 
 ex3_test_() ->
   Binary = <<".#..#..###\n",
@@ -113,7 +162,7 @@ ex3_test_() ->
              ".##...##.#\n",
              ".....#.#..\n">>,
   Asteroids = parse_grid(Binary, 10),
-  ?_assertMatch({{6, 3}, 41, _}, part1(Asteroids)).
+  ?_assertMatch({41, _}, part1(Asteroids)).
 
 ex4_test_() ->
   Binary = <<"#.#...#.#.\n",
@@ -127,7 +176,7 @@ ex4_test_() ->
              "......#...\n",
              ".####.###.\n">>,
   Asteroids = parse_grid(Binary, 10),
-  ?_assertMatch({{1, 2}, 35, _}, part1(Asteroids)).
+  ?_assertMatch({35, _}, part1(Asteroids)).
 
 ex5_test_() ->
   Binary = <<".#..##.###...#######\n",
@@ -151,7 +200,9 @@ ex5_test_() ->
              "#.#.#.#####.####.###\n",
              "###.##.####.##.#..##\n">>,
   Asteroids = parse_grid(Binary, 20),
-  ?_assertMatch({{11, 13}, 210, _}, part1(Asteroids)).
+  [ ?_assertMatch({210, _}, part1(Asteroids))
+  ].
+
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:
