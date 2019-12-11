@@ -9,6 +9,7 @@
         , day_2/1
         , day_3/1
         , day_4/1
+        , day_5/1
         ]).
 
 all() ->
@@ -16,6 +17,7 @@ all() ->
   , day_2
   , day_3
   , day_4
+  , day_5
   ].
 
 init_per_suite(Config) ->
@@ -32,5 +34,5 @@ day_2(_Config) -> ?assertEqual(ok, eunit:test(aoc2017_day02, [verbose])).
 day_3(_Config) ->
   ?assertEqual(ok, eunit:test(aoc2017_day03_part1, [verbose])),
   ?assertEqual(ok, eunit:test(aoc2017_day03_part2, [verbose])).
-day_4(_Config) ->
-  ?assertEqual(ok, eunit:test(aoc2017_day04, [verbose])).
+day_4(_Config) -> ?assertEqual(ok, eunit:test(aoc2017_day04, [verbose])).
+day_5(_Config) -> ?assertEqual(ok, eunit:test(aoc2017_day05, [verbose])).

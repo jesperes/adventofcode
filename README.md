@@ -45,14 +45,14 @@ C:   C
 | 1   | EJ   | EJ   | E    | EJC  | EJ   |
 | 2   | EJ   | E    | E    | EJ   | EJ   |
 | 3   | EJ   | E    | E    | E    | EJ   |
-| 4   | EJ   | E    | J    | E    | EJ   |
-| 5   | EJ   | E    | J    | EJ   | EJ   |
+| 4   | EJ   | E    | EJ   | E    | EJ   |
+| 5   | EJ   | E    | EJ   | EJ   | EJ   |
 | 6   | EJC  | E    | J    | E    | E    |
 | 7   | EJ   | E    | J    | E    | E    |
 | 8   | EJ   | E    | J    | E    | E    |
 | 9   | EJ   | EJ   |      | E    | E    |
-| 10  | EJ   | E    | J    | E    |      |
-| 11  | EJ   |      | J    | E    |      |
+| 10  | EJ   | E    | J    | E    | E    |
+| 11  | EJ   |      | J    | E    | E    |
 | 12  | EJ   | E    | J    | E    |      |
 | 13  | EJ   | E    | J    | EJ   |      |
 | 14  | EJ   | EJC  | J    | EJ   |      |

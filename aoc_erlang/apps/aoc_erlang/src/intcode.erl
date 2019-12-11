@@ -4,8 +4,7 @@
 -include_lib("eunit/include/eunit.hrl").
 
 %% API
--export([
-          execute/1
+-export([ execute/1
         , execute/2
         , execute/4
         , parse/1
