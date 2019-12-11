@@ -4,28 +4,13 @@
 -module(aoc2019_day09).
 -include_lib("eunit/include/eunit.hrl").
 
-
-%% Puzzle solution
-part1(Input) ->
-  {_, [Out]} = intcode:execute(Input, [1]),
-  Out.
-
-part2(Input) ->
-  {_, [Out]} = intcode:execute(Input, [2]),
-  Out.
-
-%% --- [ Input/parsing ] ---
-
-get_input() ->
-  inputs:get_as_string(2019, 09).
-
 %% --- [ Tests ] ---
 
 main_test_() ->
-  Input = intcode:parse(get_input()),
+  Input = intcode:parse(inputs:get_as_string(2019, 09)),
 
-  [ {"Part 1", ?_assertEqual(2594708277, part1(Input))}
-  , {"Part 2", ?_assertEqual(87721, part2(Input))}
+  [ {"Part 1", ?_assertMatch({_, [2594708277]}, intcode:execute(Input, [1]))}
+  , {"Part 2", ?_assertMatch({_, [87721]}, intcode:execute(Input, [2]))}
   ].
 
 ex1_test_() ->
