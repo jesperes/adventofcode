@@ -148,11 +148,9 @@ execute(Prog, PC, RelBase, In, Out, State) ->
       execute(Prog, PC + 2, RelBase + RM(Op1, M1), In, Out, State);
     ?OP_INPUT ->
       {State0, Input} = In(State),
-      ?assert(is_map(State0)),
       execute(W(Op1, M1, Input), PC + 2, RelBase, In, Out, State0);
     ?OP_OUTPUT ->
       State0 = Out(RM(Op1, M1), State),
-      ?assert(is_map(State0)),
       execute(Prog, PC + 2, RelBase, In, Out, State0);
     ?OP_END ->
       {Prog, State}
