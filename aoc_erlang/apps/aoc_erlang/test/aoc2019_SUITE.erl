@@ -14,6 +14,8 @@
         , day_7/1
         , day_8/1
         , day_9/1
+        , day_10/1
+        , day_11/1
         ]).
 
 all() ->
@@ -26,6 +28,8 @@ all() ->
   , day_7
   , day_8
   , day_9
+  , day_10
+  , day_11
   ].
 
 init_per_suite(Config) ->

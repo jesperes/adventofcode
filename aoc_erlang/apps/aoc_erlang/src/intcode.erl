@@ -52,8 +52,10 @@ execute(Prog) ->
   execute(Prog, []).
 
 %% Execute an IntCode program. Inputs are passed as list, and output
-%% values are returned when the program exits (most recent output
-%% first).
+%% values are returned when the program exits. Note that the order of
+%% these is in reverse (most recent output first), so the list has to
+%% be reversed to get the outputs in the order in which the program
+%% outputed them.
 %%
 %% @param Prog     The IntCode program to execute.
 %% @param Input    List of integers to supply as input.
