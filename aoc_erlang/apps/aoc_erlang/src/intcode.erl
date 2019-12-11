@@ -89,7 +89,8 @@ execute(Prog, Input) ->
               Input :: intcode_input(),
               Output :: intcode_output(),
               InitState :: term()) ->
-                 {intcode_program(), intcode_state()}.
+                 {OutProg :: intcode_program(),
+                  OutState :: intcode_state()}.
 execute(Prog, Input, Output, State) ->
   execute(Prog, 0, 0, Input, Output, State).
 
