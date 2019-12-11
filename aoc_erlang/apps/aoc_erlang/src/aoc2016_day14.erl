@@ -115,7 +115,6 @@ has5_test_() ->
 digest_to_hexstring_test_() ->
   [?_assertEqual(<<"577571be4de9dcce85a041ba0410f29f">>,
                  digest_to_hexstring(erlang:md5("abc0"))),
-   ?_assertException(error, _, digest_to_hexstring(0)),
    ?_assertException(error, _, digest_to_hexstring(<<>>))
   ].
 

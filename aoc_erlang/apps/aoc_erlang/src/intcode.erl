@@ -46,7 +46,8 @@
 
 %% Execute an IntCode program. No inputs can be provided, and all the
 %% outputs are returned in a list.
--spec execute(Prog :: intcode_program()) -> Outputs :: list(integer()).
+-spec execute(Prog :: intcode_program()) -> {Prog :: intcode_program() ,
+                                             Outputs :: list(integer())}.
 execute(Prog) ->
   execute(Prog, []).
 

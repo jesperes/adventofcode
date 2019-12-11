@@ -13,7 +13,7 @@
 -define(BLACK, 0).
 
 part1(Prog) ->
-  Grid =
+  {_, Grid} =
     intcode:execute(Prog, fun input/1, fun output/2,
                     #{ pos => {0, 0}
                      , dir => 0
@@ -26,7 +26,7 @@ part1(Prog) ->
 
 
 part2(Prog) ->
-  Grid =
+  {_, Grid} =
     intcode:execute(Prog, fun input/1, fun output/2,
                     #{ pos => {0, 0}
                      , dir => 0

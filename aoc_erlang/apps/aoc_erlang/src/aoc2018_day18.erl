@@ -27,34 +27,34 @@ start2(_Input) ->
 
 %% TODO detect loop automatically
 
-iter(968) -> 178398;
-iter(969) -> 175593;
-iter(970) -> 175593;
-iter(971) -> 175840;
-iter(972) -> 176782;
-iter(973) -> 179034;
-iter(974) -> 180800;
-iter(975) -> 183218;
-iter(976) -> 186472;
-iter(977) -> 188679;
-iter(978) -> 192560;
-iter(979) -> 193050;
-iter(980) -> 197568;
-iter(981) -> 200260;
-iter(982) -> 199841;
-iter(983) -> 204516;
-iter(984) -> 208547;
-iter(985) -> 211584;
-iter(986) -> 214635;
-iter(987) -> 214635;
-iter(988) -> 216389;
-iter(989) -> 218160;
-iter(990) -> 217540;
-iter(991) -> 212576;
-iter(992) -> 208362;
-iter(993) -> 196305;
-iter(994) -> 189610;
-iter(995) -> 181044.
+%% iter(968) -> 178398;
+%% iter(969) -> 175593;
+%% iter(970) -> 175593;
+%% iter(971) -> 175840;
+iter(972) -> 176782.
+%% iter(973) -> 179034;
+%% iter(974) -> 180800;
+%% iter(975) -> 183218;
+%% iter(976) -> 186472;
+%% iter(977) -> 188679;
+%% iter(978) -> 192560;
+%% iter(979) -> 193050;
+%% iter(980) -> 197568;
+%% iter(981) -> 200260;
+%% iter(982) -> 199841;
+%% iter(983) -> 204516;
+%% iter(984) -> 208547;
+%% iter(985) -> 211584;
+%% iter(986) -> 214635;
+%% iter(987) -> 214635;
+%% iter(988) -> 216389;
+%% iter(989) -> 218160;
+%% iter(990) -> 217540;
+%% iter(991) -> 212576;
+%% iter(992) -> 208362;
+%% iter(993) -> 196305;
+%% iter(994) -> 189610;
+%% iter(995) -> 181044.
 
 %% Only defined when N >= ?CYCLE_BASE.
 cyclic_pattern(N) when N >= ?CYCLE_BASE ->
@@ -97,11 +97,6 @@ parse_line([$.|Rest], X, Y, Grid) ->
   parse_line(Rest, X + 1, Y, G0);
 parse_line([_|Rest], X, Y, Grid) ->
   parse_line(Rest, X + 1, Y, Grid).
-
-%% grid_to_string(Grid, MaxX, MaxY) ->
-%%     [[ maps:get({X, Y}, Grid, '?') ||
-%%          X <- lists:seq(0, MaxX - 1) ] ++ "\n" ||
-%%         Y <- lists:seq(0, MaxY - 1) ].
 
 coords(MaxX, MaxY) ->
   [ {X, Y} ||
