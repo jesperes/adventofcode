@@ -48,3 +48,5 @@ day_7(_Config) ->
   ?assertEqual(ok, eunit:test(aoc2019_day07_part2, [verbose])).
 day_8(_Config) -> ?assertEqual(ok, eunit:test(aoc2019_day08, [verbose])).
 day_9(_Config) -> ?assertEqual(ok, eunit:test(aoc2019_day09, [verbose])).
+day_10(_Config) -> ?assertEqual(ok, eunit:test(aoc2019_day10, [verbose])).
+day_11(_Config) -> ?assertEqual(ok, eunit:test(aoc2019_day11, [verbose])).

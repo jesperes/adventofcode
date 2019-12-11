@@ -4,7 +4,10 @@
 -include_lib("eunit/include/eunit.hrl").
 
 %% API
--export([ execute/4
+-export([
+          execute/1
+        , execute/2
+        , execute/4
         , parse/1
         ]).
 
@@ -40,6 +43,37 @@
                                State :: integer())
                               -> NewState :: intcode_state()).
 
+
+%% Execute an IntCode program. No inputs can be provided, and all the
+%% outputs are returned in a list.
+-spec execute(Prog :: intcode_program()) -> Outputs :: list(integer()).
+execute(Prog) ->
+  execute(Prog, []).
+
+%% Execute an IntCode program. Inputs are passed as list, and output
+%% values are returned when the program exits (most recent output
+%% first).
+%%
+%% @param Prog     The IntCode program to execute.
+%% @param Input    List of integers to supply as input.
+%% @returns Output List of integers the program sent to the OUTPUT
+%%                 instruction.
+-spec execute(Prog :: intcode_program(),
+              Input :: list(integer())) ->
+                 {ProgOut :: intcode_program(),
+                  Output :: list(integer())}.
+execute(Prog, Input) ->
+  {ProgOut, {_, Outputs0}} =
+    execute(Prog,
+            fun({[N|Inputs], Outputs} = _State) ->
+                {{Inputs, Outputs}, N}
+            end,
+            fun(Output, {Inputs, Outputs} = _State) ->
+                {Inputs, [Output|Outputs]}
+            end,
+            {Input, []}),
+  {ProgOut, Outputs0}.
+
 %% Execute an IntCode program. Input and output are communicated
 %% through funs which is passed a state which can be modified and
 %% returned by the input/output funs.
@@ -48,13 +82,13 @@
 %% @param   Input     Fun to provide input values
 %% @param   Output    Fun to receive output values
 %% @param   State     Initial state
-%% @returns EndState  State when program exits.
+%% @returns {P,S}     The program and the end state. The program may
+%%                    modify itself, and this is used by some puzzles.
 -spec execute(Prog :: intcode_program(),
               Input :: intcode_input(),
               Output :: intcode_output(),
-              InitState :: term()
-             ) ->
-                 intcode_state().
+              InitState :: term()) ->
+                 {intcode_program(), intcode_state()}.
 execute(Prog, Input, Output, State) ->
   execute(Prog, 0, 0, Input, Output, State).
 
@@ -121,7 +155,7 @@ execute(Prog, PC, RelBase, In, Out, State) ->
       ?assert(is_map(State0)),
       execute(Prog, PC + 2, RelBase, In, Out, State0);
     ?OP_END ->
-      State
+      {Prog, State}
   end.
 
 %% Parse an intcode program and return it as a map from memory

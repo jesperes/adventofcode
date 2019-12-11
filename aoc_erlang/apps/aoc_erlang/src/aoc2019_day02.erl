@@ -5,50 +5,22 @@
 -include_lib("eunit/include/eunit.hrl").
 
 %% Puzzle solution
-part1(Input) ->
-  run(Input, 12, 2).
+part1(Prog) ->
+  run_intcode(Prog, 12, 2).
 
 part2(Input) ->
   [100 * A + B || A <- lists:seq(0, 99),
                   B <- lists:seq(0, 99),
-                  run(Input, A, B) =:= 19690720].
+                  run_intcode(Input, A, B) =:= 19690720].
 
-run(Ints, A, B) ->
-  Ints0 = maps:put(1, A, Ints),
-  Ints1 = maps:put(2, B, Ints0),
-  IntsFinal = do_run(Ints1, 0),
-  maps:get(0, IntsFinal).
-
-do_run(Ints, PC) when is_map(Ints) ->
-  Get = fun(K) -> maps:get(K, Ints) end,
-  Put = fun(K, V) -> maps:put(K, V, Ints) end,
-  Op0 = Get(PC),
-  case Op0 of
-    99 -> Ints;
-    _ ->
-      Op1 = Get(PC + 1),
-      Op2 = Get(PC + 2),
-      Op3 = Get(PC + 3),
-
-      case Op0 of
-        1 -> do_run(Put(Op3, Get(Op1) + Get(Op2)), PC + 4);
-        2 -> do_run(Put(Op3, Get(Op1) * Get(Op2)), PC + 4)
-      end
-  end.
-
-%% Read input and convert to map from PC (index) -> Value (int).
-get_input() ->
-  Ints =
-    lists:map(fun list_to_integer/1,
-              string:tokens(
-                inputs:get_as_string(2019, 02), ",")),
-  maps:from_list(
-    lists:zip(lists:seq(0, length(Ints) - 1),
-              Ints)).
+run_intcode(Prog, A, B) ->
+  {ProgOut, _} =
+    intcode:execute(maps:merge(Prog, #{1 => A, 2 => B})),
+  maps:get(0, ProgOut).
 
 %% Tests
 main_test_() ->
-  Input = get_input(),
+  Input = intcode:parse(inputs:get_as_binary(2019, 2)),
 
   [ {"Part 1", ?_assertEqual(3654868, part1(Input))}
   , {"Part 2", ?_assertEqual([7014], part2(Input))}
