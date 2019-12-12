@@ -6,8 +6,13 @@
 
 %% Puzzle solution
 part1(Bodies, Steps) ->
-  FinalBodies = nbodies(Bodies, Steps),
-  energy(FinalBodies).
+  {T, Energy} =
+    timer:tc(fun() ->
+                 FinalBodies = nbodies(Bodies, Steps),
+                 energy(FinalBodies)
+             end),
+  ?debugFmt("Time: ~p usecs (~p usecs/iteration)", [T, T / Steps]),
+  Energy.
 
 nbodies(Bodies, 0) -> Bodies;
 nbodies(Bodies, N) ->
@@ -63,19 +68,16 @@ run2(Bodies, States, N) ->
 %% coordinate individually, then use LCM to compute the period of the
 %% entire system.
 check_cycles(Bodies, [Sx, Sy, Sz], N) ->
-  Xcoords = {lists:map(fun({{X, _, _}, _}) -> X end, Bodies),
-             lists:map(fun({_, {Dx, _, _}}) -> Dx end, Bodies)},
-  Sx0 = update_cycle(Xcoords, Sx, N),
+  {Xcoords, Ycoords, Zcoords} = get_coords(Bodies, [], [], []),
+  [update_cycle(Xcoords, Sx, N),
+   update_cycle(Ycoords, Sy, N),
+   update_cycle(Zcoords, Sz, N)].
 
-  Ycoords = {lists:map(fun({{_, Y, _}, _}) -> Y end, Bodies),
-             lists:map(fun({_, {_, Dy, _}}) -> Dy end, Bodies)},
-  Sy0 = update_cycle(Ycoords, Sy, N),
-
-  Zcoords = {lists:map(fun({{_, _, Z}, _}) -> Z end, Bodies),
-             lists:map(fun({_, {_, _, Dz}}) -> Dz end, Bodies)},
-  Sz0 = update_cycle(Zcoords, Sz, N),
-
-  [Sx0, Sy0, Sz0].
+%% Take a list of bodies, and return a three-tuple containing X, Y,
+%% and Z states respectively.
+get_coords([], AccX, AccY, AccZ) -> {AccX, AccY, AccZ};
+get_coords([{{X, Y, Z}, {Dx, Dy, Dz}}|Rest], AccX, AccY, AccZ) ->
+  get_coords(Rest, [{X, Dx}|AccX], [{Y, Dy}|AccY], [{Z, Dz}|AccZ]).
 
 update_cycle(Coords, Set, N) ->
   case sets:is_set(Set) of
@@ -107,7 +109,12 @@ get_input() ->
 main_test_() ->
   Input = get_input(),
   [ {"Part 1", ?_assertEqual(8362, part1(Input, 1000))}
-  , {"Part 2", timeout, 60, ?_assertEqual(0, part2(Input))}
+    %% This answer is slightly less than 500 trillion, or 4.78 *
+    %% 10^14.  In part 1, it takes us ~ 3 microseconds/iteration. At
+    %% that speed, computing part 2 would take us ~45 years, and that
+    %% does not take into account the enormous amount of memory needed
+    %% to store all the states.
+  , {"Part 2", timeout, 60, ?_assertEqual(478373365921244, part2(Input))}
   ].
 
 ex1_test_() ->
