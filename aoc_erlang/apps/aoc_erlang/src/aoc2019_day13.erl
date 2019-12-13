@@ -49,12 +49,9 @@ count_blocks([_, _, _|Rest], Map) ->
 part2(Prog) ->
   Prog0 = maps:merge(Prog, #{0 => 2}),
   InitState = #state{},
-
   {_, #state{score = Score}} =
     intcode:execute(Prog0, fun joystick/1, fun display/2, InitState),
-
   Score.
-
 
 joystick(#state{ball_x = Bx, paddle_x = Px} = State) ->
   {State, case Bx - Px of
