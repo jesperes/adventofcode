@@ -3,8 +3,6 @@
 -include_lib("stdlib/include/assert.hrl").
 
 -export([ all/0
-        , init_per_suite/1
-        , end_per_suite/1
         , day_1/1
         , day_2/1
         , day_3/1
@@ -16,6 +14,8 @@
         , day_9/1
         , day_10/1
         , day_11/1
+        , day_12/1
+        , day_13/1
         ]).
 
 all() ->
@@ -30,16 +30,8 @@ all() ->
   , day_9
   , day_10
   , day_11
+  , day_13
   ].
-
-init_per_suite(Config) ->
-  lists:keystore(start_time, 1, Config,
-                 {start_time, erlang:system_time(microsecond)}).
-
-end_per_suite(Config) ->
-  {start_time, Start} = lists:keyfind(start_time, 1, Config),
-  Now = erlang:system_time(microsecond),
-  ct:print("Elapsed time: ~p seconds", [(Now - Start) / 1000000]).
 
 day_1(_Config) -> ?assertEqual(ok, eunit:test(aoc2019_day01, [verbose])).
 day_2(_Config) -> ?assertEqual(ok, eunit:test(aoc2019_day02, [verbose])).
@@ -54,3 +46,5 @@ day_8(_Config) -> ?assertEqual(ok, eunit:test(aoc2019_day08, [verbose])).
 day_9(_Config) -> ?assertEqual(ok, eunit:test(aoc2019_day09, [verbose])).
 day_10(_Config) -> ?assertEqual(ok, eunit:test(aoc2019_day10, [verbose])).
 day_11(_Config) -> ?assertEqual(ok, eunit:test(aoc2019_day11, [verbose])).
+day_12(_Config) -> ?assertEqual(ok, eunit:test(aoc2019_day12, [verbose])).
+day_13(_Config) -> ?assertEqual(ok, eunit:test(aoc2019_day13, [verbose])).

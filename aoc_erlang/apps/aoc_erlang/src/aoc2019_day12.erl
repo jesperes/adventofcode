@@ -6,13 +6,8 @@
 
 %% Puzzle solution
 part1(Bodies, Steps) ->
-  {T, Energy} =
-    timer:tc(fun() ->
-                 FinalBodies = nbodies(Bodies, Steps),
-                 energy(FinalBodies)
-             end),
-  ?debugFmt("Time: ~p usecs (~p usecs/iteration)", [T, T / Steps]),
-  Energy.
+  FinalBodies = nbodies(Bodies, Steps),
+  energy(FinalBodies).
 
 nbodies(Bodies, 0) -> Bodies;
 nbodies(Bodies, N) ->
