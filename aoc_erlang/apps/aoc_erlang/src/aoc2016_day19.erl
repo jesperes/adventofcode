@@ -1,75 +1,52 @@
+%%% Advent of Code solution for 2016 day 19.
+%%% Created: 2019-12-15T17:50:57+00:00
+
 -module(aoc2016_day19).
 -include_lib("eunit/include/eunit.hrl").
 
-presents(N) ->
-  lists:foldl(fun(Elf, Acc) ->
-                  gb_trees:insert(Elf, 1, Acc)
-              end, gb_trees:empty(), lists:seq(1, N)).
+get_input() -> 3014387.
 
-start(NumElves) ->
-  Presents = presents(NumElves),
-  {Elf, _} = steal_presents(Presents, NumElves, gb_trees:iterator(Presents)),
-  Elf.
+%% Day 19: An Elephant Named Joseph
+%%
+%% This is a variant of the Josephus problem, which can be solved
+%% arithmetically, see https://www.youtube.com/watch?v=uCsD3ZGzMgE.
+part1(N) ->
+  2*(N - largest_2pow(1, N)) + 1.
 
-start2(NumElves) ->
-  Presents = presents(NumElves),
-  {Elf, _} = steal_presents2(Presents, NumElves,
-                             gb_trees:iterator(Presents),
-                             across(Presents, NumElves)),
-  Elf.
-
-across(Presents, NumElves) ->
-  Iter = gb_trees:iterator(Presents),
-  lists:foldl(fun(_, Acc) ->
-                  {_, _, It} = gb_trees:next(Acc),
-                  It
-              end, Iter, lists:seq(1, NumElves div 2)).
-
-circular_next(Presents, Iter) ->
-  case gb_trees:next(Iter) of
-    none -> gb_trees:next(gb_trees:iterator(Presents));
-    Res  -> Res
+%% Return the largest 2^A such that 2^A < N. I'm sure there is a nicer
+%% way of doing this.
+largest_2pow(A, N) ->
+  if (1 bsl A) > N -> 1 bsl (A - 1);
+     true -> largest_2pow(A + 1, N)
   end.
 
-steal_presents(Presents, 1, _Iter) ->
-  gb_trees:smallest(Presents);
-steal_presents(Presents, NumElves, Iter) ->
-  {CurrElf, CurrPres, I0} = circular_next(Presents, Iter),
-  {NextElf, NextPres, _I1} = circular_next(Presents, I0),
-  P0 = gb_trees:delete(NextElf, Presents),
-  P1 = gb_trees:update(CurrElf, CurrPres + NextPres, P0),
-  NewIter = gb_trees:iterator_from(NextElf, P1),
-  steal_presents(P1, NumElves - 1, NewIter).
+%% Return the largest 3^A < N.
+largest_3pow(A, N) ->
+  P = math:pow(3, A),
+  if P > N -> floor(math:pow(3, A - 1));
+     true  -> largest_3pow(A + 1, N)
+  end.
 
-steal_presents2(Presents, 1, _Iter, _Across) ->
-  gb_trees:smallest(Presents);
-steal_presents2(Presents, NumElves, Iter, Across) ->
-  {CurrElf, CurrPres, _I0} = circular_next(Presents, Iter),
-  {AcrossElf, AcrossPres, Across0} =
-    case NumElves rem 2 of
-      0 ->
-        {_, _, It} = circular_next(Presents, Across),
-        circular_next(Presents, It);
-      _ ->
-        circular_next(Presents, Across)
-    end,
+%% Part 2 can also be solved arithmetically, but I stole the formula
+%% from Reddit:
+%% https://www.reddit.com/r/adventofcode/comments/5j4lp1/2016_day_19_solutions/
+part2(N) ->
+  B = largest_3pow(1, N),
+  if N == B     -> N;
+     N - B =< B -> N - B;
+     true       -> 2 * N - 3 * B
+  end.
 
-  %% ?debugFmt("CurrElf = ~p, AcrossElf = ~p~n", [CurrElf, AcrossElf]),
-  P0 = gb_trees:delete(AcrossElf, Presents),
-  P1 = gb_trees:update(CurrElf, CurrPres + AcrossPres, P0),
-  %% ?debugFmt("Ring: ~p~n", [gb_trees:to_list(P1)]),
-  {_, _, NewIter} = gb_trees:next(gb_trees:iterator_from(CurrElf, P1)),
-  steal_presents2(P1, NumElves - 1, NewIter, Across0).
-
-
+%% Tests
 main_test_() ->
-  NumElves = 3014387,
-  [ {"Tests",
-     [ ?_assertEqual(3, start(5))
-     , ?_assertEqual(2, start2(5))
-     ]
-    }
-  , {"Part 1", timeout, 60, ?_assertMatch(1834471, start(NumElves))}
-  , {"Part 2", timeout, 60,
-     ?_assertMatch(1420064, start2(NumElves))}
+  Input = get_input(),
+
+  [ {"Part 1", ?_assertEqual(1834471, part1(Input))}
+  , {"Part 2", ?_assertEqual(1420064, part2(Input))}
   ].
+
+%%%_* Emacs ====================================================================
+%%% Local Variables:
+%%% allout-layout: t
+%%% erlang-indent-level: 2
+%%% End:
