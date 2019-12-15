@@ -20,7 +20,7 @@ ex1_test_() ->
 
 ex2_test_() ->
   Prog = intcode:parse("104,1125899906842624,99"),
-  ?_assertMatch({_, [1125899906842624]}, intcode:execute(Prog, 0)).
+  ?_assertMatch({_, [1125899906842624]}, intcode:execute(Prog, [])).
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:

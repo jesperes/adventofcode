@@ -4,7 +4,10 @@
 -module(aoc2019_day15).
 -include_lib("eunit/include/eunit.hrl").
 
-%% Puzzle solution
+%% TODO cleanup; this throw thing to escape out of the first search is
+%% a little yucky. We should be able to do both part 1 and 2 in the
+%% same function.
+
 part1(Prog) ->
   Pid = start_intcode(Prog),
   {Dist0, Grid0} =
@@ -21,8 +24,6 @@ part1(Prog) ->
                     end, maps:to_list(Grid1)),
 
   {Dist0, lists:max(OxygenDists)}.
-
-to_str(C) -> C.
 
 start_intcode(Prog) ->
   Parent = self(),
