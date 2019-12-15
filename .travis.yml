@@ -9,6 +9,9 @@ matrix:
 
     - language: erlang
       name: Erlang solutions
+      before_install:
+        - sudo apt-get update
+        - sudo apt-get -y install gnuplot
       before_script: cd aoc_erlang
       script: rebar3 do compile,eunit,ct
       otp_release: 22.1
