@@ -27,7 +27,6 @@ pre_init_per_testcase(_Suite, _TC, Config, State) ->
   {Config, maps:put(tc_start, ts(), State)}.
 
 post_end_per_testcase(_Suite, TC, _Config, Return, State) ->
-  N = maps:get(count, State),
   Elapsed = ts() - maps:get(tc_start, State),
   DataFile = maps:get(plotfile, State),
   {ok, IoDevice} = file:open(DataFile, [append]),
