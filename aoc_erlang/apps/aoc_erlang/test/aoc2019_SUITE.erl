@@ -16,6 +16,8 @@
         , day_11/1
         , day_12/1
         , day_13/1
+        , day_14/1
+        , day_15/1
         ]).
 
 all() ->
@@ -32,6 +34,8 @@ all() ->
   , day_11
   , day_12
   , day_13
+  , day_14
+  , day_15
   ].
 
 day_1(_Config) -> ?assertEqual(ok, eunit:test(aoc2019_day01, [verbose])).
@@ -49,3 +53,5 @@ day_10(_Config) -> ?assertEqual(ok, eunit:test(aoc2019_day10, [verbose])).
 day_11(_Config) -> ?assertEqual(ok, eunit:test(aoc2019_day11, [verbose])).
 day_12(_Config) -> ?assertEqual(ok, eunit:test(aoc2019_day12, [verbose])).
 day_13(_Config) -> ?assertEqual(ok, eunit:test(aoc2019_day13, [verbose])).
+day_14(_Config) -> ?assertEqual(ok, eunit:test(aoc2019_day14, [verbose])).
+day_15(_Config) -> ?assertEqual(ok, eunit:test(aoc2019_day15, [verbose])).

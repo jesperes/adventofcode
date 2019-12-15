@@ -32,12 +32,11 @@ post_end_per_testcase(_Suite, TC, _Config, Return, State) ->
   DataFile = maps:get(plotfile, State),
   {ok, IoDevice} = file:open(DataFile, [append]),
   ok = file:write(IoDevice,
-                  io_lib:format("~p ~p ~p~n", [N, format_tc(TC), Elapsed / 1000000])),
+                  io_lib:format("\"~s\" ~p~n", [format_tc(TC), Elapsed / 1000000])),
   file:close(IoDevice),
   {Return, maps:update_with(count, fun(Old) -> Old + 1 end, State)}.
 
 post_end_per_suite(_Suite, _Config, Return, State) ->
-  ct:print("Plot data file: ~p", [maps:get(plotfile, State)]),
   {Return, maps:remove(plotfile, State)}.
 
 %% internal

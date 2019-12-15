@@ -3,7 +3,7 @@
 -include_lib("eunit/include/eunit.hrl").
 
 day15_test_() ->
-  {timeout, 60,
+  {timeout, 120,
    [ {"Part 1", fun() -> ?assertEqual(222870, part1()) end}
    , {"Part 2", fun() -> ?assertEqual(117936, part2()) end}
    ]}.
