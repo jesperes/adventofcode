@@ -18,33 +18,27 @@ fft_repeat(Digits, N) ->
               end, Digits, lists:seq(1, N)).
 
 fft(Digits) ->
-  lists:map(
-    fun(Pos) ->
-        L = pattern(Pos, length(Digits)),
-        Mult = fun({X, Y}) -> X * Y end,
-        abs(lists:sum(lists:map(Mult, lists:zip(L, Digits)))) rem 10
-    end, lists:seq(1, length(Digits))).
+  ok.
+  %% lists:map(
+  %%   fun(Pos) ->
+  %%       L = pattern(Pos, length(Digits)),
+  %%       Mult = fun({X, Y}) -> X * Y end,
+  %%       abs(lists:sum(lists:map(Mult, lists:zip(L, Digits)))) rem 10
+  %%   end, lists:seq(1, length(Digits))).
 
 first8(L) ->
   {F, _} = lists:split(8, L),
   F.
 
-%% Generate a pattern list [0, 0, ..., 1, 1, ..., 0, 0, ..., -1, -1
-%% ...]  when N is the number of consecutive 0, 1, -1.
-pattern(N, L) ->
-   pattern(N, L, 0, []).
+pattern(Pos, SegLen) ->
+  case ((Pos + 1) div SegLen) rem 4 of
+    0 -> 0;
+    1 -> 1;
+    2 -> 0;
+    3 -> -1
+  end.
 
-pattern(_, L, Len, Acc) when Len > L ->
-  [_|Result] = lists:flatten(Acc),
-  {Trimmed, _} = lists:split(L, Result),
-  Trimmed;
-pattern(N, L, Len, Acc) ->
-  pattern(N, L, Len + N * 4,
-          [repeat(0, N),
-           repeat(1, N),
-           repeat(0, N),
-           repeat(-1, N),
-           Acc]).
+
 
 %% Return a list of N, repeated M times.
 repeat(N, M) ->
