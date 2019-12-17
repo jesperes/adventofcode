@@ -9,8 +9,8 @@ import aoc2018.Day01;
 import aoc2018.Day02;
 
 @RunWith(Suite.class)
-@SuiteClasses({ Day01.class, Day02.class, Day03.class, Day04.class,
-        Day05.class })
+@SuiteClasses({ Day01.class, Day02.class, Day03.class, Day04.class, Day05.class,
+        Day16.class })
 public class Aoc2019Suite {
 
 }
