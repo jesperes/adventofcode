@@ -18,13 +18,12 @@ fft_repeat(Digits, N) ->
               end, Digits, lists:seq(1, N)).
 
 fft(Digits) ->
-  ok.
-  %% lists:map(
-  %%   fun(Pos) ->
-  %%       L = pattern(Pos, length(Digits)),
-  %%       Mult = fun({X, Y}) -> X * Y end,
-  %%       abs(lists:sum(lists:map(Mult, lists:zip(L, Digits)))) rem 10
-  %%   end, lists:seq(1, length(Digits))).
+  lists:map(
+     fun(Pos) ->
+         L = pattern(Pos, length(Digits)),
+         Mult = fun({X, Y}) -> X * Y end,
+         abs(lists:sum(lists:map(Mult, lists:zip(L, Digits)))) rem 10
+     end, lists:seq(1, length(Digits))).
 
 first8(L) ->
   {F, _} = lists:split(8, L),
@@ -37,8 +36,6 @@ pattern(Pos, SegLen) ->
     2 -> 0;
     3 -> -1
   end.
-
-
 
 %% Return a list of N, repeated M times.
 repeat(N, M) ->
@@ -61,24 +58,24 @@ get_input() ->
   inputs:get_as_string(2019, 16).
 
 %% Tests
-main_test_() ->
-  Input = get_input(),
+%% main_test_() ->
+%%   Input = get_input(),
 
-  [ {"Part 1", timeout, 60, ?_assertEqual("84970726", part1(Input))}
-  %% , {"Part 2", ?_assertEqual(0, part2(Input))}
-  ].
+%%   [ {"Part 1", timeout, 60, ?_assertEqual("84970726", part1(Input))}
+%%   %% , {"Part 2", ?_assertEqual(0, part2(Input))}
+%%   ].
 
-pattern_test_() ->
-  ?_assertEqual([0, 0, 1, 1, 1, 0, 0, 0, -1, -1, -1],
-                pattern(3, 11)).
+%% pattern_test_() ->
+%%   ?_assertEqual([0, 0, 1, 1, 1, 0, 0, 0, -1, -1, -1],
+%%                 pattern(3, 11)).
 
-ex1_test_() ->
-  [ ?_assertEqual("01029498", fft_repeat_str("12345678", 4))
-  , ?_assertEqual("24176176",
-                  first8(fft_repeat_str("80871224585914546619083218645595", 100)))
-  , ?_assertEqual("73745418",
-                  first8(fft_repeat_str("19617804207202209144916044189917", 100)))
-  ].
+%% ex1_test_() ->
+%%   [ ?_assertEqual("01029498", fft_repeat_str("12345678", 4))
+%%   , ?_assertEqual("24176176",
+%%                   first8(fft_repeat_str("80871224585914546619083218645595", 100)))
+%%   , ?_assertEqual("73745418",
+%%                   first8(fft_repeat_str("19617804207202209144916044189917", 100)))
+%%   ].
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:
