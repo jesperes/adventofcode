@@ -4,19 +4,8 @@
 -define(KEY_STRETCH, 2016).
 -define(INPUT, "ahsbgdzn").
 
--export([profile/0]).
-
--define(USE_NIF, 1).
-
--ifdef(USE_NIF).
-
--on_load(init/0).
-
-init() ->
-  File = filename:join(?NIF_DIR, "aoc2016_day14.so"),
-  ok = erlang:load_nif(filename:rootname(File), 0).
-
--endif.
+-export([ profile/0
+        ]).
 
 profile() ->
   eprof:profile(fun() -> aoc2016_day14:test() end),
@@ -30,7 +19,7 @@ find_key(Salt, HashFun, N, Threes, Keys) ->
 
   Keys0 =
     case has5(Digest) of
-      false -> Keys;
+       false -> Keys;
       C5 ->
         %% Get list of indices which have a matching 3-sequence
         NewKeys =
@@ -83,9 +72,11 @@ md5_stretched(S, N) ->
 %% This is where this puzzle spends 90% of its time, converting
 %% binaries to hexstrings. Implemented as a NIF.
 digest_to_hexstring(Binary) when byte_size(Binary) == 16 ->
-  << << (if N =< 9 -> N + $0;
-            true -> N + 87
-         end):8 >> || <<N:4>> <= Binary >>.
+
+  aoc_nifs:digest_to_hexstring(Binary).
+  %% << << (if N =< 9 -> N + $0;
+  %%           true -> N + 87
+  %%        end):8 >> || <<N:4>> <= Binary >>.
 
 %% ------------------------------------------------------------
 %% Unit tests
