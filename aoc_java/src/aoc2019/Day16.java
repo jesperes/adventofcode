@@ -2,7 +2,6 @@ package aoc2019;
 
 import static java.lang.Math.abs;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
@@ -71,15 +70,6 @@ public class Day16 extends AocPuzzle {
         return segments[((i + 1) / j) % 4];
     }
 
-    int[] repeat(int[] digits, int n) {
-        int[] rdigits = new int[digits.length * n];
-        for (int i = 0; i < n; i++) {
-            System.arraycopy(digits, 0, rdigits, i * digits.length,
-                    digits.length);
-        }
-        return rdigits;
-    }
-
     /*
      * Key observation 1: The answer for part 2 is determined by an offset
      * which tells us where in the final output string we should take the
@@ -115,39 +105,28 @@ public class Day16 extends AocPuzzle {
 
         final int offset = Integer.valueOf(input.substring(0, 7));
         final int phases = 100;
-        int[] digits = new int[input.length()];
-        for (int i = 0; i < digits.length; i++) {
-            digits[i] = input.charAt(i) - '0';
+        int ilen = input.length();
+        int rlen = ilen * 10000; // full length of repeated string
+        int len = rlen - offset; // length of string to work with
+        int[] in = new int[len];
+
+        // Copy the input string into an integer array, from offset and
+        // to the end (of the repeated array).
+        for (int i = 0; i < len; i++) {
+            in[i] = input.charAt((offset + i) % ilen) - '0';
         }
-
-        int[] rdigits = repeat(digits, 10000);
-        int[] in = rdigits;
-        int[] out = new int[in.length];
-        int[] tmp = null;
-
-        // Just to make sure
-        assertTrue(offset > rdigits.length / 2);
 
         for (int n = 0; n < phases; n++) {
-            // Last digit will always be the same?
-            out[in.length - 1] = in[in.length - 1];
-
-            // Go backwards from the end to the message offset
-            for (int i = in.length - 2; i >= offset; i--) {
-                int prev = out[i + 1];
-                int inDigit = in[i];
-                out[i] = (inDigit + prev) % 10;
+            // Each phase can be computed backwards, in which case we can do
+            // the computation without any extra storage.
+            for (int i = in.length - 2; i >= 0; i--) {
+                in[i] = (in[i] + in[i + 1]) % 10;
             }
-
-            tmp = out;
-            out = in;
-            in = tmp;
         }
 
-        out = tmp;
         char[] msg = new char[8];
-        for (int i = offset; i < offset + 8; i++) {
-            msg[i - offset] = (char) (out[i] + '0');
+        for (int i = 0; i < 8; i++) {
+            msg[i] = (char) (in[i] + '0');
         }
         return new String(msg);
     }
