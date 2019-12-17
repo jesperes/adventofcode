@@ -2,6 +2,7 @@ package aoc2019;
 
 import static java.lang.Math.abs;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
@@ -10,25 +11,14 @@ import org.junit.Test;
 import common.AocPuzzle;
 
 /**
- * AoC puzzle template.
+ * Day 16: Flawed Frequency Transmission
  */
 public class Day16 extends AocPuzzle {
 
     int[] segments = new int[] { 0, 1, 0, -1 };
-    int offset = 1; // pattern offset
 
     public Day16() throws IOException {
         super(2019, 16);
-    }
-
-    // TODO solve part 1 here
-    private int part1() {
-        return 0;
-    }
-
-    // TODO solve part 2 here
-    private int part2() {
-        return 0;
     }
 
     String fft(String s, int repeats) {
@@ -41,15 +31,9 @@ public class Day16 extends AocPuzzle {
 
         // Outer loop, once for each application of FFT
         for (int n = 0; n < repeats; n++) {
-            System.out.format("Repeating FFT (%d), length of input = %d...%n",
-                    n, s.length());
-
             // Loop over all the position in the output string.
             for (int j = 0; j < out.length; j++) {
                 out[j] = 0;
-                if (j % 1000 == 0)
-                    System.out.println("Position: " + j);
-
                 // Inner loop over all positions in the input string
                 for (int k = 0; k < in.length; k++) {
                     int p = pattern(k, j + 1);
@@ -84,15 +68,88 @@ public class Day16 extends AocPuzzle {
      * @param j The length of the segments
      */
     int pattern(int i, int j) {
-        return segments[((i + offset) / j) % 4];
+        return segments[((i + 1) / j) % 4];
     }
 
-    String repeatString(String s, int n) {
-        StringBuilder b = new StringBuilder();
+    int[] repeat(int[] digits, int n) {
+        int[] rdigits = new int[digits.length * n];
         for (int i = 0; i < n; i++) {
-            b.append(s);
+            System.arraycopy(digits, 0, rdigits, i * digits.length,
+                    digits.length);
         }
-        return b.toString();
+        return rdigits;
+    }
+
+    /*
+     * Key observation 1: The answer for part 2 is determined by an offset
+     * which tells us where in the final output string we should take the
+     * answer. This is taken from the first 7 digits of the input string.
+     * 
+     * Key observation 2: Due to how the pattern sequence looks, out[i] only
+     * depends on digits in[i] ... in[last]. This means that we can ignore
+     * all leading digits up to the desired message offset (the pattern
+     * sequence is always 0 for these numbers).
+     * 
+     * Key observation 3: Message offset is larger than half the (repeated)
+     * input length, which means that the pattern sequence for the digits we
+     * care about are like this:
+     *
+     * @formatter:off
+     * 
+     * a b c d e f g h
+     * 1 1 1 1 1 1 1 1 -> h + g + f + e + d + c + b + a
+     *   1 1 1 1 1 1 1 -> h + g + f + e + d + c + b
+     *     1 1 1 1 1 1 -> h + g + f + e + d + c
+     *       1 1 1 1 1 -> h + g + f + e + d
+     *         1 1 1 1 -> h + g + f + e
+     *           1 1 1 -> h + g + f 
+     *             1 1 -> h + g
+     *               1 -> h
+     *                  
+     * @formatter:on
+     * 
+     * Key observation 4: Each number in the output sequence can be computed 
+     * based on the previous on, reducing the quadratic complexity -> linear. 
+     */
+    String part2(String input) {
+
+        final int offset = Integer.valueOf(input.substring(0, 7));
+        final int phases = 100;
+        int[] digits = new int[input.length()];
+        for (int i = 0; i < digits.length; i++) {
+            digits[i] = input.charAt(i) - '0';
+        }
+
+        int[] rdigits = repeat(digits, 10000);
+        int[] in = rdigits;
+        int[] out = new int[in.length];
+        int[] tmp = null;
+
+        // Just to make sure
+        assertTrue(offset > rdigits.length / 2);
+
+        for (int n = 0; n < phases; n++) {
+            // Last digit will always be the same?
+            out[in.length - 1] = in[in.length - 1];
+
+            // Go backwards from the end to the message offset
+            for (int i = in.length - 2; i >= offset; i--) {
+                int prev = out[i + 1];
+                int inDigit = in[i];
+                out[i] = (inDigit + prev) % 10;
+            }
+
+            tmp = out;
+            out = in;
+            in = tmp;
+        }
+
+        out = tmp;
+        char[] msg = new char[8];
+        for (int i = offset; i < offset + 8; i++) {
+            msg[i - offset] = (char) (out[i] + '0');
+        }
+        return new String(msg);
     }
 
     /*
@@ -139,16 +196,8 @@ public class Day16 extends AocPuzzle {
 
     @Test
     public void testPart2() throws Exception {
-//        assertEquals("84462026",
-//                part2("03036732577212944063491565474664", 10000));
-        assertEquals("84970726", part2(getInputAsString(), 10000));
-    }
-
-    String part2(String input, int n) {
-        String repeatedInput = repeatString(input, n);
-        String f = fft(repeatedInput, 100);
-        int offset = Integer.valueOf(input.substring(0, 7));
-        return f.substring(offset, offset + 8);
+        assertEquals("84462026", part2("03036732577212944063491565474664"));
+        assertEquals("47664469", part2(getInputAsString()));
     }
 
 }
