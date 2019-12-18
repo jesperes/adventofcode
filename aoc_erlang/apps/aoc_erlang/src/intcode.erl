@@ -57,7 +57,8 @@ execute(Prog) ->
 %% outputed them.
 %%
 %% @param Prog     The IntCode program to execute.
-%% @param Input    List of integers to supply as input.
+%% @param Input    List of integers to supply as input. This list is
+%%                 before sent to the intcode interpreter.
 %% @returns Output List of integers the program sent to the OUTPUT
 %%                 instruction.
 -spec execute(Prog :: intcode_program(),
@@ -73,7 +74,7 @@ execute(Prog, Input) ->
             fun(Output, {Inputs, Outputs} = _State) ->
                 {Inputs, [Output|Outputs]}
             end,
-            {Input, []}),
+            {lists:flatten(Input), []}),
   {ProgOut, Outputs0}.
 
 %% Execute an IntCode program. Input and output are communicated
