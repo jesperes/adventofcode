@@ -41,7 +41,7 @@ public class Day25 {
     /**
      * Implement the tape as an ordered map (TreeMap) of all the ones on the
      * tape.
-     * 
+     *
      * @author jespe
      */
     static class Tape {
@@ -145,13 +145,13 @@ public class Day25 {
     TuringMachine getSmallTestInput() {
         // @formatter:off
 		TuringMachine tm = new TuringMachine(
-				new State("A", new Action[] { 
+				new State("A", new Action[] {
 						new Action(0, 1, +1),
-						new Action(1, 0, -1) 
+						new Action(1, 0, -1)
 						}),
-				new State("B", new Action[] { 
+				new State("B", new Action[] {
 						new Action(0, 1, -1),
-						new Action(1, 1, +1) 
+						new Action(1, 1, +1)
 						}));
 		// @formatter:on
 
@@ -166,29 +166,29 @@ public class Day25 {
     TuringMachine getLargeTestInput() {
         // @formatter:off
 		TuringMachine tm = new TuringMachine(
-				new State("A", new Action[] { 
+				new State("A", new Action[] {
 						new Action(0, 1, DIR_RIGHT),
-						new Action(1, 0, DIR_RIGHT) 
+						new Action(1, 0, DIR_RIGHT)
 						}),
-				new State("B", new Action[] { 
+				new State("B", new Action[] {
 						new Action(0, 0, DIR_LEFT),
-						new Action(1, 0, DIR_RIGHT) 
+						new Action(1, 0, DIR_RIGHT)
 						}),
-				new State("C", new Action[] { 
+				new State("C", new Action[] {
 						new Action(0, 1, DIR_RIGHT),
-						new Action(1, 1, DIR_RIGHT) 
+						new Action(1, 1, DIR_RIGHT)
 						}),
-				new State("D", new Action[] { 
+				new State("D", new Action[] {
 						new Action(0, 1, DIR_LEFT),
-						new Action(1, 0, DIR_LEFT) 
+						new Action(1, 0, DIR_LEFT)
 						}),
-				new State("E", new Action[] { 
+				new State("E", new Action[] {
 						new Action(0, 1, DIR_RIGHT),
-						new Action(1, 1, DIR_LEFT) 
+						new Action(1, 1, DIR_LEFT)
 						}),
-				new State("F", new Action[] { 
+				new State("F", new Action[] {
 						new Action(0, 1, DIR_RIGHT),
-						new Action(1, 1, DIR_RIGHT) 
+						new Action(1, 1, DIR_RIGHT)
 						})
 				);
 		// @formatter:on

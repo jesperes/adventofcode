@@ -12,7 +12,7 @@ import java.util.stream.Stream;
 
 /**
  * Base class for AoC puzzles, with some useful methods for reading input files.
- * 
+ *
  * @author jesperes
  *
  */

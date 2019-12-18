@@ -1,6 +1,6 @@
 package common;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +24,7 @@ public class SearchAlgorithmsTest {
             return s.hashCode();
         }
 
+        @Override
         public boolean equals(Object other) {
             return ((Node) other).s.equals(s);
         }

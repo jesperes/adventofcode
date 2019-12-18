@@ -84,6 +84,7 @@ public class Day22_Part2 extends AocPuzzle {
             return nodeStates.getOrDefault(node, State.Clean);
         }
 
+        @Override
         public String toString() {
             StringBuilder builder = new StringBuilder();
 

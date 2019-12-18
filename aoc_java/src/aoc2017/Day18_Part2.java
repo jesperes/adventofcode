@@ -62,7 +62,7 @@ public class Day18_Part2 extends AocPuzzle {
         /**
          * Execute this program as far as possible, i.e. until the next rcv
          * instruction which blocks on an empty message queue.
-         * 
+         *
          * @param str
          * @return The number of instructions executed.
          */

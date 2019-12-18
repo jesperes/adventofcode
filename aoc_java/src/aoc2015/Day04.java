@@ -10,7 +10,7 @@ import org.junit.Test;
 /**
  * The performance of this one is bound by the MD5 algorithm, so there is really
  * not much room for optimization.
- * 
+ *
  * @author jesperes
  */
 public class Day04 {

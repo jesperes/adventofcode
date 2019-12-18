@@ -101,7 +101,7 @@ public class Day24 extends AocPuzzle {
     /**
      * Compute the strongest bridge which can be formed by taking 'first' and
      * appending elements from 'components'.
-     * 
+     *
      * @param first
      * @param components
      * @return

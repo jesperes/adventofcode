@@ -91,6 +91,7 @@ public class Day22_Part1 extends AocPuzzle {
             return numInfections;
         }
 
+        @Override
         public String toString() {
             StringBuilder builder = new StringBuilder();
 

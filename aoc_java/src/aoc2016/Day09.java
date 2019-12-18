@@ -12,7 +12,7 @@ import common.AocPuzzle;
  * decompressed string, but without constructing the individual substrings. The
  * the decompressed string is huge (~12GB), so this optimization is necessary to
  * be able to compute the size without having to copy 12 GB of strings.
- * 
+ *
  * @author jespe
  *
  */

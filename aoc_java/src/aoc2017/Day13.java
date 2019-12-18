@@ -23,9 +23,9 @@ public class Day13 extends AocPuzzle {
     private Map<Integer, Firewall> getShortInput() {
         return Stream.of(
         // @formatter:off
-                "0: 3", 
-                "1: 2", 
-                "4: 4", 
+                "0: 3",
+                "1: 2",
+                "4: 4",
                 "6: 4")
                 // @formatter:on
                 .map(s -> new Firewall(s))
@@ -131,7 +131,7 @@ public class Day13 extends AocPuzzle {
      * Compute the severity of any collisions with firewall scanners. Note that
      * we do not need to "simulate" the firewalls, we can simply compute where
      * the scanners are expected to be.
-     * 
+     *
      * @param firewalls      The firewalls. The index here is the depth of the
      *                       firewalls, so if there are no firewall at a certain
      *                       index, the array has a null element.

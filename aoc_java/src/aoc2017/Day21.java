@@ -57,7 +57,7 @@ public class Day21 extends AocPuzzle {
     /**
      * Shamelessly stolen from
      * https://www.geeksforgeeks.org/inplace-rotate-square-matrix-by-90-degrees/
-     * 
+     *
      * An Inplace function to rotate a N x N matrix by 90 degrees in
      * anti-clockwise direction
      */
@@ -124,20 +124,20 @@ public class Day21 extends AocPuzzle {
      * all of them can be reached by rotating/flipping. Note that order is
      * important: flip horiz (0 or more), then flip vertical (0 or more), then
      * rotate (0 or more).
-     * 
-     * We observe that there are 8 distinct rotations. If we write the 
+     *
+     * We observe that there are 8 distinct rotations. If we write the
      * the 2x2 matrix on a piece of paper, these correspond to 4 positions
      * on each page, with 4 rotations on each page. We could of course do without
      * one of the flips and replace them with rotations.
-     * 
+     *
      * @formatter:off
-     * {{1, 2, 3, 4}, // identity 
+     * {{1, 2, 3, 4}, // identity
      *  {1, 2, 4, 3}, --
-     *  {1, 3, 2, 4}, // flip horiz + rotate ccw * 1 
+     *  {1, 3, 2, 4}, // flip horiz + rotate ccw * 1
      *  {1, 3, 4, 2}, --
-     *  {1, 4, 2, 3}, -- 
+     *  {1, 4, 2, 3}, --
      *  {1, 4, 3, 2}, --
-     *  {2, 1, 3, 4}, -- 
+     *  {2, 1, 3, 4}, --
      *  {2, 1, 4, 3}, // flip horiz
      *  {2, 3, 1, 4}, --
      *  {2, 3, 4, 1}, --
@@ -156,7 +156,7 @@ public class Day21 extends AocPuzzle {
      *  {4, 3, 1, 2}, --
      *  {4, 3, 2, 1}} // rotate ccw * 2
      * @formatter:on
-     * 
+     *
      */
 
     public static boolean transformAndCheckMatrix(char[][] matrix,

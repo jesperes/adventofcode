@@ -34,6 +34,7 @@ public class Day16 extends AocPuzzle {
             count = n;
         }
 
+        @Override
         public String toString() {
             return "s" + String.valueOf(count);
         }
@@ -79,6 +80,7 @@ public class Day16 extends AocPuzzle {
             this.indexb = indexb;
         }
 
+        @Override
         public String toString() {
             return String.format("x%d/%d", indexa, indexb);
         }
@@ -100,6 +102,7 @@ public class Day16 extends AocPuzzle {
             this.progb = progb;
         }
 
+        @Override
         public String toString() {
             return String.format("p%c/%c", proga, progb);
         }
@@ -235,7 +238,7 @@ public class Day16 extends AocPuzzle {
          * We optimize this by caching known results, and only perform dances
          * for input configurations we haven't seen before. This cuts the time
          * per iteration from ~300000ns to ~15ns.
-         * 
+         *
          * This takes the runtime down to 8s which is doable.
          */
         Map<String, String> map = new HashMap<>();

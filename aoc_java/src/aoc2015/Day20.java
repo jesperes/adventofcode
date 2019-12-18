@@ -13,7 +13,7 @@ import org.junit.Test;
  * elf N delivers presents to house N, N*2, N*3, etc. The puzzle is to find the
  * house with the smallest number which will receive more than X presents (were
  * X is the puzzle input, in my case 36000000).
- * 
+ *
  * The problem is quadratic (elves * houses), but it is very sparse, as the
  * distance between houses increases for each elf (so elf 100 delivers only to
  * houses 100, 200, 300, 400, etc.). Even so, the number of houses grows very
@@ -24,8 +24,8 @@ import org.junit.Test;
  * The critical observation is that once elf N has delivered all its presents
  * house N will not receive any more presents. This is when we can check how
  * many presents house N ultimately gets.
- * 
- * 
+ *
+ *
  * @author jesperes
  *
  */

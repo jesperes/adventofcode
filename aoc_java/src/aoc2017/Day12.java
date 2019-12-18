@@ -20,13 +20,13 @@ public class Day12 extends AocPuzzle {
     }
 
     // @formatter:off
-    static String SMALL_INPUT = "0 <-> 2\n" + 
-            "1 <-> 1\n" + 
-            "2 <-> 0, 3, 4\n" + 
-            "3 <-> 2, 4\n" + 
-            "4 <-> 2, 3, 6\n" + 
-            "5 <-> 6\n" + 
-            "6 <-> 4, 5\n"; 
+    static String SMALL_INPUT = "0 <-> 2\n" +
+            "1 <-> 1\n" +
+            "2 <-> 0, 3, 4\n" +
+            "3 <-> 2, 4\n" +
+            "4 <-> 2, 3, 6\n" +
+            "5 <-> 6\n" +
+            "6 <-> 4, 5\n";
     // @formatter:on
 
     private void addLink(Map<Integer, Set<Integer>> graph, int a, int b) {

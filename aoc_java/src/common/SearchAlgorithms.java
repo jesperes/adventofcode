@@ -20,7 +20,7 @@ public class SearchAlgorithms {
 	/**
 	 * Breadth-first search. Assumes that the graph is a tree, i.e. any node is
 	 * reachable through a unique path.
-	 * 
+	 *
 	 * @param root
 	 * @param data
 	 * @return

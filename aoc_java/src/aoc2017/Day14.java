@@ -18,7 +18,7 @@ public class Day14 {
 
     /**
      * Returns the knot hash as a binary string
-     * 
+     *
      * @param str
      * @return
      */
@@ -48,7 +48,7 @@ public class Day14 {
     /**
      * Compute the total number of ones in the binary representations of
      * knotHash(input + "-" + n) where n is 0 .. 127.
-     * 
+     *
      * @param input
      * @return
      */
@@ -63,7 +63,7 @@ public class Day14 {
     /**
      * Return the disk array for the given input string as an array of int
      * arrays.
-     * 
+     *
      * @param input
      * @return Array of int arrays, where -1 is "uncolored", and 0 is "empty".
      */
@@ -78,7 +78,7 @@ public class Day14 {
     /**
      * Fill a region starting at the given (i,j) coordinates using the specified
      * color.
-     * 
+     *
      * @param grid
      * @param i
      * @param j
@@ -103,7 +103,7 @@ public class Day14 {
 
     /**
      * Assign colors to continuous regions.
-     * 
+     *
      * @param grid
      * @return The number of colors/regions used.
      */

@@ -15,7 +15,7 @@ import common.AocPuzzle;
 
 /**
  * deo edw edwed wed
- * 
+ *
  * @formatter:off
 
 	pbga (66)
@@ -33,25 +33,25 @@ import common.AocPuzzle;
 	cntj (57)
 
                 gyxo
-              /     
+              /
          ugml - ebii
-       /      \     
+       /      \
       |         jptl
-      |        
+      |
       |         pbga
      /        /
 tknk --- padx - havc
      \        \
       |         goyq
-      |             
+      |
       |         ktlj
-       \      /     
+       \      /
          fwft - cntj
-              \     
+              \
                 xhth
 
  * @formatter:on
- * 
+ *
  * @author jespe
  *
  */

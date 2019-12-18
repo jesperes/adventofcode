@@ -25,9 +25,9 @@ import common.SearchAlgorithms;
 
 /**
  * Rules:
- * 
+ *
  * -
- * 
+ *
  * @author jesperes
  *
  */
@@ -146,6 +146,7 @@ public class Day11 {
             return components.equals(other.components);
         }
 
+        @Override
         public int hashCode() {
             return Integer.hashCode(elevator) * components.hashCode();
         }
@@ -181,7 +182,7 @@ public class Day11 {
 
         /**
          * Return all possible buildings which can be reached from this point.
-         * 
+         *
          * @return
          */
         public List<Building> getChildren() {
