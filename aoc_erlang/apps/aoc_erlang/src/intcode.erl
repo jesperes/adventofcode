@@ -8,6 +8,9 @@
         , execute/2
         , execute/4
         , parse/1
+        , spawn_execute/1
+        , send_input/2
+        , receive_output/1
         ]).
 
 %% Opcode definitions
@@ -95,6 +98,34 @@ execute(Prog, Input) ->
                   OutState :: intcode_state()}.
 execute(Prog, Input, Output, State) ->
   execute(Prog, 0, 0, Input, Output, State).
+
+
+%% Spawn a intcode process, returns the pid. Use send_input/2 and
+%% receive_output/1 for I/O.
+spawn_execute(Prog) ->
+  Parent = self(),
+  proc_lib:spawn(
+    fun() ->
+        execute(Prog,
+                fun(S) ->
+                    {S, receive
+                          Input -> Input
+                        end}
+                end,
+                fun(Output, S) ->
+                    Parent ! Output,
+                    S
+                end,
+                #{})
+    end).
+
+send_input(Input, Pid) ->
+  Pid ! Input.
+
+receive_output(Pid) ->
+  receive
+    Output -> Output
+  end.
 
 execute(Prog, PC, RelBase, In, Out, State) ->
 
