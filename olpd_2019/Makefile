@@ -3,7 +3,8 @@ ALL=\
 	day01-c \
 	day02-groovy \
 	day04-c \
-	day04-clpfd
+	day04-clpfd \
+	day09-c
 
 all: $(ALL)
 .PHONY: $(ALL)
@@ -33,3 +34,10 @@ day04-c:
 day04-clpfd:
 	$(PROGRESS)
 	cd day04 && $(TIME) swipl day04.pl
+
+day09-c:
+	$(PROGRESS)
+	gcc -c -Wall -Werror -O3 day09/intcode.c -o day09/intcode.o
+	gcc -c -Wall -Werror -O3 day09/day09.c -o day09/day09.o
+	gcc -Wall -Werror -O3 day09/intcode.o day09/day09.o -o day09/day09
+	$(TIME) ./day09/day09
