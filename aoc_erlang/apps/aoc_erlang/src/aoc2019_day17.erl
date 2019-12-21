@@ -5,12 +5,14 @@
 -include_lib("eunit/include/eunit.hrl").
 
 part1(Prog) ->
-  {_, Scaffolds} = parse(Prog),
+  {_, List} = intcode:execute(Prog),
+  L = lists:reverse(List),
+  Bin = list_to_binary(L),
+  [{Width, _}|_] = binary:matches(Bin, <<"\n">>),
+  Scaffolds = make_grid(Bin, Width + 1),
   count_intersections(Scaffolds).
 
 part2(Prog) ->
-  {_, Scaffolds} = parse(Prog),
-
   %% Split the necessary instructions into functions < 20 chars/line.
   A = "L,12,L,12,L,6,L,6",
   B = "R,8,R,4,L,12",
@@ -21,16 +23,8 @@ part2(Prog) ->
   Prog0 = maps:merge(Prog, #{0 => 2}),
   %% Score is the last integer output by the program, but this
   %% implementation returns the output in reverse order.
-  {_, [Score|Output]} = intcode:execute(Prog0, Input),
+  {_, [Score|_]} = intcode:execute(Prog0, Input),
   Score.
-
-parse(Prog) ->
-  {_, List} = intcode:execute(Prog),
-  L = lists:reverse(List),
-  Bin = list_to_binary(L),
-  [{Width, _}|_] = binary:matches(Bin, <<"\n">>),
-  Scaffolds = make_grid(Bin, Width + 1),
-  {L, Scaffolds}.
 
 count_intersections(Scaffolds) ->
   maps:fold(
