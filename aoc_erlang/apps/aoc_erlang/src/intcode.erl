@@ -10,7 +10,7 @@
         , parse/1
         , spawn_execute/1
         , send_input/2
-        , receive_output/1
+        , receive_output/0
         ]).
 
 %% Opcode definitions
@@ -122,7 +122,7 @@ spawn_execute(Prog) ->
 send_input(Input, Pid) ->
   Pid ! Input.
 
-receive_output(Pid) ->
+receive_output() ->
   receive
     Output -> Output
   end.
