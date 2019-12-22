@@ -67,6 +67,7 @@ void intcode_execute(intcode_t *p)
 {
   int pc = 0;
   size_t relbase = 0;
+  int64_t *prog = p->prog;
 
   while (true) {
     // Read opcode

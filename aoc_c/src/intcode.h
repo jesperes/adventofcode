@@ -1,6 +1,7 @@
 #ifndef _INTCODE_H
 #define _INTCODE_H
 
+#include <stdint.h>
 
 /*
  * Intcode state
@@ -16,11 +17,11 @@ typedef struct {
   size_t outputc;
 } intcode_t;
 
-enum IntcodeStatusCode
+typedef enum
   {
    StatusInput,
    StatusOutput,
-  };
+  } IntcodeStatusCode;
 
 typedef struct {
   IntcodeStatusCode status;
@@ -28,7 +29,7 @@ typedef struct {
 } intcode_status_t;
 
 void intcode_init(intcode_t *p);
-intcode_status_t intcode_execute(intcode_t *p);
+void intcode_execute(intcode_t *p);
 void intcode_deinit(intcode_t *p);
 
 #endif
