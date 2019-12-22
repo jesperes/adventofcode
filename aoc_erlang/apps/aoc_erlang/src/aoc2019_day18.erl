@@ -43,18 +43,98 @@ part2(_Input) ->
   ?debugMsg("Not implemented."),
   0.
 
-%% Input reader (place downloaded input file in
-%% priv/inputs/2019/input18.txt).
+%% Find keys reachable from Pos, holding Keys.
+find_keys(Grid, Pos, Keys) ->
+  ok.
+
 get_input() ->
   inputs:get_as_binary(2019, 18).
 
-%% Tests
-main_test_() ->
-  Input = get_input(),
+%% ============================================================
+%% Parsing text input into a map
+%% ============================================================
 
-  [ {"Part 1", ?_assertEqual(0, part1(Input))}
-  , {"Part 2", ?_assertEqual(0, part2(Input))}
-  ].
+parse(Binary) ->
+  [{Width, _}|_] = binary:matches(Binary, <<"\n">>),
+  ?assertEqual($\n, binary:at(Binary, Width)),
+  String = binary_to_list(Binary),
+  parse(String, 0, Width, #{ width => Width
+                           , height => byte_size(Binary) div Width
+                           }).
+
+parse([], _, Width, Grid) ->
+  Grid;
+parse([$\n|Rest], N, Width, Grid) ->
+  parse(Rest, N + 1, Width, Grid);
+parse([C|Rest], N, Width, Grid) ->
+  Pos = xy_from_offset(N, Width),
+  Atm = list_to_atom([C]),
+  parse(Rest, N + 1, Width,
+        maps:merge(Grid, #{ Atm => Pos, Pos => Atm})).
+
+xy_from_offset(N, Width) ->
+  {N rem (Width + 1), N div (Width + 1)}.
+
+%% %% Tests
+%% main_test_() ->
+%%   Input = get_input(),
+
+%%   [ {"Part 1", ?_assertEqual(0, part1(Input))}
+%%   , {"Part 2", ?_assertEqual(0, part2(Input))}
+%%   ].
+
+
+
+
+
+ex1_test() ->
+  Binary = <<"#########\n",
+             "#b.A.@.a#\n",
+             "#########\n">>,
+
+  Grid = parse(Binary),
+  %% ?debugFmt("~n~p", [Grid]),
+  Width = maps:get(width, Grid),
+  Height = maps:get(height, Grid),
+  ?assertEqual(9, Width),
+  ?assertEqual(3, Height),
+
+  Start = maps:get('@', Grid),
+  ?assertEqual({5, 1}, Start),
+
+  NbrFun = fun({X, Y} = P, Grid) ->
+               %% ?debugFmt("Nbrs for ~p~n", [P]),
+               [{1, {X0, Y0}} ||
+                 {X0, Y0} <- [{X - 1, Y},
+                              {X + 1, Y},
+                              {X, Y + 1},
+                              {X, Y - 1}],
+                 maps:get({X0, Y0}, Grid) =/= '#'
+               ]
+           end,
+
+  EndFun = fun(Node, _) -> false end,
+
+  {finished, Result} = dijkstra:dijkstra(Grid, Start, NbrFun, EndFun),
+
+  ?debugFmt("~nResult = ~p", [Result]),
+  ?debugFmt("~nShortest paths = ~p",
+            [[{Node, dijkstra:shortest_path(Result, maps:get(Node, Grid))} ||
+               Node <- [a, b]]]).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:

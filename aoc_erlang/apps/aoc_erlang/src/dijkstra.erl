@@ -24,7 +24,8 @@ shortest_dist(#state{distances = Map}, Node) ->
 shortest_path(State, Node) ->
   shortest_path(State, Node, [Node]).
 
-shortest_path(#state{parents = Parents} = State, Node, Path) ->
+shortest_path(#state{parents = Parents, closed = Closed} = State, Node, Path) ->
+  ?assert(maps:is_key(Node, Closed)),
   case maps:get(Node, Parents, undef) of
     undef -> Path;
     Parent -> shortest_path(State, Parent, [Parent|Path])
@@ -89,7 +90,7 @@ dijkstra0(#state{ frontier = Frontier
           %% Find neighbors
           Neighbors = Fun(Node, Graph),
 
-          %% ?debugFmt("~nNeighbors(~p) = ~p", [Node, Neighbors]),
+          ?debugFmt("~nNeighbors(~p) = ~p", [Node, Neighbors]),
 
           %% Mark node as evaluated (this means that we know the shortest
           %% path to this node).
