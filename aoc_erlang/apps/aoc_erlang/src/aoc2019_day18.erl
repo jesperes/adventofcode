@@ -36,11 +36,11 @@ part1(_Input) ->
   %% KeysDiscovered}, we perform a BFS to find all keys which can be
   %% reached from KeyPos, given the set of keys already discovered.
   %%
-  ?debugMsg("Not implemented."),
+  %% ?debugMsg("Not implemented."),
   0.
 
 part2(_Input) ->
-  ?debugMsg("Not implemented."),
+  %% ?debugMsg("Not implemented."),
   0.
 
 %% Find keys reachable from Pos, holding Keys.
@@ -83,44 +83,42 @@ main_test_() ->
    , {"Part 2", ?_assertEqual(0, part2(Input))}
    ].
 
-
-
-
-
 ex1_test() ->
   Binary = <<"#########\n",
-             "#b.A.@.a#\n",
-             "#########\n">>,
+              "#b.A.@.a#\n",
+              "#########\n">>,
 
-  Grid = parse(Binary),
-  %% ?debugFmt("~n~p", [Grid]),
-  Width = maps:get(width, Grid),
-  Height = maps:get(height, Grid),
-  ?assertEqual(9, Width),
-  ?assertEqual(3, Height),
+  _Grid = parse(Binary),
+  [].
 
-  Start = maps:get('@', Grid),
-  ?assertEqual({5, 1}, Start),
+%%   %% ?debugFmt("~n~p", [Grid]),
+%%   Width = maps:get(width, Grid),
+%%   Height = maps:get(height, Grid),
+%%   ?assertEqual(9, Width),
+%%   ?assertEqual(3, Height),
 
-  NbrFun = fun({X, Y}, _Grid) ->
-               %% ?debugFmt("Nbrs for ~p~n", [P]),
-               [{1, {X0, Y0}} ||
-                 {X0, Y0} <- [{X - 1, Y},
-                              {X + 1, Y},
-                              {X, Y + 1},
-                              {X, Y - 1}],
-                 maps:get({X0, Y0}, Grid) =/= '#'
-               ]
-           end,
+%%   Start = maps:get('@', Grid),
+%%   ?assertEqual({5, 1}, Start),
 
-  EndFun = fun(_, _) -> false end,
+%%   NbrFun = fun({X, Y}, _Grid) ->
+%%                %% ?debugFmt("Nbrs for ~p~n", [P]),
+%%                [{1, {X0, Y0}} ||
+%%                  {X0, Y0} <- [{X - 1, Y},
+%%                               {X + 1, Y},
+%%                               {X, Y + 1},
+%%                               {X, Y - 1}],
+%%                  maps:get({X0, Y0}, Grid) =/= '#'
+%%                ]
+%%            end,
 
-  {finished, Result} = dijkstra:dijkstra(Grid, Start, NbrFun, EndFun),
+%%   EndFun = fun(_, _) -> false end,
 
-  ?debugFmt("~nResult = ~p", [Result]),
-  ?debugFmt("~nShortest paths = ~p",
-            [[{Node, dijkstra:shortest_path(Result, maps:get(Node, Grid))} ||
-               Node <- [a, b]]]).
+%%   {finished, Result} = dijkstra:dijkstra(Grid, Start, NbrFun, EndFun),
+
+%%   ?debugFmt("~nResult = ~p", [Result]),
+%%   ?debugFmt("~nShortest paths = ~p",
+%%             [[{Node, dijkstra:shortest_path(Result, maps:get(Node, Grid))} ||
+%%                Node <- [a, b]]]).
 
 
 

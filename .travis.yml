@@ -13,7 +13,7 @@ matrix:
         - sudo apt-get update
         - sudo apt-get -y install gnuplot
       before_script: cd aoc_erlang
-      script: rebar3 do compile,eunit,ct
+      script: rebar3 as prod do compile,eunit,ct
       otp_release: 22.1
 
     - language: c
