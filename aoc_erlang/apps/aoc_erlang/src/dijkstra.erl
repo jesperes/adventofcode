@@ -50,7 +50,8 @@ shortest_path(#state{parents = Parents, closed = Closed} = State, Node, Path) ->
                                    NbrNode :: term()})),
                EndFun :: fun((Node :: term(), Graph :: term()) ->
                                 boolean())) ->
-                  Result :: #state{}.
+                  {finished, Result :: #state{}} |
+                  {found, Result :: #state{}}.
 dijkstra(Graph, Source, Fun, EndFun) ->
   State =
     #state{ source = Source

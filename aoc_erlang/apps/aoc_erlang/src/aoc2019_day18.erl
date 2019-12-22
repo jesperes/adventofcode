@@ -44,8 +44,8 @@ part2(_Input) ->
   0.
 
 %% Find keys reachable from Pos, holding Keys.
-find_keys(Grid, Pos, Keys) ->
-  ok.
+%% find_keys(Grid, Pos, Keys) ->
+%%   ok.
 
 get_input() ->
   inputs:get_as_binary(2019, 18).
@@ -62,7 +62,7 @@ parse(Binary) ->
                            , height => byte_size(Binary) div Width
                            }).
 
-parse([], _, Width, Grid) ->
+parse([], _, _Width, Grid) ->
   Grid;
 parse([$\n|Rest], N, Width, Grid) ->
   parse(Rest, N + 1, Width, Grid);
@@ -76,12 +76,12 @@ xy_from_offset(N, Width) ->
   {N rem (Width + 1), N div (Width + 1)}.
 
 %% %% Tests
-%% main_test_() ->
-%%   Input = get_input(),
+main_test_() ->
+   Input = get_input(),
 
-%%   [ {"Part 1", ?_assertEqual(0, part1(Input))}
-%%   , {"Part 2", ?_assertEqual(0, part2(Input))}
-%%   ].
+   [ {"Part 1", ?_assertEqual(0, part1(Input))}
+   , {"Part 2", ?_assertEqual(0, part2(Input))}
+   ].
 
 
 
@@ -102,7 +102,7 @@ ex1_test() ->
   Start = maps:get('@', Grid),
   ?assertEqual({5, 1}, Start),
 
-  NbrFun = fun({X, Y} = P, Grid) ->
+  NbrFun = fun({X, Y}, _Grid) ->
                %% ?debugFmt("Nbrs for ~p~n", [P]),
                [{1, {X0, Y0}} ||
                  {X0, Y0} <- [{X - 1, Y},
@@ -113,7 +113,7 @@ ex1_test() ->
                ]
            end,
 
-  EndFun = fun(Node, _) -> false end,
+  EndFun = fun(_, _) -> false end,
 
   {finished, Result} = dijkstra:dijkstra(Grid, Start, NbrFun, EndFun),
 
