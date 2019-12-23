@@ -39,22 +39,20 @@ kill_all(L) ->
   lists:foreach(fun(N) ->
                     case nic_pid(N) of
                       undefined -> ok;
-                      Pid -> exit(Pid, normal)
+                      Pid -> exit(Pid, kill)
                     end
                 end, L).
 
 nic(Prog, Addr, Parent) ->
   register(nic_name(Addr), self()),
-  {_ProgOut, NicState} =
-    intcode:execute(Prog,
-                    fun nic_input/1,
-                    fun nic_output/2,
-                    #nic{ addr = Addr
-                        , booting = true
-                        , parent = Parent
-                        , outseq = 0
-                        }),
-  ?debugFmt("NIC terminated, state = ~p", [NicState]).
+  intcode:execute(Prog,
+                  fun nic_input/1,
+                  fun nic_output/2,
+                  #nic{ addr = Addr
+                      , booting = true
+                      , parent = Parent
+                      , outseq = 0
+                      }).
 
 spawn_nat() ->
   Parent = self(),
@@ -67,24 +65,20 @@ spawn_nat() ->
 nat(Parent) ->
   register(nic_name(255), self()),
   Parent ! {nat_start, self()},
-  ?debugFmt("Starting NAT...", []),
   nat_loop(#nat{parent = Parent,
                 solutions = #{},
                 first = undef,
-                idle = sets:new()}),
-  ?debugFmt("NAT terminated.", []).
-
+                idle = sets:new()}).
 
 check_mql() ->
   case process_info(self(), message_queue_len) of
     {message_queue_len, L} when L > 100 ->
-      erlang:display({mql, L});
-    _ ->
-      ok
+      L;
+    {message_queue_len, L} ->
+      L
   end.
 
 is_network_idle() ->
-  %% erlang:display(checking_network_idle),
   lists:foldl(fun(_, false) ->
                   false;
                  (N, true) ->
@@ -95,35 +89,21 @@ is_network_idle() ->
                   end
               end, true, lists:seq(0, 49)).
 
-
 nat_loop(#nat{ parent = Parent
              , solutions = Solutions
-             , idle = Idle
              , first = First
              , packet = Packet} = State) ->
 
-  %% erlang:display({nat_loop, maps:keys(Solutions)}),
-  check_mql(),
-
-  %% Too high: (You guessed 22393.)
-  %% Too high: (You guessed 19327.)
+  MQL = check_mql(),
 
   receive
-    P ->
-      %% erlang:display({nat_receive, P}),
-      nat_loop(State#nat{packet = P})
-  after 10 ->
-      case is_tuple(Packet) andalso is_network_idle() of
-        false ->
-          nat_loop(State);
+    P -> nat_loop(State#nat{packet = P})
+  after 50 ->
+      case MQL == 0 andalso is_tuple(Packet) andalso is_network_idle() of
+        false -> nat_loop(State);
         true ->
-          %% erlang:display(network_idle),
           {_, Y} = Packet,
-
-          %% Restart computers
           nic_pid(0) ! Packet,
-
-          %% Store part 1 solution
           State0 = case First of
                      undef -> State#nat{first = Y};
                      _ -> State
@@ -131,8 +111,10 @@ nat_loop(#nat{ parent = Parent
 
           case maps:is_key(Y, Solutions) of
             true ->
-              %% We are done, send results back
-              Parent ! {First, Y};
+              Parent ! {First, Y},
+              receive
+                killme -> ok
+              end;
             _ ->
               nat_loop(State0#nat{ solutions = maps:put(Y, true, Solutions)
                                  , packet = undef
@@ -140,44 +122,6 @@ nat_loop(#nat{ parent = Parent
           end
       end
   end.
-
-  %% State0 =
-  %%   case sets:size(Idle) of
-  %%     Size when (Size == 50) and is_tuple(Packet) ->
-  %%       erlang:display({network_idle, Packet}),
-
-  %%       nic_pid(0) ! Packet,
-  %%       {_, Y} = Packet,
-
-  %%       case sets:is_element(Y, Solutions) of
-  %%         true ->
-  %%           erlang:display({part2, Y}),
-  %%           Parent ! {First, Y},
-  %%           State;
-  %%         false ->
-  %%           State#nat{ idle = sets:new()
-  %%                    , packet = undef
-  %%                    , solutions = sets:add_element(Y, Solutions)
-  %%                    }
-  %%       end;
-  %%     _ ->
-  %%       State
-  %%   end,
-
-  %% receive
-  %%   {_, Y0} = Other ->
-  %%     nat_loop(
-  %%       case First of
-  %%         undef ->
-  %%           erlang:display({part1, Y0}),
-  %%           State0#nat{first = Y0, packet = Other};
-  %%         _ ->
-  %%           State0#nat{packet = Other}
-  %%       end);
-
-  %%   Unknown ->
-  %%     ?debugFmt("Unknown message: ~p", [Unknown])
-  %% end.
 
 spawn_nics(Prog, Addrs) ->
   Parent = self(),
@@ -224,6 +168,7 @@ nic_input(State) ->
     {X, Y} ->
       %% Buffer the Y value so that we can return it in the next input
       %% instruction.
+      %% erlang:display({ts(), received, {X, Y}}),
       {State#nic{iny = Y, idle = false}, X}
   after 0 ->
       %% Tell NAT that we are idle
@@ -246,6 +191,7 @@ nic_output(X, #nic{outseq = N} = State) when N rem 3 == 1 ->
 nic_output(Y, #nic{outseq = N,
                    outx = X,
                    outaddr = OutAddr} = State) when N rem 3 == 2 ->
+  %% erlang:display({ts(), self(), sends, {X, Y}, to, OutAddr}),
   nic_pid(OutAddr) ! {X, Y},
   State#nic{outseq = N + 1, outx = undef, outaddr = undef, idle = false}.
 
@@ -257,7 +203,7 @@ get_input() ->
 %% Tests
 main_test_() ->
   Input = get_input(),
-  {"Part 1 & 2", timeout, 3600, ?_assertEqual(24268, part1(Input))}.
+  {"Part 1 & 2", timeout, 3600, ?_assertEqual({24268, 19316}, part1(Input))}.
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:
