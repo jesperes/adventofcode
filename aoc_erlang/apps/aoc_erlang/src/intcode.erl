@@ -7,6 +7,7 @@
 -export([ execute/1
         , execute/2
         , execute/4
+        , execute_tty/1
         , parse/1
         , spawn_execute/1
         , send_input/2
@@ -46,6 +47,28 @@
                               -> NewState :: intcode_state()).
 
 
+execute_tty(Filename) ->
+  {ok, Binary} = file:read_file(Filename),
+  Prog = intcode:parse(Binary),
+  _ = execute(Prog,
+              fun tty_input/1,
+              fun tty_output/2,
+              []),
+  ok.
+
+tty_input(Buf) ->
+  case Buf of
+    [] ->
+      [C|Line] = io:get_line("> "),
+      {Line, C};
+    [C|Line] ->
+      {Line, C}
+  end.
+
+tty_output(Output, S) ->
+  io:put_chars(standard_io, [Output]),
+  S.
+
 %% Execute an IntCode program. No inputs can be provided, and all the
 %% outputs are returned in a list.
 -spec execute(Prog :: intcode_program()) -> {Prog :: intcode_program() ,
@@ -72,7 +95,9 @@ execute(Prog, Input) ->
   {ProgOut, {_, Outputs0}} =
     execute(Prog,
             fun({[N|Inputs], Outputs} = _State) ->
-                {{Inputs, Outputs}, N}
+                {{Inputs, Outputs}, N};
+               ({[], Outputs}) ->
+                throw({no_input, lists:reverse(Outputs)})
             end,
             fun(Output, {Inputs, Outputs} = _State) ->
                 {Inputs, [Output|Outputs]}
