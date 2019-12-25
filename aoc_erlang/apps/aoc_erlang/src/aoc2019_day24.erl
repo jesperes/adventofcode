@@ -72,10 +72,10 @@ get_input() ->
     "#.###",
     "##...">>.
 
-grid_to_str(Map) ->
-  [[ maps:get({X, Y}, Map) ||
-     X <- lists:seq(0, 4) ] ++ "\n"
-   || Y <- lists:seq(0, 4) ].
+%% grid_to_str(Map) ->
+%%   [[ maps:get({X, Y}, Map) ||
+%%      X <- lists:seq(0, 4) ] ++ "\n"
+%%    || Y <- lists:seq(0, 4) ].
 
 parse(Bin) ->
   lists:foldl(fun({X, Y} = Key, Acc) ->
@@ -90,7 +90,7 @@ parse(Bin) ->
 main_test_() ->
   Input = get_input(),
 
-  [ {"Part 1", ?_assertEqual(0, part1(Input))}
+  [ {"Part 1", ?_assertEqual(17863711, part1(Input))}
   %% , {"Part 2", ?_assertEqual(0, part2(Input))}
   ].
 
