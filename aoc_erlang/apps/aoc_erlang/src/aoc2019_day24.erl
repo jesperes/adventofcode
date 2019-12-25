@@ -4,6 +4,10 @@
 -module(aoc2019_day24).
 -include_lib("eunit/include/eunit.hrl").
 
+%% ------------------------------------------------------------
+%% Part 1: game of life-like cellular atomaton.
+%% ------------------------------------------------------------
+
 part1(Bin) ->
   State = find_first_repeated_state(parse(Bin), sets:new()),
   biodiv_rating(State).
@@ -55,6 +59,11 @@ adjacent_bugs({X, Y}, Map) ->
   lists:foldl(fun($#, Acc) -> Acc + 1;
                  (_, Acc) -> Acc
               end, 0, [N, E, S, W]).
+
+%% ------------------------------------------------------------
+%% Part 2: Each 5x5 grid is a cell in a bigger 5x5 grid, and each
+%% center tile, is a grid in a smaller 5x5 grid.
+%% ------------------------------------------------------------
 
 get_input() ->
   <<"...#.",
