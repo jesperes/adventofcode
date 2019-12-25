@@ -33,6 +33,10 @@ $ mkdir build && cmake ..
 $ cd build && make && ctest
 ```
 
+## Puzzle benchmark
+
+![Puzzle benchmark](aoc_erlang/plot.png)
+
 ## Status
 
 E:   Erlang
