@@ -25,12 +25,12 @@ public class Day21 extends AocPuzzle {
             ".#./..#/### => #..#/..../..../#..#" //
     };
 
-    private static void printGrid(String pattern) {
-        System.out.println("--");
-        for (String row : pattern.split("/")) {
-            System.out.println(row);
-        }
-    }
+//    private static void printGrid(String pattern) {
+//        System.out.println("--");
+//        for (String row : pattern.split("/")) {
+//            System.out.println(row);
+//        }
+//    }
 
     private static char[][] patternToMatrix(String pattern) {
         String[] rows = pattern.split("/");

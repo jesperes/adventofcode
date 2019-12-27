@@ -184,7 +184,7 @@ public class Day07 extends AocPuzzle {
             }
 
             int delta = -(deviantWeight - normalWeight);
-            int adjustedWeight = deviatingNode.weight + delta;
+            // int adjustedWeight = deviatingNode.weight + delta;
 
             // Adjust the map of child weights, so that when we calculate
             // the weight below we get the right value.

@@ -111,7 +111,7 @@ public class IntCode {
             prog.put(op + relbase, value);
             return;
         default:
-            assert false;
+            fail();
             return;
         }
     }

@@ -5,6 +5,13 @@ import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.Set;
 
+/**
+ * Used by 2018 day 22, but that puzzle implementation is not currently run
+ * because it is known to fail.
+ * 
+ * @author jesperes
+ *
+ */
 public class Dijkstra {
 
     public static <T> Graph<T> calculateShortestPathFromSource(Graph<T> graph,
