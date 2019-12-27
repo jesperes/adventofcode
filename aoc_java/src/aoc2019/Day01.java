@@ -33,17 +33,9 @@ public class Day01 extends AocPuzzle {
             return f + fuel(f);
     }
 
-    /*
-     * Tests
-     */
-
     @Test
-    public void testPart1() throws Exception {
+    public void tests() throws Exception {
         assertEquals(3368364, part1());
-    }
-
-    @Test
-    public void testPart2() throws Exception {
         assertEquals(5049684, part2());
     }
 

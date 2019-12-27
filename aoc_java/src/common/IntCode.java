@@ -1,8 +1,7 @@
-package aoc2019;
+package common;
 
 import static org.junit.Assert.fail;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -74,6 +73,21 @@ public class IntCode {
         this.outputs = new ArrayList<>();
     }
 
+    /**
+     * Execute the given intcode program, supplying a list of inputs. Returns a
+     * list containing the output values.
+     * 
+     * @param prog
+     * @param inputs
+     * @return
+     * @return
+     */
+    public static List<Long> execute(String prog, long... inputs) {
+        IntCode intcode = new IntCode(parse(prog), inputs);
+        intcode.execute();
+        return intcode.getOutputs();
+    }
+
     private Long read(long op, int mode) {
         switch (mode) {
         case MODE_POS:
@@ -102,7 +116,7 @@ public class IntCode {
         }
     }
 
-    public void execute() throws IOException {
+    public void execute() {
 
         while (true) {
             int op0 = read(pc, MODE_POS).intValue() % 100;

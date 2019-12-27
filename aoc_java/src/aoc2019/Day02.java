@@ -3,13 +3,12 @@ package aoc2019;
 import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
-import java.math.BigInteger;
-import java.util.Collections;
 import java.util.Map;
 
 import org.junit.Test;
 
 import common.AocPuzzle;
+import common.IntCode;
 
 /**
  * Day 2: 1202 Program Alarm
@@ -20,13 +19,13 @@ public class Day02 extends AocPuzzle {
         super(2019, 2);
     }
 
-    private int part1(String input, int x, int y) throws IOException {
-        Map<BigInteger, BigInteger> prog = BigIntCode.parse(input);
-        prog.put(BigInteger.ONE, BigInteger.valueOf(x));
-        prog.put(BigInteger.TWO, BigInteger.valueOf(y));
-        BigIntCode intcode = new BigIntCode(prog, Collections.emptyList());
+    private int part1(String input, long x, long y) throws IOException {
+        Map<Long, Long> prog = IntCode.parse(input);
+        prog.put(1L, x);
+        prog.put(2L, y);
+        IntCode intcode = new IntCode(prog);
         intcode.execute();
-        return prog.get(BigInteger.ZERO).intValue();
+        return prog.get(0L).intValue();
     }
 
     private int part2(String input) throws IOException {
@@ -38,17 +37,9 @@ public class Day02 extends AocPuzzle {
         return 0;
     }
 
-    /*
-     * Tests
-     */
-
     @Test
-    public void testPart1() throws Exception {
+    public void tests() throws Exception {
         assertEquals(3654868, part1(getInputAsString(), 12, 2));
-    }
-
-    @Test
-    public void testPart2() throws Exception {
         assertEquals(7014, part2(getInputAsString()));
     }
 }

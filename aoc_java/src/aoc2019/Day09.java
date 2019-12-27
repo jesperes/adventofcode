@@ -7,6 +7,7 @@ import java.io.IOException;
 import org.junit.Test;
 
 import common.AocPuzzle;
+import common.IntCode;
 
 /**
  * AoC puzzle template.
@@ -17,36 +18,15 @@ public class Day09 extends AocPuzzle {
         super(2019, 9);
     }
 
-    class Day09Intcode extends IntCode {
-        public Day09Intcode(long value) throws IOException {
-            super(IntCode.parse(getInputAsString()), value);
-        }
-    }
-
-    private long part1() throws IOException {
-        IntCode intcode = new Day09Intcode(1L);
+    private long execute(long input) throws IOException {
+        IntCode intcode = new IntCode(IntCode.parse(getInputAsString()), input);
         intcode.execute();
         return intcode.getOutputs().get(0);
     }
 
-    private long part2() throws IOException {
-        IntCode intcode = new Day09Intcode(2L);
-        intcode.execute();
-        return intcode.getOutputs().get(0);
-    }
-
-    /*
-     * Tests
-     */
-
     @Test
-    public void testPart1() throws Exception {
-        assertEquals(2594708277L, part1());
+    public void tests() throws Exception {
+        assertEquals(2594708277L, execute(1));
+        assertEquals(87721L, execute(2));
     }
-
-    @Test
-    public void testPart2() throws Exception {
-        assertEquals(87721L, part2());
-    }
-
 }
