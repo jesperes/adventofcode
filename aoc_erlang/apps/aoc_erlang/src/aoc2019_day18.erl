@@ -45,44 +45,40 @@ part1(Binary, AllKeys) ->
 %% list of keys taken along that path.
 -spec neighbors(Node :: search_node(),
                 Graph :: graph()) -> list(search_node()).
-neighbors({{X, Y}, KeysIn} = _Node, Graph) ->
+neighbors({Pos, KeysIn}, Graph) ->
   case KeysIn =:= maps:get(keys, Graph) of
     true -> found;
     false ->
-      Dist = 1,
-      [{Dist, {{X0, Y0}, collect_keys({X0, Y0}, KeysIn, Graph)}} ||
-        {X0, Y0} <- [{X - 1, Y},
-                     {X + 1, Y},
-                     {X, Y + 1},
-                     {X, Y - 1}],
-        is_open({X0, Y0}, KeysIn, Graph)]
+      lists:foldl(
+        fun(Adj, Acc) ->
+            case maps:get(Adj, Graph) of
+              %% Wall, no neighbor here
+              $# -> Acc;
+
+              %% Empty space (or start), add node but don't change key
+              %% list
+              C when (C =:= $.) or (C =:= $@) ->
+                [{1, {Adj, KeysIn}}|Acc];
+
+              %% Door
+              C when (C >= $A) and (C =< $Z) ->
+                case lists:member(C + 32, KeysIn) of
+                  true -> [{1, {Adj, KeysIn}}|Acc];
+                  false -> Acc
+                end;
+
+              %% Key
+              C when (C >= $a) and (C =< $z) ->
+                [{1, {Adj, lists:usort([C|KeysIn])}}|Acc]
+            end
+        end, [], adj(Pos))
   end.
 
-collect_keys(Pos, KeysIn, Graph) ->
-  C = maps:get(Pos, Graph),
-  case is_key(C) of
-    true -> lists:usort([C|KeysIn]);
-    _    -> KeysIn
-  end.
-
-%% Return true if we can pass through the given node.
-is_open(Pos, Keys, Graph) ->
-  D = maps:get(Pos, Graph, $#),
-  case is_wall(D) of
-    true -> false;
-    false ->
-      case is_door(D) of
-        false -> true;
-        true ->
-          K = matching_key(D),
-          lists:member(K, Keys)
-      end
-  end.
-
-is_wall(C) -> C =:= $#.
-is_key(C) -> (C >= $a) and (C =< $z).
-is_door(C) -> (C >= $A) and (C =< $Z).
-matching_key(D) -> D + 32.
+adj({X, Y}) ->
+  [{X - 1, Y},
+   {X + 1, Y},
+   {X, Y + 1},
+   {X, Y - 1}].
 
 get_input() ->
   inputs:get_as_binary(2019, 18).
