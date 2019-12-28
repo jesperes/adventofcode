@@ -28,10 +28,11 @@
 %% Use dijkstra's algorithm with nodes being a tuple of {Pos,
 %% KeysFound}.
 part1(Binary, AllKeys) ->
+  Keys = list_to_binary(AllKeys),
   Grid = parse(Binary),
   StartPos = maps:get($@, Grid),
-  StartNode = {StartPos, []},
-  Grid0 = maps:put(keys, AllKeys, Grid),
+  StartNode = {StartPos, <<>>},
+  Grid0 = maps:put(keys, Keys, Grid),
   {found, Node, State} = dijkstra:dijkstra(Grid0, StartNode, fun neighbors/2),
   length(dijkstra:shortest_path(State, Node)) - 1.
 
@@ -62,14 +63,17 @@ neighbors({Pos, KeysIn}, Graph) ->
 
               %% Door
               C when (C >= $A) and (C =< $Z) ->
-                case lists:member(C + 32, KeysIn) of
-                  true -> [{1, {Adj, KeysIn}}|Acc];
-                  false -> Acc
+                LC = list_to_binary([C + 32]),
+                case binary:match(KeysIn, LC) of
+                  nomatch -> Acc;
+                  _ -> [{1, {Adj, KeysIn}}|Acc]
                 end;
 
               %% Key
               C when (C >= $a) and (C =< $z) ->
-                [{1, {Adj, lists:usort([C|KeysIn])}}|Acc]
+                Str = binary_to_list(KeysIn),
+                B = list_to_binary(lists:usort([C|Str])),
+                [{1, {Adj, B}}|Acc]
             end
         end, [], adj(Pos))
   end.
