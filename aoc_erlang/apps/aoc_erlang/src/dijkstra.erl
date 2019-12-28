@@ -2,7 +2,7 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
--export([ dijkstra/4
+-export([ dijkstra/3
         , shortest_dist/2
         , shortest_path/2
         ]).
@@ -14,8 +14,7 @@
         , frontier
         , distances
         , parents
-        , nbrfun
-        , endfun
+        , callbackfun
         }).
 
 shortest_dist(#state{distances = Map}, Node) ->
@@ -35,23 +34,22 @@ shortest_path(#state{parents = Parents} = State, Node, Path) ->
 %%
 %% @param Graph   The graph to search.
 %% @param Source  Start node
-%% @param Fun     Neighbor callback function. Returns a list of
-%%                {Dist,Node} tuples for each of the node's neighbors.
-%% @param EndFun  Returns true iff the given node is the end node, and
-%%                the search should stop.
-%% @returns       A opaque search state, which can be passed to e.g.
-%%                shortest_path/2 to find the shortest path to a node.
+%% @param CallbackFun
+%%                Function for evaluating nodes. Should return a list
+%%                of {Dist, Node} tuples for the nodes neighbors, or
+%%                'found' if the node passed to it was the end node.
+%% @returns       {finished, State} if there are no more nodes to
+%%                evaluate, or {found, Node, State} if the goal node was
+%%                found.
 %%
 -spec dijkstra(Graph :: term(),
                Source :: term(),
-               Fun :: fun((Node :: term(), Graph :: term()) ->
-                             list({NbrDist :: integer(),
-                                   NbrNode :: term()})),
-               EndFun :: fun((Node :: term(), Graph :: term()) ->
-                                boolean())) ->
+               CallbackFun :: fun((Node :: term(), Graph :: term()) ->
+                                     list({NbrDist :: integer(),
+                                           NbrNode :: term()}))) ->
                   {finished, Result :: #state{}} |
                   {found, Result :: #state{}}.
-dijkstra(Graph, Source, Fun, EndFun) ->
+dijkstra(Graph, Source, CallbackFun) ->
   State =
     #state{ source = Source
           , graph = Graph
@@ -59,70 +57,53 @@ dijkstra(Graph, Source, Fun, EndFun) ->
           , frontier = gb_sets:from_list([{0, Source}])
           , distances = #{Source => 0}
           , parents = #{}
-          , nbrfun = Fun
-          , endfun = EndFun
+          , callbackfun = CallbackFun
           },
 
   dijkstra0(State).
 
 dijkstra0(#state{ frontier = Frontier
-                , nbrfun = Fun
-                , endfun = EndFun
+                , callbackfun = CallbackFun
                 , graph = Graph
                 } = State) ->
-  %% ?debugFmt("~nFrontier: ~p", [gb_sets:to_list(Frontier)]),
+  case gb_sets:is_empty(Frontier) orelse take_frontier(State) of
+    true -> {finished, State};
+    {{NodeDist, Node}, State0} ->
 
-  case gb_sets:is_empty(Frontier) of
-    true ->
-      %% We have exhausted the search, no more nodes
-      %% to evaluate.
-      {finished, State};
-    false ->
-      %% Pick the node from the frontier with the shortest distance
-      %% from origin.
-      {{NodeDist, Node}, State0} = take_frontier(State),
+      %% Function to apply to each neighbor
+      NbrFun =
+        fun({NbrDist, NbrNode}, #state{distances = Dists} = Acc) ->
+            case {is_closed(NbrNode, Acc),
+                  is_in_frontier(NbrNode, Acc)} of
+              {true, _} ->
+                %% Node already evaluated
+                Acc;
+              {false, false} ->
+                %% Unseen node
+                add_frontier(Node, NbrNode,
+                             NodeDist + NbrDist, Acc);
+              {false, true} ->
+                %% Previously seen, but not evaluated. Update
+                %% shortest distance, if necessary.
+                NewNbrDist = NodeDist + NbrDist,
+                OldNbrDist = maps:get(NbrNode, Dists),
+                if NewNbrDist < OldNbrDist ->
+                    update_distance(Node, NbrNode, NewNbrDist, Acc);
+                   true -> Acc
+                end
+            end
+        end,
 
-      case EndFun(Node, Graph) of
-        true ->
-          %% We have found our target
-          {found, State};
-        false ->
-          %% Find neighbors
-          Neighbors = Fun(Node, Graph),
-
-          %% ?debugFmt("~nNeighbors(~p) = ~p", [Node, Neighbors]),
-
-          %% Mark node as evaluated (this means that we know the shortest
-          %% path to this node).
-          State1 = add_to_closed(Node, State0),
-
-          %% Fold over the neighbors, and repeat.
+      case CallbackFun(Node, Graph) of
+        found -> {found, Node, State0};
+        Neighbors ->
           dijkstra0(
-            lists:foldl(
-              fun({NbrDist, NbrNode}, Acc) ->
-                  case is_closed(NbrNode, Acc) of
-                    true ->
-                      %% Neighbor is in closed set, i.e. already evaluated
-                      Acc;
-                    false ->
-                      case is_in_frontier(NbrNode, Acc) of
-                        true ->
-                          NewNbrDist = NodeDist + NbrDist,
-                          OldNbrDist = maps:get(NbrNode, Acc#state.distances),
-
-                          if NewNbrDist < OldNbrDist ->
-                              update_distance(Node, NbrNode, NewNbrDist, Acc);
-                             true ->
-                              Acc
-                          end;
-                        false ->
-                          %% New node, add it to the frontier
-                          add_frontier(Node, NbrNode, NodeDist + NbrDist, Acc)
-                      end
-                  end
-              end, State1, Neighbors))
+            lists:foldl(NbrFun,
+                        add_to_closed(Node, State0),
+                        Neighbors))
       end
   end.
+
 
 is_closed(Node, State) ->
   maps:is_key(Node, State#state.closed).
@@ -171,11 +152,10 @@ dijkstra_test_() ->
            },
 
   NbrFun = fun(Node, G) -> maps:get(Node, G) end,
-  EndFun = fun(_Node, _Graph) -> false end,
 
   ?_assertEqual({7, [a, b, c]},
                 begin
-                  {finished, State} = dijkstra(Graph, a, NbrFun, EndFun),
+                  {finished, State} = dijkstra(Graph, a, NbrFun),
                   {shortest_dist(State, c),
                    shortest_path(State, c)}
                 end).
@@ -208,7 +188,9 @@ grid_helper(Grid, Size) ->
                 {Xa, Ya} /= {X, Y}]
           end,
 
-  NbrFn = fun(Curr, _) ->
+  NbrFn = fun(Curr, _) when Curr =:= Goal ->
+              found;
+             (Curr, _) ->
               lists:filtermap(fun(N) ->
                                   case sets:is_element(N, Obstacles) of
                                     true -> false;
@@ -217,11 +199,7 @@ grid_helper(Grid, Size) ->
                               end, AdjFn(Curr))
           end,
 
-  EndFun = fun(Pos, _) -> Pos =:= Goal end,
-
-  {found, State} = dijkstra(Grid, Start, NbrFn, EndFun),
-  %% ?debugFmt("~nShortest path: ~p",
-  %%           [shortest_path(State, Goal)]),
+  {found, Goal, State} = dijkstra(Grid, Start, NbrFn),
   shortest_dist(State, Goal) + 1.
 
 t1_test() ->

@@ -4,48 +4,85 @@
 -module(aoc2019_day18).
 -include_lib("eunit/include/eunit.hrl").
 
-%% Puzzle solution
-part1(_Input) ->
-  %%
-  %% Only one entrance (marked @) is present among the open passages
-  %% (marked .) and stone walls (#), but you also detect an assortment
-  %% of keys (shown as lowercase letters) and doors (shown as
-  %% uppercase letters). Keys of a given letter open the door of the
-  %% same letter: a opens A, b opens B, and so on. You aren't sure
-  %% which key you need to disable the tractor beam, so you'll need to
-  %% collect all of them.
-  %%
-  %% Example:
-  %%
-  %% #################
-  %% #i.G..c...e..H.p#
-  %% ########.########
-  %% #j.A..b...f..D.o#
-  %% ########@########
-  %% #k.E..a...g..B.n#
-  %% ########.########
-  %% #l.F..d...h..C.m#
-  %% #################
-  %%
-  %% Do shortest path search (Dijkstra?) with nodes being {KeyPos,
-  %% KeysDiscovered}. The keys discovered affects how what paths to
-  %% other nodes are available, so a key reached through a different
-  %% set of keys represents a different node in the search graph.
-  %%
-  %% BFS can be used to find all adjacent nodes, so from {KeyPos,
-  %% KeysDiscovered}, we perform a BFS to find all keys which can be
-  %% reached from KeyPos, given the set of keys already discovered.
-  %%
-  %% ?debugMsg("Not implemented."),
-  0.
+%%
+%% Only one entrance (marked @) is present among the open passages
+%% (marked .) and stone walls (#), but you also detect an assortment
+%% of keys (shown as lowercase letters) and doors (shown as
+%% uppercase letters). Keys of a given letter open the door of the
+%% same letter: a opens A, b opens B, and so on. You aren't sure
+%% which key you need to disable the tractor beam, so you'll need to
+%% collect all of them.
+%%
+%% Example:
+%%
+%% #################
+%% #i.G..c...e..H.p#
+%% ########.########
+%% #j.A..b...f..D.o#
+%% ########@########
+%% #k.E..a...g..B.n#
+%% ########.########
+%% #l.F..d...h..C.m#
+%% #################
+%%
+%% Use dijkstra's algorithm with nodes being a tuple of {Pos,
+%% KeysFound}.
+part1(Binary, AllKeys) ->
+  Grid = parse(Binary),
+  StartPos = maps:get($@, Grid),
+  StartNode = {StartPos, []},
+  Grid0 = maps:put(keys, AllKeys, Grid),
+  {found, Node, State} = dijkstra:dijkstra(Grid0, StartNode, fun neighbors/2),
+  length(dijkstra:shortest_path(State, Node)) - 1.
 
-part2(_Input) ->
-  %% ?debugMsg("Not implemented."),
-  0.
+-type pos()            :: {X :: integer(), Y :: integer()}.
+-type keylist()        :: term().
+-type search_node()    :: {pos(), keylist()}.
+-type graph()          :: map().
 
-%% Find keys reachable from Pos, holding Keys.
-%% find_keys(Grid, Pos, Keys) ->
-%%   ok.
+%% Neighbor-function. Returns the list of neighbors to a given node.
+%% In this particular implementation, returns a list of positions +
+%% list of keys taken along that path.
+-spec neighbors(Node :: search_node(),
+                Graph :: graph()) -> list(search_node()).
+neighbors({{X, Y}, KeysIn} = _Node, Graph) ->
+  case KeysIn =:= maps:get(keys, Graph) of
+    true -> found;
+    false ->
+      Dist = 1,
+      [{Dist, {{X0, Y0}, collect_keys({X0, Y0}, KeysIn, Graph)}} ||
+        {X0, Y0} <- [{X - 1, Y},
+                     {X + 1, Y},
+                     {X, Y + 1},
+                     {X, Y - 1}],
+        is_open({X0, Y0}, KeysIn, Graph)]
+  end.
+
+collect_keys(Pos, KeysIn, Graph) ->
+  C = maps:get(Pos, Graph),
+  case is_key(C) of
+    true -> lists:usort([C|KeysIn]);
+    _    -> KeysIn
+  end.
+
+%% Return true if we can pass through the given node.
+is_open(Pos, Keys, Graph) ->
+  D = maps:get(Pos, Graph, $#),
+  case is_wall(D) of
+    true -> false;
+    false ->
+      case is_door(D) of
+        false -> true;
+        true ->
+          K = matching_key(D),
+          lists:member(K, Keys)
+      end
+  end.
+
+is_wall(C) -> C =:= $#.
+is_key(C) -> (C >= $a) and (C =< $z).
+is_door(C) -> (C >= $A) and (C =< $Z).
+matching_key(D) -> D + 32.
 
 get_input() ->
   inputs:get_as_binary(2019, 18).
@@ -58,9 +95,10 @@ parse(Binary) ->
   [{Width, _}|_] = binary:matches(Binary, <<"\n">>),
   ?assertEqual($\n, binary:at(Binary, Width)),
   String = binary_to_list(Binary),
-  parse(String, 0, Width, #{ width => Width
-                           , height => byte_size(Binary) div Width
-                           }).
+  parse(String, 0, Width,
+        #{ width => Width %% without newline
+         , height => byte_size(Binary) div (Width + 1)
+         }).
 
 parse([], _, _Width, Grid) ->
   Grid;
@@ -68,71 +106,46 @@ parse([$\n|Rest], N, Width, Grid) ->
   parse(Rest, N + 1, Width, Grid);
 parse([C|Rest], N, Width, Grid) ->
   Pos = xy_from_offset(N, Width),
-  Atm = list_to_atom([C]),
   parse(Rest, N + 1, Width,
-        maps:merge(Grid, #{ Atm => Pos, Pos => Atm})).
+        maps:merge(Grid, #{ C => Pos, Pos => C})).
 
 xy_from_offset(N, Width) ->
   {N rem (Width + 1), N div (Width + 1)}.
 
-%% %% Tests
+%% ============================================================
+%% Tests
+%% ============================================================
+
 main_test_() ->
-   Input = get_input(),
+  Input = get_input(),
+  AllKeys = lists:seq($a, $z),
 
-   [ {"Part 1", ?_assertEqual(0, part1(Input))}
-   , {"Part 2", ?_assertEqual(0, part2(Input))}
-   ].
+  [ {"Part 1", timeout, 60, ?_assertEqual(3856, part1(Input, AllKeys))}
+    %% , {"Part 2", ?_assertEqual(0, part2(Input))}
+  ].
 
-ex1_test() ->
-  Binary = <<"#########\n",
-              "#b.A.@.a#\n",
-              "#########\n">>,
+ex1_test_() ->
+  Binary = <<"########################\n",
+             "#f.D.E.e.C.b.A.@.a.B.c.#\n",
+             "######################.#\n",
+             "#d.....................#\n",
+             "########################\n">>,
+  ?_assertEqual(86, part1(Binary, "abcdef")).
 
-  _Grid = parse(Binary),
-  [].
+ex2_test_() ->
+  Binary = <<"#################\n",
+             "#i.G..c...e..H.p#\n",
+             "########.########\n",
+             "#j.A..b...f..D.o#\n",
+             "########@########\n",
+             "#k.E..a...g..B.n#\n",
+             "########.########\n",
+             "#l.F..d...h..C.m#\n",
+             "#################\n"
+           >>,
 
-%%   %% ?debugFmt("~n~p", [Grid]),
-%%   Width = maps:get(width, Grid),
-%%   Height = maps:get(height, Grid),
-%%   ?assertEqual(9, Width),
-%%   ?assertEqual(3, Height),
-
-%%   Start = maps:get('@', Grid),
-%%   ?assertEqual({5, 1}, Start),
-
-%%   NbrFun = fun({X, Y}, _Grid) ->
-%%                %% ?debugFmt("Nbrs for ~p~n", [P]),
-%%                [{1, {X0, Y0}} ||
-%%                  {X0, Y0} <- [{X - 1, Y},
-%%                               {X + 1, Y},
-%%                               {X, Y + 1},
-%%                               {X, Y - 1}],
-%%                  maps:get({X0, Y0}, Grid) =/= '#'
-%%                ]
-%%            end,
-
-%%   EndFun = fun(_, _) -> false end,
-
-%%   {finished, Result} = dijkstra:dijkstra(Grid, Start, NbrFun, EndFun),
-
-%%   ?debugFmt("~nResult = ~p", [Result]),
-%%   ?debugFmt("~nShortest paths = ~p",
-%%             [[{Node, dijkstra:shortest_path(Result, maps:get(Node, Grid))} ||
-%%                Node <- [a, b]]]).
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  Keys = lists:seq($a, $p),
+  ?_assertEqual(136, part1(Binary, Keys)).
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:
