@@ -5,6 +5,7 @@
 -export([ dijkstra/3
         , shortest_dist/2
         , shortest_path/2
+        , closed_set/1
         ]).
 
 -record(state,
@@ -28,6 +29,9 @@ shortest_path(#state{parents = Parents} = State, Node, Path) ->
     undef -> Path;
     Parent -> shortest_path(State, Parent, [Parent|Path])
   end.
+
+closed_set(#state{closed = Closed}) ->
+  lists:sort(maps:keys(Closed)).
 
 %%
 %% Apply dijkstra's algorithm to Graph, beginning at Source.
