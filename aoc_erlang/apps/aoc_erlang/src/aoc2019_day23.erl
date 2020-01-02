@@ -4,21 +4,27 @@
 -module(aoc2019_day23).
 -include_lib("eunit/include/eunit.hrl").
 
--record(nic, { addr :: integer()    % Network address
-             , booting :: boolean() % True when booting, false otherwise
-             , parent :: pid()      % Parent pid
-             , outseq :: integer()  % Next output is: 0 = addr, 1 = x, 2 = y
-             , outaddr :: integer() % Address for next output package
-             , outx :: integer()    % Buffered outgoing X value
-             , iny :: integer()     % Buffered incoming Y value
-             , idle :: integer()
+-record(nic, { addr    :: integer()   % Network address
+             , booting :: boolean()   % True when booting, false otherwise
+             , parent  :: pid()       % Parent pid
+             , outseq  :: integer()   % Next output is: 0 = addr, 1 = x, 2 = y
+             , outaddr :: integer()
+                        | 'undefined' % Address for next output package
+             , outx    :: integer()
+                        | 'undefined' % Buffered outgoing X value
+             , iny     :: integer()
+                        | 'undefined' % Buffered incoming Y value
+             , idle    :: boolean()
+                        | 'undefined'
              }).
 
--record(nat, { packet :: {integer(), integer()} % Last packet seen by NAT
-             , idle :: term()                   % Set of idle pids
-             , parent :: pid()                  % Parent pid
+-record(nat, { packet    :: {integer(), integer()}
+                          | 'undefined' % Last packet seen by NAT
+             , idle      :: term()      % Set of idle pids
+             , parent    :: pid()       % Parent pid
              , solutions :: term()
-             , first :: integer()
+             , first     :: integer()
+                          | 'undefined'
              }).
 
 part1(Prog) ->
@@ -62,12 +68,12 @@ spawn_nat() ->
   receive {nat_start, Pid} -> ok end,
   Pid.
 
+-spec nat(Parent :: pid()) -> no_return().
 nat(Parent) ->
   register(nic_name(255), self()),
   Parent ! {nat_start, self()},
   nat_loop(#nat{parent = Parent,
                 solutions = #{},
-                first = undef,
                 idle = sets:new()}).
 
 check_mql() ->
@@ -105,7 +111,7 @@ nat_loop(#nat{ parent = Parent
           {_, Y} = Packet,
           nic_pid(0) ! Packet,
           State0 = case First of
-                     undef -> State#nat{first = Y};
+                     undefined -> State#nat{first = Y};
                      _ -> State
                    end,
 
@@ -117,7 +123,7 @@ nat_loop(#nat{ parent = Parent
               end;
             _ ->
               nat_loop(State0#nat{ solutions = maps:put(Y, true, Solutions)
-                                 , packet = undef
+                                 , packet = undefined
                                  })
           end
       end
@@ -155,7 +161,7 @@ nic_input(#nic{ booting = true
 
 %% If we have a buffered Y value, return it.
 nic_input(#nic{iny = Y} = State) when is_integer(Y) ->
-  {State#nic{iny = undef}, Y};
+  {State#nic{iny = undefined}, Y};
 %% Poll input queue
 nic_input(State) ->
   check_mql(),
@@ -193,7 +199,10 @@ nic_output(Y, #nic{outseq = N,
                    outaddr = OutAddr} = State) when N rem 3 == 2 ->
   %% erlang:display({ts(), self(), sends, {X, Y}, to, OutAddr}),
   nic_pid(OutAddr) ! {X, Y},
-  State#nic{outseq = N + 1, outx = undef, outaddr = undef, idle = false}.
+  State#nic{ outseq = N + 1
+           , outx = undefined
+           , outaddr = undefined
+           , idle = false}.
 
 %% Input reader (place downloaded input file in
 %% priv/inputs/2019/input23.txt).

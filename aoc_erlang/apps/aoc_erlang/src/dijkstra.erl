@@ -52,7 +52,7 @@ closed_set(#state{closed = Closed}) ->
                                      list({NbrDist :: integer(),
                                            NbrNode :: term()}))) ->
                   {finished, Result :: #state{}} |
-                  {found, Result :: #state{}}.
+                  {found, Node :: term(), Result :: #state{}}.
 dijkstra(Graph, Source, CallbackFun) ->
   State =
     #state{ source = Source
