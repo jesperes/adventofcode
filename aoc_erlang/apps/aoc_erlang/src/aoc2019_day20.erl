@@ -4,20 +4,16 @@
 -module(aoc2019_day20).
 -include_lib("eunit/include/eunit.hrl").
 
-%% Puzzle solution
+%% Part 1
+
 part1(Binary) ->
   Maze = {_, Portals} = parse(Binary),
   StartPos = maps:get('AA', Portals),
-  {found, Node, State} = dijkstra:dijkstra(Maze, StartPos, fun evalfun/2),
+  {found, Node, State} = dijkstra:dijkstra(Maze, StartPos, fun neighbors/2),
   Path = dijkstra:shortest_path(State, Node),
-
-  %% {Map, _} = Maze,
-  %% ?debugFmt("~n~s~n",
-  %%           [grid:to_str(
-  %%              grid:grid_with_path(Map, Path, $@))]),
   length(Path) - 1.
 
-evalfun({_, _} = Pos, {Map, Portals}) ->
+neighbors({_, _} = Pos, {Map, Portals}) ->
   case maps:get('ZZ', Portals) of
     End when End =:= Pos -> found;
     _ ->
@@ -25,7 +21,6 @@ evalfun({_, _} = Pos, {Map, Portals}) ->
         fun(AdjPos) ->
             case maps:get(AdjPos, Map, undef) of
               $. -> {true, {1, AdjPos}};
-              $Z -> {true, {1, AdjPos}};
               _ -> false
             end
         end, adj(Pos)) ++
@@ -36,27 +31,57 @@ evalfun({_, _} = Pos, {Map, Portals}) ->
         end
   end.
 
+%% Part 2
+
+part2(Binary) ->
+  Maze = {_, Portals} = parse(Binary),
+  StartPos = {0, maps:get('AA', Portals)},
+  {found, Node, State} = dijkstra:dijkstra(Maze, StartPos, fun neighbors2/2),
+  Path = dijkstra:shortest_path(State, Node),
+  length(Path) - 1.
+
+%% For part 2 we need to track which level we are on, and disallow
+%% moving outside the top-most level.
+neighbors2({Level, {_, _} = Pos}, {Map, Portals}) ->
+  case maps:get('ZZ', Portals) of
+    End when (End =:= Pos) and (Level == 0) -> found;
+    _ ->
+      lists:filtermap(
+        fun(AdjPos) ->
+            case maps:get(AdjPos, Map, undef) of
+              $. -> {true, {1, {Level, AdjPos}}};
+              _ -> false
+            end
+        end, adj(Pos)) ++
+        %% Add the portal as a neighbor, if there is one.
+        case maps:get(Pos, Portals, undef) of
+          undef -> [];
+          Portal ->
+            %% Track movement to adjacent levels.
+            NextLevel =
+              case maps:get({type, Pos}, Portals) of
+                outer -> Level - 1;
+                inner -> Level + 1
+              end,
+            %% Don't allow teleporting outside the outermost level.
+            if NextLevel >= 0 ->
+                [{1, {NextLevel, Portal}}];
+               true ->
+                []
+            end
+        end
+  end.
+
 adj({X, Y}) ->
   [{X - 1, Y},
    {X + 1, Y},
    {X, Y - 1},
    {X, Y + 1}].
 
-%% part2(_Input) ->
-%%   0.
-
 %% Input reader (place downloaded input file in
 %% priv/inputs/2019/input20.txt).
 get_input() ->
   inputs:get_as_binary(2019, 20).
-
-%% Tests
-main_test_() ->
-  Input = get_input(),
-
-  [ {"Part 1", ?_assertEqual(442, part1(Input))}
-    %%   , {"Part 2", ?_assertEqual(0, part2(Input))}
-  ].
 
 %% ==================================================================
 %% Code for parsing the maze. This is a bit more work than usual,
@@ -107,6 +132,8 @@ parse_line(Y, Line, Acc) ->
                         Line)).
 
 find_portals(Map) ->
+  Size = get_maze_size(Map),
+
   Portals =
     lists:foldl(
       fun(C, Acc) ->
@@ -115,13 +142,19 @@ find_portals(Map) ->
             fun({Name, Pos}, InnerAcc) ->
                 case maps:get(Name, InnerAcc, undef) of
                   undef ->
-                    maps:merge(InnerAcc,
-                               #{Name => Pos,
-                                 Pos => Pos});
+                    maps:put(Name, Pos, InnerAcc);
                   OtherPos ->
+                    %% For part 2 we need to be able to tell if a
+                    %% portal is on the inner or outer side of the
+                    %% donut so that we can track the level.
                     maps:merge(InnerAcc,
-                               #{Pos => OtherPos,
-                                 OtherPos => Pos})
+                               #{ Pos => OtherPos
+                                , OtherPos => Pos
+                                , {type, Pos} =>
+                                    portal_type(Pos, Size)
+                                , {type, OtherPos} =>
+                                    portal_type(OtherPos, Size)
+                                })
                 end
             end, Acc, Portals)
       end, #{}, lists:seq($A, $Z)),
@@ -131,6 +164,26 @@ find_portals(Map) ->
                  (_, _) -> true
               end,  Portals).
 
+%% Figure out which direction a portal goes. This is necessary so that
+%% we know if we are going inwards or outwards.
+portal_type({2, _}, _) -> outer;
+portal_type({_, 2}, _) -> outer;
+portal_type({X, _}, {W, _}) when X == (W - 3) -> outer;
+portal_type({_, Y}, {_, H}) when Y == (H - 3) -> outer;
+portal_type(_, _) -> inner.
+
+%% Return the {Width,Height} of the maze.
+get_maze_size(Map) ->
+  {XCoords, YCoords} =
+    lists:unzip(
+      maps:keys(
+        maps:filter(
+          fun({X, Y}, _) -> is_integer(X) and is_integer(Y);
+             (_, _) -> false
+          end, Map))),
+  MaxX = lists:max(XCoords),
+  MaxY = lists:max(YCoords),
+  {MaxX + 1, MaxY + 1}.
 
 %% Find all the portals beginning with Letter.
 find_portals(Letter, Map) ->
@@ -190,7 +243,14 @@ get_portal(Letter, {X, Y}, Map) ->
       false
   end.
 
-ex1_test() ->
+%% Tests
+main_test_() ->
+  Input = get_input(),
+  [ {"Part 1", ?_assertEqual(442, part1(Input))}
+  , {"Part 2", ?_assertEqual(5208, part2(Input))}
+  ].
+
+ex1_test_() ->
   %%                    1
   %%          01234567890123456789
   Binary = <<"         A           \n", % 0
@@ -213,8 +273,91 @@ ex1_test() ->
              "             Z       \n", % 17
              "             Z       \n">>,
 
-  ?assertEqual(23, part1(Binary)).
+  ?_assertEqual(23, part1(Binary)).
 
+ex2_test_() ->
+  Binary =
+    <<"                   A               \n",
+      "                   A               \n",
+      "  #################.#############  \n",
+      "  #.#...#...................#.#.#  \n",
+      "  #.#.#.###.###.###.#########.#.#  \n",
+      "  #.#.#.......#...#.....#.#.#...#  \n",
+      "  #.#########.###.#####.#.#.###.#  \n",
+      "  #.............#.#.....#.......#  \n",
+      "  ###.###########.###.#####.#.#.#  \n",
+      "  #.....#        A   C    #.#.#.#  \n",
+      "  #######        S   P    #####.#  \n",
+      "  #.#...#                 #......VT\n",
+      "  #.#.#.#                 #.#####  \n",
+      "  #...#.#               YN....#.#  \n",
+      "  #.###.#                 #####.#  \n",
+      "DI....#.#                 #.....#  \n",
+      "  #####.#                 #.###.#  \n",
+      "ZZ......#               QG....#..AS\n",
+      "  ###.###                 #######  \n",
+      "JO..#.#.#                 #.....#  \n",
+      "  #.#.#.#                 ###.#.#  \n",
+      "  #...#..DI             BU....#..LF\n",
+      "  #####.#                 #.#####  \n",
+      "YN......#               VT..#....QG\n",
+      "  #.###.#                 #.###.#  \n",
+      "  #.#...#                 #.....#  \n",
+      "  ###.###    J L     J    #.#.###  \n",
+      "  #.....#    O F     P    #.#...#  \n",
+      "  #.###.#####.#.#####.#####.###.#  \n",
+      "  #...#.#.#...#.....#.....#.#...#  \n",
+      "  #.#####.###.###.#.#.#########.#  \n",
+      "  #...#.#.....#...#.#.#.#.....#.#  \n",
+      "  #.###.#####.###.###.#.#.#######  \n",
+      "  #.#.........#...#.............#  \n",
+      "  #########.###.###.#############  \n",
+      "           B   J   C               \n",
+      "           U   P   P               \n">>,
+
+  ?_assertEqual(58, part1(Binary)).
+
+ex3_test_() ->
+  Binary =
+    <<"             Z L X W       C               \n",
+      "             Z P Q B       K               \n",
+      "  ###########.#.#.#.#######.###############\n",
+      "  #...#.......#.#.......#.#.......#.#.#...#\n",
+      "  ###.#.#.#.#.#.#.#.###.#.#.#######.#.#.###\n",
+      "  #.#...#.#.#...#.#.#...#...#...#.#.......#\n",
+      "  #.###.#######.###.###.#.###.###.#.#######\n",
+      "  #...#.......#.#...#...#.............#...#\n",
+      "  #.#########.#######.#.#######.#######.###\n",
+      "  #...#.#    F       R I       Z    #.#.#.#\n",
+      "  #.###.#    D       E C       H    #.#.#.#\n",
+      "  #.#...#                           #...#.#\n",
+      "  #.###.#                           #.###.#\n",
+      "  #.#....OA                       WB..#.#..ZH\n",
+      "  #.###.#                           #.#.#.#\n",
+      "CJ......#                           #.....#\n",
+      "  #######                           #######\n",
+      "  #.#....CK                         #......IC\n",
+      "  #.###.#                           #.###.#\n",
+      "  #.....#                           #...#.#\n",
+      "  ###.###                           #.#.#.#\n",
+      "XF....#.#                         RF..#.#.#\n",
+      "  #####.#                           #######\n",
+      "  #......CJ                       NM..#...#\n",
+      "  ###.#.#                           #.###.#\n",
+      "RE....#.#                           #......RF\n",
+      "  ###.###        X   X       L      #.#.#.#\n",
+      "  #.....#        F   Q       P      #.#.#.#\n",
+      "  ###.###########.###.#######.#########.###\n",
+      "  #.....#...#.....#.......#...#.....#.#...#\n",
+      "  #####.#.###.#######.#######.###.###.#.#.#\n",
+      "  #.......#.......#.#.#.#.#...#...#...#.#.#\n",
+      "  #####.###.#####.#.#.#.#.###.###.#.###.###\n",
+      "  #.......#.....#.#...#...............#...#\n",
+      "  #############.#.#.###.###################\n",
+      "               A O F   N                   \n",
+      "               A A D   M                   \n">>,
+
+  ?_assertEqual(396, part2(Binary)).
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:
