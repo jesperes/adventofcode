@@ -25,6 +25,6 @@ matrix:
       name: One-language-per-day challenge 2019
       before_install:
         - sudo apt-get update
-        - sudo apt-get -y install groovy swi-prolog
+        - sudo apt-get -y install groovy swi-prolog erlang
       before_script: cd olpd_2019
       script: make
