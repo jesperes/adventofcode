@@ -26,7 +26,7 @@ to_str(Grid) ->
          X <- lists:seq(MinX, MaxX)] ++ "\n" ||
         Y <- lists:seq(MinY, MaxY)];
      true ->
-      "<grid is empty>"
+      io_lib:format("Grid is empty: ~p", [Grid])
   end.
 
 header(MinX, MaxX) ->
