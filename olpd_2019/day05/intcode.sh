@@ -8,6 +8,8 @@
 set -u
 
 INPUTFILE=$1
+
+# Takes a single input, and writes outputs to stdout.
 INPUT=$2
 
 function read_program()
@@ -204,8 +206,6 @@ while true; do
             (( PC1=$PC + 1 ))
             OP1=$(read_mem $PC1 $MODE_POS)
             (( M1=($MEM0 / 100) % 10 ))
-
-            # TODO get input
             ADDR=$(write_addr $OP1 $M1)
             PROG[$ADDR]=$INPUT
             (( PC=$PC+2 ))
@@ -216,7 +216,7 @@ while true; do
             (( M1=($MEM0 / 100) % 10 ))
             V1=$(read_mem $OP1 $M1)
             (( PC=$PC+2 ))
-            echo "OUTPUT: $V1"
+            echo $V1
             ;;
         $OP_END)
             exit 0

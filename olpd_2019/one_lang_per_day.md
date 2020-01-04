@@ -6,7 +6,7 @@
 | 2   | 1202 Program Alarm                 | First intcode puzzle                          | Groovy       | intcode  |
 | 3   | Crossed Wires                      | Finding intersections on a grid               |              |          |
 | 4   | Secure Container                   | Finding passwords given some constraints      | Prolog/CLPFD |          |
-| 5   | Sunny with a Chance of Asteroids   | Second intcode puzzle (add I/O instr)         |              | intcode  |
+| 5   | Sunny with a Chance of Asteroids   | Second intcode puzzle (add I/O instr)         | Bash         | intcode  |
 | 6   | Universal Orbit Map                | Graph search                                  |              | search   |
 | 7   | Amplification Circuit              | Connecting intcode computers in serial        |              | intcode  |
 | 8   | Space Image Format                 | Decode a particular image format              |              |          |

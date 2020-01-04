@@ -1,7 +1,7 @@
 // Day 2: 1202 Program Alarm
 
 def prog() {
-    return new File("input.txt").getText()
+    return new File("../inputs/input02.txt").getText()
         .split(",").collect { it -> Integer.valueOf(it.trim()) }
 }
 
