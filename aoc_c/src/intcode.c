@@ -213,6 +213,26 @@ void intcode_execute(intcode_t *p)
 #include <stdlib.h>
 #include <inttypes.h>
 
+void clear_screen()
+{
+  printf("\033[2J");
+}
+
+void save_pos()
+{
+  printf("\033[s");
+}
+
+void restore_pos()
+{
+  printf("\033[u");
+}
+
+void move_to(int x, int y)
+{
+  printf("\033[%d;%dH", y, x);
+}
+
 /*
  * Intcode computer hooked up to an ascii-capable terminal.
  */
@@ -223,6 +243,13 @@ int main(int argc, char **argv)
   // The intcode program state
   intcode_t intcode;
   intcode_init_from_file(&intcode, argv[1]);
+
+  intcode.prog[0] = 2;
+
+  int outputs[] = { 0, 0, 0 };
+  int cntr = 0;
+
+  clear_screen();
 
   while (true) {
     intcode_execute(&intcode);
@@ -236,7 +263,21 @@ int main(int argc, char **argv)
       break;
     }
     case OP_OUTPUT: {
-      // putchar(intcode.output);
+      outputs[cntr++] = (int)intcode.output;
+      if (cntr == 3) {
+        save_pos();
+        move_to(outputs[0] + 1, outputs[1] + 1);
+        switch (outputs[2]) {
+        case 0: putchar(32); break;  // space
+        case 1: putchar('#'); break; // wall
+        case 2: putchar('*'); break; // block
+        case 3: putchar('='); break; // paddle
+        case 4: putchar('@'); break; // ball
+        default: assert(false);
+        }
+        cntr = 0;
+        restore_pos();
+      }
       break;
     }
     }
@@ -250,36 +291,19 @@ int main(int argc, char **argv)
   assert(argc >= 2);
   int i = 2;
 
-  // The intcode program state
   intcode_t intcode;
   intcode_init_from_file(&intcode, argv[1]);
-
-  // intcode.prog[1] = 12;
-  // intcode.prog[2] = 2;
-
-  for (int j = 0; j < intcode.progsize; j++) {
-    printf("%" PRId64 ",", intcode.prog[j]);
-  }
-  printf("\n");
 
   while (true) {
     intcode_execute(&intcode);
 
-#if 0
-    printf("Execute function returned with opcode %d\n", intcode.last_opcode);
-    printf("Input pending: %d\n", intcode.input_pending);
-    printf("Output pending: %d\n", intcode.output_pending);
-#endif
     switch (intcode.last_opcode) {
     case OP_END: {
-      printf("Program exiting, prog[0] = %" PRId64 "\n",
-             intcode.prog[0]);
       return 0;
     }
     case OP_INPUT: {
       assert(i < argc);
       intcode.input = atol(argv[i++]);
-      printf("INPUT = %" PRId64 "\n", intcode.input);
       break;
     }
     case OP_OUTPUT: {
