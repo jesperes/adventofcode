@@ -21,11 +21,11 @@ pre_init_per_suite(Suite, Config, State) ->
 pre_init_per_testcase(Suite, TC, Config, State) ->
   {Config, maps:put({start_tc, Suite, TC}, ts(), State)}.
 
-post_end_per_testcase(Suite, TC, Config, Return, State) ->
+post_end_per_testcase(Suite, TC, _Config, Return, State) ->
   Elapsed = ts() - maps:get({start_tc, Suite, TC}, State),
   {Return, maps:put({elapsed_tc, Suite, TC}, Elapsed, State)}.
 
-post_end_per_suite(Suite, Config, Return, State) ->
+post_end_per_suite(Suite, _Config, Return, State) ->
   Elapsed = ts() - maps:get({start_suite, Suite}, State),
   {Return, maps:put({elapsed_suite, Suite}, Elapsed, State)}.
 

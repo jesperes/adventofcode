@@ -53,7 +53,7 @@ grid_new() ->
   }.
 
 grid_get_solution({A1, _} = Grid) ->
-  Info = #{size := Size} = counters:info(A1),
+  #{size := Size} = counters:info(A1),
   count(Grid, 1, Size, {0, 0}).
 
 count(_, N, N, Acc) ->
