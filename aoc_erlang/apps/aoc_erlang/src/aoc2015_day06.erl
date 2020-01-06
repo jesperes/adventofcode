@@ -2,7 +2,6 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
-%% This solution runs in ~15 seconds, but eunit times out at 5 secs.
 main_test_() ->
   {"Part 1 & 2", timeout, 60, fun main/0}.
 
@@ -43,7 +42,10 @@ fold_xy(Fun, Init, {X0, Y0}, {X1, Y1}) ->
                 X <- lists:seq(X0, X1),
                 Y <- lists:seq(Y0, Y1)]).
 
-%% -- grid abstraction --
+
+%% OTP 21 has a new 'counters' module which can be used as a array of
+%% 64-bit ints with destructive updates. Note, however, that indexing
+%% starts at 1, not 0.
 
 grid_new() ->
   { counters:new(1000 * 1000, []) %% on/off
