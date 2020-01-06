@@ -39,27 +39,46 @@ process_instr([{turn_off, From, To}|Rest], Grid) ->
 
 fold_xy(Fun, Init, {X0, Y0}, {X1, Y1}) ->
   lists:foldl(Fun, Init,
-              [X + Y * 1000 ||
+              [1 + X + Y * 1000 ||
                 X <- lists:seq(X0, X1),
                 Y <- lists:seq(Y0, Y1)]).
 
 %% -- grid abstraction --
 
-grid_new() -> array:new({default, {false, 0}}).
+grid_new() ->
+  { counters:new(1000 * 1000, []) %% on/off
+  , counters:new(1000 * 1000, []) %% brightness
+  }.
 
-grid_get_solution(Grid) ->
-  Values = array:sparse_to_list(Grid),
-  {length(lists:filter(fun({V, _}) -> V end, Values)),
-   lists:sum(lists:map(fun({_, V}) -> V end, Values))}.
+grid_get_solution({A1, _} = Grid) ->
+  Info = #{size := Size} = counters:info(A1),
+  count(Grid, 1, Size, {0, 0}).
 
-grid_toggle(Pos, Grid) ->
-  {S, B} = array:get(Pos, Grid),
-  array:set(Pos, {not S, B + 2}, Grid).
+count(_, N, N, Acc) ->
+  Acc;
+count({A1, A2} = Grid, Index, Size, {Acc0, Acc1}) ->
+  count(Grid, Index + 1, Size,
+        {Acc0 + counters:get(A1, Index),
+         Acc1 + counters:get(A2, Index)}).
 
-grid_turn_on(Pos, Grid) ->
-  {_, B} = array:get(Pos, Grid),
-  array:set(Pos, {true, B + 1}, Grid).
+grid_toggle(Index, {A1, A2}) ->
+  counters:put(A1, Index,
+               case counters:get(A1, Index) of
+                 0 -> 1;
+                 1 -> 0
+               end),
+  counters:add(A2, Index, 2),
+  {A1, A2}.
 
-grid_turn_off(Pos, Grid) ->
-  {_, B} = array:get(Pos, Grid),
-  array:set(Pos, {false, max(0, B - 1)}, Grid).
+grid_turn_on(Index, {A1, A2}) ->
+  counters:put(A1, Index, 1),
+  counters:add(A2, Index, 1),
+  {A1, A2}.
+
+grid_turn_off(Index, {A1, A2}) ->
+  counters:put(A1, Index, 0),
+  case counters:get(A2, Index) of
+    N when N >= 1 -> counters:sub(A2, Index, 1);
+    _ -> counters:put(A2, Index, 0)
+  end,
+  {A1, A2}.
