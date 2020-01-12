@@ -18,9 +18,9 @@ Rules:
 | 4   | Prolog/CLPFD | swi-prolog |
 | 5   | Bash         |            |
 | 6   | Erlang       | erlang     |
-| 7   |              |            |
-| 8   |              |            |
-| 9   |              |            |
+| 7   | C            |            |
+| 8   | C++          |            |
+| 9   | Ruby         | ruby       |
 | 10  |              |            |
 | 11  |              |            |
 | 12  |              |            |
