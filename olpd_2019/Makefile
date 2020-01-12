@@ -5,7 +5,8 @@ ALL=\
 	day04-clpfd \
 	day05-bash \
 	day06-erlang \
-	day07-c
+	day07-c \
+	day08-c++
 
 all: $(ALL)
 .PHONY: $(ALL)
@@ -33,3 +34,6 @@ day06-erlang:
 
 day07-c:
 	cd day07 && $(TIME) ./day07.sh
+
+day08-c++:
+	cd day08 && $(TIME) ./day08.sh

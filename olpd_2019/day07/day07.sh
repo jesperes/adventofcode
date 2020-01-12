@@ -1,5 +1,6 @@
 #!/bin/bash
 
+set -e
 AOC_C_SRC=../../aoc_c/src
 CFLAGS="-g -O3 -Wall -Werror"
 clang-format -i day07.c
