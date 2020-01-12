@@ -6,7 +6,8 @@ ALL=\
 	day05-bash \
 	day06-erlang \
 	day07-c \
-	day08-c++
+	day08-c++ \
+	day09-ruby
 
 all: $(ALL)
 .PHONY: $(ALL)
@@ -37,3 +38,6 @@ day07-c:
 
 day08-c++:
 	cd day08 && $(TIME) ./day08.sh
+
+day09-ruby:
+	cd day09 && $(TIME) ./day09.rb
