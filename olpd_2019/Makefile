@@ -40,4 +40,4 @@ day08-c++:
 	cd day08 && $(TIME) ./day08.sh
 
 day09-ruby:
-	cd day09 && $(TIME) ./day09.rb
+	cd day09 && $(TIME) ./day09.rb --verbose=silent
