@@ -192,31 +192,7 @@ public class Day03 {
         assertEquals(13190, part2(getInputAsLines()));
     }
 
-    public void testExample1() throws Exception {
-        List<String> list = Arrays.asList("R8,U5,L5,D3", "U7,R6,D4,L4");
-        assertEquals(6, part1(list));
-        assertEquals(30, part2(list));
-    }
-
-    public void testExample2() throws Exception {
-        List<String> list = Arrays.asList("R75,D30,R83,U83,L12,D49,R71,U7,L72",
-                "U62,R66,U55,R34,D71,R55,D58,R83");
-        assertEquals(159, part1(list));
-        assertEquals(610, part2(list));
-    }
-
-    public void testExample3() throws Exception {
-        List<String> list = Arrays.asList(
-                "R98,U47,R26,D63,R33,U87,L62,D20,R33,U53,R51",
-                "U98,R91,D20,R16,D67,R40,U7,R15,U6,R7");
-        assertEquals(135, part1(list));
-        assertEquals(410, part2(list));
-    }
-
     public void main() throws Exception {
-        testExample1();
-        testExample2();
-        testExample3();
         testPart1();
         testPart2();
     }
