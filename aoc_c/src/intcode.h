@@ -56,6 +56,6 @@ void intcode_init(intcode_t *p);
  */
 void intcode_execute(intcode_t *p);
 
-void intcode_init_from_file(intcode_t *p, char *filename);
+void intcode_init_from_file(intcode_t *p, const char *filename);
 
 #endif

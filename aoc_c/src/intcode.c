@@ -46,7 +46,7 @@ void intcode_init(intcode_t *p)
 }
 
 // Read an intcode program from file.
-void intcode_init_from_file(intcode_t *p, char *filename)
+void intcode_init_from_file(intcode_t *p, const char *filename)
 {
   intcode_init(p);
 
