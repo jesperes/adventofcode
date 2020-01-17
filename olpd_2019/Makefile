@@ -11,7 +11,7 @@ ALL=\
 
 all: $(ALL)
 .PHONY: $(ALL)
-.SILENT:
+# .SILENT:
 
 TIME=time --format='$@ \t%E'
 
