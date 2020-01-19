@@ -7,11 +7,12 @@ ALL=\
 	day06-erlang \
 	day07-c \
 	day08-c++ \
-	day09-ruby
+	day09-ruby \
+	day10-js
 
 all: $(ALL)
 .PHONY: $(ALL)
-# .SILENT:
+.SILENT:
 
 TIME=time --format='$@ \t%E'
 
@@ -41,3 +42,6 @@ day08-c++:
 
 day09-ruby:
 	cd day09 && $(TIME) ./day09.rb --verbose=silent
+
+day10-js:
+	cd day10 && $(TIME) node ./day10.js
