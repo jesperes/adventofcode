@@ -1,8 +1,6 @@
 /*
  * Advent of Code 2019, one-language-per-day challenge, day 10:
  * Javascript.
- *
- * Roughly translated from my Erlang implementation.
  */
 
 var ex1 = `.#..#..###
@@ -103,11 +101,14 @@ function asteroids_by_visibility(dirs) {
 
 function find_best_location(map) {
     var max_visible_asteroids = 0
+    var best
     for (const [key, value] of map.entries()) {
-        if (value.size > max_visible_asteroids)
+        if (value.size > max_visible_asteroids) {
             max_visible_asteroids = value.size
+            best = key
+        }
     }
-    return max_visible_asteroids
+    return {asteroid: best, visible_asteroids: max_visible_asteroids}
 }
 
 function f_to_i(f) {
@@ -131,12 +132,38 @@ function distance(a, b) {
 }
 
 function check(expected, actual) {
-    process.exit(expected == actual ? 0 : 1)
+    if (expected != actual) {
+        console.log(`Expected ${expected}, got ${actual}`)
+        process.exit(1)
+    }
 }
 
 var asteroids = parse(input)
 var dirs = asteroid_dirs(asteroids)
 var by_visibility = asteroids_by_visibility(dirs)
 
+// Part 1
 var part1 = find_best_location(by_visibility)
-check(334, part1)
+check(334, part1.visible_asteroids)
+
+function get_closest(asteroids)
+{
+    var n = 100000000
+    var closest
+    for (var i = 0; i < asteroids.length; i++) {
+        var astr = asteroids[i]
+        if (astr.dist < n) {
+            n = astr.dist
+            closest = astr
+        }
+    }
+    return closest
+}
+
+// Part 2
+var visible = by_visibility.get(part1.asteroid)
+var directions = Array.from(visible.keys()).sort((a, b) => a - b)
+d = directions[199]
+var astr = get_closest(visible.get(d))
+var part2 = astr.b.x * 100 + astr.b.y
+check(1119, part2)
