@@ -51,6 +51,9 @@ void intcode_init_from_file(intcode_t *p, const char *filename)
   intcode_init(p);
 
   FILE *f = fopen(filename, "r");
+  if (f == NULL)
+    perror("Failed to open");
+
   assert(f != NULL);
 
   char buf[20];
@@ -91,6 +94,7 @@ void intcode_init_from_file(intcode_t *p, const char *filename)
   }
 
   p->progsize = progsize;
+  fclose(f);
 }
 
 void intcode_execute(intcode_t *p)
