@@ -45,3 +45,6 @@ day09-ruby:
 
 day10-js:
 	cd day10 && $(TIME) node ./day10.js
+
+day11-perl:
+	cd day11 && $(TIME) ./day11.perl
