@@ -3,7 +3,7 @@ MAKEFLAGS += --output-sync=none
 endif
 
 all:
-	rebar3 do compile,dialyzer,eunit
+	rebar3 do compile,dialyzer,xref,eunit
 
 clean:
 	rebar3 clean
