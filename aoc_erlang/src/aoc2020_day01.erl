@@ -12,11 +12,13 @@ part1(Input) ->
             X + Y == 2020].
 
 part2(Input) ->
+  Min = lists:min(Input),
   [X * Y * Z || X <- Input,
                 Y <- Input,
+                X < Y,
+                X + Y < (2020 - Min),
                 Z <- Input,
                 Y < Z,
-                X < Y,
                 X + Y + Z == 2020].
 
 %% Input reader (place downloaded input file in
