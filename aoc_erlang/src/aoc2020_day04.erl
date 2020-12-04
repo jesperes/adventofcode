@@ -15,6 +15,10 @@ part2(Input) ->
   ValidPassports = lists:filter(fun valid_passport2/1, Passports),
   length(ValidPassports).
 
+%% ============================================================
+%% Input parsing
+%% ============================================================
+
 -spec parse_passports(Lines :: [string()]) -> map().
 parse_passports(Lines) ->
   {_, Passports} =
@@ -30,21 +34,41 @@ parse_passports(Lines) ->
               Pairs1 =
                 lists:foldl(
                   fun([K, V], Acc0) ->
-                      maps:put(list_to_atom(K), V, Acc0)
+                      KA = list_to_atom(K),
+                      maps:put(KA, parse_value(KA, V), Acc0)
                   end, #{}, Pairs),
               {maps:merge(Map, Pairs1), Acc}
           end
       end, {#{}, []}, Lines),
   Passports.
 
+parse_value(byr, V) -> ltoi(V);
+parse_value(eyr, V) -> ltoi(V);
+parse_value(iyr, V) -> ltoi(V);
+parse_value(ecl, V) -> ltoa(V);
+parse_value(hgt, V) ->
+  case re:run(V, "([0-9]+)(in|cm)", [{capture, all, list}]) of
+    {match, [_, N, Unit]} ->
+      {list_to_atom(Unit), list_to_integer(N)};
+    _ ->
+      invalid
+  end;
+parse_value(_K, V) -> V.
+
+%% ============================================================
+%% Input validation
+%% ============================================================
+
 required_fields() ->
   [byr, iyr, eyr, hgt, hcl, ecl, pid].
 
+%% Part 1
 valid_passport1(P) ->
   lists:all(fun(K) ->
                 maps:is_key(K, P)
             end, required_fields()).
 
+%% Part 2
 valid_passport2(#{byr := Byr,
                   iyr := Iyr,
                   eyr := Eyr,
@@ -52,38 +76,25 @@ valid_passport2(#{byr := Byr,
                   hgt := Hgt,
                   hcl := Hcl,
                   pid := Pid}) ->
-  ltoi(Byr) >= 1920 andalso
-    ltoi(Byr) =< 2002 andalso
-    ltoi(Iyr) >= 2010 andalso
-    ltoi(Iyr) =< 2020 andalso
-    ltoi(Eyr) >= 2020 andalso
-    ltoi(Eyr) =< 2030 andalso
+  Byr >= 1920 andalso Byr =< 2002 andalso
+    Iyr >= 2010 andalso Iyr =< 2020 andalso
+    Eyr >= 2020 andalso Eyr =< 2030 andalso
     valid_height(Hgt) andalso
     valid_hair_color(Hcl) andalso
-    valid_eye_color(list_to_atom(Ecl)) andalso
+    valid_eye_color(Ecl) andalso
     valid_pid(Pid);
 valid_passport2(_) ->
   false.
 
-ltoi(S) -> list_to_integer(S).
-
-valid_height(Hgt) ->
-  case lists:reverse(Hgt) of
-    [$m, $c|X] ->
-      Cm = list_to_integer(lists:reverse(X)),
-      Cm >= 150 andalso Cm =< 193;
-    [$n, $i|Y] ->
-      In = list_to_integer(lists:reverse(Y)),
-      In >= 59 andalso In =< 76;
-    _ ->
-      false
-  end.
+valid_height({cm, Cm}) ->
+  Cm >= 150 andalso Cm =< 193;
+valid_height({in, In}) ->
+  In >= 59 andalso In =< 76;
+valid_height(_) ->
+  false.
 
 valid_hair_color(Hcl) ->
-  case re:run(Hcl, "#[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]") of
-    {match, _} -> true;
-    _ -> false
-  end.
+  re_match(Hcl, "#[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]").
 
 valid_eye_color(amb) -> true;
 valid_eye_color(blu) -> true;
@@ -95,17 +106,32 @@ valid_eye_color(oth) -> true;
 valid_eye_color(_) -> false.
 
 valid_pid(Pid) ->
-  case re:run(Pid, "^[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]$") of
+  re_match(Pid, "^[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]$").
+
+%% ============================================================
+%% Helpers
+%% ============================================================
+
+re_match(S, RE) ->
+  case re:run(S, RE) of
     {match, _} -> true;
     _ -> false
   end.
 
+ltoi(S) -> list_to_integer(S).
+
+ltoa(S) -> list_to_atom(S).
+
+%% ============================================================
 %% Input reader (place downloaded input file in
 %% priv/inputs/2020/input04.txt).
 get_input() ->
   string:split(inputs:get_as_string(2020, 04), "\n", all).
 
+%% ============================================================
 %% Tests
+%% ============================================================
+
 main_test_() ->
   Input = get_input(),
 
