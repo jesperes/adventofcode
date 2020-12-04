@@ -94,7 +94,7 @@ valid_height(_) ->
   false.
 
 valid_hair_color(Hcl) ->
-  re_match(Hcl, "#[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]").
+  re_match(Hcl, "^#[0-9a-f]{6}$").
 
 valid_eye_color(amb) -> true;
 valid_eye_color(blu) -> true;
@@ -106,7 +106,7 @@ valid_eye_color(oth) -> true;
 valid_eye_color(_) -> false.
 
 valid_pid(Pid) ->
-  re_match(Pid, "^[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]$").
+  re_match(Pid, "^\\d{9}$").
 
 %% ============================================================
 %% Helpers
