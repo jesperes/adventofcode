@@ -25,7 +25,10 @@ parse_passports(Lines) ->
     lists:foldl(
       fun(Line, {Map, Acc}) ->
           case Line of
-            "" -> {#{}, [Map|Acc]};
+            "" ->
+              %% TODO optimization: move password validation here to
+              %% avoid accumulating invalid passwords.
+              {#{}, [Map|Acc]};
             _ ->
               Pairs =
                 lists:map(fun(S) ->
