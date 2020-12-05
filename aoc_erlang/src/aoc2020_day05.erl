@@ -5,55 +5,31 @@
 -include_lib("eunit/include/eunit.hrl").
 
 %% Puzzle solution
-part1(Input) ->
-  lists:max(lists:map(fun seat_id/1, Input)).
+solve(Input) ->
+  %% Sort the list of seat ids in reverse order. This avoids the extra
+  %% traversal to find the max seat id.
+  [Max|_] = SeatIds =
+    lists:sort(fun desc/2, lists:map(fun seat_id/1, Input)),
+  {Max, find_seat(SeatIds)}.
 
-part2(Input) ->
-  Set = lists:foldl(
-          fun(S, Acc) ->
-              sets:add_element(seat_id(S), Acc)
-          end, sets:new(), Input),
-  FilledSeats = lists:sort(sets:to_list(Set)),
-  find_seat(FilledSeats).
+%% Sorting function for descending order.
+desc(A, B) -> B =< A.
 
-%% ============================================================
-%% Part 1
-%% ============================================================
-
+%% Seat ids are really just the boarding card ids thinly disguised as
+%% binary numbers
 seat_id(S) ->
-  ?assertEqual(7 + 3, length(S)),
-  {Rows, Seats} = lists:split(7, S),
-  ?assertEqual(7, length(Rows)),
-  Row = binary_search(Rows, 128, 0, 127, $F, $B),
-  Seat = binary_search(Seats, 8, 0, 7, $L, $R),
-  Row * 8 + Seat.
-
-binary_search([], Size, Lower, Upper, _LowerC, _UpperC) when
-    Size == 1, Lower == Upper ->
-  %% End case
-  Lower;
-binary_search([C|Rows], Size, Lower, _Upper, LowerC, UpperC) when
-    C == LowerC ->
-  Half = (Size bsr 1) - 1,
-  binary_search(Rows, Size bsr 1, Lower, Lower + Half, LowerC, UpperC);
-binary_search([C|Rows], Size, Lower, Upper, LowerC, UpperC) when
-    C == UpperC ->
-  %% Keep upper half
-  Half = Size bsr 1,
-  binary_search(Rows, Size bsr 1, Lower + Half, Upper, LowerC, UpperC).
-
-%% ============================================================
-%% Part 2
-%% ============================================================
+  lists:foldl(fun(C, Acc) when C =:= $B ; C =:= $R ->
+                  (Acc bsl 1) bor 1;
+                 (_, Acc) ->
+                  Acc bsl 1
+              end, 0, S).
 
 %% The input to this function is a list of all occupied seats.  "Our"
 %% seat is the only one missing, but it is specified to have a seat id
 %% at -1 and +1, so we want to find the first "hole" in the sequence
 %% of occupied seats.
-find_seat([A, B|_]) when B == A + 2 ->
-  A + 1;
-find_seat([_|Rest]) ->
-  find_seat(Rest).
+find_seat([A, B|_]) when A == B + 2 -> B + 1;
+find_seat([_|Rest]) -> find_seat(Rest).
 
 %% Input reader (place downloaded input file in
 %% priv/inputs/2020/input05.txt).
@@ -63,10 +39,7 @@ get_input() ->
 %% Tests
 main_test_() ->
   Input = get_input(),
-
-  [ {"Part 1", ?_assertEqual(928, part1(Input))}
-  , {"Part 2", ?_assertEqual(610, part2(Input))}
-  ].
+  {"Part 1 & 2", ?_assertEqual({928, 610}, solve(Input))}.
 
 seat_id_test_() ->
   [?_assertEqual(357, seat_id("FBFBBFFRLR")),
