@@ -19,7 +19,6 @@ part2(Input) ->
 %% Input parsing
 %% ============================================================
 
--spec parse_passports(Lines :: [string()]) -> map().
 parse_passports(Lines) ->
   {_, Passports} =
     lists:foldl(
