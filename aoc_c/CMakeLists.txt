@@ -1,9 +1,10 @@
 cmake_minimum_required(VERSION 3.12)
-project(aoc_c LANGUAGES C)
+project(aoc_c LANGUAGES C CXX)
 enable_testing()
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_C_FLAGS "-g -O3 -Wall -Werror")
+set(CMAKE_CPP_FLAGS "-g -O3 -Wall -Werror")
 file(GLOB PUZZLE_SRC src/aoc*_day*.c src/aoc*_day*.cpp)
 set(UTILS src/md5.c)
 
