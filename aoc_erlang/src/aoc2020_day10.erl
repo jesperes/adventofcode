@@ -70,18 +70,7 @@ main_test_() ->
   , {"Part 2", ?_assertEqual(74049191673856, part2(Input))}
   ].
 
-test_input() ->
-  [16,
-   10,
-   15,
-   5,
-   1,
-   11,
-   7,
-   19,
-   6,
-   12,
-   4].
+test_input() -> [16, 10, 15, 5, 1, 11, 7, 19, 6, 12, 4].
 
 ex1_test_() ->
   ?_assertEqual(35, solve1(test_input())).
