@@ -44,23 +44,18 @@ solve2(List) ->
 
   %% Cache is a maps from indexes in `Adapters' to the number
   %% of ways it can be reached.
-  Cache = array:from_list([1 | lists:duplicate(Device, 0)]),
+  Cache = #{0 => 1},
 
   %% For each adapter, add the number of ways the previous three
   %% adapters can be reached.
   Cache0 =
     lists:foldl(fun(I, CacheIn) ->
-                    array:set(I, sum_of_3(I, CacheIn), CacheIn)
+                    Sum3 = lists:sum([maps:get(I - X, CacheIn, 0) ||
+                                       X <- [1, 2, 3], I - X >= 0]),
+                    maps:put(I, Sum3, CacheIn)
                 end, Cache, Adapters ++ [Device]),
 
-  lists:max(array:to_list(Cache0)).
-
-%% Returns the sum of keys (I-1), (I-2), (I-3)
-sum_of_3(I, Cache) ->
-  lists:sum([safe_get(I-X, Cache) || X <- [1, 2, 3]]).
-
-safe_get(I, _) when I < 0 -> 0;
-safe_get(I, A) -> array:get(I, A).
+  lists:max(maps:values(Cache0)).
 
 %% Input reader (place downloaded input file in
 %% priv/inputs/2020/input10.txt).
