@@ -31,38 +31,42 @@ post_end_per_suite(Suite, _Config, Return, State) ->
 
 terminate(State) ->
   try
-    ct:print("~s", [slowest(State, 10)])
+    ct:print("~s", [timings(State)])
   catch X:Y:St ->
       ct:print("~p", [{X, Y, St}])
   end.
 
-slowest(State, N) ->
-  ElapsedTC =
-    maps:fold(fun({elapsed_tc, Suite, TC}, Elapsed, Acc) ->
-                  maps:put({Suite, TC}, Elapsed, Acc);
-                 (_, _, Acc) -> Acc
-              end, #{}, State),
+year(Suite) ->
+  {match, [Year]} = re:run(atom_to_list(Suite), "aoc(\\d+)_.*",
+                           [{capture, all_but_first, list}]),
+  list_to_integer(Year).
 
-  MaxTime = lists:max(maps:values(ElapsedTC)),
+day(TC) ->
+  {match, [Day]} = re:run(atom_to_list(TC), "day_(\\d+)",
+                          [{capture, all_but_first, list}]),
+  list_to_integer(Day).
 
+timings(State) ->
+  Timings =
+    lists:sort(
+      maps:fold(fun({elapsed_tc, Suite, TC}, Elapsed, Acc) ->
+                    [{year(Suite), day(TC), Elapsed}|Acc];
+                   (_, _, Acc) -> Acc
+                end, [], State)),
 
+  MaxTime = lists:max(lists:map(fun({_, _, X}) -> X end, Timings)),
 
-  List = lists:sort(
-           lists:map(fun({TC, Elapsed}) ->
-                         {-Elapsed, TC}
-                     end, maps:to_list(ElapsedTC))),
-  {First10, _} = lists:split(min(N, length(List)), List),
-  io_lib:format("~w slowest tests~n", [N]) ++
+  io_lib:format("~-6s ~-5s ~-12s ~s~n", ["Year", "Day", "Time", "Relative time"]) ++
     lists:map(
-      fun({X, {Suite, TC}}) ->
-          ElapsedUsecs = -X,
+      fun({Suite, TC, ElapsedUsecs}) ->
           ElapsedSecs = ElapsedUsecs / 1000000.0,
           Col1 = io_lib:format("~p", [Suite]),
           Col2 = io_lib:format("~p", [TC]),
-          Col3 = io_lib:format("~p secs", [ElapsedSecs]),
+          Col3 = io_lib:format("~.3f secs", [ElapsedSecs]),
           Col4 = progressbar(ElapsedUsecs, MaxTime),
-          io_lib:format("~-18s ~-8s ~12s ~s~n", [Col1, Col2, Col3, Col4])
-      end, First10).
+          io_lib:format("~-6s ~-5s ~-12s ~s~n",
+                       [Col1, Col2, Col3, Col4])
+      end, Timings).
 
 progressbar(S, Max) ->
   Width = 40,
