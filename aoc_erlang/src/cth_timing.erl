@@ -43,6 +43,10 @@ slowest(State, N) ->
                  (_, _, Acc) -> Acc
               end, #{}, State),
 
+  MaxTime = lists:max(maps:values(ElapsedTC)),
+
+
+
   List = lists:sort(
            lists:map(fun({TC, Elapsed}) ->
                          {-Elapsed, TC}
@@ -50,7 +54,22 @@ slowest(State, N) ->
   {First10, _} = lists:split(min(N, length(List)), List),
   io_lib:format("~w slowest tests~n", [N]) ++
     lists:map(
-      fun({X, Y}) ->
-          io_lib:format("~p: ~p secs~n",
-                        [Y, -X/1000000])
+      fun({X, {Suite, TC}}) ->
+          ElapsedUsecs = -X,
+          ElapsedSecs = ElapsedUsecs / 1000000.0,
+          Col1 = io_lib:format("~p", [Suite]),
+          Col2 = io_lib:format("~p", [TC]),
+          Col3 = io_lib:format("~p secs", [ElapsedSecs]),
+          Col4 = progressbar(ElapsedUsecs, MaxTime),
+          io_lib:format("~-18s ~-8s ~12s ~s~n", [Col1, Col2, Col3, Col4])
       end, First10).
+
+progressbar(S, Max) ->
+  Width = 40,
+  Left = trunc((S / Max) * Width),
+  Right = Width - Left,
+
+  "[" ++
+    io_lib:format("~s~s", [lists:duplicate(Left, $=),
+                           lists:duplicate(Right, $ )]) ++
+    "]".
