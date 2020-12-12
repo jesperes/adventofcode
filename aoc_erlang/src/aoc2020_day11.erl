@@ -12,10 +12,6 @@ part1(Lines) ->
 part2(Lines) ->
   Grid = to_map(Lines),
   iterate_until_same(Grid, fun compute_next2/3).
-  %% G0 = iterate_one_step(Grid, fun compute_next2/3),
-  %% G1 = iterate_one_step(G0, fun compute_next2/3),
-  %% G2 = iterate_one_step(G1, fun compute_next2/3),
-  %% ?debugFmt("~n~s~n", [grid:to_str(G2)]).
 
 %% Iterate until the grid does not change
 iterate_until_same(Grid, Fun) ->
