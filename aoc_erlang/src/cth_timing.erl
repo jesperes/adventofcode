@@ -55,6 +55,7 @@ timings(State) ->
                 end, [], State)),
 
   MaxTime = lists:max(lists:map(fun({_, _, X}) -> X end, Timings)),
+  TotalTime = lists:sum(lists:map(fun({_, _, X}) -> X end, Timings)),
 
   io_lib:format("~-6s ~-5s ~-12s ~s~n", ["Year", "Day", "Time", "Relative time"]) ++
     lists:map(
@@ -66,7 +67,9 @@ timings(State) ->
           Col4 = progressbar(ElapsedUsecs, MaxTime),
           io_lib:format("~-6s ~-5s ~-12s ~s~n",
                        [Col1, Col2, Col3, Col4])
-      end, Timings).
+      end, Timings) ++
+    io_lib:format("~nTotal time: ~.3f secs~n", [TotalTime / 1000000.0]).
+
 
 progressbar(S, Max) ->
   Width = 40,
