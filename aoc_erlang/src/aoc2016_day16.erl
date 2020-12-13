@@ -45,6 +45,6 @@ unit_test() ->
 main_test_() ->
   [ {"Part 1",
      ?_assertEqual("10100101010101101", fill_disk("11101000110010100", 272))}
-  , {"Part 2", timeout, 10,
+  , {"Part 2", timeout, 60,
      ?_assertEqual("01100001101101001", fill_disk("11101000110010100", 35651584))}
   ].
