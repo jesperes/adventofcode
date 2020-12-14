@@ -61,7 +61,6 @@ write_bits(Addr, Value, Pos, [MaskBit|Rest]) ->
 %% ======================================================================
 
 apply_masks2(Masks, Memory) ->
-  %% io:format("~p~n", [Masks]),
   lists:foldl(
     fun({Mask, Writes}, MemoryIn) ->
         %% Find which bits are floating
@@ -74,27 +73,18 @@ apply_masks2(Masks, Memory) ->
 
         lists:foldl(
           fun({write, Addr, Value}, MemoryIn0) ->
-              %% Apply address mask
-              %% io:format("~n", []),
-              %% io:format("Addr:          ~36.2.0B~n", [Addr]),
-              %% io:format("Applying mask: ~s~n", [Mask]),
-
               %% Apply the mask for non-floating bits
               AppliedMask =
                 lists:foldl(
-                  fun({Pos, MaskBit}, N) ->
-                      case MaskBit of
-                        $1 -> N bor (1 bsl Pos);
-                        _ -> N
-                      end
+                  fun({Pos, $1}, N) -> N bor (1 bsl Pos);
+                     (_, N) -> N
                   end, Addr, lists:zip(lists:seq(35, 0, -1), Mask)),
 
-              %% io:format("Applied mask:  ~36.2.0B~n", [AppliedMask]),
-              %% io:format("Floating bits: ~p~n", [FloatingBits]),
-
+              %% Expand floating writes. The number of writes will be
+              %% 2 ** (number of X:s).
               ExpandedWrites = expand_writes(FloatingBits, AppliedMask, Value),
-              %% io:format("Expanded writes:~n~p~n", [ExpandedWrites]),
 
+              %% Apply the floating writes
               lists:foldl(fun({write, A, V}, Acc) ->
                               maps:put(A, V, Acc)
                           end, MemoryIn0, ExpandedWrites)
@@ -102,35 +92,23 @@ apply_masks2(Masks, Memory) ->
     end, Memory, Masks).
 
 expand_writes(Bits, Addr, Value) ->
-  %% io:format("Address: ~36.2.0B~n", [Addr]),
-  %% io:format("Floating bits are at positions: ~p~n", [Bits]),
-
   lists:sort(lists:map(fun(N) ->
                            {write, make_expanded_mask(Addr, Bits, N), Value}
                        end, lists:seq(0, 1 bsl (length(Bits)) - 1))).
 
+%% `Addr' is the raw address with the mask (except floating bits)
+%% applied. `Bits' are the bit numbers of the floating bits, and `N' is
+%% the bitpattern to use.
+%%
+%% If `Bits` is [3,1,0] and `N' is 011, we should write, into Addr, a
+%% 0 at position 3, a 1 at position 1, and a 0 at position 0.
 make_expanded_mask(Addr, Bits, N) ->
-  %% Raw addr:      000000000000000000000000000000011010 (decimal 26)
-  %% Applying mask: 00000000000000000000000000000000X0XX
-  %% Applied mask:  000000000000000000000000000000001010 (`Addr' here)
-  %% Floating bits: [3,1,0] (position of the X:s) (`Bits' here)
-  %% N is [000, 001, 010, 011, ...]
-  %% The binary number N is used to determine the bit values of the bits
-  %% at the positions determined by `Bits'.
-  %% io:format("Values of floating bits: ~.2B~n", [N]),
   lists:foldl(fun({I, Pos}, Acc) ->
-                  M = (N bsr I) band 1,
-                  Acc0 =
-                    case M of
-                      1 -> Acc bor (1 bsl Pos);
-                      0 -> Acc band (bnot (1 bsl Pos))
-                    end,
-                  %% io:format("Addr ~36.2.0B = ~p~n", [Acc0, Acc0]),
-                  Acc0
-
+                  case (N bsr I) band 1 of
+                    1 -> Acc bor (1 bsl Pos);
+                    0 -> Acc band (bnot (1 bsl Pos))
+                  end
               end, Addr, with_index(Bits)).
-
-
 
 with_index(L) ->
   lists:zip(lists:seq(0, length(L) - 1), L).
@@ -163,7 +141,7 @@ main_test_() ->
   Input = get_input(),
 
   [ {"Part 1", ?_assertEqual(8471403462063, part1(Input))}
-  , {timeout, 60, {"Part 2", ?_assertEqual(0, part2(Input))}}
+  , {"Part 2", ?_assertEqual(2667858637669, part2(Input))}
   ].
 
 test_input() ->
