@@ -5,67 +5,39 @@
 -include_lib("eunit/include/eunit.hrl").
 
 %% Puzzle solution
-part1(Input) ->
-  speak(lists:reverse(Input), 2020).
+solve(Input, Limit) ->
+  [Last|Rest] = lists:reverse(Input),
+  Input0 = lists:reverse(Rest),
 
-speak([F|_] = L, Limit) when length(L) == Limit ->
-  F;
-speak([MostRecentlySpokenNumber|Rest] = L, Limit) ->
-  case indexof(MostRecentlySpokenNumber, Rest) of
-    false -> speak([0|L], Limit);
-    I -> speak([I + 1|L], Limit)
-  end.
+  Array = array_new(Limit),
+  lists:foreach(
+    fun({Turn, Num}) ->
+        array_put(Array, Num, Turn)
+    end, lists:zip(lists:seq(1, length(Input0)),
+                   Input0)),
 
-indexof(E, L) -> indexof(E, 0, L).
+  NextTurn = length(Input) + 1,
+  solve0(NextTurn, Last, Array, Limit).
 
-indexof(_E, _I, []) -> false;
-indexof(E, I, [E|_]) -> I;
-indexof(E, I, [_|Rest]) -> indexof(E, I + 1, Rest).
+solve0(Turn, Last, _, Limit) when Turn > Limit ->
+  Last;
+solve0(Turn, Last, Array, Limit) ->
+  Next =
+    case array_get(Array, Last) of
+      0 -> 0;
+      IndexOfLast -> Turn - IndexOfLast - 1
+    end,
+  array_put(Array, Last, Turn - 1),
+  solve0(Turn + 1, Next, Array, Limit).
 
+array_new(Size) ->
+  counters:new(Size + 1, []).
 
-part2(List, Limit) ->
-  %% Map from turn# to the number spoken during that turn
-  TurnToNumberMap = maps:from_list(
-                      lists:zip(lists:seq(1, length(List)),
-                                List)),
+array_put(Array, I, Val) ->
+  ok = counters:put(Array, I + 1, Val).
 
-  %% Map from numbers to a list of the turns that number was spoken in
-  NumberToTurnsMap =
-    lists:foldl(fun({Turn, Num}, Acc) ->
-                    maps:update_with(Num,
-                                     fun(Old) -> [Turn|Old] end,
-                                     [Turn], Acc)
-                end, #{},
-                lists:zip(lists:seq(1, length(List)),
-                          List)),
-
-  LastSpoken = lists:last(List),
-  speak2(LastSpoken, TurnToNumberMap, NumberToTurnsMap, Limit).
-
-speak2(LastSpoken, TurnToNumberMap, NumberToTurnsMap, Limit) ->
-
-  Turns = maps:size(TurnToNumberMap),
-
-  case Turns of
-    T when T == Limit ->
-      LastSpoken;
-    _ ->
-      NextSpoken =
-        case maps:get(LastSpoken, NumberToTurnsMap, undefined) of
-          [_] -> 0;
-          [T1,T2|_] ->
-            T1 - T2
-        end,
-
-      Turn = Turns + 1,
-
-      speak2(NextSpoken,
-             maps:put(Turn, NextSpoken, TurnToNumberMap),
-             maps:update_with(NextSpoken,
-                              fun([Old|_]) -> [Turn, Old] end, % only keep last two
-                              [Turn], NumberToTurnsMap),
-             Limit)
-  end.
+array_get(Array, I) ->
+  counters:get(Array, I + 1).
 
 input() ->
   [6,4,12,1,20,0,16].
@@ -74,20 +46,12 @@ input() ->
 main_test_() ->
   Input = input(),
 
-  [ {"Part 1", ?_assertEqual(475, part1(Input))}
-  , {timeout, 10000, {"Part 2", ?_assertEqual(11261, part2(Input, 30000000))}}
-  ].
-
-indexof_test_() ->
-  [ ?_assertEqual(2, indexof(0, [6, 3, 0]))
-  , ?_assertEqual(0, indexof(6, [6, 3, 0]))
+  [ {"Part 1", ?_assertEqual(475, solve(Input, 2020))}
+  , {timeout, 60, {"Part 2", ?_assertEqual(11261, solve(Input, 30000000))}}
   ].
 
 ex1_test_() ->
-  ?_assertEqual(436, part1([0, 3, 6])).
-
-ex2_test_() ->
-  ?_assertEqual(436, part2([0, 3, 6], 2020)).
+  ?_assertEqual(436, solve([0, 3, 6], 2020)).
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:
