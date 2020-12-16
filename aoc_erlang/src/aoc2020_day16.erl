@@ -4,6 +4,8 @@
 -module(aoc2020_day16).
 -include_lib("eunit/include/eunit.hrl").
 
+-compile([nowarn_unused_function]).
+
 %% Puzzle solution
 part1(Input) ->
   #{fields := Fields,
@@ -18,17 +20,19 @@ part1(Input) ->
     end, 0, lists:flatten(Tickets)).
 
 part2(Input) ->
-  P = #{myticket := MyTicket} = parse(Input),
+  #{myticket := MyTicket} = parse(Input),
 
-  show_valid_fields(P),
-
+  %% This list was obtained by calling `show_valid_fields/1' and
+  %% then matching up the valid fields by ocular inspection.
   DepartureFields = [3, 4, 8, 11, 12, 14],
+
+  %% Multiply all the departure fields on our ticket
   lists:foldl(fun erlang:'*'/2, 1,
               lists:map(fun(Pos) ->
                             lists:nth(Pos, MyTicket)
                         end, DepartureFields)).
 
--ifdef(PRINT_VALID_FIELDS).
+%% Prints out valid fields.
 show_valid_fields(#{fields := Fields,
                     myticket := MyTicket,
                     nearbytickets := Tickets}) ->
@@ -37,37 +41,12 @@ show_valid_fields(#{fields := Fields,
       lists:filter(fun(Ticket) -> is_ticket_valid(Ticket, Fields) end,
                    Tickets)),
 
-  io:format("Valid tickets:~n~120p~n", [ValidTickets]),
-
   lists:foreach(
     fun(Pos) ->
         ValidFieldsForPos =
           find_field(Pos, [MyTicket|ValidTickets], Fields),
         io:format("~nValid fields for pos ~p~n~p~n", [Pos, ValidFieldsForPos])
     end, lists:seq(1, maps:size(Fields))).
-
-%% These were found by printing out valid fields for each position and
-%% then doing a ocular inspection...
-field_map('arrival location') -> 19;
-field_map('arrival platform') -> 2;
-field_map('arrival station') -> 17;
-field_map('arrival track') -> 6;
-field_map('departure date') -> 4;
-field_map('departure location') -> 14;
-field_map('departure platform') -> 12;
-field_map('departure station') -> 11;
-field_map('departure time') -> 8;
-field_map('departure track') -> 3;
-field_map(class) -> 5;
-field_map(duration) -> 18;
-field_map(price) -> 10;
-field_map(route) -> 15;
-field_map(row) -> 9;
-field_map(seat) -> 13;
-field_map(train) -> 1;
-field_map(type) -> 16;
-field_map(wagon) -> 7;
-field_map(zone) -> 20.
 
 %% Find what field corresponds to position `Pos'
 find_field(Pos, Tickets, Fields) ->
@@ -89,11 +68,6 @@ is_ticket_valid(Ticket, Fields) ->
     fun(Num) ->
         is_valid_for_some_field(Num, Fields)
     end, Ticket).
-
--else.
-show_valid_fields(_) ->
-  ok.
--endif.
 
 %% Determine if a given number is valid, i.e. if there is a field
 %% which this number could belong to.
