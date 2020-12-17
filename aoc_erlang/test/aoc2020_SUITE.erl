@@ -29,3 +29,4 @@ day_13(_Config) -> ?assertEqual(ok, eunit:test(aoc2020_day13, [verbose])).
 day_14(_Config) -> ?assertEqual(ok, eunit:test(aoc2020_day14, [verbose])).
 day_15(_Config) -> ?assertEqual(ok, eunit:test(aoc2020_day15, [verbose])).
 day_16(_Config) -> ?assertEqual(ok, eunit:test(aoc2020_day16, [verbose])).
+day_17(_Config) -> ?assertEqual(ok, eunit:test(aoc2020_day17, [verbose])).
