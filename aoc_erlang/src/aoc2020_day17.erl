@@ -111,23 +111,44 @@ conway_4d(Cubes, 0) ->
 conway_4d(Cubes, N) ->
   Cubes0 = do_conway_4d_step(Cubes),
   %% show_layers(Cubes0),
-  ?debugFmt("Step ~p, active cells: ~p", [N, maps:size(Cubes0)]),
   conway_4d(Cubes0, N - 1).
 
 do_conway_4d_step(Cubes) ->
-  %% TODO find a better (smaller) bound
-  Bound = get_bound_4d(Cubes),
+  {{MinX, MaxX},
+   {MinY, MaxY},
+   {MinZ, MaxZ},
+   {MinW, MaxW}} = get_bound_4d(Cubes),
 
   Coords =
     [{X, Y, Z, W} ||
-      X <- lists:seq(-Bound, Bound),
-      Y <- lists:seq(-Bound, Bound),
-      Z <- lists:seq(-Bound, Bound),
-      W <- lists:seq(-Bound, Bound)],
+      X <- lists:seq(MinX, MaxX),
+      Y <- lists:seq(MinY, MaxY),
+      Z <- lists:seq(MinZ, MaxZ),
+      W <- lists:seq(MinW, MaxW)],
 
   lists:foldl(fun(Coord, Acc) ->
                   step_one_cube_4d(Coord, Cubes, Acc)
               end, #{}, Coords).
+
+get_bound_4d(Cubes) ->
+  {{MinX, MaxX},
+   {MinY, MaxY},
+   {MinZ, MaxZ},
+   {MinW, MaxW}} =
+    maps:fold(
+      fun({X, Y, Z, W}, _, {{MinX, MaxX},
+                            {MinY, MaxY},
+                            {MinZ, MaxZ},
+                            {MinW, MaxW}}) ->
+          {{min(X, MinX), max(X, MaxX)},
+           {min(Y, MinY), max(Y, MaxY)},
+           {min(Z, MinZ), max(Z, MaxZ)},
+           {min(W, MinW), max(W, MaxW)}}
+      end, {{0, 0}, {0, 0}, {0, 0}, {0, 0}}, Cubes),
+  {{MinX - 1, MaxX + 1},
+   {MinY - 1, MaxY + 1},
+   {MinZ - 1, MaxZ + 1},
+   {MinW - 1, MaxW + 1}}.
 
 step_one_cube_4d(Coord, OldCubes, NewCubes) ->
   Nbrs = get_neighbors_4d(Coord),
@@ -157,12 +178,6 @@ get_neighbors_4d({X, Y, Z, W}) ->
     ZN <- [Z - 1, Z, Z + 1],
     WN <- [W - 1, W, W + 1],
     not ((XN == X) and (YN == Y) and (ZN == Z) and (WN == W))].
-
-get_bound_4d(Cubes) ->
-  1 + maps:fold(
-        fun({X, Y, Z, W}, _, Acc) ->
-            lists:max([Acc, abs(X), abs(Y), abs(Z), abs(W)])
-        end, 0, Cubes).
 
 show_layers_4d(Cubes) ->
   Bound = get_bound(Cubes),
