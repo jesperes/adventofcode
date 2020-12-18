@@ -23,3 +23,5 @@ hs_err_pid*
 
 *~
 *.beam
+/aoc_erlang/src/aoc2020_*_lexer.erl
+/aoc_erlang/src/aoc2020_*_parser.erl
