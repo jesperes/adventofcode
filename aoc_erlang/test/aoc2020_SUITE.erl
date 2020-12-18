@@ -30,3 +30,6 @@ day_14(_Config) -> ?assertEqual(ok, eunit:test(aoc2020_day14, [verbose])).
 day_15(_Config) -> ?assertEqual(ok, eunit:test(aoc2020_day15, [verbose])).
 day_16(_Config) -> ?assertEqual(ok, eunit:test(aoc2020_day16, [verbose])).
 day_17(_Config) -> ?assertEqual(ok, eunit:test(aoc2020_day17, [verbose])).
+day_18(_Config) -> ?assertEqual(ok, eunit:test(aoc2020_day18, [verbose])).
+
+%% Day 11, 15, and 17 take 2-6 seconds each, the rest are all below <1s.
