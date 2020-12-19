@@ -60,8 +60,6 @@ part2(Input) ->
         end
     end, 0, Messages).
 
-%% Match rules are
-%% (any number of RE_42) + (N number of RE_42) + (N number of RE_31)
 is_match(M, RE_42, RE_42_end, RE_31_end) ->
   {N_31, Rest} = is_match_31(M, RE_31_end, 0),
   if N_31 == 0 -> false;
