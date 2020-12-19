@@ -1,4 +1,4 @@
-name: C/C++ (CMake)
+name: cmake
 
 on: [push]
 

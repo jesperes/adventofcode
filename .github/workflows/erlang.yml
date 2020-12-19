@@ -1,4 +1,4 @@
-name: Erlang (Rebar 3.x)
+name: erlang
 
 on:
   push:
