@@ -5,6 +5,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_C_FLAGS "-g -O3 -Wall -Werror")
 set(CMAKE_CPP_FLAGS "-g -O3 -Wall -Werror")
+
+set(CMAKE_C_FLAGS_RELEASE "-O3")
+set(CMAKE_CPP_FLAGS_RELEASE "-O3")
+
 file(GLOB PUZZLE_SRC src/aoc*_day*.c src/aoc*_day*.cpp)
 set(UTILS src/md5.c)
 
