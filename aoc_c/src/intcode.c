@@ -26,6 +26,7 @@ int64_t read(int64_t *prog, int64_t op, int m, int relbase)
     return prog[op + relbase];
   } else {
     assert(false);
+    return 0;
   }
 }
 
