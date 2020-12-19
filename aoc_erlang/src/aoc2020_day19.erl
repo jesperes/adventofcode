@@ -4,36 +4,16 @@
 -module(aoc2020_day19).
 -include_lib("eunit/include/eunit.hrl").
 
--compile([nowarn_unused_function, export_all, nowarn_export_all]).
+-compile([nowarn_unused_function]).
+
+%% ======================================================================
+%% Part 1
+%% ======================================================================
 
 part1(Input) ->
-  parts(Input, none, false).
-
-part2(Input) ->
-  parts(Input, none, true).
-
-%% Puzzle solution
-parts(Input, Id, Replace) ->
-  {RawRules, Messages} = parse(Input),
-
-  Rules =
-    case Replace of
-      true ->
-        maps:merge(#{8 => [[42], [42, 8]],
-                     11 => [[42, 31], [42, 11, 31]]},
-                   RawRules);
-      false ->
-        RawRules
-    end,
-
-  case Id of
-    none -> ok;
-    Suffix -> generate_dot_graphs(Rules, Suffix)
-  end,
-
-  RE = to_regex(0, Rules, none),
+  {Rules, Messages} = parse(Input),
+  RE = to_regex(0, Rules),
   {ok, CompiledRE} = re:compile("^" ++ RE ++ "$"),
-
   lists:foldl(fun(M, Acc) ->
                   case re:run(M, CompiledRE) of
                     {match, _} -> Acc + 1;
@@ -41,53 +21,100 @@ parts(Input, Id, Replace) ->
                   end
               end, 0, Messages).
 
+
+%% ======================================================================
+%% Part 2
+%%
+%% The input rules are modified so that they contain loops. The
+%% modified rules are such that
+%%
+%% 0 : (at least one copy of rule 42)
+%%     (N copies of rule 31)
+%%     (N copies of rule 42)
+%%
+%% Regular expressions are thwarted by having to match an equal amount
+%% of rule 31 and rule 42.
+%%
+%% So, we compute the (finite) regexps for rule 31 and 42, then match
+%% *backwards*:
+%%
+%% 1. As many copies of rule 31 we can find
+%% 2. Match the same number of copies of rule 42
+%% 3. Remaining string must consist of any number of rule 42, but
+%%    nothing else.
+%%
+%% ======================================================================
+
+part2(Input) ->
+  {Rules, Messages} = parse(Input),
+  RE_42_str = to_regex(42, Rules),
+  {ok, RE_42} = re:compile("^(" ++ RE_42_str ++ ")+$"),
+  {ok, RE_42_end} = re:compile("^(?<first>.*)" ++ RE_42_str ++ "$"),
+  {ok, RE_31_end} = re:compile("^(?<first>.*)" ++ to_regex(31, Rules) ++ "$"),
+
+  lists:foldl(
+    fun(M, Acc) ->
+        case is_match(M, RE_42, RE_42_end, RE_31_end) of
+          true -> Acc + 1;
+          false -> Acc
+        end
+    end, 0, Messages).
+
+%% Match rules are
+%% (any number of RE_42) + (N number of RE_42) + (N number of RE_31)
+is_match(M, RE_42, RE_42_end, RE_31_end) ->
+  {N_31, Rest} = is_match_31(M, RE_31_end, 0),
+  if N_31 == 0 -> false;
+     true ->
+      case is_match_42_n(Rest, RE_42_end, N_31) of
+        {true, Rest0} ->
+          is_match_42(Rest0, RE_42);
+        _ ->
+          false
+      end
+  end.
+
+%% Matches greedily many copies of rule 31 at the end, and returns how
+%% many we matched, and the remaining string.
+is_match_31(M, RE_31, N) ->
+  case re:run(M, RE_31, [{capture, all_names, list}]) of
+    {match, [Leading]} ->
+      is_match_31(Leading, RE_31, N + 1);
+    _ ->
+      {N, M}
+  end.
+
+%% Matches `N' copies of rule 42 at the end
+is_match_42_n(Str, _RE_42_end, 0) ->
+  {true, Str};
+is_match_42_n(Str, RE_42_end, N) ->
+  case re:run(Str, RE_42_end, [{capture, all_names, list}]) of
+    {match, [Leading]} ->
+      is_match_42_n(Leading, RE_42_end, N - 1);
+    _ ->
+      false
+  end.
+
+%% Matches any copies of rule 42
+is_match_42(Str, RE_42) ->
+  case re:run(Str, RE_42) of
+    {match, _} -> true;
+    _ -> false
+  end.
+
+%% ======================================================================
+%% Graph generator
+%% ======================================================================
+
 %% Generate .dot+.png graphs for the rules, to easier spot the
 %% differences.
 generate_dot_graphs(Rules, Id) ->
   Dot = to_dot(Rules),
   Basename = io_lib:format("day19_~s", [Id]),
-  ?debugFmt("Generating dot graph: ~s.dot~n", [Basename]),
+  %% ?debugFmt("Generating dot graph: ~s.dot~n", [Basename]),
   ok = file:write_file(Basename ++ ".dot", Dot),
   [] = os:cmd(lists:flatten(io_lib:format("dot -Tpng -o ~s.png ~s.dot",
                                           [Basename, Basename]))).
-
-%% ======================================================================
-%% Part 1
-%% ======================================================================
-
-to_regex(Key, RuleMap, _Parent) when is_integer(Key) ->
-  case maps:get(Key, RuleMap) of
-    [RHS] -> to_regex(RHS, RuleMap, Key);
-    [_|_] = RHS ->
-      "(" ++
-        lists:join(
-          "|",
-          lists:map(
-            fun(X) ->
-                %% ?debugFmt("LHS ~w -> RHS ~w", [Key, X]),
-                to_regex(X, RuleMap, Key)
-            end,
-            RHS)) ++ ")"
-  end;
-to_regex(Key, RuleMap, Parent) when is_list(Key) ->
-  lists:join(
-    "",
-    lists:map(
-      fun(X) ->
-          if Parent == X ->
-              throw({loop, X});
-             true ->
-              to_regex(X, RuleMap, Parent)
-          end
-      end,
-      Key));
-to_regex(Key, _RuleMap, _) when is_atom(Key) ->
-  atom_to_list(Key).
-
-%% ======================================================================
-%% Part 2
-%% ======================================================================
-
 to_dot(RuleMap) ->
   "digraph rules {\n" ++
     to_dot0(RuleMap) ++
@@ -96,28 +123,62 @@ to_dot(RuleMap) ->
 to_dot0(RuleMap) ->
   lists:map(
     fun({LHS, RHS}) ->
-        RHSNode = make_rhs_node(RHS),
-        %% io:format("~p -> ~p (~s)~n", [LHS, RHS, RHSNode]),
-        io_lib:format("rule_~p -> ~s;~n", [LHS, RHSNode]) ++
-             lists:map(
-                  fun(R) ->
-                      io_lib:format("~s -> rule_~p;~n",
-                                    [RHSNode, R])
-                  end, RHS)
+        %% ?debugFmt("~p", [{LHS, RHS}]),
+        case RHS of
+          [R] ->
+            io_lib:format("rule_~w -> rule_~w;~n", [LHS, R]);
+          _ ->
+            %% If RHS consists of multiple rules, we need an
+            %% intermediary node to represent the "logical and".
+            RHSNode = make_rhs_node(RHS),
+            io_lib:format("rule_~w -> ~s;~n", [LHS, RHSNode]) ++
+              lists:map(
+                fun(R) ->
+                    io_lib:format("~s -> rule_~w;~n",
+                                  [RHSNode, R])
+                end, RHS)
+        end
     end,
     [{LHS, RHS} || {LHS, RHSList} <- maps:to_list(RuleMap),
                    RHS <- RHSList]).
 
 make_rhs_node(RHS) ->
-  "i_" ++
+  "_" ++
     lists:join("_and_",
                lists:map(fun(R) when is_atom(R) ->
                              atom_to_list(R);
                             (R) when is_integer(R) ->
                              integer_to_list(R)
-                         end, RHS)).
+                         end, RHS)) ++ "_".
 
 
+%% ======================================================================
+%% Regexp rewriting
+%% ======================================================================
+
+to_regex(Key, RuleMap) when is_integer(Key) ->
+  case maps:get(Key, RuleMap) of
+    [RHS] -> to_regex(RHS, RuleMap);
+    [_|_] = RHS ->
+      "(" ++
+        lists:join(
+          "|",
+          lists:map(
+            fun(X) ->
+                to_regex(X, RuleMap)
+            end,
+            RHS)) ++ ")"
+  end;
+to_regex(Key, RuleMap) when is_list(Key) ->
+  lists:join(
+    "",
+    lists:map(
+      fun(X) ->
+          to_regex(X, RuleMap)
+      end,
+      Key));
+to_regex(Key, _RuleMap) when is_atom(Key) ->
+  atom_to_list(Key).
 
 %% ======================================================================
 %% Parser
@@ -162,8 +223,8 @@ get_input() ->
 %% Tests
 main_test_() ->
   Input = get_input(),
-  [ {"Part 1", ?_assertEqual(147, parts(Input, none, false))}
-  %% , {"Part 2", ?_assertEqual(0, parts(Input, "part2", false))}
+  [ {"Part 1", ?_assertEqual(147, part1(Input))}
+  , {"Part 2", ?_assertEqual(263, part2(Input))}
   ].
 
 test_input1() ->
@@ -181,14 +242,14 @@ test_input1() ->
     "aaaabbb">>.
 
 ex1_test_() ->
-  ?_assertEqual(2, parts(test_input1(), none, false)).
+  ?_assertEqual(2, part1(test_input1())).
 
 test_input2() ->
   <<"42: 9 14 | 10 1\n"
     "9: 14 27 | 1 26\n"
     "10: 23 14 | 28 1\n"
     "1: \"a\"\n"
-    "11: 42 31\n"
+    "11: 42 31 | 42 11 31 \n"
     "5: 1 14 | 15 1\n"
     "19: 14 1 | 14 14\n"
     "12: 24 14 | 19 1\n"
@@ -210,7 +271,7 @@ test_input2() ->
     "21: 14 1 | 1 14\n"
     "25: 1 1 | 1 14\n"
     "22: 14 14\n"
-    "8: 42\n"
+    "8: 42 | 42 8\n"
     "26: 14 22 | 1 20\n"
     "18: 15 15\n"
     "7: 14 5 | 1 21\n"
@@ -233,11 +294,7 @@ test_input2() ->
     "aabbbbbaabbbaaaaaabbbbbababaaaaabbaaabba\n">>.
 
 ex2_test_() ->
-  [ %% ?_assertEqual(3, part2(test_input2a(), 1))
-    %% ?_assertEqual(3, part2(test_input2b(), 2))
-    {"Part 2 (no loops)", ?_assertEqual(3, parts(test_input2(), "testinput2_noloops", false))}
-  , {"Part 2 (modified, with loops)", ?_assertEqual(3, parts(test_input2(), "testinput2_noloops", false))}
-  ].
+  ?_assertEqual(12, part2(test_input2())).
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:
