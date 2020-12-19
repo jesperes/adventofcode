@@ -8,26 +8,34 @@
 
 %% Puzzle solution
 part1(Input) ->
-  %% redbug:start("aoc2020_day19:reduce"),
   [RuleBlock, MessageBlock] = binary:split(Input, <<"\n\n">>),
   Rules = binary:split(RuleBlock, <<"\n">>, [global]),
   Messages = binary:split(MessageBlock, <<"\n">>, [global]),
-  Messages0 =
-    lists:map(
-      fun(M) ->
-          lists:map(
-            fun(C) -> list_to_atom([C]) end, binary_to_list(M))
-      end, Messages),
+  Rules0 = lists:foldl(fun parse_rule/2, #{}, Rules),
 
-  RuleMap =
-    lists:foldl(
-      fun(Rule, Acc) ->
-          parse_rule(Rule, Acc)
-      end, #{}, Rules),
+  lists:foldl(fun(M, Acc) ->
+                  RE = to_regex(0, Rules0),
+                  case re:run(M, "^" ++ RE ++ "$") of
+                    {match, _} -> Acc + 1;
+                    _ -> Acc
+                  end
+              end, 0, Messages).
 
-  reduce(hd(Messages0), RuleMap).
 
-parse_rule(Binary, Map) ->
+to_regex(Key, RuleMap) when is_integer(Key) ->
+  case maps:get(Key, RuleMap) of
+    [RHS] ->
+      %% RHS is a single element, no need to parenthesize
+      to_regex(RHS, RuleMap);
+    [_|_] = RHS ->
+      "(" ++ lists:join("|", lists:map(fun(X) -> to_regex(X, RuleMap) end, RHS)) ++ ")"
+  end;
+to_regex(Key, RuleMap) when is_list(Key) ->
+  lists:join("", lists:map(fun(X) -> to_regex(X, RuleMap) end, Key));
+to_regex(Key, _RuleMap) when is_atom(Key) ->
+  atom_to_list(Key).
+
+parse_rule(Binary, Acc) ->
   [LHS, RHS] = binary:split(Binary, <<":">>),
   SubRules = lists:map(
                fun(B) ->
@@ -41,9 +49,7 @@ parse_rule(Binary, Map) ->
                      binary:split(B, <<" ">>, [global]))
                end, binary:split(RHS, <<"|">>, [global])),
   LHS0 = btoi(LHS),
-  maps:merge(
-    Map,
-    maps:from_list([{SubRule, LHS0} || SubRule <- SubRules])).
+  maps:put(LHS0, SubRules, Acc).
 
 btoi(B) ->
   case re:run(B, "\"([ab])\"|(\\d+)", [{capture, all_but_first, list}]) of
@@ -52,39 +58,6 @@ btoi(B) ->
     {match, [Terminal]} ->
       list_to_atom(Terminal)
   end.
-
-reduce([], Rules) ->
-  {true, {unused_rules, Rules}};
-reduce(Msg, Rules) when map_size(Rules) == 0 ->
-  {false, {remaining_msg, Msg}};
-reduce(Msg, RuleMap) ->
-  io:format("Reducing ~p using rules ~p~n", [Msg, RuleMap]),
-  {Rule, RuleMap0} = find_matching_rule(Msg, RuleMap),
-  Msg0 = apply_rule(Rule, Msg),
-  reduce(Msg0, RuleMap0).
-
-apply_rule({LHS, RHS}, Msg) ->
-  true = lists:prefix(RHS, Msg),
-  {_, Msg0} = lists:split(length(RHS), Msg),
-  io:format("Applied rule (~p -> ~p) on ~p to get ~p~n", [LHS, RHS, Msg, Msg0]),
-  Msg0.
-
-find_matching_rule([], _RuleMap) ->
-  true;
-find_matching_rule(Msg, RuleMap) ->
-  case lists:filter(fun(RHS) ->
-                        lists:prefix(RHS, Msg)
-                    end, maps:keys(RuleMap)) of
-    [RHS|_] ->
-      LHS = maps:get(RHS, RuleMap),
-      io:format("Msg ~p matches rule ~p -> ~p~n", [Msg, LHS, RHS]),
-      {{LHS, RHS}, maps:remove(RHS, RuleMap)};
-    [] ->
-      io:format("Msg ~p does not match any rule~n", [Msg])
-  end.
-
-%% is_matching_rule(Msg, {_, RHS} = Rule) ->
-%%   lists:prefix(RHS, Msg).
 
 part2(_Input) ->
   ?debugMsg("Not implemented."),
@@ -97,11 +70,10 @@ get_input() ->
 
 %% Tests
 main_test_() ->
-  _Input = get_input(),
-  [].
-  %% [ {"Part 1", ?_assertEqual(0, part1(Input))}
+  Input = get_input(),
+  [ {"Part 1", ?_assertEqual(147, part1(Input))}
   %% , {"Part 2", ?_assertEqual(0, part2(Input))}
-  %% ].
+  ].
 
 test_input() ->
   <<"0: 4 1 5\n"
@@ -118,7 +90,7 @@ test_input() ->
     "aaaabbb">>.
 
 ex1_test_() ->
-  ?_assertEqual(0, part1(test_input())).
+  ?_assertEqual(2, part1(test_input())).
 
 
 %%%_* Emacs ====================================================================
