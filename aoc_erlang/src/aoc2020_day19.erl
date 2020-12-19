@@ -4,86 +4,87 @@
 -module(aoc2020_day19).
 -include_lib("eunit/include/eunit.hrl").
 
+-compile([nowarn_unused_function, export_all, nowarn_export_all]).
+
 %% Puzzle solution
 part1(Input) ->
+  %% redbug:start("aoc2020_day19:reduce"),
   [RuleBlock, MessageBlock] = binary:split(Input, <<"\n\n">>),
-  Rules = lists:sort(binary:split(RuleBlock, <<"\n">>, [global])),
+  Rules = binary:split(RuleBlock, <<"\n">>, [global]),
   Messages = binary:split(MessageBlock, <<"\n">>, [global]),
-  ParsedRules = lists:map(fun parse_rule/1, Rules),
-  {ParsedRules, Messages}.
+  Messages0 =
+    lists:map(
+      fun(M) ->
+          lists:map(
+            fun(C) -> list_to_atom([C]) end, binary_to_list(M))
+      end, Messages),
 
-parse_rule(Binary) ->
+  RuleMap =
+    lists:foldl(
+      fun(Rule, Acc) ->
+          parse_rule(Rule, Acc)
+      end, #{}, Rules),
+
+  reduce(hd(Messages0), RuleMap).
+
+parse_rule(Binary, Map) ->
   [LHS, RHS] = binary:split(Binary, <<":">>),
   SubRules = lists:map(
                fun(B) ->
                    lists:filtermap(
                      fun(B0) ->
                          case byte_size(B0) > 0 of
-                           true -> {true, B0};
+                           true -> {true, btoi(B0)};
                            false -> false
                          end
                      end,
                      binary:split(B, <<" ">>, [global]))
                end, binary:split(RHS, <<"|">>, [global])),
-  {LHS, SubRules}.
+  LHS0 = btoi(LHS),
+  maps:merge(
+    Map,
+    maps:from_list([{SubRule, LHS0} || SubRule <- SubRules])).
 
+btoi(B) ->
+  case re:run(B, "\"([ab])\"|(\\d+)", [{capture, all_but_first, list}]) of
+    {match, [[], RuleNum]} ->
+      list_to_integer(RuleNum);
+    {match, [Terminal]} ->
+      list_to_atom(Terminal)
+  end.
 
-reduce(Message) ->
+reduce([], Rules) ->
+  {true, {unused_rules, Rules}};
+reduce(Msg, Rules) when map_size(Rules) == 0 ->
+  {false, {remaining_msg, Msg}};
+reduce(Msg, RuleMap) ->
+  io:format("Reducing ~p using rules ~p~n", [Msg, RuleMap]),
+  {Rule, RuleMap0} = find_matching_rule(Msg, RuleMap),
+  Msg0 = apply_rule(Rule, Msg),
+  reduce(Msg0, RuleMap0).
 
+apply_rule({LHS, RHS}, Msg) ->
+  true = lists:prefix(RHS, Msg),
+  {_, Msg0} = lists:split(length(RHS), Msg),
+  io:format("Applied rule (~p -> ~p) on ~p to get ~p~n", [LHS, RHS, Msg, Msg0]),
+  Msg0.
 
+find_matching_rule([], _RuleMap) ->
+  true;
+find_matching_rule(Msg, RuleMap) ->
+  case lists:filter(fun(RHS) ->
+                        lists:prefix(RHS, Msg)
+                    end, maps:keys(RuleMap)) of
+    [RHS|_] ->
+      LHS = maps:get(RHS, RuleMap),
+      io:format("Msg ~p matches rule ~p -> ~p~n", [Msg, LHS, RHS]),
+      {{LHS, RHS}, maps:remove(RHS, RuleMap)};
+    [] ->
+      io:format("Msg ~p does not match any rule~n", [Msg])
+  end.
 
-
-
-
-%%   FileName = code:lib_dir(aoc_erlang, src) ++ "/" ++ atom_to_list(?MODULE) ++ "_parser.yrl",
-%%   emit_yrl(ParsedRules, FileName),
-%%   try
-%%     %% There will be warnings
-%%     {ok, _, _Warnings} = yecc:file(FileName, [return])
-%%   after
-%%       file:delete(FileName)
-%%   end.
-
-%% emit_yrl(Rules, F) ->
-%%   Yrl =
-%%     io_lib:format("Nonterminals\n"
-%%                   "    ~s.\n"
-%%                   "\n"
-%%                   "Terminals\n"
-%%                   "    'a' 'b'.\n"
-%%                   "\n"
-%%                   "Rootsymbol\n"
-%%                   "    rule0.\n"
-%%                   "\n"
-%%                   "~s~n",
-%%                   [ lists:join(" ", lists:map(fun emit_non_terminal/1, Rules))
-%%                   , lists:map(fun emit_rule/1, Rules)
-%%                   ]),
-%%   io:format("~n~s~n", [Yrl]),
-%%   ok = file:write_file(F, Yrl).
-
-%% emit_non_terminal({LHS, _}) ->
-%%   io_lib:format("rule~s", [LHS]).
-
-%% emit_rule({LHS, RHS}) ->
-%%   lists:join("",
-%%              lists:map(fun(Rule) ->
-%%                            emit_rule0(LHS, Rule)
-%%                        end, RHS)).
-
-%% emit_rule0(LHS, RHS) ->
-%%   io_lib:format("rule~s -> ~s : { '$1' }.~n",
-%%                 [LHS,
-%%                  lists:join(
-%%                    " ",
-%%                    lists:map(
-%%                      fun(R) ->
-%%                          case R of
-%%                            <<"\"a\"">> -> io_lib:format("'a'", []);
-%%                            <<"\"b\"">> -> io_lib:format("'b'", []);
-%%                            _ -> io_lib:format("rule~s", [R])
-%%                          end
-%%                      end, RHS))]).
+%% is_matching_rule(Msg, {_, RHS} = Rule) ->
+%%   lists:prefix(RHS, Msg).
 
 part2(_Input) ->
   ?debugMsg("Not implemented."),
@@ -96,11 +97,29 @@ get_input() ->
 
 %% Tests
 main_test_() ->
-  Input = get_input(),
+  _Input = get_input(),
+  [].
+  %% [ {"Part 1", ?_assertEqual(0, part1(Input))}
+  %% , {"Part 2", ?_assertEqual(0, part2(Input))}
+  %% ].
 
-  [ {"Part 1", ?_assertEqual(0, part1(Input))}
-  , {"Part 2", ?_assertEqual(0, part2(Input))}
-  ].
+test_input() ->
+  <<"0: 4 1 5\n"
+    "1: 2 3 | 3 2\n"
+    "2: 4 4 | 5 5\n"
+    "3: 4 5 | 5 4\n"
+    "4: \"a\"\n"
+    "5: \"b\"\n"
+    "\n"
+    "ababbb\n"
+    "bababa\n"
+    "abbbab\n"
+    "aaabbb\n"
+    "aaaabbb">>.
+
+ex1_test_() ->
+  ?_assertEqual(0, part1(test_input())).
+
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:
