@@ -4,8 +4,8 @@ Start
 456
 789
 
-Rotate 90 CW / 270 CCW
-----------
+Rotate 90
+------
 741
 852
 963
@@ -16,32 +16,32 @@ Rotate 180
 654
 321
 
-Rotate 270 CW / 90 CCW
+Rotate 270
 -----------
 369
 258
 147
 
-Flip around vertical axis
+Flip (Vertical)
 -----------
 321
 654
 987
 
-Flip around horizontal axis
------------
-789
-456
-123
-
-Flip around vertical axis + rotate 90 CW
-------------
+Flip + Rotate 90
+------
 963
 852
 741
 
-Flip around vertical axis + rotate 90 CCW
-------------
+Flip + Rotate 180
+------
+789
+456
+123
+
+Flip + Rotate 270
+------
 147
 258
 369

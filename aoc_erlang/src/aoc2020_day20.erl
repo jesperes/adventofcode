@@ -19,12 +19,16 @@ part1(Input) ->
 
 %% Part 2: Assemble the entire picture and find the sea monster.
 part2(Input) ->
-  TilesFull = parse_tiles2(Input),
-  TilesFull.
-  %% [Num|_] = maps:keys(TilesFull),
-  %% Rows = maps:get(Num, TilesFull),
-  %% flip_rotate_tile(Rows).
+  part2(Input, 10).
 
+part2(Input, _TileSize) ->
+  TilesFull = parse_tiles2(Input),
+  [Num|_] = maps:keys(TilesFull),
+  Rows = maps:get(Num, TilesFull),
+  lists:foreach(
+    fun(Tile) ->
+        ?debugFmt("~n-->~n~s", [grid:to_str(Tile)])
+    end, flip_rotate_tile(Rows, 10)).
 
 %% ======================================================================
 %% Parser
@@ -129,38 +133,40 @@ find_corner_tiles(Tiles) ->
 %% 6: Flip around vertical axis + rotate 90 CW
 %% 7: Flip around horizontal axis + rotate 90 CCW
 
-flip_rotate_tile(Rows) ->
-  [Rows,
-   rotate_90cw(Rows),
-   rotate_180cw(Rows),
-   rotate_90ccw(Rows),
-   flip_vert(Rows),
-   flip_horiz(Rows),
-   flip_vert_90cw(Rows),
-   flip_horiz_90cw(Rows)].
+flip_rotate_tile(Rows, TileSize) ->
+  Max = TileSize - 1,
 
-rotate_90cw(Rows) ->
-  Rows.
+  ?debugFmt("Flipping/rotating tile:~n~s~n", [grid:to_str(Rows)]),
 
-rotate_180cw(Rows) ->
-  Rows.
+  Rotate =
+    fun(R) ->
+        maps:fold(fun({X, Y}, Value, Acc) when (X >= 0) andalso (X =< Max) andalso
+                                               (Y >= 0) andalso (Y =< Max) ->
+                      maps:put({Max - Y, X}, Value, Acc)
+                  end, #{}, R)
+    end,
 
-rotate_90ccw(Rows) ->
-  Rows.
+  Flip =
+    fun(R) ->
+        maps:fold(fun({X, Y}, Value, Acc) when (X >= 0) andalso (X =< Max) andalso
+                                               (Y >= 0) andalso (Y =< Max) ->
+                      maps:put({Max - X, Y}, Value, Acc)
+                  end, #{}, R)
+    end,
 
-flip_vert(Rows) ->
-  Rows.
+  R90 = Rotate(Rows),
+  R180 = Rotate(R90),
+  R270 = Rotate(R180),
+  FlipR0 = Flip(Rows),
+  FlipR90 = Rotate(FlipR0),
+  FlipR180 = Rotate(FlipR90),
+  FlipR270 = Rotate(FlipR180),
 
-flip_horiz(Rows) ->
-  lists:reverse(Rows).
+  %% Self-test
+  ?assertEqual(Rows, Rotate(R270)),
+  ?assertEqual(Rows, Rotate(Rotate(Rotate(Rotate(Rows))))),
 
-flip_vert_90cw(Rows) ->
-  Rows.
-
-flip_horiz_90cw(Rows) ->
-  _FlipHoriz = lists:reverse(Rows).
-
-
+  [Rows, R90, R180, R270, FlipR0, FlipR90, FlipR180, FlipR270].
 
 %% ======================================================================
 %% Input
@@ -189,7 +195,7 @@ check_border_uniqueness_test_() ->
                     tuple_to_list(Borders) ++ Acc
                 end, [], maps:values(Tiles)),
 
-  UniqueBorderPairs =
+  UniqueBorderPairs=
     lists:sort([A || A <- AllBorders,
                      B <- AllBorders,
                      A < B,
@@ -211,6 +217,19 @@ is_matching_border_test_() ->
   [ ?_assert(is_matching_borders("##.##.", ".##.##"))
   , ?_assertNot(is_matching_borders("##.##.", ".##.#."))
   ].
+
+flip_and_rotate_test_() ->
+  {_Num, Tile} =
+    parse_tile2(<<"1:\n"
+                  ".#.#.\n"
+                  "##.##\n"
+                  "#..#.\n"
+                  "..###\n"
+                  "###..">>),
+  fun() ->
+      Tiles = flip_rotate_tile(Tile, 4),
+      ?assertEqual(8, length(Tiles))
+  end.
 
 matching_borders_test_() ->
   %% These two have a matching south border
