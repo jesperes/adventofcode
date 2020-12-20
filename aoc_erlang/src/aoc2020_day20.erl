@@ -12,23 +12,172 @@
 %% little by picking out the 4 tiles which have two borders which do
 %% not match up with any other border, but we don't actually compute
 %% how any of the tiles are supposed to be flipped/rotated.
-part1(Input) ->
+solve(Input) ->
   Tiles = parse_tiles(Input),
-  CornerTiles = find_corner_tiles(Tiles),
-  lists:foldl(fun erlang:'*'/2, 1, CornerTiles).
+  Size = floor(math:sqrt(maps:size(Tiles))),
+  _Coords = lists:sort([{X, Y} ||
+                         X <- lists:seq(0, Size - 1),
+                         Y <- lists:seq(0, Size - 1)]),
 
-%% Part 2: Assemble the entire picture and find the sea monster.
-part2(Input) ->
-  part2(Input, 10).
+  %% Maps border ids to tile nums
+  BorderMap = border_map(Tiles),
 
-part2(Input, _TileSize) ->
-  TilesFull = parse_tiles2(Input),
-  [Num|_] = maps:keys(TilesFull),
-  Rows = maps:get(Num, TilesFull),
-  lists:foreach(
-    fun(Tile) ->
-        ?debugFmt("~n-->~n~s", [grid:to_str(Tile)])
-    end, flip_rotate_tile(Rows, 10)).
+  %% Maps tile nums to their border ids
+  TilesToBorders = inv_map(BorderMap),
+
+  %% Get the corners
+  Corners = find_corner_tiles(TilesToBorders, BorderMap),
+
+  %%Part1Sol = maps:fold(fun(TileNum, _TileData, Acc) -> Acc * TileNum end, 1, Corners),
+  %%?debugFmt("Part 1 solution: ~p", [Part1Sol]),
+
+  TopLeft = something,
+  ExternalId = something, %% one of external border ids of TopLeft
+
+  %% Rotate TopLeft tile such that the given external id faces left.
+  TopLeft0 = rotate_or_flip_to_fit(TopLeft, ExternalId, left),
+
+  %% Place this tile at {0, 0}.
+  PlacedTiles = place_tile(TopLeft0, {0, 0}, #{}),
+
+  %%% CONTINUE HERE
+
+  ?debugFmt("Top left tile: ~p", [T]).
+
+%% TODO write a function which can rotate a tile until it has a given
+%% border id at a given position, i.e.
+%%
+%% rotate_tile(Tile, Id, Pos) such that
+
+  %% place_tiles(Coords, Tiles, BorderMap).
+
+%% TODO this map can probably be produced in the same function as
+%% border_map
+inv_map(Map) ->
+  maps:fold(
+    fun(K, VList, Acc) ->
+        lists:foldl(
+          fun(V, InnerAcc) ->
+              maps:update_with(V, fun(Old) -> [K|Old] end,
+                               [K], InnerAcc)
+          end, Acc, VList)
+    end, #{}, Map).
+
+border_map(Tiles) ->
+  maps:fold(
+    fun(TileNum, TileMap, Acc) ->
+        Borders = borders(TileMap),
+        lists:foldl(
+          fun(BorderId, InnerAcc) ->
+              %% ?debugFmt("Border ID ~p refers to tilenum ~p", [BorderId, TileNum]),
+              maps:update_with(BorderId,
+                               fun(Old) -> [TileNum|Old] end,
+                               [TileNum], InnerAcc)
+          end, Acc, Borders)
+    end, #{}, Tiles).
+
+%% This is a bit hairy...
+find_corner_tiles(TilesToBorders, BorderMap) ->
+  maps:filter(
+    fun(TileNum, BorderIds) ->
+        ExternalIds =
+          lists:filter(
+            fun(Id) ->
+                %% External ids refer only to *one*
+                %% tile in the border-id -> tilenum map.
+                [TileNum] =:= maps:get(Id, BorderMap)
+            end, BorderIds),
+        length(ExternalIds) == 4
+    end, TilesToBorders).
+
+%% find_corner_tile([TileNum|Rest], Tiles, BorderMap) ->
+%%   Tile = maps:get(TileNum, Tiles),
+%%   OuterBorders = [B || B <- borders(Tile), not maps:is_key(B, BorderMap)],
+%%   ?debugFmt("Outer borders: ~p", [OuterBorders]),
+
+%%   %% Tiles which have only 2 "inner" borders are corner tiles.
+%%   case length(OuterBorders) of
+%%     N when N == 2 -> TileNum;
+%%     N when N >= 3 -> find_corner_tile(Rest, Tiles, BorderMap)
+%%   end.
+
+%% place_tiles(_Coords, Tiles, BorderMap) ->
+
+%%   Corner = find_corner_tile(maps:keys(Tiles), Tiles, BorderMap),
+%%   ?debugFmt("Corner tile: ~p~n~s~n",
+%%             [Corner, grid:to_str(maps:get(Corner, Tiles))]),
+
+%%   lists:foldl(
+%%     fun(Coord, {PlacedTiles, RemainingTiles}) ->
+%%         place_tile_at(Coord, PlacedTiles, RemainingTiles, BorderMap)
+%%     end, {#{}, Tiles}, []).
+
+
+
+
+
+
+%% place_tile_at(Coord, PlacedTiles, RemainingTiles, BorderMap) ->
+%%   %% Find tile from `RemainingTiles' to place at `Coord'.
+%%   RemainingTileNums = maps:keys(RemainingTiles),
+%%   TileToPlace = find_tile(Coord, PlacedTiles, RemainingTileNums, RemainingTiles, BorderMap),
+%%   ?debugFmt("Found tile to place at ~p~n~p~n",
+%%             [Coord, TileToPlace]),
+%%   ok.
+
+%% %% Iterate over all tiles to find a tile to place at `Coord'
+%% find_tile(Coord, PlacedTiles, [TileNum|Rest], TileMap, BorderMap) ->
+%%   %% Try to place `TileNum' at `Coord'
+%%   Tile = maps:get(TileNum, TileMap),
+%%   Rotated = flip_rotate_tile(Tile),
+
+%%   case find_tile_rotation(Coord, PlacedTiles, Rotated, TileNum, TileMap, BorderMap) of
+%%     false ->
+%%       find_tile(Coord, PlacedTiles, Rest, TileMap, BorderMap);
+%%     Tile ->
+%%       Tile
+%%   end.
+
+%% find_tile_rotation(_, _, [], _, _, _) ->
+%%   false;
+%% find_tile_rotation(Coord, PlacedTiles, [Tile|Rest], TileNum, TileMap, BorderMap) ->
+%%   case fits(Coord, PlacedTiles, Tile, TileNum, TileMap, BorderMap) of
+%%     true -> Tile;
+%%     false ->
+%%       find_tile_rotation(Coord, PlacedTiles, Rest, TileNum, TileMap, BorderMap)
+%%   end.
+
+%% %% Return true/false if `Tile' fits at `Coord'.
+%% fits({_X, _Y}, _PlacedTiles, _Tile, _TileNum, _TileMap, _BorderMap) ->
+%%   %% ?debugFmt("Checking if tile ~p fits at ~p",
+%%   %%           [TileNum, _Coord]),
+%%   false.
+
+shift_by_coord(Coord, Tile, N) ->
+  case maps:get(Coord, Tile, undefined) of
+    $# -> (N bsl 1) bor 1;
+    _ -> N bsl 1
+  end.
+
+%% Take the four borders of this tile and translate them to integers
+%% for easy indexing. Each border can be flipped, so this makes 8
+%% integers per tile.
+borders(Tile) ->
+  %% TODO store this in the TileData?
+  Size = maps:get(size, Tile),
+  L = lists:seq(0, Size - 1),
+  LR = lists:seq(Size -1, 0, -1),
+
+  N  = lists:foldl(fun(X, Acc) -> shift_by_coord({X, 0},        Tile, Acc) end, 0, L),
+  NR = lists:foldl(fun(X, Acc) -> shift_by_coord({X, 0},        Tile, Acc) end, 0, LR),
+  S  = lists:foldl(fun(X, Acc) -> shift_by_coord({X, Size - 1}, Tile, Acc) end, 0, L),
+  SR = lists:foldl(fun(X, Acc) -> shift_by_coord({X, Size - 1}, Tile, Acc) end, 0, LR),
+  E  = lists:foldl(fun(Y, Acc) -> shift_by_coord({Size - 1, Y}, Tile, Acc) end, 0, L),
+  ER = lists:foldl(fun(Y, Acc) -> shift_by_coord({Size - 1, Y}, Tile, Acc) end, 0, LR),
+  W  = lists:foldl(fun(Y, Acc) -> shift_by_coord({0, Y},        Tile, Acc) end, 0, L),
+  WR = lists:foldl(fun(Y, Acc) -> shift_by_coord({0, Y},        Tile, Acc) end, 0, LR),
+
+  [N, NR, S, SR, E, ER, W, WR].
 
 %% ======================================================================
 %% Parser
@@ -43,25 +192,6 @@ parse_tiles(Input) ->
               end, #{}, L).
 
 parse_tile(TileBin) ->
-  [Header|Rows] = binary:split(TileBin, <<"\n">>, [global]),
-  {match, Matches} =
-    re:run(Header, "(\\d+):", [{capture, all_but_first, list}]),
-  TileNum = list_to_integer(hd(Matches)),
-  Rows0 = lists:filtermap(fun(<<>>) -> false;
-                             (Binary) -> {true, binary_to_list(Binary)}
-                          end, Rows),
-  {TileNum, borders(Rows0)}.
-
-%% Parse full tiles (not just their borders)
-parse_tiles2(Input) ->
-  L = binary:split(Input, <<"Tile ">>, [global]),
-  lists:foldl(fun(<<>>, Acc) -> Acc;
-                 (TileBin, Acc) ->
-                  {Num, Rows} = parse_tile2(TileBin),
-                  maps:put(Num, Rows, Acc)
-              end, #{}, L).
-
-parse_tile2(TileBin) ->
   [Header, Rows] = binary:split(TileBin, <<"\n">>),
   {match, Matches} =
     re:run(Header, "(\\d+):", [{capture, all_but_first, list}]),
@@ -73,76 +203,24 @@ parse_tile2(TileBin) ->
                     maps:put({Offset rem (Width + 1),
                               Offset div (Width + 1)}, $#, Acc)
                 end, #{}, Offsets),
-  {TileNum, Map}.
+  {TileNum, maps:put(size, Width, Map)}.
 
 %% ======================================================================
 %% Helpers
 %% ======================================================================
 
-%% Return the borders of a tile
-borders(Rows) ->
-  N = hd(Rows),
-  S = lists:last(Rows),
-  {W, E} = lists:foldl(
-             fun([], Acc) -> Acc;
-                ([W|Rest], {W0, E0}) ->
-                 E = lists:last(Rest),
-                 {[W|W0], [E|E0]}
-             end, {[], []}, Rows),
-  Rev = fun(List) -> lists:reverse(List) end,
-  {N, Rev(E), S, Rev(W)}.
-
-%% Returns true/false if two tiles have a matching border
-has_matching_borders(RowsA, RowsB) ->
-  MatchingBorders =
-    [{A, B} || A <- tuple_to_list(RowsA),
-               B <- tuple_to_list(RowsB),
-               is_matching_borders(A, B)],
-  length(MatchingBorders) > 0.
-
-%% Return true/false if two borders match (possibly with flipping)
-is_matching_borders(RowA, RowB) ->
-  (RowA =:= RowB) orelse (RowA =:= lists:reverse(RowB)).
-
-%% Find the id of the corner tiles
-find_corner_tiles(Tiles) ->
-  TileNums = maps:keys(Tiles),
-  lists:foldl(
-    fun(Num, Acc) ->
-        Borders = maps:get(Num, Tiles),
-        MatchingTiles =
-          lists:filter(
-            fun(Other) when Other =/= Num ->
-                has_matching_borders(Borders, maps:get(Other, Tiles));
-               (_) -> false
-            end, TileNums),
-
-        case length(MatchingTiles) of
-          2 -> [Num|Acc];
-          N when N >= 3 -> Acc
-        end
-    end, [], TileNums).
-
-%% There are 8 ways to rotate/flip a tile
-%% 0: Start
-%% 1: Rotate 90 CW (or 270 CCW)
-%% 2: Rotate 180 (CW/CCW)
-%% 3: Rotate 270 CW (or 90 CCW)
-%% 4: Flip around vertical axis
-%% 5: Flip around horizontal axis
-%% 6: Flip around vertical axis + rotate 90 CW
-%% 7: Flip around horizontal axis + rotate 90 CCW
-
-flip_rotate_tile(Rows, TileSize) ->
+flip_rotate_tile(Rows) ->
+  TileSize = maps:get(size, Rows),
   Max = TileSize - 1,
 
-  ?debugFmt("Flipping/rotating tile:~n~s~n", [grid:to_str(Rows)]),
+  %% ?debugFmt("Flipping/rotating tile (max = ~p):~n~s~n", [Max, grid:to_str(Rows)]),
 
   Rotate =
     fun(R) ->
         maps:fold(fun({X, Y}, Value, Acc) when (X >= 0) andalso (X =< Max) andalso
                                                (Y >= 0) andalso (Y =< Max) ->
-                      maps:put({Max - Y, X}, Value, Acc)
+                      maps:put({Max - Y, X}, Value, Acc);
+                     (K, V, Acc) -> maps:put(K, V, Acc)
                   end, #{}, R)
     end,
 
@@ -150,7 +228,8 @@ flip_rotate_tile(Rows, TileSize) ->
     fun(R) ->
         maps:fold(fun({X, Y}, Value, Acc) when (X >= 0) andalso (X =< Max) andalso
                                                (Y >= 0) andalso (Y =< Max) ->
-                      maps:put({Max - X, Y}, Value, Acc)
+                      maps:put({Max - X, Y}, Value, Acc);
+                     (K, V, Acc) -> maps:put(K, V, Acc)
                   end, #{}, R)
     end,
 
@@ -172,83 +251,12 @@ flip_rotate_tile(Rows, TileSize) ->
 %% Input
 %% ======================================================================
 
-get_input() ->
-  inputs:get_as_binary(2020, 20).
+%% get_input() ->
+%%   inputs:get_as_binary(2020, 20).
 
 %% ======================================================================
 %% Tests
 %% ======================================================================
-
-main_test_() ->
-  Input = get_input(),
-  [ {"Part 1", ?_assertEqual(66020135789767, part1(Input))}
-  , {"Part 2", ?_assertEqual(0, part2(Input))}
-  ].
-
-%% Check that all borders are pairwise unique, i.e. each border
-%% matches up with exactly 1 (or zero, for external tile borders)
-%% other tile.
-check_border_uniqueness_test_() ->
-  Tiles = parse_tiles(get_input()),
-  AllBorders =
-    lists:foldl(fun(Borders, Acc) ->
-                    tuple_to_list(Borders) ++ Acc
-                end, [], maps:values(Tiles)),
-
-  UniqueBorderPairs=
-    lists:sort([A || A <- AllBorders,
-                     B <- AllBorders,
-                     A < B,
-                     is_matching_borders(A, B)]),
-
-  ?_assertEqual(UniqueBorderPairs, lists:usort(UniqueBorderPairs)).
-
-borders_test_() ->
-  Rows = ["####",
-          "....",
-          "....",
-          "###."],
-  ?_assertEqual({"####",
-                 "#...",
-                 "###.",
-                 "#..#"}, borders(Rows)).
-
-is_matching_border_test_() ->
-  [ ?_assert(is_matching_borders("##.##.", ".##.##"))
-  , ?_assertNot(is_matching_borders("##.##.", ".##.#."))
-  ].
-
-flip_and_rotate_test_() ->
-  {_Num, Tile} =
-    parse_tile2(<<"1:\n"
-                  ".#.#.\n"
-                  "##.##\n"
-                  "#..#.\n"
-                  "..###\n"
-                  "###..">>),
-  fun() ->
-      Tiles = flip_rotate_tile(Tile, 4),
-      ?assertEqual(8, length(Tiles))
-  end.
-
-matching_borders_test_() ->
-  %% These two have a matching south border
-  RowsA = [".###.",
-           "....#",
-           "....#",
-           ".....",
-           "###.."],
-
-  RowsB = [".#.#.",
-           "#....",
-           ".....",
-           "....#",
-           "..###"],
-
-  BordersA = borders(RowsA),
-  BordersB = borders(RowsB),
-
-  ?_assert(has_matching_borders(BordersA, BordersB)).
 
 test_input() ->
   <<"Tile 2311:\n"
@@ -360,7 +368,7 @@ test_input() ->
     "..#.###...\n">>.
 
 ex1_test_() ->
-  ?_assertEqual(20899048083289, part1(test_input())).
+  ?_assertEqual(0, solve(test_input())).
 
 
 %%%_* Emacs ====================================================================
