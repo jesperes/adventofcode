@@ -21,7 +21,7 @@ solve(Input) ->
 
   %% Place remaining tiles, row-by-row
   FinalPlacement = place_row(0, Size, StartTile, RemainingTiles,
-                             BorderMap, InvBorderMap, PlacedTiles),
+                             BorderMap, PlacedTiles),
 
   Part1Solution = get_part1_sol(FinalPlacement, Size),
 
@@ -142,7 +142,7 @@ remove_tile({Num, _}, Tiles) ->
 %% tile to the right, places it, and continues until the row runs
 %% out. Then, picks the next tile in the row underneath, and does the
 %% same thing.
-place_row(Y, Size, LeftTile, RemainingTiles, BorderMap, InvBorderMap, PlacedTiles) ->
+place_row(Y, Size, LeftTile, RemainingTiles, BorderMap, PlacedTiles) ->
   {_,
    PlacedTilesOut0,
    RemainingTilesOut0} =
@@ -179,7 +179,7 @@ place_row(Y, Size, LeftTile, RemainingTiles, BorderMap, InvBorderMap, PlacedTile
       PlacedTilesOut1 = maps:put(Coord0, NewLeftTile, PlacedTilesOut0),
       RemainingTilesOut1 = remove_tile(NewLeftTile, RemainingTilesOut0),
 
-      place_row(Y + 1, Size, NewLeftTile, RemainingTilesOut1, BorderMap, InvBorderMap, PlacedTilesOut1)
+      place_row(Y + 1, Size, NewLeftTile, RemainingTilesOut1, BorderMap, PlacedTilesOut1)
   end.
 
 find_tile_below(Tile, RemainingTiles, BorderMap) ->
