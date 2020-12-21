@@ -28,21 +28,9 @@ solve(Input) ->
   %% Get the corners
   Corners = find_corner_tiles(TilesToBorders, BorderMap),
 
-  %%Part1Sol = maps:fold(fun(TileNum, _TileData, Acc) -> Acc * TileNum end, 1, Corners),
-  %%?debugFmt("Part 1 solution: ~p", [Part1Sol]),
-
-  TopLeft = something,
-  ExternalId = something, %% one of external border ids of TopLeft
-
-  %% Rotate TopLeft tile such that the given external id faces left.
-  TopLeft0 = rotate_or_flip_to_fit(TopLeft, ExternalId, left),
-
-  %% Place this tile at {0, 0}.
-  PlacedTiles = place_tile(TopLeft0, {0, 0}, #{}),
-
   %%% CONTINUE HERE
 
-  ?debugFmt("Top left tile: ~p", [T]).
+  ?debugFmt("Corners: ~p", [Corners]).
 
 %% TODO write a function which can rotate a tile until it has a given
 %% border id at a given position, i.e.
