@@ -4,8 +4,6 @@
 -module(aoc2020_day20).
 -include_lib("eunit/include/eunit.hrl").
 
--compile([nowarn_unused_function]).
-
 %% Day 20: Jurassic Jigsaw
 
 solve(Input) ->
@@ -13,42 +11,29 @@ solve(Input) ->
   Size = floor(math:sqrt(maps:size(Tiles) div 8)),
   [First|_Rest] = [{X, Y} || X <- lists:seq(0, Size - 1),
                             Y <- lists:seq(0, Size - 1)],
-
-  %%   ?debugFmt("~nTiles:~n~p", [Tiles]),
-
   BorderMap = border_map(Tiles),
-%%   ?debugFmt("~nBorderMap:~n~p", [BorderMap]),
-
   InvBorderMap = inv_border_map(Tiles),
-  %%?debugFmt("~nInverse BorderMap:~n~p", [InvBorderMap]),
-
   [StartTile|_] = find_ne_corner_tile(Tiles, BorderMap, InvBorderMap),
 
   %% Place the first tile
   PlacedTiles = #{First => StartTile},
   RemainingTiles = remove_tile(StartTile, Tiles),
 
-  %% ?debugFmt("Start tile: ~p", [StartTile]),
-  %% ?debugFmt("~n~s~n", [grid:to_str(maps:get(StartTile, Tiles))]),
-
-  FinalPlacement = place_row(0, Size, StartTile, RemainingTiles, BorderMap, InvBorderMap, PlacedTiles),
-
+  %% Place remaining tiles, row-by-row
+  FinalPlacement = place_row(0, Size, StartTile, RemainingTiles,
+                             BorderMap, InvBorderMap, PlacedTiles),
   FinalGrid = join_tiles(FinalPlacement, Tiles, Size),
 
-  ?debugFmt("~n~s~n", [grid:to_str(FinalGrid)]),
-
   SM = sea_monster(),
-  ?debugFmt("~nSea monster:~n~s~n", [grid:to_str(SM)]),
-
   maps:fold(
-    fun(Id, Grid, not_found) ->
+    fun(_Id, Grid, not_found) ->
         AllHashes = sets:from_list(maps:keys(Grid) -- [size]),
         NumHashes = sets:size(AllHashes),
-        RemainingPixels = find_sea_monster(SM, Grid, Id, AllHashes),
+        RemainingPixels = find_sea_monster(SM, Grid, AllHashes),
         case sets:size(RemainingPixels) of
           N when N < NumHashes ->
             %% At least one sea monster was removed
-            ?debugFmt("Remaining pixels: ~p", [N]),
+            %% ?debugFmt("Remaining pixels: ~p", [N]),
             N;
           _ ->
             not_found
@@ -56,9 +41,7 @@ solve(Input) ->
        (_Id, _Grid, Solution) -> Solution
     end, not_found, all_symmetries(final, FinalGrid)).
 
-  %% NotPartOfSeamonster = find_sea_monsters(SM, FinalGrid, sets:from_list(maps:
-  %% sets:size(NotPartOfSeamonster).
-
+%% Build coord-map of the sea monster.
 sea_monster() ->
   Width = 20,
   Lines = <<"                  # ",
@@ -66,24 +49,24 @@ sea_monster() ->
             " #  #  #  #  #  #   ">>,
 
   %% Coordinates in the resulting map are relative to the tip of the
-  %% sea-monster's tail
+  %% sea monster's tail
   lists:foldl(
     fun({Offset, _}, Acc) ->
         maps:put({Offset rem Width,
                   (Offset div Width) - 1}, $#, Acc)
     end, #{}, binary:matches(Lines, <<"#">>)).
 
-
-find_sea_monster(SM, FinalGrid, Id, AllHashes) ->
+%% Find sea monsters and remove any matching `#' from `AllHashes'.
+find_sea_monster(SM, FinalGrid, AllHashes) ->
   maps:fold(
     fun(size, _, Acc) -> Acc;
        (Coord, _, Acc) ->
-        is_sea_monster_at(Id, Coord, SM, FinalGrid, Acc)
+        is_sea_monster_at(Coord, SM, FinalGrid, Acc)
     end, AllHashes, FinalGrid).
 
 %% If there is a sea monster at {X, Y}, remove all hashes from `AllHashes'
 %% which matches the sea monster pixels.
-is_sea_monster_at(Id, {X, Y}, SM, Grid, AllHashes) ->
+is_sea_monster_at({X, Y}, SM, Grid, AllHashes) ->
   NumSMPixels = maps:size(SM),
   MatchingPixels =
     lists:foldl(fun({SMX, SMY}, Acc) ->
@@ -96,13 +79,12 @@ is_sea_monster_at(Id, {X, Y}, SM, Grid, AllHashes) ->
   case length(MatchingPixels) of
     N when N == NumSMPixels ->
       %% All pixels matched, remove them from `AllHashes'
-      ?debugFmt("Grid ~p, found sea monster at ~p, removing ~p pixels",
-                [Id, {X, Y}, N]),
       sets:subtract(AllHashes, sets:from_list(MatchingPixels));
     _ ->
       AllHashes
   end.
 
+%% Join all the placed tiles into a big jigsaw.
 join_tiles(PlacedTiles, Tiles, Size) ->
   lists:foldl(
     fun({X, Y} = Coord, Acc) ->
@@ -144,7 +126,10 @@ remove_tile({Num, _}, Tiles) ->
                  (_Id, _) -> false
               end, Tiles).
 
-%% Place row Y
+%% place_row: This is the tricky part. Given `LeftTile`, finds next
+%% tile to the right, places it, and continues until the row runs
+%% out. Then, picks the next tile in the row underneath, and does the
+%% same thing.
 place_row(Y, Size, LeftTile, RemainingTiles, BorderMap, InvBorderMap, PlacedTiles) ->
   {_,
    PlacedTilesOut0,
@@ -154,18 +139,6 @@ place_row(Y, Size, LeftTile, RemainingTiles, BorderMap, InvBorderMap, PlacedTile
           [_N, _S, E, _W] = maps:get(LeftTileIn, BorderMap),
           Coord = {X, Y},
           {LeftNum, _} = LeftTileIn,
-          %% ?debugFmt("Placing tile right of ~p at coord ~p", [LeftTileIn, Coord]),
-          %% ?debugFmt("Already placed tiles ~p", [PlacedTilesIn]),
-          %% ?debugFmt("Joining border id ~p", [E]),
-
-          %% ?debugFmt("~nRemaining tiles ~p", [maps:keys(RemainingTilesIn)]),
-
-          %% There should be 8 different tiles to choose from, we need
-          %% the one which where E(Left) == W(Right)
-
-          %% TODO maybe we need a "tile num -> [list of eight tile id]"
-          %% map to speed up things.
-
           [{RightId, _RightData}] =
             maps:to_list(
               maps:filter(
@@ -177,13 +150,8 @@ place_row(Y, Size, LeftTile, RemainingTiles, BorderMap, InvBorderMap, PlacedTile
                    (_, _) -> false
                 end, RemainingTilesIn)),
 
-          %% ?debugFmt("Placing tile ~p at ~p", [RightId, Coord]),
-          %% ?debugFmt("Tile:~n~s~n", [grid:to_str(RightData)]),
           PlacedTilesOut = maps:put(Coord, RightId, PlacedTilesIn),
-
-          %% Remove all symmetries of the tile we just placed
           RemainingTilesOut = remove_tile(RightId, RemainingTilesIn),
-
           LeftTileOut = RightId,
 
           {LeftTileOut, PlacedTilesOut, RemainingTilesOut}
@@ -193,9 +161,7 @@ place_row(Y, Size, LeftTile, RemainingTiles, BorderMap, InvBorderMap, PlacedTile
       %% No more rows to place
       PlacedTilesOut0;
      true ->
-      %% ?debugFmt("Placed tiles: ~p", [PlacedTilesOut0]),
       NewLeftTile = find_tile_below(LeftTile, RemainingTilesOut0, BorderMap),
-      %% ?debugFmt("New left tile: ~p", [NewLeftTile]),
       Coord0 = {0, Y + 1},
 
       PlacedTilesOut1 = maps:put(Coord0, NewLeftTile, PlacedTilesOut0),
@@ -206,13 +172,6 @@ place_row(Y, Size, LeftTile, RemainingTiles, BorderMap, InvBorderMap, PlacedTile
 
 find_tile_below(Tile, RemainingTiles, BorderMap) ->
   [_, S, _, _] = maps:get(Tile, BorderMap),
-
-  %% ?debugFmt("Remaining tiles: ~p", [maps:keys(RemainingTiles)]),
-  %% ?debugFmt("Finding tile with north edge == ~p", [S]),
-  %% ?debugFmt("Borders of remaining tiles: ~p",
-  %%           [lists:foldl(fun(Id, Acc) ->
-  %%                            maps:put(Id, maps:get(Id, BorderMap), Acc)
-  %%                        end, #{}, maps:keys(RemainingTiles))]),
   [{BelowId, _}] =
     maps:to_list(
       maps:filter(
@@ -227,8 +186,6 @@ find_ne_corner_tile(Tiles, BorderMap, InvBorderMap) ->
   maps:fold(
     fun(TileId, _TileData, Acc) ->
         Borders = maps:get(TileId, BorderMap),
-        %% ?debugFmt("Checking ~p with borders ~p", [TileId, Borders]),
-
         case lists:map(
                fun(BorderId) ->
                    case is_external_border(BorderId, InvBorderMap) of
