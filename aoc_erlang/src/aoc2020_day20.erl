@@ -22,24 +22,36 @@ solve(Input) ->
   %% Place remaining tiles, row-by-row
   FinalPlacement = place_row(0, Size, StartTile, RemainingTiles,
                              BorderMap, InvBorderMap, PlacedTiles),
+
+  Part1Solution = get_part1_sol(FinalPlacement, Size),
+
   FinalGrid = join_tiles(FinalPlacement, Tiles, Size),
 
   SM = sea_monster(),
-  maps:fold(
-    fun(_Id, Grid, not_found) ->
-        AllHashes = sets:from_list(maps:keys(Grid) -- [size]),
-        NumHashes = sets:size(AllHashes),
-        RemainingPixels = find_sea_monster(SM, Grid, AllHashes),
-        case sets:size(RemainingPixels) of
-          N when N < NumHashes ->
-            %% At least one sea monster was removed
-            %% ?debugFmt("Remaining pixels: ~p", [N]),
-            N;
-          _ ->
-            not_found
-        end;
-       (_Id, _Grid, Solution) -> Solution
-    end, not_found, all_symmetries(final, FinalGrid)).
+  Part2Solution =
+    maps:fold(
+      fun(_Id, Grid, not_found) ->
+          AllHashes = sets:from_list(maps:keys(Grid) -- [size]),
+          NumHashes = sets:size(AllHashes),
+          RemainingPixels = find_sea_monster(SM, Grid, AllHashes),
+          case sets:size(RemainingPixels) of
+            N when N < NumHashes -> N;
+            _ -> not_found
+          end;
+         (_Id, _Grid, Solution) -> Solution
+      end, not_found, all_symmetries(final, FinalGrid)),
+
+  {Part1Solution, Part2Solution}.
+
+get_part1_sol(FinalPlacement, Size) ->
+  lists:foldl(
+    fun(Coord, Acc) ->
+        {TileId, _} = maps:get(Coord, FinalPlacement),
+        Acc * TileId
+    end, 1, [{0, 0},
+             {Size - 1, 0},
+             {0, Size - 1},
+             {Size - 1, Size - 1}]).
 
 %% Build coord-map of the sea monster.
 sea_monster() ->
@@ -327,7 +339,7 @@ get_input() ->
 %% ======================================================================
 
 main_test_() ->
-  ?_assertEqual(1537, solve(get_input())).
+  ?_assertEqual({66020135789767, 1537}, solve(get_input())).
 
 test_input() ->
   <<"Tile 2311:\n"
@@ -439,7 +451,7 @@ test_input() ->
     "..#.###...\n">>.
 
 ex1_test_() ->
-  ?_assertEqual(273, solve(test_input())).
+  ?_assertEqual({20899048083289, 273}, solve(test_input())).
 
 
 %%%_* Emacs ====================================================================
