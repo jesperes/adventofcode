@@ -30,7 +30,6 @@ crab_combat([D1|Deck1], [D2|Deck2]) when D1 < D2 ->
 %% Recursive crab combat
 %% =======================================================================
 
-
 rec_crab_combat(Deck1, Deck2) ->
   rec_crab_combat(Deck1, Deck2, sets:new()).
 
@@ -73,7 +72,7 @@ rec_crab_combat(Deck1, Deck2, Rounds) ->
         false ->
           if Draw1 > Draw2 ->
               rec_crab_combat(Rest1 ++ [Draw1, Draw2], Rest2, Rounds0);
-            Draw1 < Draw2 ->
+             Draw1 < Draw2 ->
               rec_crab_combat(Rest1, Rest2 ++ [Draw2, Draw1], Rounds0)
           end
       end

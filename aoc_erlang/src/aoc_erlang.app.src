@@ -5,7 +5,13 @@
   {mod, []},
   {applications,
    [kernel,
-    stdlib
+    stdlib,
+    common_test,
+    eunit,
+    jsone,
+    tools,
+    redbug,
+    parsetools
    ]},
   {env,[]},
   {modules, []},
