@@ -1,7 +1,7 @@
-%%% Advent of Code solution for 2020 day 23.
-%%% Created: 2020-12-22T17:23:44+00:00
+%%% Advent of Code solution for 2020 day 24.
+%%% Created: 2020-12-22T21:10:14+00:00
 
--module(aoc2020_day23).
+-module(aoc2020_day24).
 -behavior(aoc_puzzle).
 
 -export([info/0,
@@ -17,8 +17,8 @@
 info() ->
   #aoc_puzzle{module = ?MODULE,
               year = 2020,
-              day = 23,
-              name = "AoC 2020 day 23"}.
+              day = 24,
+              name = "AoC 2020 day 24"}.
 
 %% ======================================================================
 %% Solver
