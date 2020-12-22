@@ -11,9 +11,10 @@
     jsone,
     tools,
     redbug,
-    parsetools
+    parsetools,
+    poolboy
    ]},
-  {env,[]},
+  {env, [{pools, [{pool1, [{size, 10}]}]}]},
   {modules, []},
   {maintainers, []},
   {licenses, ["Apache 2.0"]},
