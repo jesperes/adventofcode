@@ -4,14 +4,14 @@
 
 -compile([export_all, nowarn_export_all]).
 
+tc({F, _}) ->
+  case re:run(atom_to_list(F), "day_.*") of
+    {match, _} -> {true, F};
+    _ -> false
+  end.
+
 all() ->
-  lists:filtermap(
-    fun({F, _}) ->
-        case re:run(atom_to_list(F), "day_.*") of
-          {match, _} -> {true, F};
-          _ -> false
-        end
-    end, ?MODULE:module_info(exports)).
+  lists:filtermap(fun tc/1, ?MODULE:module_info(exports)).
 
 day_1(_Config) -> ?assertEqual(ok, eunit:test(aoc2020_day01, [verbose])).
 day_2(_Config) -> ?assertEqual(ok, eunit:test(aoc2020_day02, [verbose])).
@@ -34,5 +34,4 @@ day_18(_Config) -> ?assertEqual(ok, eunit:test(aoc2020_day18, [verbose])).
 day_19(_Config) -> ?assertEqual(ok, eunit:test(aoc2020_day19, [verbose])).
 day_20(_Config) -> ?assertEqual(ok, eunit:test(aoc2020_day20, [verbose])).
 day_21(_Config) -> ?assertEqual(ok, eunit:test(aoc2020_day21, [verbose])).
-
-%% Day 11, 15, and 17 take 2-6 seconds each, the rest are all below <1s.
+day_22(_Config) -> ?assertEqual(ok, eunit:test(aoc2020_day22, [verbose])).
