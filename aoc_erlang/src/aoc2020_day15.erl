@@ -31,13 +31,13 @@ solve0(Turn, Last, Array, Limit) ->
   solve0(Turn + 1, Next, Array, Limit).
 
 array_new(Size) ->
-  counters:new(Size + 1, []).
+  atomics:new(Size + 1, []).
 
 array_put(Array, I, Val) ->
-  ok = counters:put(Array, I + 1, Val).
+  ok = atomics:put(Array, I + 1, Val).
 
 array_get(Array, I) ->
-  counters:get(Array, I + 1).
+  atomics:get(Array, I + 1).
 
 input() ->
   [6,4,12,1,20,0,16].
