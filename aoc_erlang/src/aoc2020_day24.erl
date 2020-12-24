@@ -69,18 +69,20 @@ fold_coords(Fun, State, [A|Rest]) when ([A] =:= "e") orelse
 %% Part 2 iteration code
 %% ======================================================================
 
+%% Represent coordinates using maps-as-sets.
+get_coords_to_check(Tiles) ->
+  maps:fold(
+    fun(Coord, _, Acc) ->
+        maps:merge(
+          Acc,
+          maps:merge(#{Coord => ignore}, neighbors(Coord)))
+    end, #{}, Tiles).
+
 do_one_iter(_N, Tiles) ->
   %% Only consider black tiles and their neighbors (white tiles can
   %% only turn black if they have a black neighbor)
-  Coords =
-    sets:to_list(
-      maps:fold(
-        fun(Coord, _, Acc) ->
-            sets:union(Acc, sets:from_list([Coord|neighbors(Coord)]))
-        end, sets:new(), Tiles)),
-
-  lists:foldl(
-    fun(Coord, Acc) ->
+  maps:fold(
+    fun(Coord, ignore, Acc) ->
         Neighbors = neighbors(Coord),
         IsBlack = maps:is_key(Coord, Tiles),
         case {IsBlack, count_black_neighbors(Neighbors, Tiles)} of
@@ -89,11 +91,11 @@ do_one_iter(_N, Tiles) ->
           {false, 2} -> maps:put(Coord, black, Acc);
           _ -> Acc
         end
-    end, Tiles, Coords).
+    end, Tiles, get_coords_to_check(Tiles)).
 
 count_black_neighbors(Neighbors, Tiles) ->
-  lists:foldl(
-    fun(Coord, N) ->
+  maps:fold(
+    fun(Coord, ignore, N) ->
         case maps:get(Coord, Tiles, white) of
           black -> N + 1;
           _ -> N
@@ -105,12 +107,13 @@ neighbors({X, Y, Z} = Coord) ->
   %% the neighbors of a given tile will always be the same).
   case get(Coord) of
     undefined ->
-      Nbrs = [{X + Dx, Y + Dy, Z + Dz} ||
-               Dx <- [-1, 0, 1],
-               Dy <- [-1, 0, 1],
-               Dz <- [-1, 0, 1],
-               {Dy, Dx, Dz} =/= {0, 0, 0},
-               Dy + Dx + Dz == 0],
+      Nbrs = maps:from_list(
+               [{{X + Dx, Y + Dy, Z + Dz}, ignore}
+                || Dx <- [-1, 0, 1],
+                   Dy <- [-1, 0, 1],
+                   Dz <- [-1, 0, 1],
+                   {Dy, Dx, Dz} =/= {0, 0, 0},
+                   Dy + Dx + Dz == 0]),
       put(Coord, Nbrs),
       Nbrs;
     Nbrs -> Nbrs
@@ -135,7 +138,7 @@ neighbors_test_() ->
                  {0,-1,1},
                  {0,1,-1},
                  {1,-1,0},
-                 {1,0,-1}], lists:sort(neighbors({0, 0, 0}))).
+                 {1,0,-1}], lists:sort(maps:keys(neighbors({0, 0, 0})))).
 
 fold_coords_test_() ->
   ?_assertEqual(["e", "se", "ne", "e"],
