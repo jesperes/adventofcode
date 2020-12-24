@@ -7,11 +7,26 @@
 %% For an explanation of how to use 3D coords to represent hexagons,
 %% https://www.redblobgames.com/grids/hexagons/
 
-%% Puzzle solution
+%% ======================================================================
+%% Part 1
+%% ======================================================================
 part1(Input) ->
   Tiles = flip_tiles(Input),
   maps:size(Tiles).
 
+%% ======================================================================
+%% Part 2
+%% ======================================================================
+part2(Input, N) ->
+  Tiles = flip_tiles(Input),
+  Final = lists:foldl(fun do_one_iter/2, Tiles, lists:seq(1, N)),
+  maps:size(Final).
+
+%% ======================================================================
+%% Solutions
+%% ======================================================================
+
+%% Perform the initial tile flipping.
 flip_tiles(Input) ->
   lists:foldl(
     fun(Line, Acc) ->
@@ -39,7 +54,6 @@ flip_tiles(Input) ->
 
     end, #{}, Input).
 
-%% Fold over a hexagonal direction strings as found in the input
 fold_coords(_Fun, State, []) ->
   State;
 fold_coords(Fun, State, [A, B|Rest]) when ([A, B] =:= "ne") orelse
@@ -52,13 +66,12 @@ fold_coords(Fun, State, [A|Rest]) when ([A] =:= "e") orelse
   fold_coords(Fun, Fun([A], State), Rest).
 
 %% ======================================================================
-%% Part 2
-part2(Input, N) ->
-  Tiles = flip_tiles(Input),
-  Final = lists:foldl(fun do_one_iter/2, Tiles, lists:seq(1, N)),
-  maps:size(Final).
+%% Part 2 iteration code
+%% ======================================================================
 
 do_one_iter(_N, Tiles) ->
+  %% Only consider black tiles and their neighbors (white tiles can
+  %% only turn black if they have a black neighbor)
   Coords =
     sets:to_list(
       maps:fold(
@@ -87,13 +100,21 @@ count_black_neighbors(Neighbors, Tiles) ->
         end
     end, 0, Neighbors).
 
-neighbors({X, Y, Z}) ->
-  [{X + Dx, Y + Dy, Z + Dz} ||
-    Dx <- [-1, 0, 1],
-    Dy <- [-1, 0, 1],
-    Dz <- [-1, 0, 1],
-    {Dy, Dx, Dz} =/= {0, 0, 0},
-    Dy + Dx + Dz == 0].
+neighbors({X, Y, Z} = Coord) ->
+  %% Cache neighbor lists in the process dictionary (these are static;
+  %% the neighbors of a given tile will always be the same).
+  case get(Coord) of
+    undefined ->
+      Nbrs = [{X + Dx, Y + Dy, Z + Dz} ||
+               Dx <- [-1, 0, 1],
+               Dy <- [-1, 0, 1],
+               Dz <- [-1, 0, 1],
+               {Dy, Dx, Dz} =/= {0, 0, 0},
+               Dy + Dx + Dz == 0],
+      put(Coord, Nbrs),
+      Nbrs;
+    Nbrs -> Nbrs
+  end.
 
 %% Input reader (place downloaded input file in
 %% priv/inputs/2020/input24.txt).
