@@ -79,8 +79,6 @@ get_coords_to_check(Tiles) ->
     end, #{}, Tiles).
 
 do_one_iter(_N, Tiles) ->
-  %% Only consider black tiles and their neighbors (white tiles can
-  %% only turn black if they have a black neighbor)
   maps:fold(
     fun(Coord, ignore, Acc) ->
         Neighbors = neighbors(Coord),
