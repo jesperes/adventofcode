@@ -35,6 +35,6 @@ day_19(_Config) -> ?assertEqual(ok, eunit:test(aoc2020_day19, [verbose])).
 day_20(_Config) -> ?assertEqual(ok, eunit:test(aoc2020_day20, [verbose])).
 day_21(_Config) -> ?assertEqual(ok, eunit:test(aoc2020_day21, [verbose])).
 day_22(_Config) -> ?assertEqual(ok, eunit:test(aoc2020_day22, [verbose])).
-%% TODO day 23 part 2
+day_23(_Config) -> ?assertEqual(ok, eunit:test(aoc2020_day23, [verbose])).
 day_24(_Config) -> ?assertEqual(ok, eunit:test(aoc2020_day24, [verbose])).
 day_25(_Config) -> ?assertEqual(ok, eunit:test(aoc2020_day25, [verbose])).
