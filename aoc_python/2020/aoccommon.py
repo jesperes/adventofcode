@@ -16,6 +16,7 @@ class AocPuzzle:
         self.total_time = None
         self.result = None
         self.expected_result = None
+        (self.year, self.day) = self.id()
 
     def has_method(self, name):
         hasattr(self, name) and callable(getattr(self, name))
@@ -59,10 +60,11 @@ class AocPuzzle:
             with Timer(print_title = False) as parse_time:
                 parsed_input = self.parse(io)
 
+            self.parse_time = parse_time.elapsed
+
         if parsed_input is None:
             self.has_parsed_input = False
         else:
-            self.parse_time = parse_time.elapsed
             self.has_parsed_input = True
 
         # Try solve() first, otherwise solve1 + solve2
@@ -87,3 +89,7 @@ class AocPuzzle:
         self.p_both_time = p_both_time.elapsed
         self.expected_result = self.expected()
         self.total_time = self.p_both_time + self.parse_time
+        if self.expected_result == self.result:
+            self.status = "OK"
+        else:
+            self.status = "FAILED"
