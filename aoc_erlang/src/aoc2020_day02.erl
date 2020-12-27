@@ -2,16 +2,36 @@
 %%% Created: 2020-12-02T05:50:52+00:00
 
 -module(aoc2020_day02).
--include_lib("eunit/include/eunit.hrl").
+-behavior(aoc_puzzle).
 
-%% Puzzle solution
-part1(Input) ->
-  length(lists:filter(fun is_valid_password_1/1, parse_pwd_list(Input))).
+-export([ parse/1
+        , solve1/1
+        , solve2/1
+        , info/0
+        ]).
 
-part2(Input) ->
-  length(lists:filter(fun is_valid_password_2/1, parse_pwd_list(Input))).
+-include("aoc_puzzle.hrl").
 
-parse_pwd_list(Input) ->
+-spec info() -> aoc_puzzle().
+info() ->
+  #aoc_puzzle{ module = ?MODULE
+             , year = 2020
+             , day = 2
+             , name = "Password Philosophy"
+             , expected = {660, 530}
+             , has_input_file = true
+             }.
+
+-type input_type() :: [{Min :: integer(),
+                        Max :: integer(),
+                        C :: integer(),
+                        Pwd :: string()}].
+-type result1_type() :: integer().
+-type result2_type() :: result1_type().
+
+-spec parse(Input :: binary()) -> input_type().
+parse(Input) ->
+  Lines = string:tokens(binary_to_list(Input), "\r\n"),
   lists:map(
     fun(S) ->
         [A, B, [Letter], Pwd] = string:tokens(S, ":- "),
@@ -19,17 +39,23 @@ parse_pwd_list(Input) ->
          list_to_integer(B),
          Letter,
          Pwd}
-    end, Input).
+    end, Lines).
+
+-spec solve1(Input :: input_type()) -> result1_type().
+solve1(Input) ->
+  length(lists:filter(fun is_valid_password_1/1, Input)).
+
+-spec solve2(Input :: input_type()) -> result2_type().
+solve2(Input) ->
+  length(lists:filter(fun is_valid_password_2/1, Input)).
 
 is_valid_password_1({A, B, Letter, Pwd}) ->
   N = number_of(Letter, Pwd),
   N >= A andalso N =< B.
 
 number_of(_, "") -> 0;
-number_of(C, [C|Rest]) ->
-  1 + number_of(C, Rest);
-number_of(C, [_|Rest]) ->
-  number_of(C, Rest).
+number_of(C, [C|Rest]) -> 1 + number_of(C, Rest);
+number_of(C, [_|Rest]) -> number_of(C, Rest).
 
 is_valid_password_2({A, B, Letter, Pwd}) ->
   case {lists:nth(A, Pwd) =:= Letter, lists:nth(B, Pwd) =:= Letter} of
@@ -37,19 +63,6 @@ is_valid_password_2({A, B, Letter, Pwd}) ->
     {false, true} -> true;
     _ -> false
   end.
-
-%% Input reader (place downloaded input file in
-%% priv/inputs/2020/input02.txt).
-get_input() ->
-  inputs:get_as_lines(2020, 02).
-
-%% Tests
-main_test_() ->
-  Input = get_input(),
-
-  [ {"Part 1", ?_assertEqual(660, part1(Input))}
-  , {"Part 2", ?_assertEqual(530, part2(Input))}
-  ].
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:

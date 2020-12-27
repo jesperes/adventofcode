@@ -19,21 +19,26 @@ info() ->
              , day = 1
              , name = "Report Repair"
              , expected = {987339, 259521570}
+             , has_input_file = true
              }.
 
--spec parse(Input :: binary()) -> ParsedInput :: [integer()].
+-type input_type() :: [integer()].
+-type result1_type() :: integer().
+-type result2_type() :: result1_type().
+
+-spec parse(Input :: binary()) -> input_type().
 parse(Input) ->
   lists:map(fun list_to_integer/1,
             string:tokens(binary_to_list(Input), "\n\r")).
 
--spec solve1(Input :: [integer()]) -> ok.
+-spec solve1(Input :: input_type()) -> result1_type().
 solve1(Input) ->
   hd([X * Y || X <- Input,
                Y <- Input,
                X < Y,
                X + Y == 2020]).
 
--spec solve2(Input :: [integer()]) -> ok.
+-spec solve2(Input :: input_type()) -> result2_type().
 solve2(Input) ->
   Min = lists:min(Input),
   hd([X * Y * Z || X <- Input,
