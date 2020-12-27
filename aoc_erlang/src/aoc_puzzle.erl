@@ -11,8 +11,11 @@
 %% Callback to parse the input data
 -callback parse(Input :: binary()) -> ParsedInput :: term().
 
-%% Callback to solve the puzzle
--callback solve(ParsedInput :: term()) -> ok.
+%% Callback to part 1 of the puzzle
+-callback solve1(ParsedInput :: term()) -> ok.
+
+%% Callback to part 2 of the puzzle
+-callback solve2(ParsedInput :: term()) -> ok.
 
 %% Callback to get info about a puzzle
 -callback info() -> aoc_puzzle().

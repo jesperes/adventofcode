@@ -15,6 +15,8 @@
 %% API
 -export([ start_link/0
         , solve/1
+        , report_progress/3
+        , get_puzzle_id/1
         ]).
 
 %% Internal exports
@@ -28,7 +30,12 @@
 -define(SERVER, ?MODULE).
 
 -record(state, { workers = []
+               , puzzles = #{}
                }).
+
+-type step() :: parse |
+                part1 |
+                part2.
 
 %%%===================================================================
 %%% API
@@ -39,6 +46,16 @@ start_link() ->
 
 solve(Puzzles) ->
   gen_server:cast(?SERVER, {solve, Puzzles}).
+
+-spec report_progress(Step :: step(),
+                      Time :: integer(),
+                      PuzzleId :: aoc_puzzle_id()) -> ok.
+report_progress(Step, Time, PuzzleId) ->
+  gen_server:cast(?SERVER, {report_progress, Step, Time, PuzzleId}).
+
+-spec get_puzzle_id(Puzzle :: aoc_puzzle()) -> aoc_puzzle_id().
+get_puzzle_id(#aoc_puzzle{year = Year, day = Day}) ->
+  {Year, Day}.
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -54,13 +71,30 @@ handle_call(wait, _From, State) ->
 handle_cast({solve, Puzzles}, State) ->
   StateOut =
     lists:foldl(
-      fun(Puzzle, State0) ->
+      fun(#aoc_puzzle{year = Year, day = Day} = Puzzle, State0) ->
           Pid = spawn_link(?MODULE, solve_puzzle, [Puzzle]),
           io:format("Spawned worker process: ~p~n", [Pid]),
           Workers = State0#state.workers,
-          State0#state{workers = [Pid|Workers]}
+          State0#state{workers = [Pid|Workers],
+                       puzzles = maps:put({Year, Day},
+                                          Puzzle,
+                                          State0#state.puzzles)}
       end, State, Puzzles),
-  {noreply, StateOut}.
+  {noreply, StateOut};
+handle_cast({report_progress, Step, Time, PuzzleId},
+             #state{puzzles = Puzzles} = State) ->
+  Puzzle = maps:get(PuzzleId, State#state.puzzles),
+  Puzzle0 =
+    case Step of
+      parse -> Puzzle#aoc_puzzle{parse = Time};
+      part1 -> Puzzle#aoc_puzzle{part1 = Time};
+      part2 -> Puzzle#aoc_puzzle{part2 = Time}
+    end,
+
+  io:format("~p ~p: ~p~n", [PuzzleId, Step, Time]),
+
+  State0 = State#state{puzzles = maps:update(PuzzleId, Puzzle0, Puzzles)},
+  {noreply, State0}.
 
 handle_info({'EXIT', Pid, _Reason}, State) ->
   Workers = State#state.workers,
@@ -97,15 +131,21 @@ get_input(#aoc_puzzle{year = Year, day = Day}) ->
                     [code:priv_dir(aoc_erlang), Year, Day])),
   file:read_file(Filename).
 
+run_step_with_progress(#aoc_puzzle{module = M} = Puzzle, Step, F, A) ->
+  {T, V} = timer:tc(M, F, A),
+  report_progress(Step, T, get_puzzle_id(Puzzle)),
+  V.
+
 solve_puzzle(Puzzle) ->
   M = Puzzle#aoc_puzzle.module,
 
   case get_input(Puzzle) of
     {ok, Binary} ->
       io:format("Parsing...~n", []),
-      ParsedInput = M:parse(Binary),
-      io:format("Solving...~n", []),
-      ok = M:solve(ParsedInput);
+
+      ParsedInput = run_step_with_progress(Puzzle, parse, parse, [Binary]),
+      _Part1 = run_step_with_progress(Puzzle, part1, solve1, [ParsedInput]),
+      _Part2 = run_step_with_progress(Puzzle, part2, solve2, [ParsedInput]);
     {error, enoent} ->
       io:format("No input file found for ~p~n", [M]),
       ok = M:solve(<<>>)

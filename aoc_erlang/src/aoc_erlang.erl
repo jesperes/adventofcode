@@ -5,4 +5,5 @@
 main(_Args) ->
   {ok, _Pid} = aoc_server:start_link(),
   Puzzles = aoc_puzzle:find_puzzles(all, all),
+  io:format("Puzzles: ~p~n", [Puzzles]),
   aoc_server:solve(Puzzles).
