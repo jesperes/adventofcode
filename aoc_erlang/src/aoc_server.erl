@@ -169,7 +169,13 @@ solve_puzzle(Puzzle, InputFileDir) ->
   PuzzleId = get_puzzle_id(Puzzle),
   Binary = get_input(Puzzle, InputFileDir),
   ParsedInput = run_step_with_progress(Puzzle, parse, parse, [Binary]),
-  Part1 = run_step_with_progress(Puzzle, part1, solve1, [ParsedInput]),
-  report_result(part1, Part1, PuzzleId),
-  Part2 = run_step_with_progress(Puzzle, part2, solve2, [ParsedInput]),
-  report_result(part2, Part2, PuzzleId).
+
+  try
+    Part1 = run_step_with_progress(Puzzle, part1, solve1, [ParsedInput]),
+    report_result(part1, Part1, PuzzleId),
+    Part2 = run_step_with_progress(Puzzle, part2, solve2, [ParsedInput]),
+    report_result(part2, Part2, PuzzleId)
+  catch T:E:St ->
+      io:format("Failed to run puzzle ~p: ~p~n~p~n", [PuzzleId, {T, E}, St]),
+      io:format("Parsed input: ~p~n", [ParsedInput])
+  end.

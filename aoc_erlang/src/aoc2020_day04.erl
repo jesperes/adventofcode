@@ -10,8 +10,6 @@
         , info/0
         ]).
 
--compile([nowarn_unused_function]).
-
 -include("aoc_puzzle.hrl").
 
 -spec info() -> aoc_puzzle().
@@ -33,6 +31,7 @@ parse(Input) ->
   {ok, RE} = re:compile("[\n ]+"),
   lists:foldl(
     fun(Line, Acc) ->
+        %% TODO parse without using re (which is very slow)
         Pairs = re:split(Line, RE, [{return, list}]),
         Passport =
           lists:foldl(fun(S, Acc0) ->
