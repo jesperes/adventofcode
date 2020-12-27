@@ -2,47 +2,58 @@
 %%% Created: 2020-12-04T06:20:31+00:00
 
 -module(aoc2020_day04).
--include_lib("eunit/include/eunit.hrl").
+-behavior(aoc_puzzle).
 
-%% Puzzle solution
-part1(Input) ->
-  Passports = parse_passports(Input),
-  ValidPassports = lists:filter(fun valid_passport1/1, Passports),
-  length(ValidPassports).
+-export([ parse/1
+        , solve1/1
+        , solve2/1
+        , info/0
+        ]).
 
-part2(Input) ->
-  Passports = parse_passports(Input),
-  ValidPassports = lists:filter(fun valid_passport2/1, Passports),
-  length(ValidPassports).
+-compile([nowarn_unused_function]).
+
+-include("aoc_puzzle.hrl").
+
+-spec info() -> aoc_puzzle().
+info() ->
+  #aoc_puzzle{ module = ?MODULE
+             , year = 2020
+             , day = 4
+             , name = "Passport Processing"
+             , expected = {200, 116}
+             , has_input_file = true
+             }.
+
+-type input_type() :: [#{atom() => term()}].
+-type result1_type() :: integer().
+-type result2_type() :: result1_type().
+
+-spec parse(Input :: binary()) -> input_type().
+parse(Input) ->
+  {ok, RE} = re:compile("[\n ]+"),
+  lists:foldl(
+    fun(Line, Acc) ->
+        Pairs = re:split(Line, RE, [{return, list}]),
+        Passport =
+          lists:foldl(fun(S, Acc0) ->
+                          [K, V] = string:split(S, ":", all),
+                          KA = list_to_atom(K),
+                          maps:put(KA, parse_value(KA, V), Acc0)
+                      end, #{}, Pairs),
+        [Passport|Acc]
+    end, [], string:split(string:trim(binary_to_list(Input)), "\n\n", all)).
+
+-spec solve1(Input :: input_type()) -> result1_type().
+solve1(Input) ->
+  length(lists:filter(fun valid_passport1/1, Input)).
+
+-spec solve2(Input :: input_type()) -> result2_type().
+solve2(Input) ->
+  length(lists:filter(fun valid_passport2/1, Input)).
 
 %% ============================================================
 %% Input parsing
 %% ============================================================
-
-parse_passports(Lines) ->
-  {_, Passports} =
-    lists:foldl(
-      fun(Line, {Map, Acc}) ->
-          case Line of
-            "" ->
-              %% TODO optimization: move password validation here to
-              %% avoid accumulating invalid passwords.
-              {#{}, [Map|Acc]};
-            _ ->
-              Pairs =
-                lists:map(fun(S) ->
-                              string:split(S, ":")
-                          end, string:split(Line, " ", all)),
-              Pairs1 =
-                lists:foldl(
-                  fun([K, V], Acc0) ->
-                      KA = list_to_atom(K),
-                      maps:put(KA, parse_value(KA, V), Acc0)
-                  end, #{}, Pairs),
-              {maps:merge(Map, Pairs1), Acc}
-          end
-      end, {#{}, []}, Lines),
-  Passports.
 
 parse_value(byr, V) -> ltoi(V);
 parse_value(eyr, V) -> ltoi(V);
@@ -125,21 +136,11 @@ ltoi(S) -> list_to_integer(S).
 ltoa(S) -> list_to_atom(S).
 
 %% ============================================================
-%% Input reader (place downloaded input file in
-%% priv/inputs/2020/input04.txt).
-get_input() ->
-  string:split(inputs:get_as_string(2020, 04), "\n", all).
-
-%% ============================================================
 %% Tests
 %% ============================================================
 
-main_test_() ->
-  Input = get_input(),
-
-  [ {"Part 1", ?_assertEqual(200, part1(Input))}
-  , {"Part 2", ?_assertEqual(116, part2(Input))}
-  ].
+-ifdef(EUNIT).
+-include_lib("eunit/include/eunit.hrl").
 
 invalid_part2_test() ->
   Invalid =
@@ -182,8 +183,7 @@ misc_test() ->
   ?assert(valid_pid("012345689")),
   ?assertNot(valid_pid("01234568900")).
 
-
-%% Too high: 117
+-endif.
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:
