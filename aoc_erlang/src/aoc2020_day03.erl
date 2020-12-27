@@ -2,13 +2,40 @@
 %%% Created: 2020-12-03T07:01:04+00:00
 
 -module(aoc2020_day03).
--include_lib("eunit/include/eunit.hrl").
+-behavior(aoc_puzzle).
 
-%% Puzzle solution
-part1(Input) ->
+-export([ parse/1
+        , solve1/1
+        , solve2/1
+        , info/0
+        ]).
+
+-include("aoc_puzzle.hrl").
+
+-spec info() -> aoc_puzzle().
+info() ->
+  #aoc_puzzle{ module = ?MODULE
+             , year = 2020
+             , day = 3
+             , name = "Toboggan Trajectory"
+             , expected = {230, 9533698720}
+             , has_input_file = true
+             }.
+
+-type input_type() :: [string()].
+-type result1_type() :: integer().
+-type result2_type() :: result1_type().
+
+-spec parse(Input :: binary()) -> input_type().
+parse(Input) ->
+  string:tokens(binary_to_list(Input), "\r\n").
+
+-spec solve1(Input :: input_type()) -> result1_type().
+solve1(Input) ->
   num_trees(Input, {3, 1}).
 
-part2(Input) ->
+-spec solve2(Input :: input_type()) -> result2_type().
+solve2(Input) ->
   num_trees(Input, {1, 1}) *
     num_trees(Input, {3, 1}) *
     num_trees(Input, {5, 1}) *
@@ -30,19 +57,6 @@ num_trees(Lines, X, Y, NumTrees, {SlopeX, SlopeY} = Slope) ->
       _ -> NumTrees
     end,
   num_trees(Lines, X + SlopeX, Y + SlopeY, NumTrees1, Slope).
-
-%% Input reader (place downloaded input file in
-%% priv/inputs/2020/input03.txt).
-get_input() ->
-  inputs:get_as_lines(2020, 03).
-
-%% Tests
-main_test_() ->
-  Input = get_input(),
-
-  [ {"Part 1", ?_assertEqual(230, part1(Input))}
-  , {"Part 2", ?_assertEqual(9533698720, part2(Input))}
-  ].
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:

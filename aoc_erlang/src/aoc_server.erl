@@ -13,7 +13,7 @@
 -include("aoc_puzzle.hrl").
 
 %% API
--export([ start_link/1
+-export([ start_link/2
         , solve/1
         , report_progress/3
         , report_result/3
@@ -32,6 +32,7 @@
 
 -record(state, { workers = []   :: [pid()]
                , input_file_dir :: string()
+               , display_module :: module()
                , puzzles = #{}  :: #{aoc_puzzle_id() => aoc_puzzle()}
                }).
 
@@ -45,8 +46,8 @@
 %%% API
 %%%===================================================================
 
-start_link(InputFileDir) ->
-  gen_server:start_link({local, ?SERVER}, ?MODULE, [InputFileDir], []).
+start_link(InputFileDir, DisplayModule) ->
+  gen_server:start_link({local, ?SERVER}, ?MODULE, [InputFileDir, DisplayModule], []).
 
 solve(Puzzles) ->
   gen_server:cast(?SERVER, {solve, Puzzles}).
@@ -73,14 +74,17 @@ get_puzzle_id(#aoc_puzzle{year = Year, day = Day}) ->
 %%% gen_server callbacks
 %%%===================================================================
 
-init([InputFileDir]) ->
+init([InputFileDir, DisplayModule]) ->
   process_flag(trap_exit, true),
-  {ok, #state{input_file_dir = InputFileDir}}.
+  {ok, #state{input_file_dir = InputFileDir,
+              display_module = DisplayModule}}.
 
 handle_call(wait, _From, State) ->
   {reply, ok, State}.
 
-handle_cast({solve, Puzzles}, #state{input_file_dir = InputFileDir} = State) ->
+handle_cast({solve, Puzzles}, #state{input_file_dir = InputFileDir,
+                                     display_module = DisplayModule} = State) ->
+  DisplayModule:init(Puzzles),
   StateOut =
     lists:foldl(
       fun(#aoc_puzzle{year = Year, day = Day} = Puzzle, State0) ->
@@ -102,7 +106,7 @@ handle_cast({report_progress, Step, Time, PuzzleId},
       part2 -> Puzzle#aoc_puzzle{part2 = Time}
     end,
 
-  io:format("~p ~p: ~p~n", [PuzzleId, Step, Time]),
+  (State#state.display_module):update_step_time(PuzzleId, Step, Time),
 
   State0 = State#state{puzzles = maps:update(PuzzleId, Puzzle0, Puzzles)},
   {noreply, State0};
@@ -115,12 +119,11 @@ handle_cast({report_result, Part, Result, PuzzleId},
       part2 -> Puzzle#aoc_puzzle{part2_result = Result}
     end,
 
-  io:format("Result from ~p step ~p: ~p~n", [PuzzleId, Part, Result]),
-
+  (State#state.display_module):update_part_result(PuzzleId, Part, Result),
   State0 = State#state{puzzles = maps:update(PuzzleId, Puzzle0, Puzzles)},
   {noreply, State0}.
 
-handle_info({'EXIT', Pid, _Reason}, State) ->
+handle_info({'EXIT', Pid, _Reason}, #state{puzzles = Puzzles} = State) ->
   Workers = State#state.workers,
   true = lists:member(Pid, Workers),
   StateOut = State#state{workers = lists:delete(Pid, Workers)},
@@ -128,9 +131,10 @@ handle_info({'EXIT', Pid, _Reason}, State) ->
   %% Terminate when all workers are done
   case StateOut#state.workers of
     [] ->
-      io:format("Aoc server terminating, final results~n~p~n", [StateOut#state.puzzles]),
+      (State#state.display_module):summarize(Puzzles),
       {stop, normal, ok};
-    _ -> {noreply, StateOut}
+    _ ->
+      {noreply, StateOut}
   end.
 
 terminate(_Reason, _State) ->
@@ -145,7 +149,6 @@ format_status(_Opt, Status) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-
 get_input(#aoc_puzzle{year = Year, day = Day, has_input_file = HasInput}, InputFileDir) ->
   Filename =
     lists:flatten(
