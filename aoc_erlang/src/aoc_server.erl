@@ -33,7 +33,9 @@
 -record(state, { workers = []   :: [pid()]
                , input_file_dir :: string()
                , display_module :: module()
+               , display_state  :: term()
                , puzzles = #{}  :: #{aoc_puzzle_id() => aoc_puzzle()}
+               , start_time     :: integer() | undefined
                }).
 
 -type step() :: parse |
@@ -84,20 +86,27 @@ handle_call(wait, _From, State) ->
 
 handle_cast({solve, Puzzles}, #state{input_file_dir = InputFileDir,
                                      display_module = DisplayModule} = State) ->
-  DisplayModule:init(Puzzles),
+  StartTime = timestamp(),
+  PuzzleMap = lists:foldl(
+                fun(Puzzle, Map) ->
+                    maps:put(get_puzzle_id(Puzzle), Puzzle, Map)
+                end, #{}, Puzzles),
+
+  {ok, DisplayState} = DisplayModule:init(PuzzleMap),
   StateOut =
-    lists:foldl(
-      fun(#aoc_puzzle{year = Year, day = Day} = Puzzle, State0) ->
+    maps:fold(
+      fun(_Id, Puzzle, State0) ->
           Pid = spawn_link(?MODULE, solve_puzzle, [Puzzle, InputFileDir]),
           Workers = State0#state.workers,
-          State0#state{workers = [Pid|Workers],
-                       puzzles = maps:put({Year, Day},
-                                          Puzzle,
-                                          State0#state.puzzles)}
-      end, State, Puzzles),
-  {noreply, StateOut};
+          State0#state{workers = [Pid|Workers]}
+      end, State, PuzzleMap),
+
+  {noreply, StateOut#state{start_time = StartTime,
+                           puzzles = PuzzleMap,
+                           display_state = DisplayState}};
 handle_cast({report_progress, Step, Time, PuzzleId},
-             #state{puzzles = Puzzles} = State) ->
+             #state{puzzles = Puzzles,
+                    display_state = DisplayState} = State) ->
   Puzzle = maps:get(PuzzleId, State#state.puzzles),
   Puzzle0 =
     case Step of
@@ -106,12 +115,15 @@ handle_cast({report_progress, Step, Time, PuzzleId},
       part2 -> Puzzle#aoc_puzzle{part2 = Time}
     end,
 
-  (State#state.display_module):update_step_time(PuzzleId, Step, Time),
+  {ok, NewDisplayState} =
+    (State#state.display_module):update_step_time(PuzzleId, Step, Time, DisplayState),
 
-  State0 = State#state{puzzles = maps:update(PuzzleId, Puzzle0, Puzzles)},
+  State0 = State#state{puzzles = maps:update(PuzzleId, Puzzle0, Puzzles),
+                       display_state = NewDisplayState},
   {noreply, State0};
 handle_cast({report_result, Part, Result, PuzzleId},
-            #state{puzzles = Puzzles} = State) ->
+            #state{puzzles = Puzzles,
+                   display_state = DisplayState} = State) ->
   Puzzle = maps:get(PuzzleId, State#state.puzzles),
   Puzzle0 =
     case Part of
@@ -119,11 +131,16 @@ handle_cast({report_result, Part, Result, PuzzleId},
       part2 -> Puzzle#aoc_puzzle{part2_result = Result}
     end,
 
-  (State#state.display_module):update_part_result(PuzzleId, Part, Result),
-  State0 = State#state{puzzles = maps:update(PuzzleId, Puzzle0, Puzzles)},
+  {ok, NewDisplayState} =
+    (State#state.display_module):update_part_result(PuzzleId, Part, Result, DisplayState),
+
+  State0 = State#state{puzzles = maps:update(PuzzleId, Puzzle0, Puzzles),
+                       display_state = NewDisplayState},
   {noreply, State0}.
 
-handle_info({'EXIT', Pid, _Reason}, #state{puzzles = Puzzles} = State) ->
+handle_info({'EXIT', Pid, _Reason},
+            #state{puzzles = Puzzles,
+                   display_state = DisplayState} = State) ->
   Workers = State#state.workers,
   true = lists:member(Pid, Workers),
   StateOut = State#state{workers = lists:delete(Pid, Workers)},
@@ -131,7 +148,9 @@ handle_info({'EXIT', Pid, _Reason}, #state{puzzles = Puzzles} = State) ->
   %% Terminate when all workers are done
   case StateOut#state.workers of
     [] ->
-      (State#state.display_module):summarize(Puzzles),
+      ElapsedTime = (timestamp() - State#state.start_time),
+      io:format("Wall time: ~.3f ms~n", [ElapsedTime / 1000]),
+      (State#state.display_module):summarize(Puzzles, DisplayState),
       {stop, normal, ok};
     _ ->
       {noreply, StateOut}
@@ -179,3 +198,7 @@ solve_puzzle(Puzzle, InputFileDir) ->
       io:format("Failed to run puzzle ~p: ~p~n~p~n", [PuzzleId, {T, E}, St]),
       io:format("Parsed input: ~p~n", [ParsedInput])
   end.
+
+timestamp() ->
+  {Mega, Secs, Micro} = erlang:timestamp(),
+  Micro + (1000000 * Secs) + (1000000000000 * Mega).

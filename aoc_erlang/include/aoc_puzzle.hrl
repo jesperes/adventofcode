@@ -22,3 +22,4 @@
 
 -type aoc_puzzle() :: #aoc_puzzle{}.
 -type aoc_puzzle_id() :: {integer(), integer()}.
+-type aoc_puzzle_map() :: #{aoc_puzzle_id() => aoc_puzzle()}.

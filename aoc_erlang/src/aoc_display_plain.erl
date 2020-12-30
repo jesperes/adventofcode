@@ -4,36 +4,38 @@
 -include("aoc_puzzle.hrl").
 
 -export([ init/1
-        , update_step_time/3
-        , update_part_result/3
-        , summarize/1
+        , update_step_time/4
+        , update_part_result/4
+        , summarize/2
         ]).
 
--spec init(Puzzles :: [aoc_puzzle()]) -> ok.
+-spec init(Puzzles :: aoc_puzzle_map()) -> {ok, term()}.
 init(_Puzzles) ->
-  io:format("Solving puzzles... ", []).
+  io:format("Solving puzzles... ", []),
+  {ok, []}.
 
 -spec update_step_time(PuzzleId :: aoc_puzzle_id(),
                        Part :: part1 | part2,
-                       Time :: integer()) -> ok.
-update_step_time({_Year, _Day}, _Part, _Time) ->
-  ok.
+                       Time :: integer(),
+                       State :: term()) -> {ok, term()}.
+update_step_time({_Year, _Day}, _Part, _Time, State) ->
+  {ok, State}.
 
 -spec update_part_result(PuzzleId :: aoc_puzzle_id(),
                          Part :: part1 | part2,
-                         Result :: term()) -> ok.
-update_part_result({_Year, _Day}, _Part, _Result) ->
-  ok.
+                         Result :: term(),
+                         State :: term()) -> {ok, term()}.
+update_part_result({_Year, _Day}, _Part, _Result, State) ->
+  {ok, State}.
 
-%% Format microseconds as microseconds.
 fmt_time(undefined) ->
   "--";
 fmt_time(T) when is_integer(T) ->
   try
     if T < 1000000 ->
-        io_lib:format("~.3g ms", [T / 1000]);
+        io_lib:format("~.3f ms", [T / 1000]);
        true ->
-        io_lib:format("~.3g s", [T / 1000000])
+        io_lib:format("~.3f s", [T / 1000000])
     end
   catch _:_ ->
       "??"
@@ -49,8 +51,9 @@ safe_sum([N|Rest], Acc) ->
       safe_sum(Rest, Acc)
   end.
 
--spec summarize(Puzzles :: [aoc_puzzle()]) -> ok.
-summarize(Puzzles) ->
+-spec summarize(Puzzles :: aoc_puzzle_map(),
+               State :: term()) -> ok.
+summarize(Puzzles, _State) ->
   io:format("done.~n", []),
 
   Sep = "@",
