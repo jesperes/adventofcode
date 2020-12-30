@@ -9,7 +9,7 @@ main(Args) ->
     [{inputs, $i, "inputs", string, "Directory containing input files."}],
   {ok, {Options, _Rest}} = getopt:parse(OptSpecList, Args),
   InputFileDir = proplists:get_value(inputs, Options),
-  {ok, Pid} = aoc_server:start_link(InputFileDir, aoc_display_fancy),
+  {ok, Pid} = aoc_server:start_link(InputFileDir, aoc_display_plain),
   Puzzles = aoc_puzzle:find_puzzles(all, all),
   %% io:format("Found puzzles: ~p~n", [Puzzles]),
   aoc_server:solve(Puzzles),
