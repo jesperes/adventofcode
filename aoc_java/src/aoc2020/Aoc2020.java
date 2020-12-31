@@ -14,11 +14,23 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import aoc2020.solutions.Day01;
+import aoc2020.solutions.Day02;
+import aoc2020.solutions.Day03;
+import aoc2020.solutions.Day15;
+
 public class Aoc2020 {
 
 	public static void main(String[] args) throws IOException {
 		List<IAocPuzzle<?, ?, ?>> puzzles = new ArrayList<>();
+
+		// =====================================================
 		puzzles.add(new Day01());
+		puzzles.add(new Day02());
+		puzzles.add(new Day03());
+		puzzles.add(new Day15());
+		// =====================================================
+
 		List<AocPuzzleRun<?, ?, ?>> runs = runPuzzles(puzzles);
 		printTable(runs);
 	}
@@ -104,6 +116,6 @@ public class Aoc2020 {
 		long t_part1 = t2 - t1;
 		long t_part2 = t3 - t2;
 
-		return new AocResult<P1, P2>(p1, p2, Optional.of(new AocTiming(t_parsing, t_part1, t_part2)));
+		return AocResult.of(p1, p2, new AocTiming(t_parsing, t_part1, t_part2));
 	}
 }

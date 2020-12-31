@@ -1,10 +1,13 @@
-package aoc2020;
+package aoc2020.solutions;
 
 import java.io.BufferedReader;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import aoc2020.AocPuzzleInfo;
+import aoc2020.AocResult;
+import aoc2020.IAocPuzzle;
+import aoc2020.InputUtils;
 
 public class Day01 implements IAocPuzzle<List<Long>, Long, Long> {
 
@@ -15,18 +18,7 @@ public class Day01 implements IAocPuzzle<List<Long>, Long, Long> {
 
 	@Override
 	public List<Long> parse(Optional<BufferedReader> reader) {
-		// return reader.get().lines().mapToLong(s ->
-		// Long.valueOf(s)).boxed().collect(Collectors.toList());
-		List<Long> list = new ArrayList<>();
-		String line;
-		try {
-			while ((line = reader.get().readLine()) != null) {
-				list.add(Long.valueOf(line));
-			}
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-		return list;
+		return InputUtils.asLongList(reader.get());
 	}
 
 	@Override
@@ -41,7 +33,7 @@ public class Day01 implements IAocPuzzle<List<Long>, Long, Long> {
 				}
 			}
 		}
-		return 0L;
+		throw new RuntimeException();
 	}
 
 	@Override
@@ -53,16 +45,17 @@ public class Day01 implements IAocPuzzle<List<Long>, Long, Long> {
 
 				for (long z : list) {
 					if (x + y + z == 2020) {
-						return (long) (x * y * z);
+						return x * y * z;
 					}
 				}
 			}
 		}
-		return 0L;
+
+		throw new RuntimeException();
 	}
 
 	@Override
 	public AocResult<Long, Long> getExpected() {
-		return new AocResult<>(987339L, 259521570L, Optional.empty());
+		return AocResult.of(987339L, 259521570L);
 	}
 }
