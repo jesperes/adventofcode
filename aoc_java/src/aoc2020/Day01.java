@@ -1,32 +1,38 @@
 package aoc2020;
 
-import static org.junit.Assert.assertEquals;
-
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
-import org.junit.Test;
+public class Day01 implements IAocPuzzle<List<Long>, Long, Long> {
 
-import common.AocPuzzle;
-
-public class Day01 extends AocPuzzle {
-
-	private List<Integer> list;
-
-	public Day01() throws IOException {
-		super(2020, 1);
-
-		list = new ArrayList<Integer>();
-		getInputAsIntStream().forEach(n -> {
-			list.add(n);
-		});
-
+	@Override
+	public AocPuzzleInfo getInfo() {
+		return new AocPuzzleInfo(2020, 1, "Report Repair");
 	}
 
-	private long part1(List<Integer> list) {
-		for (int x : list) {
-			for (int y : list) {
+	@Override
+	public List<Long> parse(Optional<BufferedReader> reader) {
+		// return reader.get().lines().mapToLong(s ->
+		// Long.valueOf(s)).boxed().collect(Collectors.toList());
+		List<Long> list = new ArrayList<>();
+		String line;
+		try {
+			while ((line = reader.get().readLine()) != null) {
+				list.add(Long.valueOf(line));
+			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+		return list;
+	}
+
+	@Override
+	public Long part1(List<Long> list) {
+		for (long x : list) {
+			for (long y : list) {
 				if (x < y)
 					continue;
 
@@ -35,32 +41,28 @@ public class Day01 extends AocPuzzle {
 				}
 			}
 		}
-		return 0;
+		return 0L;
 	}
 
-	private long part2(List<Integer> list) {
-		for (int x : list) {
-			for (int y : list) {
+	@Override
+	public Long part2(List<Long> list) {
+		for (long x : list) {
+			for (long y : list) {
 				if (x < y || x + y >= 2020)
 					continue;
 
-				for (int z : list) {
+				for (long z : list) {
 					if (x + y + z == 2020) {
-						return x * y * z;
+						return (long) (x * y * z);
 					}
 				}
 			}
 		}
-		return 0;
+		return 0L;
 	}
 
-	@Test
-	public void testPart1() throws Exception {
-		assertEquals(987339, part1(list));
-	}
-
-	@Test
-	public void testPart2() throws Exception {
-		assertEquals(259521570, part2(list));
+	@Override
+	public AocResult<Long, Long> getExpected() {
+		return new AocResult<>(987339L, 259521570L, Optional.empty());
 	}
 }
