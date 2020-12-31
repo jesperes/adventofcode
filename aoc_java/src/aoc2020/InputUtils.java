@@ -2,8 +2,10 @@ package aoc2020;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class InputUtils {
 
@@ -37,5 +39,9 @@ public class InputUtils {
 			throw new RuntimeException(e);
 		}
 		return list;
+	}
+
+	public static Optional<BufferedReader> withReaderFromString(String s) {
+		return Optional.of(new BufferedReader(new StringReader(s)));
 	}
 }

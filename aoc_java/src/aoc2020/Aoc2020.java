@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import aoc2020.solutions.Day01;
 import aoc2020.solutions.Day02;
 import aoc2020.solutions.Day03;
+import aoc2020.solutions.Day04;
 import aoc2020.solutions.Day15;
 
 public class Aoc2020 {
@@ -28,6 +29,7 @@ public class Aoc2020 {
 		puzzles.add(new Day01());
 		puzzles.add(new Day02());
 		puzzles.add(new Day03());
+		puzzles.add(new Day04());
 		puzzles.add(new Day15());
 		// =====================================================
 
