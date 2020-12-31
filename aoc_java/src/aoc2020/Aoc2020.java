@@ -60,6 +60,29 @@ public class Aoc2020 {
 			cmd.append(Arrays.stream(columns).map(col -> map.get(col)).collect(Collectors.joining(sep)) + "\n");
 		}
 
+		cmd.append(Arrays.stream(columns).map(col -> {
+			switch (col) {
+			case Name:
+				return "Total";
+			case Parsing:
+				return String.format("%.3f secs", runs.stream().map((run) -> {
+					if (run.puzzle().getInfo().hasInputFile) {
+						return run.result().timing().get().parsing();
+					} else {
+						return 0L;
+					}
+				}).collect(Collectors.summingLong(n -> n)) / 1000000000.0);
+			case Part1Time:
+				return String.format("%.3f secs", runs.stream().map(run -> run.result().timing().get().part1())
+						.collect(Collectors.summingLong(n -> n)) / 1000000000.0);
+			case Part2Time:
+				return String.format("%.3f secs", runs.stream().map(run -> run.result().timing().get().part2())
+						.collect(Collectors.summingLong(n -> n)) / 1000000000.0);
+			default:
+				return "";
+			}
+		}).collect(Collectors.joining(sep)) + "\n");
+
 		Path path = Files.createTempFile("tabulate", ".txt");
 		try {
 			Files.writeString(path, cmd.toString());
