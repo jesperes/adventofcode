@@ -19,6 +19,7 @@ import aoc2020.solutions.Day03;
 import aoc2020.solutions.Day04;
 import aoc2020.solutions.Day05;
 import aoc2020.solutions.Day06;
+import aoc2020.solutions.Day07;
 import aoc2020.solutions.Day15;
 
 public class Aoc2020 {
@@ -33,6 +34,7 @@ public class Aoc2020 {
         puzzles.add(new Day04());
         puzzles.add(new Day05());
         puzzles.add(new Day06());
+        puzzles.add(new Day07());
         puzzles.add(new Day15());
         // =====================================================
 

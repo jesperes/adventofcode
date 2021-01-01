@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 public class InputUtils {
 
@@ -80,4 +81,7 @@ public class InputUtils {
         return out.toString();
     }
 
+    public static Stream<String> asLines(InputStream stream) {
+        return new BufferedReader(new InputStreamReader(stream)).lines();
+    }
 }

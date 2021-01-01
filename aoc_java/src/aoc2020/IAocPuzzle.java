@@ -11,6 +11,10 @@ import java.util.Optional;
  */
 public interface IAocPuzzle<TInput, TPart1, TPart2> {
 
+    public AocPuzzleInfo getInfo();
+
+    public AocResult<TPart1, TPart2> getExpected();
+
     /**
      * If {@link AocPuzzleInfo#hasInputFile} is false, reader will be empty
      * here, and the method should just return the input given in the puzzle.
@@ -24,13 +28,4 @@ public interface IAocPuzzle<TInput, TPart1, TPart2> {
 
     public TPart2 part2(TInput input);
 
-    public AocResult<TPart1, TPart2> getExpected();
-
-    public AocPuzzleInfo getInfo();
-
-    default public String describe() {
-        final var info = getInfo();
-        return String.format("%d day %d: %s", info.year(), info.day(),
-                info.name());
-    }
 }
