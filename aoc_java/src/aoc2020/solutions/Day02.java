@@ -17,13 +17,18 @@ import aoc2020.solutions.Day02.PasswordData;
 
 public class Day02 implements IAocPuzzle<List<PasswordData>, Long, Long> {
 
+    /**
+     * {@link Splitter} is considerably faster than Java's
+     * {@link String#split(String)} which uses a regex.
+     */
+    static Splitter splitter = Splitter.on(CharMatcher.anyOf("- :"))
+            .omitEmptyStrings();
+
     static class PasswordData {
         int from;
         int to;
         char c;
         String password;
-        static Splitter splitter = Splitter.on(CharMatcher.anyOf("- :"))
-                .omitEmptyStrings();
 
         public PasswordData(String s) {
             List<String> split = splitter.splitToList(s);

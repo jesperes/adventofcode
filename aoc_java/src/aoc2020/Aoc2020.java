@@ -86,6 +86,9 @@ public class Aoc2020 {
             case Part2Time:
                 return formatSumOverRuns(runs,
                         run -> run.result().timing().get().part2());
+            case TotalTime:
+                return formatSumOverRuns(runs,
+                        run -> run.result().timing().get().total());
             default:
                 return "";
             }
@@ -158,7 +161,7 @@ public class Aoc2020 {
 
     private static <T, R> Timing<R> withTiming(String prefix,
             Function<T, R> fun, T arg) {
-        System.out.format("%s ", prefix);
+        System.out.format("\t%s ", prefix);
         long t0 = System.nanoTime();
         R result = fun.apply(arg);
         long t1 = System.nanoTime();
@@ -170,7 +173,7 @@ public class Aoc2020 {
     private static <T, P1, P2> AocResult<P1, P2> runWithInput(
             Optional<BufferedReader> reader, IAocPuzzle<T, P1, P2> puzzle) {
         AocPuzzleInfo info = puzzle.getInfo();
-        System.out.format("%d day %2d... ", info.year(), info.day());
+        System.out.format("%d day %d... ", info.year(), info.day());
 
         long t0 = System.nanoTime();
 
