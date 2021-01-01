@@ -1,13 +1,20 @@
-package aoc2020;
+package aoc2020.server;
 
 import java.awt.Desktop;
 
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.handler.ResourceHandler;
+import org.eclipse.jetty.servlet.ServletContextHandler;
 
+/* 
+ * https://www.hascode.com/2012/10/html5-server-send-events-using-node-js-or-jetty/
+ */
 public class AocServer {
     public static void main(String[] args) throws Exception {
+
+        HandlerCollection collection = new HandlerCollection();
 
         Server server = new Server();
         ServerConnector connector = new ServerConnector(server);
@@ -17,7 +24,13 @@ public class AocServer {
         handler.setDirectoriesListed(true);
         handler.setDirAllowed(true);
         handler.setResourceBase("web");
-        server.setHandler(handler);
+
+        ServletContextHandler servletContextHandler = new ServletContextHandler(
+                server, "/");
+        servletContextHandler.addServlet(AocEventSourceServlet.class, "/talk");
+        collection.addHandler(handler);
+        collection.addHandler(servletContextHandler);
+        server.setHandler(collection);
         server.start();
 
         if (Desktop.isDesktopSupported()
