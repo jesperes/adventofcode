@@ -2,7 +2,8 @@ package aoc2020.solutions;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -103,8 +104,8 @@ public class Day04 implements IAocPuzzle<List<Passport>, Long, Long> {
     }
 
     @Override
-    public List<Passport> parse(Optional<BufferedReader> reader) {
-        List<String> list = InputUtils.asStringList(reader.get());
+    public List<Passport> parse(Optional<InputStream> stream) {
+        List<String> list = InputUtils.asStringList(stream.get());
         List<Passport> passports = new ArrayList<>();
         Map<Field, String> fields = new HashMap<>();
 
@@ -187,7 +188,10 @@ public class Day04 implements IAocPuzzle<List<Passport>, Long, Long> {
                 iyr:2011 ecl:brn hgt:59in
                 """;
 
-        List<Passport> list = parse(InputUtils.withReaderFromString(testInput));
-        assertEquals(2L, part1(list).longValue());
+        try (InputStream stream = new ByteArrayInputStream(
+                testInput.getBytes())) {
+            List<Passport> list = parse(Optional.of(stream));
+            assertEquals(2L, part1(list).longValue());
+        }
     }
 }

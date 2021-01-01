@@ -1,6 +1,6 @@
 package aoc2020.solutions;
 
-import java.io.BufferedReader;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -13,8 +13,8 @@ import aoc2020.InputUtils;
 public class Day05 implements IAocPuzzle<List<Integer>, Integer, Integer> {
 
     @Override
-    public List<Integer> parse(Optional<BufferedReader> reader) {
-        List<Integer> list = InputUtils.asStringList(reader.get(),
+    public List<Integer> parse(Optional<InputStream> stream) {
+        List<Integer> list = InputUtils.asStringList(stream.get(),
                 this::seatId);
         Collections.sort(list, Collections.reverseOrder());
         return list;

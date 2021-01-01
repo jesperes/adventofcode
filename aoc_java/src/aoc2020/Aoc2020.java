@@ -1,10 +1,10 @@
 package aoc2020;
 
-import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,6 +18,7 @@ import aoc2020.solutions.Day02;
 import aoc2020.solutions.Day03;
 import aoc2020.solutions.Day04;
 import aoc2020.solutions.Day05;
+import aoc2020.solutions.Day06;
 import aoc2020.solutions.Day15;
 
 public class Aoc2020 {
@@ -31,6 +32,7 @@ public class Aoc2020 {
         puzzles.add(new Day03());
         puzzles.add(new Day04());
         puzzles.add(new Day05());
+        puzzles.add(new Day06());
         puzzles.add(new Day15());
         // =====================================================
 
@@ -144,8 +146,8 @@ public class Aoc2020 {
                         "Input file is missing: " + inputFile);
             }
 
-            try (var reader = new BufferedReader(new FileReader(inputFile))) {
-                result = runWithInput(Optional.of(reader), puzzle);
+            try (var stream = new FileInputStream(inputFile)) {
+                result = runWithInput(Optional.of(stream), puzzle);
             }
         } else {
             result = runWithInput(Optional.empty(), puzzle);
@@ -159,7 +161,7 @@ public class Aoc2020 {
     }
 
     private static <T, R> Timing<R> withTiming(String prefix,
-            Function<T, R> fun, T arg) {
+            Function<T, R> fun, T arg) throws IOException {
         System.out.format("\t%s ", prefix);
         final var t0 = System.nanoTime();
         final var result = fun.apply(arg);
@@ -170,21 +172,20 @@ public class Aoc2020 {
     }
 
     private static <T, P1, P2> AocResult<P1, P2> runWithInput(
-            Optional<BufferedReader> reader, IAocPuzzle<T, P1, P2> puzzle) {
+            Optional<InputStream> stream, IAocPuzzle<T, P1, P2> puzzle)
+            throws IOException {
         final var info = puzzle.getInfo();
         System.out.format("%d day %d... ", info.year(), info.day());
 
-        final var t0 = System.nanoTime();
-
-        final Timing<T> parse = withTiming("parsing", puzzle::parse, reader);
+        final Timing<T> parse = withTiming("parsing", puzzle::parse, stream);
         final var input = parse.result;
         final Timing<P1> part1 = withTiming("part 1", puzzle::part1, input);
         final Timing<P2> part2 = withTiming("part 2", puzzle::part2, input);
 
         System.out.println();
 
-        return AocResult.of(part1.result, part2.result,
-                new AocTiming(parse.elapsed, part1.elapsed, part2.elapsed,
-                        System.nanoTime() - t0));
+        long total = parse.elapsed + part1.elapsed + part2.elapsed;
+        return AocResult.of(part1.result, part2.result, new AocTiming(
+                parse.elapsed, part1.elapsed, part2.elapsed, total));
     }
 }

@@ -1,6 +1,6 @@
 package aoc2020.solutions;
 
-import java.io.BufferedReader;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,8 +17,8 @@ public class Day01 implements IAocPuzzle<List<Long>, Long, Long> {
     }
 
     @Override
-    public List<Long> parse(Optional<BufferedReader> reader) {
-        return InputUtils.asLongList(reader.get());
+    public List<Long> parse(Optional<InputStream> stream) {
+        return InputUtils.asLongList(stream.get());
     }
 
     @Override

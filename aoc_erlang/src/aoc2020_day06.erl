@@ -38,16 +38,16 @@ solve1(Input) ->
 solve2(Input) ->
   lists:sum(lists:map(fun all_yes_answers/1, Input)).
 
+%% Returns the number of questions to which *anyone* answered yes.
+%% This is simply the number of distinct letters in the input strings.
 num_yes_answers(Group) ->
-  %% Returns the number of questions to which *everyone* answered
-  %% yes. This is the intersection of letters; i.e. the number of
-  %% letters which occurs in all answer strings.
   length(lists:usort(
            lists:flatten(
              string:split(Group, "\n", all)))).
 
-%% Returns the number of questions to which *anyone* answered yes.
-%% This is simply the number of distinct letters in the input strings.
+%% Returns the number of questions to which *everyone* answered
+%% yes. This is the intersection of letters; i.e. the number of
+%% letters which occurs in all answer strings.
 all_yes_answers(Groups) ->
   [First|Rest] = string:split(Groups, "\n", all),
   sets:size(

@@ -1,6 +1,6 @@
 package aoc2020.solutions;
 
-import java.io.BufferedReader;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,8 +40,8 @@ public class Day02 implements IAocPuzzle<List<PasswordData>, Long, Long> {
     }
 
     @Override
-    public List<PasswordData> parse(Optional<BufferedReader> reader) {
-        return InputUtils.asStringList(reader.get(), s -> new PasswordData(s));
+    public List<PasswordData> parse(Optional<InputStream> stream) {
+        return InputUtils.asStringList(stream.get(), s -> new PasswordData(s));
     }
 
     @Override

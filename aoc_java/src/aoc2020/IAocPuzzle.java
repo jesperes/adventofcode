@@ -1,6 +1,6 @@
 package aoc2020;
 
-import java.io.BufferedReader;
+import java.io.InputStream;
 import java.util.Optional;
 
 /**
@@ -18,7 +18,7 @@ public interface IAocPuzzle<TInput, TPart1, TPart2> {
      * @param reader
      * @return
      */
-    public TInput parse(Optional<BufferedReader> reader);
+    public TInput parse(Optional<InputStream> stream);
 
     public TPart1 part1(TInput input);
 
