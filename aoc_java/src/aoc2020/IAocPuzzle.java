@@ -1,6 +1,6 @@
 package aoc2020;
 
-import java.io.InputStream;
+import java.io.File;
 import java.util.Optional;
 
 /**
@@ -22,7 +22,7 @@ public interface IAocPuzzle<TInput, TPart1, TPart2> {
      * @param reader
      * @return
      */
-    public TInput parse(Optional<InputStream> stream);
+    public TInput parse(Optional<File> file);
 
     public TPart1 part1(TInput input);
 

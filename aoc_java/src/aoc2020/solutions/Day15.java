@@ -2,7 +2,7 @@ package aoc2020.solutions;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.InputStream;
+import java.io.File;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,7 +18,7 @@ import aoc2020.IAocPuzzle;
 public class Day15 implements IAocPuzzle<List<Integer>, Integer, Integer> {
 
     @Override
-    public List<Integer> parse(Optional<InputStream> reader) {
+    public List<Integer> parse(Optional<File> reader) {
         return List.of(6, 4, 12, 1, 20, 0, 16);
     }
 

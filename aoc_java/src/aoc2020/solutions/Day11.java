@@ -2,7 +2,7 @@ package aoc2020.solutions;
 
 import static org.junit.Assert.assertTrue;
 
-import java.io.InputStream;
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,8 +45,8 @@ public class Day11 implements IAocPuzzle<WaitingArea, Long, Long> {
     }
 
     @Override
-    public WaitingArea parse(Optional<InputStream> stream) {
-        List<String> list = InputUtils.asStringList(stream.get());
+    public WaitingArea parse(Optional<File> file) {
+        List<String> list = InputUtils.asStringList(file.get());
         Map<Coord, State> map = new HashMap<>();
         for (int y = 0; y < list.size(); y++) {
             int len = list.get(y).length();

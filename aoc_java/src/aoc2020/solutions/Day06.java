@@ -1,6 +1,6 @@
 package aoc2020.solutions;
 
-import java.io.InputStream;
+import java.io.File;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -20,9 +20,9 @@ public class Day06 implements IAocPuzzle<List<String>, Long, Long> {
     static Splitter groupSplitter = Splitter.on("\n");
 
     @Override
-    public List<String> parse(Optional<InputStream> stream) {
+    public List<String> parse(Optional<File> file) {
         return inputSplitter
-                .splitToList(InputUtils.asString(stream.get()).trim());
+                .splitToList(InputUtils.asString(file.get()).trim());
     }
 
     @Override

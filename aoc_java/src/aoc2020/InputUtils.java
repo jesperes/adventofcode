@@ -1,15 +1,14 @@
 package aoc2020;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Stream;
+
+import com.google.common.io.Files;
 
 public class InputUtils {
 
@@ -22,9 +21,8 @@ public class InputUtils {
      * @return
      * @throws IOException
      */
-    public static List<Long> asLongList(InputStream stream) {
-        try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(stream))) {
+    public static List<Long> asLongList(File file) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             final List<Long> list = new ArrayList<>(CAPACITY);
             String line;
             while ((line = reader.readLine()) != null) {
@@ -36,9 +34,8 @@ public class InputUtils {
         }
     }
 
-    public static List<String> asStringList(InputStream stream) {
-        try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(stream))) {
+    public static List<String> asStringList(File file) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             final List<String> list = new ArrayList<>(CAPACITY);
             String line;
             while ((line = reader.readLine()) != null) {
@@ -50,10 +47,8 @@ public class InputUtils {
         }
     }
 
-    public static <T> List<T> asStringList(InputStream stream,
-            Function<String, T> fun) {
-        try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(stream))) {
+    public static <T> List<T> asStringList(File file, Function<String, T> fun) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             final List<T> list = new ArrayList<>(CAPACITY);
             String line;
             while ((line = reader.readLine()) != null) {
@@ -65,23 +60,11 @@ public class InputUtils {
         }
     }
 
-    public static String asString(InputStream stream) {
-        final int bufferSize = 1024;
-        final char[] buffer = new char[bufferSize];
-        final StringBuilder out = new StringBuilder();
-        Reader in = new InputStreamReader(stream, StandardCharsets.UTF_8);
-        int charsRead;
+    public static String asString(File file) {
         try {
-            while ((charsRead = in.read(buffer, 0, buffer.length)) > 0) {
-                out.append(buffer, 0, charsRead);
-            }
+            return new String(Files.toByteArray(file));
         } catch (IOException e) {
-            throw new RuntimeException("Could not read input", e);
+            throw new RuntimeException(e);
         }
-        return out.toString();
-    }
-
-    public static Stream<String> asLines(InputStream stream) {
-        return new BufferedReader(new InputStreamReader(stream)).lines();
     }
 }

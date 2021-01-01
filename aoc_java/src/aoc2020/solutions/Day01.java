@@ -1,6 +1,6 @@
 package aoc2020.solutions;
 
-import java.io.InputStream;
+import java.io.File;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,7 +17,7 @@ public class Day01 implements IAocPuzzle<List<Long>, Long, Long> {
     }
 
     @Override
-    public List<Long> parse(Optional<InputStream> stream) {
+    public List<Long> parse(Optional<File> stream) {
         return InputUtils.asLongList(stream.get());
     }
 

@@ -1,10 +1,8 @@
 package aoc2020;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -143,6 +141,7 @@ public class Aoc2020 {
         AocResult<P1, P2> result;
 
         if (info.hasInputFile()) {
+
             inputFile = new File(String.format("inputs/%d/input%02d.txt",
                     info.year(), info.day()));
             if (!inputFile.exists()) {
@@ -150,9 +149,7 @@ public class Aoc2020 {
                         "Input file is missing: " + inputFile);
             }
 
-            try (var stream = new FileInputStream(inputFile)) {
-                result = runWithInput(Optional.of(stream), puzzle);
-            }
+            result = runWithInput(Optional.of(inputFile), puzzle);
         } else {
             result = runWithInput(Optional.empty(), puzzle);
         }
@@ -164,27 +161,19 @@ public class Aoc2020 {
 
     }
 
-    private static <T, R> Timing<R> withTiming(String prefix,
-            Function<T, R> fun, T arg) throws IOException {
-        System.out.format("\t%s ", prefix);
-        final var t0 = System.nanoTime();
-        final var result = fun.apply(arg);
-        final var t1 = System.nanoTime();
-        System.out.format("(%.3f ms) ", (t1 - t0) / 1000000.0);
-        System.out.flush();
-        return new Timing<R>(t1 - t0, result);
-    }
-
     private static <T, P1, P2> AocResult<P1, P2> runWithInput(
-            Optional<InputStream> stream, IAocPuzzle<T, P1, P2> puzzle)
+            Optional<File> inputFile, IAocPuzzle<T, P1, P2> puzzle)
             throws IOException {
         final var info = puzzle.getInfo();
         System.out.format("%d day %d... ", info.year(), info.day());
 
-        final Timing<T> parse = withTiming("parsing", puzzle::parse, stream);
+        final Timing<T> parse = repeatWithTiming("parsing", puzzle::parse,
+                inputFile);
         final var input = parse.result;
-        final Timing<P1> part1 = withTiming("part 1", puzzle::part1, input);
-        final Timing<P2> part2 = withTiming("part 2", puzzle::part2, input);
+        final Timing<P1> part1 = repeatWithTiming("part 1", puzzle::part1,
+                input);
+        final Timing<P2> part2 = repeatWithTiming("part 2", puzzle::part2,
+                input);
 
         System.out.println();
 
@@ -192,4 +181,40 @@ public class Aoc2020 {
         return AocResult.of(part1.result, part2.result, new AocTiming(
                 parse.elapsed, part1.elapsed, part2.elapsed, total));
     }
+
+    /**
+     * Run a function with a given argument a number of times and return the
+     * result (of the first invocation) + the average elapsed time per iteration
+     * (in nanoseconds).
+     * 
+     * To get any sort of accuracy in performance measurements in Java, it is
+     * necessary to let the JIT compiler warm up first.
+     */
+    private static <T, R> Timing<R> repeatWithTiming(String prefix,
+            Function<T, R> fun, T arg) throws IOException {
+        System.out.format("\t%s ", prefix);
+
+        long repeatFor = 1000000000; // 1s
+        long maxReps = 5000; // no need to repeat more than this many times
+
+        final var t0 = System.nanoTime();
+        R result = fun.apply(arg);
+        int reps = 1;
+        while (reps < maxReps) {
+            fun.apply(arg);
+            reps++;
+            long t = System.nanoTime();
+            long elapsed = t - t0;
+            if (elapsed > repeatFor)
+                break;
+        }
+        final var t1 = System.nanoTime();
+        var totalElapsed = t1 - t0;
+        var elapsedPerCall = totalElapsed / reps;
+        System.out.format("(%.3f ms) (%d reps) ", elapsedPerCall / 1000000.0,
+                reps);
+        System.out.flush();
+        return new Timing<R>(elapsedPerCall, result);
+    }
+
 }

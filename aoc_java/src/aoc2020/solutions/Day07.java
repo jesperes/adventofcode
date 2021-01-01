@@ -1,9 +1,8 @@
 package aoc2020.solutions;
 
-import static org.junit.Assert.assertEquals;
-
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -15,12 +14,10 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.EdgeReversedGraph;
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 import org.jgrapht.traverse.DepthFirstIterator;
-import org.junit.Test;
 
 import aoc2020.AocPuzzleInfo;
 import aoc2020.AocResult;
 import aoc2020.IAocPuzzle;
-import aoc2020.InputUtils;
 import aoc2020.solutions.Day07.Rules;
 
 public class Day07 implements IAocPuzzle<Rules, Long, Long> {
@@ -46,13 +43,15 @@ public class Day07 implements IAocPuzzle<Rules, Long, Long> {
     }
 
     @Override
-    public Rules parse(Optional<InputStream> stream) {
+    public Rules parse(Optional<File> file) {
         var graph = new SimpleDirectedWeightedGraph<String, DefaultWeightedEdge>(
                 DefaultWeightedEdge.class);
         var rules = new Rules(graph);
 
-        try (Stream<String> lines = InputUtils.asLines(stream.get())) {
+        try (Stream<String> lines = Files.lines(file.get().toPath())) {
             lines.forEach(line -> parseLine(rules, line));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
 
         return rules;
@@ -106,42 +105,5 @@ public class Day07 implements IAocPuzzle<Rules, Long, Long> {
             n += graph.getEdgeWeight(edge) * (1 + contains(rules, child));
         }
         return n;
-    }
-
-    @Test
-    public void testEx1() throws Exception {
-        String input = """
-                light red bags contain 1 bright white bag, 2 muted yellow bags.
-                dark orange bags contain 3 bright white bags, 4 muted yellow bags.
-                bright white bags contain 1 shiny gold bag.
-                muted yellow bags contain 2 shiny gold bags, 9 faded blue bags.
-                shiny gold bags contain 1 dark olive bag, 2 vibrant plum bags.
-                dark olive bags contain 3 faded blue bags, 4 dotted black bags.
-                vibrant plum bags contain 5 faded blue bags, 6 dotted black bags.
-                faded blue bags contain no other bags.
-                dotted black bags contain no other bags.
-                """;
-        try (InputStream stream = new ByteArrayInputStream(input.getBytes())) {
-            Rules rules = parse(Optional.of(stream));
-            assertEquals(9, rules.graph().vertexSet().size());
-            assertEquals(4L, (long) part1(rules));
-        }
-    }
-
-    @Test
-    public void testEx2() throws Exception {
-        String input = """
-                shiny gold bags contain 2 dark red bags.
-                dark red bags contain 2 dark orange bags.
-                dark orange bags contain 2 dark yellow bags.
-                dark yellow bags contain 2 dark green bags.
-                dark green bags contain 2 dark blue bags.
-                dark blue bags contain 2 dark violet bags.
-                dark violet bags contain no other bags.
-                """;
-        try (InputStream stream = new ByteArrayInputStream(input.getBytes())) {
-            Rules rules = parse(Optional.of(stream));
-            assertEquals(126L, (long) part2(rules));
-        }
     }
 }

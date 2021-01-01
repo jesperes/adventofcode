@@ -1,9 +1,6 @@
 package aoc2020.solutions;
 
-import static org.junit.Assert.assertEquals;
-
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,8 +11,6 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.junit.Test;
 
 import com.google.common.collect.Sets;
 
@@ -104,8 +99,8 @@ public class Day04 implements IAocPuzzle<List<Passport>, Long, Long> {
     }
 
     @Override
-    public List<Passport> parse(Optional<InputStream> stream) {
-        List<String> list = InputUtils.asStringList(stream.get());
+    public List<Passport> parse(Optional<File> file) {
+        List<String> list = InputUtils.asStringList(file.get());
         List<Passport> passports = new ArrayList<>();
         Map<Field, String> fields = new HashMap<>();
 
@@ -168,30 +163,5 @@ public class Day04 implements IAocPuzzle<List<Passport>, Long, Long> {
         }
 
         return true;
-    }
-
-    @Test
-    public void testIsValid1() throws Exception {
-        String testInput = """
-                ecl:gry pid:860033327 eyr:2020 hcl:#fffffd
-                byr:1937 iyr:2017 cid:147 hgt:183cm
-
-                iyr:2013 ecl:amb cid:350 eyr:2023 pid:028048884
-                hcl:#cfa07d byr:1929
-
-                hcl:#ae17e1 iyr:2013
-                eyr:2024
-                ecl:brn pid:760753108 byr:1931
-                hgt:179cm
-
-                hcl:#cfa07d eyr:2025 pid:166559648
-                iyr:2011 ecl:brn hgt:59in
-                """;
-
-        try (InputStream stream = new ByteArrayInputStream(
-                testInput.getBytes())) {
-            List<Passport> list = parse(Optional.of(stream));
-            assertEquals(2L, part1(list).longValue());
-        }
     }
 }
