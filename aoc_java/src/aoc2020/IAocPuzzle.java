@@ -29,7 +29,7 @@ public interface IAocPuzzle<TInput, TPart1, TPart2> {
     public AocPuzzleInfo getInfo();
 
     default public String describe() {
-        AocPuzzleInfo info = getInfo();
+        final var info = getInfo();
         return String.format("%d day %d: %s", info.year(), info.day(),
                 info.name());
     }

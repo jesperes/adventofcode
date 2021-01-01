@@ -25,9 +25,6 @@ public class Day01 implements IAocPuzzle<List<Long>, Long, Long> {
     public Long part1(List<Long> list) {
         for (long x : list) {
             for (long y : list) {
-                if (x < y)
-                    continue;
-
                 if (x + y == 2020) {
                     return x * y;
                 }
@@ -40,7 +37,7 @@ public class Day01 implements IAocPuzzle<List<Long>, Long, Long> {
     public Long part2(List<Long> list) {
         for (long x : list) {
             for (long y : list) {
-                if (x < y || x + y >= 2020)
+                if (x + y >= 2020)
                     continue;
 
                 for (long z : list) {

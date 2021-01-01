@@ -6,11 +6,9 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -19,31 +17,33 @@ import aoc2020.solutions.Day01;
 import aoc2020.solutions.Day02;
 import aoc2020.solutions.Day03;
 import aoc2020.solutions.Day04;
+import aoc2020.solutions.Day05;
 import aoc2020.solutions.Day15;
 
 public class Aoc2020 {
 
     public static void main(String[] args) throws IOException {
-        List<IAocPuzzle<?, ?, ?>> puzzles = new ArrayList<>();
+        final List<IAocPuzzle<?, ?, ?>> puzzles = new ArrayList<>();
 
         // =====================================================
         puzzles.add(new Day01());
         puzzles.add(new Day02());
         puzzles.add(new Day03());
         puzzles.add(new Day04());
+        puzzles.add(new Day05());
         puzzles.add(new Day15());
         // =====================================================
 
-        List<AocPuzzleRun<?, ?, ?>> runs = runPuzzles(puzzles);
+        final var runs = runPuzzles(puzzles);
         printTable(runs);
     }
 
     private static void printTable(List<AocPuzzleRun<?, ?, ?>> runs)
             throws IOException {
-        String sep = "@";
-        StringBuilder cmd = new StringBuilder();
+        final var sep = "@";
+        final var cmd = new StringBuilder();
 
-        AocResultTableField[] columns = new AocResultTableField[] { //
+        final var columns = new AocResultTableField[] { //
                 AocResultTableField.Year, //
                 AocResultTableField.Day, //
                 AocResultTableField.Name, //
@@ -61,8 +61,8 @@ public class Aoc2020 {
         cmd.append(Arrays.stream(columns).map(col -> col.label)
                 .collect(Collectors.joining(sep)) + "\n");
 
-        for (AocPuzzleRun<?, ?, ?> run : runs) {
-            Map<AocResultTableField, String> map = run.toTableRow();
+        for (final AocPuzzleRun<?, ?, ?> run : runs) {
+            final var map = run.toTableRow();
             cmd.append(Arrays.stream(columns)
                     .map(col -> map.getOrDefault(col, "-"))
                     .collect(Collectors.joining(sep)) + "\n");
@@ -94,15 +94,15 @@ public class Aoc2020 {
             }
         }).collect(Collectors.joining(sep)) + "\n");
 
-        Path path = Files.createTempFile("tabulate", ".txt");
+        final var path = Files.createTempFile("tabulate", ".txt");
         try {
             Files.writeString(path, cmd.toString());
-            ProcessBuilder pb = new ProcessBuilder("tabulate", "-f",
-                    "fancy_grid", "-s", sep, path.toString());
+            final var pb = new ProcessBuilder("tabulate", "-f", "fancy_grid",
+                    "-s", sep, path.toString());
             pb.inheritIO();
-            Process p = pb.start();
+            final var p = pb.start();
             p.waitFor();
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
             e.printStackTrace();
         } finally {
             Files.delete(path);
@@ -123,8 +123,8 @@ public class Aoc2020 {
 
     private static List<AocPuzzleRun<?, ?, ?>> runPuzzles(
             List<IAocPuzzle<?, ?, ?>> puzzles) throws IOException {
-        List<AocPuzzleRun<?, ?, ?>> runs = new ArrayList<>();
-        for (IAocPuzzle<?, ?, ?> puzzle : puzzles) {
+        final List<AocPuzzleRun<?, ?, ?>> runs = new ArrayList<>();
+        for (final IAocPuzzle<?, ?, ?> puzzle : puzzles) {
             runs.add(run(puzzle));
         }
         return runs;
@@ -132,7 +132,7 @@ public class Aoc2020 {
 
     private static <T, P1, P2> AocPuzzleRun<T, P1, P2> run(
             IAocPuzzle<T, P1, P2> puzzle) throws IOException {
-        AocPuzzleInfo info = puzzle.getInfo();
+        final var info = puzzle.getInfo();
         File inputFile = null;
         AocResult<P1, P2> result;
 
@@ -144,8 +144,7 @@ public class Aoc2020 {
                         "Input file is missing: " + inputFile);
             }
 
-            try (BufferedReader reader = new BufferedReader(
-                    new FileReader(inputFile))) {
+            try (var reader = new BufferedReader(new FileReader(inputFile))) {
                 result = runWithInput(Optional.of(reader), puzzle);
             }
         } else {
@@ -162,9 +161,9 @@ public class Aoc2020 {
     private static <T, R> Timing<R> withTiming(String prefix,
             Function<T, R> fun, T arg) {
         System.out.format("\t%s ", prefix);
-        long t0 = System.nanoTime();
-        R result = fun.apply(arg);
-        long t1 = System.nanoTime();
+        final var t0 = System.nanoTime();
+        final var result = fun.apply(arg);
+        final var t1 = System.nanoTime();
         System.out.format("(%.3f ms) ", (t1 - t0) / 1000000.0);
         System.out.flush();
         return new Timing<R>(t1 - t0, result);
@@ -172,15 +171,15 @@ public class Aoc2020 {
 
     private static <T, P1, P2> AocResult<P1, P2> runWithInput(
             Optional<BufferedReader> reader, IAocPuzzle<T, P1, P2> puzzle) {
-        AocPuzzleInfo info = puzzle.getInfo();
+        final var info = puzzle.getInfo();
         System.out.format("%d day %d... ", info.year(), info.day());
 
-        long t0 = System.nanoTime();
+        final var t0 = System.nanoTime();
 
-        Timing<T> parse = withTiming("parsing", puzzle::parse, reader);
-        T input = parse.result;
-        Timing<P1> part1 = withTiming("part 1", puzzle::part1, input);
-        Timing<P2> part2 = withTiming("part 2", puzzle::part2, input);
+        final Timing<T> parse = withTiming("parsing", puzzle::parse, reader);
+        final var input = parse.result;
+        final Timing<P1> part1 = withTiming("part 1", puzzle::part1, input);
+        final Timing<P2> part2 = withTiming("part 2", puzzle::part2, input);
 
         System.out.println();
 

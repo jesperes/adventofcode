@@ -2,16 +2,15 @@ package aoc2020;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 public record AocPuzzleRun<T, P1, P2> (IAocPuzzle<T, P1, P2> puzzle,
         AocResult<P1, P2> result) {
 
     public Map<AocResultTableField, String> toTableRow() {
-        Map<AocResultTableField, String> map = new HashMap<>();
-        AocPuzzleInfo info = puzzle.getInfo();
-        Optional<AocTiming> timing = result.timing();
-        AocResult<P1, P2> expected = puzzle.getExpected();
+        final Map<AocResultTableField, String> map = new HashMap<>();
+        final var info = puzzle.getInfo();
+        final var timing = result.timing();
+        final var expected = puzzle.getExpected();
 
         map.put(AocResultTableField.Name, info.name());
         map.put(AocResultTableField.Year, String.valueOf(info.year()));
@@ -48,11 +47,11 @@ public record AocPuzzleRun<T, P1, P2> (IAocPuzzle<T, P1, P2> puzzle,
     }
 
     private String statusBooleanToString(boolean status) {
-        return status ? "OK" : "FAILED";
+        return status ? "OK" : "*** FAILED ***";
     }
 
     private String timeToStr(long nanosecs) {
-        double msecs = nanosecs / 1000000.0;
+        final var msecs = nanosecs / 1000000.0;
         return String.format("%.3f ms", msecs);
     }
 }

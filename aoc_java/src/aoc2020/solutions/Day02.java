@@ -1,49 +1,47 @@
 package aoc2020.solutions;
 
-import static org.junit.Assert.assertEquals;
-
 import java.io.BufferedReader;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-
-import com.google.common.base.CharMatcher;
-import com.google.common.base.Splitter;
 
 import aoc2020.AocPuzzleInfo;
 import aoc2020.AocResult;
 import aoc2020.IAocPuzzle;
+import aoc2020.InputUtils;
 import aoc2020.solutions.Day02.PasswordData;
 
 public class Day02 implements IAocPuzzle<List<PasswordData>, Long, Long> {
 
-    /**
-     * {@link Splitter} is considerably faster than Java's
-     * {@link String#split(String)} which uses a regex.
-     */
-    static Splitter splitter = Splitter.on(CharMatcher.anyOf("- :"))
-            .omitEmptyStrings();
-
     static class PasswordData {
-        int from;
-        int to;
-        char c;
-        String password;
+        final int from;
+        final int to;
+        final char c;
+        final String password;
 
         public PasswordData(String s) {
-            List<String> split = splitter.splitToList(s);
-            assertEquals(4, split.size());
-            from = Integer.valueOf(split.get(0));
-            to = Integer.valueOf(split.get(1));
-            c = split.get(2).charAt(0);
-            password = split.get(3);
+            /*
+             * We could use String#split or e.g. Guava's Splitter, but they are
+             * both rather sluggish, especially considering our input is very
+             * strict.
+             */
+            int i = 0;
+            while (s.charAt(i++) != '-')
+                ;
+            from = Integer.parseInt(s.substring(0, i - 1), 10);
+            int n = i;
+            while (s.charAt(i++) != ' ')
+                ;
+            to = Integer.parseInt(s.substring(n, i - 1), 10);
+            while (s.charAt(i++) != ':')
+                ;
+            c = s.charAt(i - 2);
+            password = s.substring(i + 1);
         }
     }
 
     @Override
     public List<PasswordData> parse(Optional<BufferedReader> reader) {
-        return reader.get().lines().map(s -> new PasswordData(s))
-                .collect(Collectors.toList());
+        return InputUtils.asStringList(reader.get(), s -> new PasswordData(s));
     }
 
     @Override
@@ -72,17 +70,17 @@ public class Day02 implements IAocPuzzle<List<PasswordData>, Long, Long> {
 
     private boolean isValidPart1(PasswordData data) {
         int n = 0;
-        for (char c : data.password.toCharArray()) {
-            if (c == data.c)
+        int len = data.password.length();
+        for (int i = 0; i < len; i++) {
+            if (data.c == data.password.charAt(i))
                 n++;
         }
         return n >= data.from && n <= data.to;
     }
 
     private boolean isValidPart2(PasswordData data) {
-        char[] a = data.password.toCharArray();
-        boolean c1 = a[data.from - 1] == data.c;
-        boolean c2 = a[data.to - 1] == data.c;
+        boolean c1 = data.password.charAt(data.from - 1) == data.c;
+        boolean c2 = data.password.charAt(data.to - 1) == data.c;
         return (c1 == true && c2 == false) || (c1 == false && c2 == true);
     }
 }
