@@ -51,7 +51,6 @@ public record AocPuzzleRun<T, P1, P2> (IAocPuzzle<T, P1, P2> puzzle,
     }
 
     private String timeToStr(long nanosecs) {
-        final var msecs = nanosecs / 1000000.0;
-        return String.format("%.3f ms", msecs);
+        return String.format("%.3f ms", nanosecs / 1000000.0);
     }
 }
