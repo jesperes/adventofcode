@@ -11,51 +11,51 @@ import aoc2020.InputUtils;
 
 public class Day01 implements IAocPuzzle<List<Long>, Long, Long> {
 
-	@Override
-	public AocPuzzleInfo getInfo() {
-		return new AocPuzzleInfo(2020, 1, "Report Repair");
-	}
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2020, 1, "Report Repair", true);
+    }
 
-	@Override
-	public List<Long> parse(Optional<BufferedReader> reader) {
-		return InputUtils.asLongList(reader.get());
-	}
+    @Override
+    public List<Long> parse(Optional<BufferedReader> reader) {
+        return InputUtils.asLongList(reader.get());
+    }
 
-	@Override
-	public Long part1(List<Long> list) {
-		for (long x : list) {
-			for (long y : list) {
-				if (x < y)
-					continue;
+    @Override
+    public Long part1(List<Long> list) {
+        for (long x : list) {
+            for (long y : list) {
+                if (x < y)
+                    continue;
 
-				if (x + y == 2020) {
-					return x * y;
-				}
-			}
-		}
-		throw new RuntimeException();
-	}
+                if (x + y == 2020) {
+                    return x * y;
+                }
+            }
+        }
+        throw new RuntimeException();
+    }
 
-	@Override
-	public Long part2(List<Long> list) {
-		for (long x : list) {
-			for (long y : list) {
-				if (x < y || x + y >= 2020)
-					continue;
+    @Override
+    public Long part2(List<Long> list) {
+        for (long x : list) {
+            for (long y : list) {
+                if (x < y || x + y >= 2020)
+                    continue;
 
-				for (long z : list) {
-					if (x + y + z == 2020) {
-						return x * y * z;
-					}
-				}
-			}
-		}
+                for (long z : list) {
+                    if (x + y + z == 2020) {
+                        return x * y * z;
+                    }
+                }
+            }
+        }
 
-		throw new RuntimeException();
-	}
+        throw new RuntimeException();
+    }
 
-	@Override
-	public AocResult<Long, Long> getExpected() {
-		return AocResult.of(987339L, 259521570L);
-	}
+    @Override
+    public AocResult<Long, Long> getExpected() {
+        return AocResult.of(987339L, 259521570L);
+    }
 }
