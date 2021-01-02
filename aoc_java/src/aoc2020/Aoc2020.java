@@ -3,13 +3,20 @@ package aoc2020;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 import aoc2020.solutions.Day01;
 import aoc2020.solutions.Day02;
@@ -26,6 +33,7 @@ import aoc2020.solutions.Day12;
 import aoc2020.solutions.Day13;
 import aoc2020.solutions.Day14;
 import aoc2020.solutions.Day15;
+import aoc2020.solutions.Day16;
 
 public class Aoc2020 {
 
@@ -48,10 +56,87 @@ public class Aoc2020 {
         puzzles.add(new Day13());
         puzzles.add(new Day14());
         puzzles.add(new Day15());
+        puzzles.add(new Day16());
         // =====================================================
 
         final var runs = runPuzzles(puzzles);
         printTable(runs);
+        writeResultsToFile(runs);
+    }
+
+    private static void writeResultsToFile(List<AocPuzzleRun<?, ?, ?>> runs) {
+
+        var gson = new GsonBuilder().setPrettyPrinting().create();
+
+        Properties properties = System.getProperties();
+        JsonObject root = new JsonObject();
+        root.addProperty("language", "java");
+        root.addProperty("platform",
+                properties.getProperty("java.runtime.name"));
+        root.addProperty("version",
+                properties.getProperty("java.runtime.version"));
+
+        long parsetime = runs.stream()
+                .map(run -> run.result().timing().get().parsing())
+                .collect(Collectors.summingLong(n -> n));
+        long part1time = runs.stream()
+                .map(run -> run.result().timing().get().part1())
+                .collect(Collectors.summingLong(n -> n));
+        long part2time = runs.stream()
+                .map(run -> run.result().timing().get().part2())
+                .collect(Collectors.summingLong(n -> n));
+        long grandTotal = parsetime + part1time + part2time;
+
+        var totals = new JsonObject();
+        totals.addProperty("parsing", parsetime);
+        totals.addProperty("part1", part1time);
+        totals.addProperty("part2", part2time);
+        totals.addProperty("total", grandTotal);
+        root.add("totals", totals);
+
+        JsonArray array = new JsonArray();
+        runs.stream().forEach(run -> {
+            var obj = new JsonObject();
+
+            IAocPuzzle<?, ?, ?> puzzle = run.puzzle();
+            AocPuzzleInfo info = puzzle.getInfo();
+            AocResult<?, ?> result = run.result();
+            AocTiming timing = result.timing().get();
+            AocResult<?, ?> expected = puzzle.getExpected();
+
+            obj.addProperty("name", info.name());
+            obj.addProperty("year", info.year());
+            obj.addProperty("day", info.day());
+            obj.addProperty("parsing", timing.parsing());
+            obj.addProperty("total",
+                    timing.parsing() + timing.part1() + timing.part2());
+
+            var part1 = new JsonObject();
+            part1.addProperty("time", timing.part1());
+            part1.addProperty("result", result.p1().get().toString());
+            part1.addProperty("status",
+                    result.p1().get().equals(expected.p1().get()));
+            obj.add("part1", part1);
+
+            var part2 = new JsonObject();
+            part2.addProperty("time", timing.part2());
+            part2.addProperty("result", result.p2().get().toString());
+            part2.addProperty("status",
+                    result.p2().get().equals(expected.p2().get()));
+            obj.add("part2", part2);
+
+            array.add(obj);
+        });
+
+        root.add("runs", array);
+        String string = gson.toJson(root);
+        try {
+            Path path = new File("results-java-2020.json").toPath();
+            Files.writeString(path, string, Charset.defaultCharset());
+            System.out.println("Wrote json to " + path);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static void printTable(List<AocPuzzleRun<?, ?, ?>> runs)
@@ -206,7 +291,7 @@ public class Aoc2020 {
             Function<T, R> fun, T arg) throws IOException {
         System.out.format("\t%s ", prefix);
 
-        long repeatFor = 1000000000; // 1s
+        long repeatFor = 1_000_000_000; // 1s
         long maxReps = 5000; // no need to repeat more than this many times
 
         final var t0 = System.nanoTime();

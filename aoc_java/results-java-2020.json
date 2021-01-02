@@ -1,0 +1,285 @@
+{
+  "language": "java",
+  "platform": "OpenJDK Runtime Environment",
+  "version": "15.0.1+9-18",
+  "totals": {
+    "parsing": 12878393,
+    "part1": 140583338,
+    "part2": 1292454769,
+    "total": 1445916500
+  },
+  "runs": [
+    {
+      "name": "Report Repair",
+      "year": 2020,
+      "day": 1,
+      "parsing": 88517,
+      "total": 167503,
+      "part1": {
+        "time": 42927,
+        "result": "987339",
+        "status": true
+      },
+      "part2": {
+        "time": 36059,
+        "result": "259521570",
+        "status": true
+      }
+    },
+    {
+      "name": "Password Philosophy",
+      "year": 2020,
+      "day": 2,
+      "parsing": 221741,
+      "total": 263378,
+      "part1": {
+        "time": 27567,
+        "result": "660",
+        "status": true
+      },
+      "part2": {
+        "time": 14070,
+        "result": "530",
+        "status": true
+      }
+    },
+    {
+      "name": "Toboggan Trajectory",
+      "year": 2020,
+      "day": 3,
+      "parsing": 43819,
+      "total": 66815,
+      "part1": {
+        "time": 6378,
+        "result": "230",
+        "status": true
+      },
+      "part2": {
+        "time": 16618,
+        "result": "9533698720",
+        "status": true
+      }
+    },
+    {
+      "name": "Passport Processing",
+      "year": 2020,
+      "day": 4,
+      "parsing": 642063,
+      "total": 1136738,
+      "part1": {
+        "time": 42144,
+        "result": "200",
+        "status": true
+      },
+      "part2": {
+        "time": 452531,
+        "result": "116",
+        "status": true
+      }
+    },
+    {
+      "name": "Binary Boarding",
+      "year": 2020,
+      "day": 5,
+      "parsing": 217605,
+      "total": 258761,
+      "part1": {
+        "time": 246,
+        "result": "928",
+        "status": true
+      },
+      "part2": {
+        "time": 40910,
+        "result": "610",
+        "status": true
+      }
+    },
+    {
+      "name": "Custom Customs",
+      "year": 2020,
+      "day": 6,
+      "parsing": 138733,
+      "total": 2922589,
+      "part1": {
+        "time": 642049,
+        "result": "6680",
+        "status": true
+      },
+      "part2": {
+        "time": 2141807,
+        "result": "3117",
+        "status": true
+      }
+    },
+    {
+      "name": "Handy Haversacks",
+      "year": 2020,
+      "day": 7,
+      "parsing": 8403415,
+      "total": 8562481,
+      "part1": {
+        "time": 150206,
+        "result": "355",
+        "status": true
+      },
+      "part2": {
+        "time": 8860,
+        "result": "5312",
+        "status": true
+      }
+    },
+    {
+      "name": "Handheld Halting",
+      "year": 2020,
+      "day": 8,
+      "parsing": 168344,
+      "total": 1520155,
+      "part1": {
+        "time": 16376,
+        "result": "1384",
+        "status": true
+      },
+      "part2": {
+        "time": 1335435,
+        "result": "761",
+        "status": true
+      }
+    },
+    {
+      "name": "Encoding Error",
+      "year": 2020,
+      "day": 9,
+      "parsing": 105867,
+      "total": 620056,
+      "part1": {
+        "time": 43000,
+        "result": "138879426",
+        "status": true
+      },
+      "part2": {
+        "time": 471189,
+        "result": "23761694",
+        "status": true
+      }
+    },
+    {
+      "name": "Adapter Array",
+      "year": 2020,
+      "day": 10,
+      "parsing": 37753,
+      "total": 266017,
+      "part1": {
+        "time": 2699,
+        "result": "2738",
+        "status": true
+      },
+      "part2": {
+        "time": 225565,
+        "result": "74049191673856",
+        "status": true
+      }
+    },
+    {
+      "name": "Seating System",
+      "year": 2020,
+      "day": 11,
+      "parsing": 546359,
+      "total": 375123615,
+      "part1": {
+        "time": 138951583,
+        "result": "2093",
+        "status": true
+      },
+      "part2": {
+        "time": 235625673,
+        "result": "1862",
+        "status": true
+      }
+    },
+    {
+      "name": "Rain Risk",
+      "year": 2020,
+      "day": 12,
+      "parsing": 120842,
+      "total": 144546,
+      "part1": {
+        "time": 11496,
+        "result": "845",
+        "status": true
+      },
+      "part2": {
+        "time": 12208,
+        "result": "27016",
+        "status": true
+      }
+    },
+    {
+      "name": "Shuttle Search",
+      "year": 2020,
+      "day": 13,
+      "parsing": 20814,
+      "total": 46205,
+      "part1": {
+        "time": 16094,
+        "result": "333",
+        "status": true
+      },
+      "part2": {
+        "time": 9297,
+        "result": "690123192779524",
+        "status": true
+      }
+    },
+    {
+      "name": "Docking Data",
+      "year": 2020,
+      "day": 14,
+      "parsing": 706356,
+      "total": 44730419,
+      "part1": {
+        "time": 93393,
+        "result": "8471403462063",
+        "status": true
+      },
+      "part2": {
+        "time": 43930670,
+        "result": "2667858637669",
+        "status": true
+      }
+    },
+    {
+      "name": "Rambunctious Recitation",
+      "year": 2020,
+      "day": 15,
+      "parsing": 533,
+      "total": 1008141920,
+      "part1": {
+        "time": 10186,
+        "result": "475",
+        "status": true
+      },
+      "part2": {
+        "time": 1008131201,
+        "result": "11261",
+        "status": true
+      }
+    },
+    {
+      "name": "Ticket Translation",
+      "year": 2020,
+      "day": 16,
+      "parsing": 1415632,
+      "total": 1945302,
+      "part1": {
+        "time": 526994,
+        "result": "27850",
+        "status": true
+      },
+      "part2": {
+        "time": 2676,
+        "result": "491924517533",
+        "status": true
+      }
+    }
+  ]
+}
