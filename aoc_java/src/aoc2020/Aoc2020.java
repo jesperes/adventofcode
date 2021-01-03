@@ -34,6 +34,7 @@ import aoc2020.solutions.Day13;
 import aoc2020.solutions.Day14;
 import aoc2020.solutions.Day15;
 import aoc2020.solutions.Day16;
+import aoc2020.solutions.Day17;
 
 public class Aoc2020 {
 
@@ -57,6 +58,7 @@ public class Aoc2020 {
         puzzles.add(new Day14());
         puzzles.add(new Day15());
         puzzles.add(new Day16());
+        puzzles.add(new Day17());
         // =====================================================
 
         final var runs = runPuzzles(puzzles);
