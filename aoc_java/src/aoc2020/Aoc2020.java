@@ -35,32 +35,17 @@ import aoc2020.solutions.Day14;
 import aoc2020.solutions.Day15;
 import aoc2020.solutions.Day16;
 import aoc2020.solutions.Day17;
+import aoc2020.solutions.Day18;
+import aoc2020.solutions.Day19;
 
 public class Aoc2020 {
 
     public static void main(String[] args) throws IOException {
-        final List<IAocPuzzle<?, ?, ?>> puzzles = new ArrayList<>();
-
-        // =====================================================
-        puzzles.add(new Day01());
-        puzzles.add(new Day02());
-        puzzles.add(new Day03());
-        puzzles.add(new Day04());
-        puzzles.add(new Day05());
-        puzzles.add(new Day06());
-        puzzles.add(new Day07());
-        puzzles.add(new Day08());
-        puzzles.add(new Day09());
-        puzzles.add(new Day10());
-        puzzles.add(new Day11());
-        puzzles.add(new Day12());
-        puzzles.add(new Day13());
-        puzzles.add(new Day14());
-        puzzles.add(new Day15());
-        puzzles.add(new Day16());
-        puzzles.add(new Day17());
-        // =====================================================
-
+        final List<IAocPuzzle<?, ?, ?>> puzzles = List.of(new Day01(),
+                new Day02(), new Day03(), new Day04(), new Day05(), new Day06(),
+                new Day07(), new Day08(), new Day09(), new Day10(), new Day11(),
+                new Day12(), new Day13(), new Day14(), new Day15(), new Day16(),
+                new Day17(), new Day18(), new Day19());
         final var runs = runPuzzles(puzzles);
         printTable(runs);
         writeResultsToFile(runs);

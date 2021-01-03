@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
 
 import aoc2020.AocBaseRunner;
 import aoc2020.AocPuzzleInfo;
@@ -41,12 +40,6 @@ public class Day18 implements IAocIntPuzzle<List<String>> {
     @Override
     public Long part1(List<String> input) {
         return input.stream().collect(Collectors.summingLong(line -> {
-            Day18Part1Lexer lexer = new Day18Part1Lexer(
-                    CharStreams.fromString(line));
-            CommonTokenStream tokenStream = new CommonTokenStream(lexer);
-            Day18Part1Parser parser = new Day18Part1Parser(tokenStream);
-            ParseTree start = parser.expr();
-
             return new Day18Part1BaseVisitor<Long>() {
                 @Override
                 public Long visitParenGRP(ParenGRPContext ctx) {
@@ -60,32 +53,24 @@ public class Day18 implements IAocIntPuzzle<List<String>> {
 
                 @Override
                 public Long visitBinopGRP(BinopGRPContext ctx) {
-                    String op = ctx.binop.getText();
-                    long a = visit(ctx.expr(0));
-                    long b = visit(ctx.expr(1));
-                    switch (op) {
+                    switch (ctx.binop.getText()) {
                     case "+":
-                        return a + b;
+                        return visit(ctx.expr(0)) + visit(ctx.expr(1));
                     case "*":
-                        return a * b;
+                        return visit(ctx.expr(0)) * visit(ctx.expr(1));
                     default:
                         throw new RuntimeException();
                     }
                 }
 
-            }.visit(start);
+            }.visit(new Day18Part1Parser(new CommonTokenStream(
+                    new Day18Part1Lexer(CharStreams.fromString(line)))).expr());
         }));
     }
 
     @Override
     public Long part2(List<String> input) {
         return input.stream().collect(Collectors.summingLong(line -> {
-            Day18Part2Lexer lexer = new Day18Part2Lexer(
-                    CharStreams.fromString(line));
-            CommonTokenStream tokenStream = new CommonTokenStream(lexer);
-            Day18Part2Parser parser = new Day18Part2Parser(tokenStream);
-            ParseTree start = parser.expr();
-
             return new Day18Part2BaseVisitor<Long>() {
                 @Override
                 public Long visitParenGRP(
@@ -108,7 +93,8 @@ public class Day18 implements IAocIntPuzzle<List<String>> {
                         Day18Part2Parser.LiteralGRPContext ctx) {
                     return Long.parseLong(ctx.getText());
                 }
-            }.visit(start);
+            }.visit(new Day18Part2Parser(new CommonTokenStream(
+                    new Day18Part2Lexer(CharStreams.fromString(line)))).expr());
         }));
     }
 
