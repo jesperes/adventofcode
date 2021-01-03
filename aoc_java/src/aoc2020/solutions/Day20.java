@@ -2,7 +2,6 @@ package aoc2020.solutions;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -279,75 +278,80 @@ public class Day20 implements IAocIntPuzzle<Jigsaw> {
     private void placeTile(TileId tileId, Coord coord,
             Map<Coord, TileId> placedTiles, Set<TileId> remainingTiles) {
 
+        /*
+         * Remember to remove all the symmetries of a tile when placing it, or
+         * we are going to lay the same tile several times.
+         */
         placedTiles.put(coord, tileId);
         remainingTiles.removeIf(t -> t.id == tileId.id);
     }
 
+    /**
+     * Part 2 is where we stitch together all the tiles and find the sea
+     * monsters. This code is a bit rough around the edges, but it is still
+     * pretty efficient due to the lookup maps (Jigsaw.edgeMap and
+     * Jigsaw.invEdgeMap) which allows us to directly lookup the next tile to
+     * place.
+     */
     @Override
     public Long part2(Jigsaw input) {
-        // Jigsaw is nxn tiles
         var n = (int) Math.sqrt(input.tiles.size() / 8);
-        // Jigsaw is 'size' pixels
         var size = n * 8;
-        var nwTileId = findNorthWestTile(input);
-        var externalEdges = findExternalEdges(input);
+        var nwTileId = findNorthWestTile(input); // Start with the NW tile
         Map<Coord, TileId> placedTiles = new HashMap<>();
-
         Set<TileId> remainingTiles = new HashSet<>();
         remainingTiles.addAll(input.tiles.keySet());
 
         var current = nwTileId;
         var coord = new Coord(0, 0);
 
+        /*
+         * Start at the NW corners, and lay the tiles left to right. When
+         * reaching the east edge, rewind and start again with the next row.
+         * When we have reached the last tile we are done.
+         */
+        /*
+         * TODO cleanup this loop
+         */
         placeTile(current, coord, placedTiles, remainingTiles);
 
         while (true) {
-            Edges edges = input.edgeMap.get(current);
-            int east = edges.ids[EAST];
-
             if (coord.x() == n - 1) {
-                /*
-                 * We have reached the east edge, do a sanity check that the
-                 * east edge is actually an external edge.
-                 */
-                assertTrue(externalEdges.contains(east));
-
                 if (coord.y() == n - 1) {
-                    /*
-                     * We have reached the last tile. There should be no more
-                     * tiles left.
-                     */
-                    assertEquals(0, remainingTiles.size());
-                    break;
+                    break; // We're done
                 }
 
-                /*
-                 * Continue with the next row by picking the left most tile in
-                 * the current row, and finding the tile immediately south of
-                 * it.
-                 */
-                var leftMost = placedTiles.get(new Coord(0, coord.y()));
-                int south = input.edgeMap.get(leftMost).ids[SOUTH];
-                current = remainingTiles.stream().filter(
-                        tileId -> input.edgeMap.get(tileId).ids[NORTH] == south)
-                        .findFirst().get();
+                int south = input.edgeMap.get(
+                        placedTiles.get(new Coord(0, coord.y()))).ids[SOUTH];
+                current = lookupNextTile(input, remainingTiles, NORTH, south);
                 coord = new Coord(0, coord.y() + 1);
-                placeTile(current, coord, placedTiles, remainingTiles);
             } else {
-                /*
-                 * Check remaining tiles for a tile whose WEST edge matches EAST
-                 * edge we are looking for (there should be only one). This is
-                 * our new "current".
-                 */
-                current = remainingTiles.stream().filter(
-                        tileId -> input.edgeMap.get(tileId).ids[WEST] == east)
-                        .findFirst().get();
+                int east = input.edgeMap.get(current).ids[EAST];
+                current = lookupNextTile(input, remainingTiles, WEST, east);
                 coord = new Coord(coord.x() + 1, coord.y());
-
-                placeTile(current, coord, placedTiles, remainingTiles);
             }
+
+            placeTile(current, coord, placedTiles, remainingTiles);
         }
 
+        var sea = stitchTiles(input, n, size, placedTiles);
+
+        return findSeaMonster(sea);
+    }
+
+    /**
+     * Find a tile among the remaining ones which has the specified edgeId in
+     * the specified direction (NORTH, EAST, SOUTH, WEST).
+     */
+    TileId lookupNextTile(Jigsaw input, Set<TileId> remainingTiles, int dir,
+            int edgeId) {
+        return remainingTiles.stream()
+                .filter(tileId -> input.edgeMap.get(tileId).ids[dir] == edgeId)
+                .findFirst().get();
+    }
+
+    private char[][] stitchTiles(Jigsaw input, int n, int size,
+            Map<Coord, TileId> placedTiles) {
         char[][] sea = new char[size][size];
 
         /*
@@ -374,45 +378,46 @@ public class Day20 implements IAocIntPuzzle<Jigsaw> {
                 }
             }
         }
+        return sea;
+    }
 
-        {
-            /*
-             * What a feeble sea monster which is threatened by something so
-             * mundane as a code formatter?!
-             */
+    private Long findSeaMonster(char[][] sea) {
+        /*
+         * What a feeble sea monster which is threatened by something so mundane
+         * as a code formatter?!
+         */
 
-            // @formatter:off
-            String seaMonster =
-                    "                  # \n" +
-                    "#    ##    ##    ###\n" +
-                    " #  #  #  #  #  #   \n";
-            // @formatter:on
+        // @formatter:off
+        String seaMonster =
+           "                  # \n" +
+           "#    ##    ##    ###\n" +
+           " #  #  #  #  #  #   \n";
+        // @formatter:on
 
-            Map<Coord, Character> seaMonsterMap = new HashMap<>();
-            int y = 0;
-            for (String line : seaMonster.split("\n")) {
-                int x = 0;
-                for (char c : line.toCharArray()) {
-                    if (c == '#')
-                        seaMonsterMap.put(new Coord(x, y), c);
-                    x++;
-                }
-                y++;
+        Map<Coord, Character> seaMonsterMap = new HashMap<>();
+        int y = 0;
+        for (String line : seaMonster.split("\n")) {
+            int x = 0;
+            for (char c : line.toCharArray()) {
+                if (c == '#')
+                    seaMonsterMap.put(new Coord(x, y), c);
+                x++;
             }
-
-            var s1 = sea;
-            var s2 = rotate(copyMatrix(sea));
-            var s3 = rotate(copyMatrix(s2));
-            var s4 = rotate(copyMatrix(s3));
-            var s5 = flip(copyMatrix(sea));
-            var s6 = rotate(copyMatrix(s5));
-            var s7 = rotate(copyMatrix(s6));
-            var s8 = rotate(copyMatrix(s7));
-
-            return Stream.of(s1, s2, s3, s4, s5, s6, s7, s8).map(
-                    seaSym -> numSeaMonsterFreePixels(seaSym, seaMonsterMap))
-                    .collect(Collectors.summingLong(x -> x));
+            y++;
         }
+
+        var s1 = sea;
+        var s2 = rotate(copyMatrix(sea));
+        var s3 = rotate(copyMatrix(s2));
+        var s4 = rotate(copyMatrix(s3));
+        var s5 = flip(copyMatrix(sea));
+        var s6 = rotate(copyMatrix(s5));
+        var s7 = rotate(copyMatrix(s6));
+        var s8 = rotate(copyMatrix(s7));
+
+        return Stream.of(s1, s2, s3, s4, s5, s6, s7, s8)
+                .map(seaSym -> numSeaMonsterFreePixels(seaSym, seaMonsterMap))
+                .collect(Collectors.summingLong(x -> x));
     }
 
     private int numSeaMonsterFreePixels(char[][] sea,
