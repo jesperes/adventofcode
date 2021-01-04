@@ -37,6 +37,9 @@ public class Day20 implements IAocIntPuzzle<Jigsaw> {
     static final int SOUTH = 2;
     static final int WEST = 3;
 
+    record Edges(TileId tileId, int[] ids) {
+    }
+
     /**
      * Id of a tile, containing the original tile id plus a symmetry label. By
      * separating these, we can track which edge ids belong to which tiles
@@ -62,7 +65,7 @@ public class Day20 implements IAocIntPuzzle<Jigsaw> {
         }
     }
 
-    static Tile makeTile(String s) {
+    private static Tile makeTile(String s) {
         char[][] pixels = new char[SIZE][SIZE];
         String[] elems = s.split(":");
         TileId id = new TileId(Integer.parseInt(elems[0]), "0");
@@ -78,7 +81,7 @@ public class Day20 implements IAocIntPuzzle<Jigsaw> {
         return new Tile(id, pixels);
     }
 
-    static char[][] copyMatrix(char matrix[][]) {
+    private static char[][] copyMatrix(char matrix[][]) {
         char[][] copy = new char[matrix.length][matrix.length];
         for (int y = 0; y < matrix.length; y++) {
             for (int x = 0; x < matrix.length; x++) {
@@ -88,12 +91,12 @@ public class Day20 implements IAocIntPuzzle<Jigsaw> {
         return copy;
     }
 
-    static Tile copyTile(Tile original) {
+    private static Tile copyTile(Tile original) {
         return new Tile(new TileId(original.tileId.id, original.tileId.sym),
                 copyMatrix(original.pixels));
     }
 
-    static char[][] rotate(char matrix[][]) {
+    private static char[][] rotate(char matrix[][]) {
         var size = matrix.length;
 
         // first find the transpose of the matrix.
@@ -117,7 +120,7 @@ public class Day20 implements IAocIntPuzzle<Jigsaw> {
         return matrix;
     }
 
-    static char[][] flip(char matrix[][]) {
+    private static char[][] flip(char matrix[][]) {
         var size = matrix.length;
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size / 2; j++) {
@@ -130,17 +133,17 @@ public class Day20 implements IAocIntPuzzle<Jigsaw> {
         return matrix;
     }
 
-    static Tile rotateTile(Tile tile) {
+    private static Tile rotateTile(Tile tile) {
         return new Tile(new TileId(tile.tileId.id, tile.tileId.sym + "r90"),
                 rotate(tile.pixels));
     }
 
-    static Tile flipTile(Tile tile) {
+    private static Tile flipTile(Tile tile) {
         return new Tile(new TileId(tile.tileId.id, tile.tileId.sym + "f"),
                 flip(tile.pixels));
     }
 
-    static private int[] computeEdgeIds(Tile tile) {
+    private static int[] computeEdgeIds(Tile tile) {
         int[] edges = new int[] { 1 << 16, 1 << 16, 1 << 16, 1 << 16 };
 
         /*
@@ -166,10 +169,7 @@ public class Day20 implements IAocIntPuzzle<Jigsaw> {
         return edges;
     }
 
-    record Edges(TileId tileId, int[] ids) {
-    }
-
-    class Jigsaw {
+    static class Jigsaw {
         Map<TileId, Tile> tiles;
 
         // Maps tile ids to their edge ids
@@ -194,6 +194,17 @@ public class Day20 implements IAocIntPuzzle<Jigsaw> {
         }
     }
 
+    static private Stream<Tile> withSymmetries(Tile tile) {
+        Tile r90 = rotateTile(copyTile(tile));
+        Tile r180 = rotateTile(copyTile(r90));
+        Tile r270 = rotateTile(copyTile(r180));
+        Tile flip = flipTile(copyTile(tile));
+        Tile flip90 = rotateTile(copyTile(flip));
+        Tile flip180 = rotateTile(copyTile(flip90));
+        Tile flip270 = rotateTile(copyTile(flip180));
+        return Stream.of(tile, r90, r180, r270, flip, flip90, flip180, flip270);
+    }
+
     @Override
     public AocPuzzleInfo getInfo() {
         return new AocPuzzleInfo(2020, 20, "Jurassic Jigsaw", true);
@@ -209,31 +220,13 @@ public class Day20 implements IAocIntPuzzle<Jigsaw> {
         Map<TileId, Tile> tileMap = Arrays
                 .stream(InputUtils.asString(file.get()).split("Tile "))
                 .filter(s -> s.length() > 0).map(s -> makeTile(s))
-                .flatMap(this::withSymmetries)
+                .flatMap(Day20::withSymmetries)
                 .collect(Collectors.toMap(t -> t.tileId, t -> t));
 
         return new Jigsaw(tileMap);
     }
 
-    Stream<Tile> withSymmetries(Tile tile) {
-        Tile r90 = rotateTile(copyTile(tile));
-        Tile r180 = rotateTile(copyTile(r90));
-        Tile r270 = rotateTile(copyTile(r180));
-        Tile flip = flipTile(copyTile(tile));
-        Tile flip90 = rotateTile(copyTile(flip));
-        Tile flip180 = rotateTile(copyTile(flip90));
-        Tile flip270 = rotateTile(copyTile(flip180));
-        return Stream.of(tile, r90, r180, r270, flip, flip90, flip180, flip270);
-    }
-
-    @Override
-    public Long part1(Jigsaw input) {
-        Set<Integer> cornerTiles = findCornerTiles(input);
-        return cornerTiles.stream().mapToLong(n -> n).reduce((a, b) -> a * b)
-                .getAsLong();
-    }
-
-    private Set<Integer> findCornerTiles(Jigsaw input) {
+    static private Set<Integer> findCornerTiles(Jigsaw input) {
         Set<Integer> externalEdges = findExternalEdges(input);
 
         // Corner tiles are tiles which have 2 external edges.
@@ -248,7 +241,7 @@ public class Day20 implements IAocIntPuzzle<Jigsaw> {
         return cornerTiles;
     }
 
-    private Set<Integer> findExternalEdges(Jigsaw input) {
+    static private Set<Integer> findExternalEdges(Jigsaw input) {
         // Compute the set of external edges
         Set<Integer> externalEdges = new HashSet<>();
         for (Entry<Integer, Collection<Integer>> x : input.invEdgeMap.asMap()
@@ -260,7 +253,7 @@ public class Day20 implements IAocIntPuzzle<Jigsaw> {
         return externalEdges;
     }
 
-    private TileId findNorthWestTile(Jigsaw input) {
+    static private TileId findNorthWestTile(Jigsaw input) {
         Set<Integer> externalEdges = findExternalEdges(input);
 
         for (TileId x : input.tiles.keySet()) {
@@ -275,7 +268,7 @@ public class Day20 implements IAocIntPuzzle<Jigsaw> {
         throw new RuntimeException();
     }
 
-    private void placeTile(TileId tileId, Coord coord,
+    static private void placeTile(TileId tileId, Coord coord,
             Map<Coord, TileId> placedTiles, Set<TileId> remainingTiles) {
 
         /*
@@ -287,6 +280,15 @@ public class Day20 implements IAocIntPuzzle<Jigsaw> {
     }
 
     /**
+     * For part 1 we only need to find the corner tiles.
+     */
+    @Override
+    public Long part1(Jigsaw input) {
+        return findCornerTiles(input).stream().mapToLong(n -> n)
+                .reduce((a, b) -> a * b).getAsLong();
+    }
+
+    /**
      * Part 2 is where we stitch together all the tiles and find the sea
      * monsters. This code is a bit rough around the edges, but it is still
      * pretty efficient due to the lookup maps (Jigsaw.edgeMap and
@@ -295,8 +297,8 @@ public class Day20 implements IAocIntPuzzle<Jigsaw> {
      */
     @Override
     public Long part2(Jigsaw input) {
-        var n = (int) Math.sqrt(input.tiles.size() / 8);
-        var size = n * 8;
+        var numSymmetries = 8;
+        var n = (int) Math.sqrt(input.tiles.size() / numSymmetries);
         var nwTileId = findNorthWestTile(input); // Start with the NW tile
         Map<Coord, TileId> placedTiles = new HashMap<>();
         Set<TileId> remainingTiles = new HashSet<>();
@@ -310,19 +312,16 @@ public class Day20 implements IAocIntPuzzle<Jigsaw> {
          * reaching the east edge, rewind and start again with the next row.
          * When we have reached the last tile we are done.
          */
-        /*
-         * TODO cleanup this loop
-         */
-        placeTile(current, coord, placedTiles, remainingTiles);
 
         while (true) {
-            if (coord.x() == n - 1) {
-                if (coord.y() == n - 1) {
-                    break; // We're done
-                }
+            placeTile(current, coord, placedTiles, remainingTiles);
 
-                int south = input.edgeMap.get(
-                        placedTiles.get(new Coord(0, coord.y()))).ids[SOUTH];
+            if (coord.x() == n - 1) {
+                if (coord.y() == n - 1)
+                    break;
+
+                TileId startOfRow = placedTiles.get(new Coord(0, coord.y()));
+                int south = input.edgeMap.get(startOfRow).ids[SOUTH];
                 current = lookupNextTile(input, remainingTiles, NORTH, south);
                 coord = new Coord(0, coord.y() + 1);
             } else {
@@ -330,11 +329,13 @@ public class Day20 implements IAocIntPuzzle<Jigsaw> {
                 current = lookupNextTile(input, remainingTiles, WEST, east);
                 coord = new Coord(coord.x() + 1, coord.y());
             }
-
-            placeTile(current, coord, placedTiles, remainingTiles);
         }
 
-        var sea = stitchTiles(input, n, size, placedTiles);
+        /*
+         * Stitch all the tiles together, removing the borders. The final sea of
+         * pixels is 96x96 (original is 144x144).
+         */
+        var sea = stitchTiles(input, n, n * 8, placedTiles);
 
         return findSeaMonster(sea);
     }
@@ -343,14 +344,14 @@ public class Day20 implements IAocIntPuzzle<Jigsaw> {
      * Find a tile among the remaining ones which has the specified edgeId in
      * the specified direction (NORTH, EAST, SOUTH, WEST).
      */
-    TileId lookupNextTile(Jigsaw input, Set<TileId> remainingTiles, int dir,
-            int edgeId) {
+    static private TileId lookupNextTile(Jigsaw input,
+            Set<TileId> remainingTiles, int dir, int edgeId) {
         return remainingTiles.stream()
                 .filter(tileId -> input.edgeMap.get(tileId).ids[dir] == edgeId)
                 .findFirst().get();
     }
 
-    private char[][] stitchTiles(Jigsaw input, int n, int size,
+    static private char[][] stitchTiles(Jigsaw input, int n, int size,
             Map<Coord, TileId> placedTiles) {
         char[][] sea = new char[size][size];
 
@@ -381,7 +382,7 @@ public class Day20 implements IAocIntPuzzle<Jigsaw> {
         return sea;
     }
 
-    private Long findSeaMonster(char[][] sea) {
+    static private Long findSeaMonster(char[][] sea) {
         /*
          * What a feeble sea monster which is threatened by something so mundane
          * as a code formatter?!
@@ -420,7 +421,7 @@ public class Day20 implements IAocIntPuzzle<Jigsaw> {
                 .collect(Collectors.summingLong(x -> x));
     }
 
-    private int numSeaMonsterFreePixels(char[][] sea,
+    static private int numSeaMonsterFreePixels(char[][] sea,
             Map<Coord, Character> seaMonsterMap) {
         int foundSeaMonsters = 0;
 
@@ -432,8 +433,8 @@ public class Day20 implements IAocIntPuzzle<Jigsaw> {
             }
         }
 
-        int seaMonsterWidth = 20;
-        int seaMonsterHeight = 3;
+        final int seaMonsterWidth = 20;
+        final int seaMonsterHeight = 3;
 
         for (int y = -seaMonsterHeight; y < sea.length
                 + seaMonsterHeight; y++) {
