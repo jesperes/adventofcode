@@ -3,25 +3,25 @@
   "platform": "OpenJDK Runtime Environment",
   "version": "15.0.1+9-18",
   "totals": {
-    "parsing": 19458655,
-    "part1": 172040028,
-    "part2": 1714869242,
-    "total": 1906367925
+    "parsing": 17207335,
+    "part1": 171176317,
+    "part2": 1854834695,
+    "total": 2043218347
   },
   "runs": [
     {
       "name": "Report Repair",
       "year": 2020,
       "day": 1,
-      "parsing": 80437,
-      "total": 174824,
+      "parsing": 76783,
+      "total": 172436,
       "part1": {
-        "time": 52932,
+        "time": 50242,
         "result": "987339",
         "status": true
       },
       "part2": {
-        "time": 41455,
+        "time": 45411,
         "result": "259521570",
         "status": true
       }
@@ -30,15 +30,15 @@
       "name": "Password Philosophy",
       "year": 2020,
       "day": 2,
-      "parsing": 245951,
-      "total": 303198,
+      "parsing": 279487,
+      "total": 342507,
       "part1": {
-        "time": 37990,
+        "time": 39522,
         "result": "660",
         "status": true
       },
       "part2": {
-        "time": 19257,
+        "time": 23498,
         "result": "530",
         "status": true
       }
@@ -47,15 +47,15 @@
       "name": "Toboggan Trajectory",
       "year": 2020,
       "day": 3,
-      "parsing": 75871,
-      "total": 104890,
+      "parsing": 65640,
+      "total": 90038,
       "part1": {
-        "time": 8525,
+        "time": 6857,
         "result": "230",
         "status": true
       },
       "part2": {
-        "time": 20494,
+        "time": 17541,
         "result": "9533698720",
         "status": true
       }
@@ -64,15 +64,15 @@
       "name": "Passport Processing",
       "year": 2020,
       "day": 4,
-      "parsing": 654714,
-      "total": 1034693,
+      "parsing": 654852,
+      "total": 1846369,
       "part1": {
-        "time": 70749,
+        "time": 45195,
         "result": "200",
         "status": true
       },
       "part2": {
-        "time": 309230,
+        "time": 1146322,
         "result": "116",
         "status": true
       }
@@ -81,15 +81,15 @@
       "name": "Binary Boarding",
       "year": 2020,
       "day": 5,
-      "parsing": 235925,
-      "total": 244480,
+      "parsing": 235316,
+      "total": 239893,
       "part1": {
-        "time": 250,
+        "time": 195,
         "result": "928",
         "status": true
       },
       "part2": {
-        "time": 8305,
+        "time": 4382,
         "result": "610",
         "status": true
       }
@@ -98,15 +98,15 @@
       "name": "Custom Customs",
       "year": 2020,
       "day": 6,
-      "parsing": 135985,
-      "total": 2694185,
+      "parsing": 136939,
+      "total": 2644552,
       "part1": {
-        "time": 625939,
+        "time": 670870,
         "result": "6680",
         "status": true
       },
       "part2": {
-        "time": 1932261,
+        "time": 1836743,
         "result": "3117",
         "status": true
       }
@@ -115,15 +115,15 @@
       "name": "Handy Haversacks",
       "year": 2020,
       "day": 7,
-      "parsing": 9824372,
-      "total": 10075109,
+      "parsing": 6957724,
+      "total": 7112617,
       "part1": {
-        "time": 239236,
+        "time": 145887,
         "result": "355",
         "status": true
       },
       "part2": {
-        "time": 11501,
+        "time": 9006,
         "result": "5312",
         "status": true
       }
@@ -132,15 +132,15 @@
       "name": "Handheld Halting",
       "year": 2020,
       "day": 8,
-      "parsing": 192375,
-      "total": 1962007,
+      "parsing": 158067,
+      "total": 1706121,
       "part1": {
-        "time": 19738,
+        "time": 18876,
         "result": "1384",
         "status": true
       },
       "part2": {
-        "time": 1749894,
+        "time": 1529178,
         "result": "761",
         "status": true
       }
@@ -149,15 +149,15 @@
       "name": "Encoding Error",
       "year": 2020,
       "day": 9,
-      "parsing": 91959,
-      "total": 622948,
+      "parsing": 94840,
+      "total": 641424,
       "part1": {
-        "time": 49439,
+        "time": 43381,
         "result": "138879426",
         "status": true
       },
       "part2": {
-        "time": 481550,
+        "time": 503203,
         "result": "23761694",
         "status": true
       }
@@ -166,15 +166,15 @@
       "name": "Adapter Array",
       "year": 2020,
       "day": 10,
-      "parsing": 50199,
-      "total": 296695,
+      "parsing": 48599,
+      "total": 285875,
       "part1": {
-        "time": 4253,
+        "time": 4274,
         "result": "2738",
         "status": true
       },
       "part2": {
-        "time": 242243,
+        "time": 233002,
         "result": "74049191673856",
         "status": true
       }
@@ -183,15 +183,15 @@
       "name": "Seating System",
       "year": 2020,
       "day": 11,
-      "parsing": 566698,
-      "total": 394038089,
+      "parsing": 598136,
+      "total": 345652682,
       "part1": {
-        "time": 132587111,
+        "time": 135895261,
         "result": "2093",
         "status": true
       },
       "part2": {
-        "time": 260884280,
+        "time": 209159285,
         "result": "1862",
         "status": true
       }
@@ -200,15 +200,15 @@
       "name": "Rain Risk",
       "year": 2020,
       "day": 12,
-      "parsing": 134717,
-      "total": 156453,
+      "parsing": 127988,
+      "total": 154601,
       "part1": {
-        "time": 8573,
+        "time": 10345,
         "result": "845",
         "status": true
       },
       "part2": {
-        "time": 13163,
+        "time": 16268,
         "result": "27016",
         "status": true
       }
@@ -217,15 +217,15 @@
       "name": "Shuttle Search",
       "year": 2020,
       "day": 13,
-      "parsing": 21582,
-      "total": 43030,
+      "parsing": 23845,
+      "total": 50145,
       "part1": {
-        "time": 12024,
+        "time": 14809,
         "result": "333",
         "status": true
       },
       "part2": {
-        "time": 9424,
+        "time": 11491,
         "result": "690123192779524",
         "status": true
       }
@@ -234,15 +234,15 @@
       "name": "Docking Data",
       "year": 2020,
       "day": 14,
-      "parsing": 822536,
-      "total": 69579918,
+      "parsing": 1131384,
+      "total": 75516889,
       "part1": {
-        "time": 112760,
+        "time": 127630,
         "result": "8471403462063",
         "status": true
       },
       "part2": {
-        "time": 68644622,
+        "time": 74257875,
         "result": "2667858637669",
         "status": true
       }
@@ -251,15 +251,15 @@
       "name": "Rambunctious Recitation",
       "year": 2020,
       "day": 15,
-      "parsing": 1190,
-      "total": 1053767570,
+      "parsing": 2840,
+      "total": 1216691370,
       "part1": {
-        "time": 11722,
+        "time": 16341,
         "result": "475",
         "status": true
       },
       "part2": {
-        "time": 1053754658,
+        "time": 1216672189,
         "result": "11261",
         "status": true
       }
@@ -268,15 +268,15 @@
       "name": "Ticket Translation",
       "year": 2020,
       "day": 16,
-      "parsing": 1783797,
-      "total": 2341348,
+      "parsing": 2190055,
+      "total": 2793433,
       "part1": {
-        "time": 555140,
+        "time": 600640,
         "result": "27850",
         "status": true
       },
       "part2": {
-        "time": 2411,
+        "time": 2738,
         "result": "491924517533",
         "status": true
       }
@@ -285,15 +285,15 @@
       "name": "Conway Cubes",
       "year": 2020,
       "day": 17,
-      "parsing": 5119,
-      "total": 260855355,
+      "parsing": 5545,
+      "total": 276914481,
       "part1": {
-        "time": 7836873,
+        "time": 6997926,
         "result": "242",
         "status": true
       },
       "part2": {
-        "time": 253013363,
+        "time": 269911010,
         "result": "2292",
         "status": true
       }
@@ -302,15 +302,15 @@
       "name": "Operation Order",
       "year": 2020,
       "day": 18,
-      "parsing": 71516,
-      "total": 57764251,
+      "parsing": 75193,
+      "total": 59289347,
       "part1": {
-        "time": 27128257,
+        "time": 23367681,
         "result": "8298263963837",
         "status": true
       },
       "part2": {
-        "time": 30564478,
+        "time": 35846473,
         "result": "145575710203332",
         "status": true
       }
@@ -319,15 +319,15 @@
       "name": "Monster Messages",
       "year": 2020,
       "day": 19,
-      "parsing": 322628,
-      "total": 33091925,
+      "parsing": 350299,
+      "total": 33243182,
       "part1": {
-        "time": 2157566,
+        "time": 2147876,
         "result": "147",
         "status": true
       },
       "part2": {
-        "time": 30611731,
+        "time": 30745007,
         "result": "263",
         "status": true
       }
@@ -336,16 +336,33 @@
       "name": "Jurassic Jigsaw",
       "year": 2020,
       "day": 20,
-      "parsing": 4141084,
-      "total": 17216957,
+      "parsing": 3289978,
+      "total": 16514700,
       "part1": {
-        "time": 520951,
+        "time": 502631,
         "result": "66020135789767",
         "status": true
       },
       "part2": {
-        "time": 12554922,
+        "time": 12722091,
         "result": "1537",
+        "status": true
+      }
+    },
+    {
+      "name": "Allergen Assessment",
+      "year": 2020,
+      "day": 21,
+      "parsing": 703825,
+      "total": 1315685,
+      "part1": {
+        "time": 469878,
+        "result": "2428",
+        "status": true
+      },
+      "part2": {
+        "time": 141982,
+        "result": "bjq,jznhvh,klplr,dtvhzt,sbzd,tlgjzx,ctmbr,kqms",
         "status": true
       }
     }
