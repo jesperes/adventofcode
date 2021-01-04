@@ -34,14 +34,12 @@ public class Day21 implements IAocPuzzle<Day21Data, Long, String> {
     /*
      * We wrap the ingredients in records, so that we can use types to
      * distinguish between ingredients and allergens (instead of both being
-     * "string").
+     * "string"). This makes for more readable code and better type checking.
      */
     record Ingredient(String name) {
-
     }
 
     record Allergen(String name) {
-
     }
 
     record Food(Set<Ingredient> ingredients, Set<Allergen> allergens) {

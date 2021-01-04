@@ -39,6 +39,8 @@ import aoc2020.solutions.Day18;
 import aoc2020.solutions.Day19;
 import aoc2020.solutions.Day20;
 import aoc2020.solutions.Day21;
+import aoc2020.solutions.Day22;
+import aoc2020.solutions.Day23;
 
 public class Aoc2020 {
 
@@ -47,9 +49,11 @@ public class Aoc2020 {
                 new Day02(), new Day03(), new Day04(), new Day05(), new Day06(),
                 new Day07(), new Day08(), new Day09(), new Day10(), new Day11(),
                 new Day12(), new Day13(), new Day14(), new Day15(), new Day16(),
-                new Day17(), new Day18(), new Day19(), new Day20(),
-                new Day21());
+                new Day17(), new Day18(), new Day19(), new Day20(), new Day21(),
+                new Day22(), new Day23());
+        System.out.format("Running %d puzzles...", puzzles.size());
         final var runs = runPuzzles(puzzles);
+        System.out.println();
         printTable(runs);
         writeResultsToFile(runs);
     }
@@ -251,22 +255,17 @@ public class Aoc2020 {
     private static <T, P1, P2> AocResult<P1, P2> runWithInput(
             Optional<File> inputFile, IAocPuzzle<T, P1, P2> puzzle)
             throws IOException {
-        final var info = puzzle.getInfo();
-        System.out.format("%d day %d... ", info.year(), info.day());
+        System.out.print(".");
 
-        final Timing<T> parse = repeatWithTiming("parsing", puzzle::parse,
-                inputFile);
-        final var input = parse.result;
-        final Timing<P1> part1 = repeatWithTiming("part 1", puzzle::part1,
-                input);
-        final Timing<P2> part2 = repeatWithTiming("part 2", puzzle::part2,
-                input);
+        Timing<T> parse = repeatWithTiming("parsing", puzzle::parse, inputFile);
+        Timing<P1> part1 = repeatWithTiming("part 1", puzzle::part1,
+                parse.result);
+        Timing<P2> part2 = repeatWithTiming("part 2", puzzle::part2,
+                parse.result);
 
-        System.out.println();
-
-        long total = parse.elapsed + part1.elapsed + part2.elapsed;
-        return AocResult.of(part1.result, part2.result, new AocTiming(
-                parse.elapsed, part1.elapsed, part2.elapsed, total));
+        return AocResult.of(part1.result, part2.result,
+                new AocTiming(parse.elapsed, part1.elapsed, part2.elapsed,
+                        parse.elapsed + part1.elapsed + part2.elapsed));
     }
 
     /**
@@ -279,8 +278,6 @@ public class Aoc2020 {
      */
     private static <T, R> Timing<R> repeatWithTiming(String prefix,
             Function<T, R> fun, T arg) throws IOException {
-        System.out.format("\t%s ", prefix);
-
         long repeatFor = 1_000_000_000; // 1s
         long maxReps = 5000; // no need to repeat more than this many times
 
@@ -298,8 +295,7 @@ public class Aoc2020 {
         final var t1 = System.nanoTime();
         var totalElapsed = t1 - t0;
         var elapsedPerCall = totalElapsed / reps;
-        System.out.format("(%.3f ms) (%d reps) ", elapsedPerCall / 1000000.0,
-                reps);
+        System.out.print(".");
         System.out.flush();
         return new Timing<R>(elapsedPerCall, result);
     }
