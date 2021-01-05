@@ -41,6 +41,7 @@ import aoc2020.solutions.Day20;
 import aoc2020.solutions.Day21;
 import aoc2020.solutions.Day22;
 import aoc2020.solutions.Day23;
+import aoc2020.solutions.Day24;
 
 public class Aoc2020 {
 
@@ -50,7 +51,7 @@ public class Aoc2020 {
                 new Day07(), new Day08(), new Day09(), new Day10(), new Day11(),
                 new Day12(), new Day13(), new Day14(), new Day15(), new Day16(),
                 new Day17(), new Day18(), new Day19(), new Day20(), new Day21(),
-                new Day22(), new Day23());
+                new Day22(), new Day23(), new Day24());
         System.out.format("Running %d puzzles...", puzzles.size());
         final var runs = runPuzzles(puzzles);
         System.out.println();
