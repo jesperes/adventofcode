@@ -57,7 +57,7 @@ summarize(Puzzles, _State) ->
   io:format("done.~n", []),
 
   Sep = "@",
-  Header = lists:join(Sep, ["Year", "Day", "Name", "Parsing", "Part 1", "Part 2", "Part 1 result", "Part 2 result", "Part 1 status", "Part 2 status"]) ++ "\n",
+  Header = lists:join(Sep, ["Year", "Day", "Name", "Parsing", "Part 1", "Part 2", "Total", "Part 1 result", "Part 2 result", "Part 1 status", "Part 2 status"]) ++ "\n",
   Lines =
     lists:sort(
       [lists:join(Sep, [io_lib:format("~w", [P#aoc_puzzle.year]),
@@ -66,6 +66,9 @@ summarize(Puzzles, _State) ->
                         io_lib:format("~s", [fmt_time(P#aoc_puzzle.parse)]),
                         io_lib:format("~s", [fmt_time(P#aoc_puzzle.part1)]),
                         io_lib:format("~s", [fmt_time(P#aoc_puzzle.part2)]),
+                        io_lib:format("~s", [fmt_time(P#aoc_puzzle.parse +
+                                                        P#aoc_puzzle.part1 +
+                                                        P#aoc_puzzle.part2)]),
                         io_lib:format("~p", [P#aoc_puzzle.part1_result]),
                         io_lib:format("~p", [P#aoc_puzzle.part2_result]),
                         io_lib:format("~s", [status_part1(P)]),
@@ -76,17 +79,21 @@ summarize(Puzzles, _State) ->
   ParseTotal = safe_sum([P#aoc_puzzle.parse || P <- maps:values(Puzzles)]),
   Part1Total = safe_sum([P#aoc_puzzle.part1 || P <- maps:values(Puzzles)]),
   Part2Total = safe_sum([P#aoc_puzzle.part2 || P <- maps:values(Puzzles)]),
+  TotalTime = safe_sum([P#aoc_puzzle.parse +
+                      P#aoc_puzzle.part1 +
+                      P#aoc_puzzle.part2 || P <- maps:values(Puzzles)]),
   Total =
     lists:join(Sep, ["Total",
                      "",
                      "",
                      io_lib:format("~s", [fmt_time(ParseTotal)]),
                      io_lib:format("~s", [fmt_time(Part1Total)]),
-                     io_lib:format("~s", [fmt_time(Part2Total)])
+                     io_lib:format("~s", [fmt_time(Part2Total)]),
+                     io_lib:format("~s", [fmt_time(TotalTime)])
                     ]) ++ "\n",
 
   TableStr = tabulate(list_to_binary(Header ++ Lines ++ Total), Sep),
-  io:format("~n~s~n", [TableStr]).
+  io:format("~n~ts~n", [TableStr]).
 
 status_part1(Puzzle) ->
   if Puzzle#aoc_puzzle.part1_result =:= undefined ->

@@ -2,7 +2,41 @@
 %%% Created: 2020-12-07T05:38:13+00:00
 
 -module(aoc2020_day07).
--include_lib("eunit/include/eunit.hrl").
+-behavior(aoc_puzzle).
+
+-export([ parse/1
+        , solve1/1
+        , solve2/1
+        , info/0
+        ]).
+
+-include("aoc_puzzle.hrl").
+
+-spec info() -> aoc_puzzle().
+info() ->
+  #aoc_puzzle{ module = ?MODULE
+             , year = 2020
+             , day = 7
+             , name = "Handy Haversacks"
+             , expected = {355, 5312}
+             , has_input_file = true
+             }.
+
+-type input_type() :: [string()].
+-type result1_type() :: integer().
+-type result2_type() :: integer().
+
+-spec parse(Input :: binary()) -> input_type().
+parse(Input) ->
+  string:tokens(binary_to_list(Input), "\n\r").
+
+-spec solve1(Input :: input_type()) -> result1_type().
+solve1(Input) ->
+  part1(Input).
+
+-spec solve2(Input :: input_type()) -> result2_type().
+solve2(Input) ->
+  part2(Input).
 
 part1(Input) ->
   Bags = parse_input1(Input),
@@ -75,39 +109,6 @@ parse_input2(Lines) ->
                 [C], InnerAcc)
           end, Acc, Colors)
     end).
-
-%% Input reader (place downloaded input file in
-%% priv/inputs/2020/input07.txt).
-get_input() ->
-  inputs:get_as_lines(2020, 07).
-
-%% Tests
-main_test_() ->
-  Input = get_input(),
-
-  [ {"Part 1", ?_assertEqual(355, part1(Input))}
-  , {"Part 2", ?_assertEqual(5312, part2(Input))}
-  ].
-
-%% Examples
-
-part1_test_() ->
-  ?_assertEqual(4, part1(test_input())).
-
-part2_test_() ->
-  ?_assertEqual(32, part2(test_input())).
-
-test_input() ->
-  ["light red bags contain 1 bright white bag, 2 muted yellow bags.",
-   "dark orange bags contain 3 bright white bags, 4 muted yellow bags.",
-   "bright white bags contain 1 shiny gold bag.",
-   "muted yellow bags contain 2 shiny gold bags, 9 faded blue bags.",
-   "shiny gold bags contain 1 dark olive bag, 2 vibrant plum bags.",
-   "dark olive bags contain 3 faded blue bags, 4 dotted black bags.",
-   "vibrant plum bags contain 5 faded blue bags, 6 dotted black bags.",
-   "faded blue bags contain no other bags.",
-   "dotted black bags contain no other bags."].
-
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:
