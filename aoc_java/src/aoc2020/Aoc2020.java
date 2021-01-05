@@ -42,6 +42,7 @@ import aoc2020.solutions.Day21;
 import aoc2020.solutions.Day22;
 import aoc2020.solutions.Day23;
 import aoc2020.solutions.Day24;
+import aoc2020.solutions.Day25;
 
 public class Aoc2020 {
 
@@ -51,7 +52,7 @@ public class Aoc2020 {
                 new Day07(), new Day08(), new Day09(), new Day10(), new Day11(),
                 new Day12(), new Day13(), new Day14(), new Day15(), new Day16(),
                 new Day17(), new Day18(), new Day19(), new Day20(), new Day21(),
-                new Day22(), new Day23(), new Day24());
+                new Day22(), new Day23(), new Day24(), new Day25());
         System.out.format("Running %d puzzles...", puzzles.size());
         final var runs = runPuzzles(puzzles);
         System.out.println();
@@ -113,13 +114,14 @@ public class Aoc2020 {
                     result.p1().get().equals(expected.p1().get()));
             obj.add("part1", part1);
 
-            var part2 = new JsonObject();
-            part2.addProperty("time", timing.part2());
-            part2.addProperty("result", result.p2().get().toString());
-            part2.addProperty("status",
-                    result.p2().get().equals(expected.p2().get()));
-            obj.add("part2", part2);
-
+            if (info.day() != 25) {
+                var part2 = new JsonObject();
+                part2.addProperty("time", timing.part2());
+                part2.addProperty("result", result.p2().get().toString());
+                part2.addProperty("status",
+                        result.p2().get().equals(expected.p2().get()));
+                obj.add("part2", part2);
+            }
             array.add(obj);
         });
 
@@ -261,12 +263,16 @@ public class Aoc2020 {
         Timing<T> parse = repeatWithTiming("parsing", puzzle::parse, inputFile);
         Timing<P1> part1 = repeatWithTiming("part 1", puzzle::part1,
                 parse.result);
-        Timing<P2> part2 = repeatWithTiming("part 2", puzzle::part2,
-                parse.result);
-
-        return AocResult.of(part1.result, part2.result,
-                new AocTiming(parse.elapsed, part1.elapsed, part2.elapsed,
-                        parse.elapsed + part1.elapsed + part2.elapsed));
+        if (puzzle.getInfo().day() != 25) {
+            Timing<P2> part2 = repeatWithTiming("part 2", puzzle::part2,
+                    parse.result);
+            return AocResult.of(part1.result, part2.result,
+                    new AocTiming(parse.elapsed, part1.elapsed, part2.elapsed,
+                            parse.elapsed + part1.elapsed + part2.elapsed));
+        } else {
+            return AocResult.of(part1.result, null, new AocTiming(parse.elapsed,
+                    part1.elapsed, 0, parse.elapsed + part1.elapsed));
+        }
     }
 
     /**

@@ -49,14 +49,18 @@ public class AocBaseRunner {
                         : String.format("FAILED (got %s, expected %s)", p1,
                                 expected.p1().get()));
 
-        System.out.print("Running part 2... ");
-        long t4 = System.nanoTime();
-        P2 p2 = puzzle.part2(input);
-        long t5 = System.nanoTime();
-        System.out.format("(%.3f ms) ", (t5 - t4) / 1_000_000.0);
-        System.out.println(
-                expected.p2().get().equals(p2) ? String.format("OK (%s)", p2)
-                        : String.format("FAILED (got %s, expected %s)", p2,
-                                expected.p2().get()));
+        if (puzzle.getInfo().day() == 25) {
+            System.out.println("No part 2 on the 25th.");
+        } else {
+            System.out.print("Running part 2... ");
+            long t4 = System.nanoTime();
+            P2 p2 = puzzle.part2(input);
+            long t5 = System.nanoTime();
+            System.out.format("(%.3f ms) ", (t5 - t4) / 1_000_000.0);
+            System.out.println(expected.p2().get().equals(p2)
+                    ? String.format("OK (%s)", p2)
+                    : String.format("FAILED (got %s, expected %s)", p2,
+                            expected.p2().get()));
+        }
     }
 }
