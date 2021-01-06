@@ -1,17 +1,74 @@
-%%% Advent of Code solution for 2020 day 17.
-%%% Created: 2020-12-17T07:17:47+00:00
-
+%%%=============================================================================
+%%% @doc Advent of code puzzle solution
+%%% @end
+%%%=============================================================================
 -module(aoc2020_day17).
--include_lib("eunit/include/eunit.hrl").
 
--compile([nowarn_unused_function]).
+-behavior(aoc_puzzle).
 
-%% Entry points
-part1(Input) ->
+-export([ parse/1
+        , solve1/1
+        , solve2/1
+        , info/0
+        ]).
+
+-include("aoc_puzzle.hrl").
+
+%%------------------------------------------------------------------------------
+%% @doc info/0
+%% Returns info about this puzzle.
+%% @end
+%%------------------------------------------------------------------------------
+-spec info() -> aoc_puzzle().
+info() ->
+  #aoc_puzzle{ module = ?MODULE
+             , year = 2020
+             , day = 17
+             , name = "Conway Cubes"
+             , expected = {242, 2292}
+             , has_input_file = false
+             }.
+
+%%==============================================================================
+%% Types
+%%==============================================================================
+-type input_type() :: binary().
+-type result1_type() :: integer().
+-type result2_type() :: result1_type().
+
+%%------------------------------------------------------------------------------
+%% @doc parse/1
+%% Parses input file.
+%% @end
+%%------------------------------------------------------------------------------
+-spec parse(Input :: binary()) -> input_type().
+parse(_Input) ->
+  <<"..#..#..\n"
+    ".###..#.\n"
+    "#..##.#.\n"
+    "#.#.#.#.\n"
+    ".#..###.\n"
+    ".....#..\n"
+    "#...####\n"
+    "##....#.\n">>.
+
+%%------------------------------------------------------------------------------
+%% @doc solve1/1
+%% Solves part 1. Receives parsed input as returned from parse/1.
+%% @end
+%%------------------------------------------------------------------------------
+-spec solve1(Input :: input_type()) -> result1_type().
+solve1(Input) ->
   Cubes = parse_3d(Input),
   conway_3d(Cubes, 6).
 
-part2(Input) ->
+%%------------------------------------------------------------------------------
+%% @doc solve2/1
+%% Solves part 2. Receives parsed input as returned from parse/1.
+%% @end
+%%------------------------------------------------------------------------------
+-spec solve2(Input :: input_type()) -> result2_type().
+solve2(Input) ->
   Cubes = parse_4d(Input),
   conway_4d(Cubes, 6).
 
@@ -26,9 +83,7 @@ conway_3d(Cubes, N) ->
   %% show_layers(Cubes0),
   conway_3d(Cubes0, N - 1).
 
-
 do_conway_3d_step(Cubes) ->
-  %% TODO find a better (smaller) bound
   Bound = get_bound(Cubes),
 
   Coords =
@@ -73,34 +128,6 @@ get_bound(Cubes) ->
         fun({X, Y, Z}, _, Acc) ->
             lists:max([Acc, abs(X), abs(Y), abs(Z)])
         end, 0, Cubes).
-
-show_layers(Cubes) ->
-  Bound = get_bound(Cubes),
-
-  io:format("~nLayers~n"
-            "=========================================~n"
-            "Active cubes: ~p~n"
-           "Bound: ~p~n", [Cubes, Bound]),
-
-  lists:foreach(
-    fun(Z) ->
-        io:format("~n", []),
-        Slice = maps:fold(
-                  fun({X, Y, Z0}, _, Slice) ->
-                      if Z == Z0 ->
-                          maps:put({X, Y}, $#, Slice);
-                         true  ->
-                          Slice
-                      end
-                  end, #{}, Cubes),
-
-        case maps:size(Slice) of
-          0 -> ok;
-          _ ->
-            io:format("Z=~p~n", [Z]),
-            io:format("~s~n", [grid:to_str(Slice)])
-        end
-    end, lists:seq(-Bound, Bound)).
 
 %% ======================================================================
 %% 4D conways game of life (brain explodes)
@@ -179,38 +206,6 @@ get_neighbors_4d({X, Y, Z, W}) ->
     WN <- [W - 1, W, W + 1],
     not ((XN == X) and (YN == Y) and (ZN == Z) and (WN == W))].
 
-show_layers_4d(Cubes) ->
-  Bound = get_bound(Cubes),
-
-  io:format("~nLayers~n"
-            "=========================================~n"
-            "Active cubes: ~p~n"
-           "Bound: ~p~n", [Cubes, Bound]),
-
-  lists:foreach(
-    fun(Z) ->
-        lists:foreach(
-          fun(W) ->
-              io:format("~n", []),
-              Slice = maps:fold(
-                        fun({X, Y, Z0, W0}, _, Slice) ->
-                            if (Z == Z0) andalso (W == W0) ->
-                                maps:put({X, Y}, $#, Slice);
-                               true  ->
-                                Slice
-                            end
-                        end, #{}, Cubes),
-
-              case maps:size(Slice) of
-                0 -> ok;
-                _ ->
-                  io:format("Z=~p, W=~p~n", [Z, W]),
-                  io:format("~s~n", [grid:to_str(Slice)])
-              end
-          end, lists:seq(-Bound, Bound))
-    end, lists:seq(-Bound, Bound)).
-
-
 %% ======================================================================
 %% Parser
 %% ======================================================================
@@ -235,32 +230,6 @@ parse_4d(Binary) ->
                   Z = 0,
                   maps:put({X, Y, Z, W}, $#, Map)
               end, #{}, binary:matches(Binary, <<"#">>)).
-
-%% Input reader (place downloaded input file in
-%% priv/inputs/2020/input17.txt).
-get_input() ->
-  inputs:get_as_binary(2020, 17).
-
-%% Tests
-main_test_() ->
-  Input = get_input(),
-
-  [ {"Part 1", ?_assertEqual(242, part1(Input))}
-  , {timeout, 60, {"Part 2", ?_assertEqual(2292, part2(Input))}}
-  ].
-
-
-test_input() ->
-  <<".#.\n"
-    "..#\n"
-    "###\n">>.
-
-ex1_test_() ->
-  ?_assertEqual(112, part1(test_input())).
-
-neighbors_test_() ->
-  ?_assertEqual(26, length(get_neighbors({1, 1, 1}))).
-
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:

@@ -1,39 +1,83 @@
-%%% Advent of Code solution for 2020 day 18.
-%%% Created: 2020-12-18T06:16:04+00:00
-
+%%%=============================================================================
+%%% @doc Advent of code puzzle solution
+%%% @end
+%%%=============================================================================
 -module(aoc2020_day18).
--include_lib("eunit/include/eunit.hrl").
+-behavior(aoc_puzzle).
 
--define(is_int_char(C), (C >= $0) and (C =< $9)).
--define(is_space(C), (C == 32)).
+-export([ parse/1
+        , solve1/1
+        , solve2/1
+        , info/0
+        ]).
 
-%% Solve both parts at once, but use different parsers. They only
-%% differ in the precedence of the +/* operators.
-parts(Input) ->
-  lists:foldl(fun(Line, {A1, A2}) ->
-                  {ok, Tokens, _} = aoc2020_day18_lexer:string(Line),
-                  {A1 + eval_tokens(Tokens, aoc2020_day18_part1_parser),
-                   A2 + eval_tokens(Tokens, aoc2020_day18_part2_parser)}
-              end, {0, 0}, Input).
+-include("aoc_puzzle.hrl").
 
-eval_tokens(Tokens, Parser) ->
-  {ok, AST} = Parser:parse(Tokens),
-  eval_ast(AST).
+%%------------------------------------------------------------------------------
+%% @doc info/0
+%% Returns info about this puzzle.
+%% @end
+%%------------------------------------------------------------------------------
+-spec info() -> aoc_puzzle().
+info() ->
+  #aoc_puzzle{ module = ?MODULE
+             , year = 2020
+             , day = 18
+             , name = "Operation Order"
+             , expected = {8298263963837, 145575710203332}
+             , has_input_file = true
+             }.
+
+%%==============================================================================
+%% Types
+%%==============================================================================
+-type input_type() :: [string()].
+-type result1_type() :: integer().
+-type result2_type() :: result1_type().
+
+%%------------------------------------------------------------------------------
+%% @doc parse/1
+%% Parses input file.
+%% @end
+%%------------------------------------------------------------------------------
+-spec parse(Input :: binary()) -> input_type().
+parse(Input) ->
+  string:tokens(binary_to_list(Input), "\r\n").
+
+%%------------------------------------------------------------------------------
+%% @doc solve1/1
+%% Solves part 1. Receives parsed input as returned from parse/1.
+%% @end
+%%------------------------------------------------------------------------------
+-spec solve1(Input :: input_type()) -> result1_type().
+solve1(Lines) ->
+  sum_over_lines(Lines, aoc2020_day18_part1_parser).
+
+%%------------------------------------------------------------------------------
+%% @doc solve2/1
+%% Solves part 2. Receives parsed input as returned from parse/1.
+%% @end
+%%------------------------------------------------------------------------------
+-spec solve2(Input :: input_type()) -> result2_type().
+solve2(Lines) ->
+  sum_over_lines(Lines, aoc2020_day18_part2_parser).
+
+%%==============================================================================
+%% Internals
+%%==============================================================================
+
+sum_over_lines(Lines, ParserModule) ->
+  lists:foldl(
+    fun(Line, Sum) ->
+        {ok, Tokens, _} = aoc2020_day18_lexer:string(Line),
+        {ok, AST} = ParserModule:parse(Tokens),
+        Sum + eval_ast(AST)
+    end, 0, Lines).
 
 eval_ast({int, N}) -> N;
 eval_ast({expr, Expr}) -> eval_ast(Expr);
 eval_ast({plus, A, B}) -> eval_ast(A) + eval_ast(B);
 eval_ast({mult, A, B}) -> eval_ast(A) * eval_ast(B).
-
-%% Input reader (place downloaded input file in
-%% priv/inputs/2020/input18.txt).
-get_input() ->
-  inputs:get_as_lines(2020, 18).
-
-%% Tests
-main_test_() ->
-  Input = get_input(),
-  {"Part 1 & 2", ?_assertEqual({8298263963837, 145575710203332}, parts(Input))}.
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:

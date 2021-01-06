@@ -1,10 +1,72 @@
-%%% Advent of Code solution for 2020 day 15.
-%%% Created: 2020-12-15T06:19:22+00:00
-
+%%%=============================================================================
+%%% @doc Advent of code puzzle solution
+%%% @end
+%%%=============================================================================
 -module(aoc2020_day15).
--include_lib("eunit/include/eunit.hrl").
 
-%% Puzzle solution
+-behavior(aoc_puzzle).
+
+-export([ parse/1
+        , solve1/1
+        , solve2/1
+        , info/0
+        ]).
+
+-include("aoc_puzzle.hrl").
+
+%%------------------------------------------------------------------------------
+%% @doc info/0
+%% Returns info about this puzzle.
+%% @end
+%%------------------------------------------------------------------------------
+-spec info() -> aoc_puzzle().
+info() ->
+  #aoc_puzzle{ module = ?MODULE
+             , year = 2020
+             , day = 15
+             , name = "Rambunctious Recitation"
+             , expected = {475, 11261}
+             , has_input_file = false
+             }.
+
+%%==============================================================================
+%% Types
+%%==============================================================================
+-type input_type() :: [integer()].
+-type result1_type() :: integer().
+-type result2_type() :: result1_type().
+
+%%------------------------------------------------------------------------------
+%% @doc parse/1
+%% Parses input file.
+%% @end
+%%------------------------------------------------------------------------------
+-spec parse(binary()) -> input_type().
+parse(_Input) ->
+  [6,4,12,1,20,0,16].
+
+%%------------------------------------------------------------------------------
+%% @doc solve1/1
+%% Solves part 1. Receives parsed input as returned from parse/1.
+%% @end
+%%------------------------------------------------------------------------------
+-spec solve1(Input :: input_type()) -> result1_type().
+solve1(Input) ->
+  solve(Input, 2020).
+
+%%------------------------------------------------------------------------------
+%% @doc solve2/1
+%% Solves part 2. Receives parsed input as returned from parse/1.
+%% @end
+%%------------------------------------------------------------------------------
+-spec solve2(Input :: input_type()) -> result2_type().
+solve2(Input) ->
+  solve(Input, 30000000).
+
+%%==============================================================================
+%% Internals
+%%==============================================================================
+
 solve(Input, Limit) ->
   [Last|Rest] = lists:reverse(Input),
   Input0 = lists:reverse(Rest),
@@ -38,20 +100,6 @@ array_put(Array, I, Val) ->
 
 array_get(Array, I) ->
   atomics:get(Array, I + 1).
-
-input() ->
-  [6,4,12,1,20,0,16].
-
-%% Tests
-main_test_() ->
-  Input = input(),
-
-  [ {"Part 1", ?_assertEqual(475, solve(Input, 2020))}
-  , {timeout, 60, {"Part 2", ?_assertEqual(11261, solve(Input, 30000000))}}
-  ].
-
-ex1_test_() ->
-  ?_assertEqual(436, solve([0, 3, 6], 2020)).
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:

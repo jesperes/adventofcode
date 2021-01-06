@@ -14,6 +14,7 @@ main(Args) ->
   {ok, {Options, _Rest}} = getopt:parse(OptSpecList, Args),
   InputFileDir = proplists:get_value(inputs, Options),
   Puzzles = aoc_puzzle:find_puzzles(all, all),
+  io:format("Running ~p puzzles...", [length(Puzzles)]),
   Solutions =
     lists:map(
       fun(P) ->
@@ -41,7 +42,7 @@ timestamp() ->
   Micro + (1000000 * Secs) + (1000000000000 * Mega).
 
 run_with_timing(M, F, A) ->
-  io:format("~p ~p... ", [M, F]),
+  io:format(".", []),
   Repeats = 10,
   MaxMicros = 1000000,
   Start = timestamp(),
@@ -64,14 +65,14 @@ run_with_timing(M, F, A) ->
               {TotalTime + T, TotalRepeats + 1, Result0, Cont}
           end
       end, {0, 0, undefined, continue}, lists:seq(1, Repeats)),
-  io:format("(~p repeats, ~.3f ms)~n", [R, T / 1000.0]),
   {trunc(T / R), V}.
 
 solve_puzzle(Puzzle, InputFileDir) ->
+  io:format("[~p]", [Puzzle#aoc_puzzle.day]),
   Binary = get_input(Puzzle, InputFileDir),
   M = Puzzle#aoc_puzzle.module,
-  {ParseTime, ParsedInput} = run_with_timing(M, parse, [Binary]),
   {Exp1, Exp2} = Puzzle#aoc_puzzle.expected,
+  {ParseTime, ParsedInput} = run_with_timing(M, parse, [Binary]),
   {Part1Time, Part1Result} = run_with_timing(M, solve1, [ParsedInput]),
   {Part2Time, Part2Result} = run_with_timing(M, solve2, [ParsedInput]),
 
@@ -106,7 +107,10 @@ tabulate(Solutions) ->
                      [io_lib:format("~p", [Puzzle#aoc_puzzle.year]),
                       io_lib:format("~p", [Puzzle#aoc_puzzle.day]),
                       Puzzle#aoc_puzzle.name,
-                      io_lib:format("~.3f", [Puzzle#aoc_puzzle.parse / 1000.0]),
+                      case Puzzle#aoc_puzzle.has_input_file of
+                        true -> io_lib:format("~.3f", [Puzzle#aoc_puzzle.parse / 1000.0]);
+                        false -> "-"
+                      end,
                       io_lib:format("~.3f", [Puzzle#aoc_puzzle.part1 / 1000.0]),
                       io_lib:format("~.3f", [Puzzle#aoc_puzzle.part2 / 1000.0]),
                       io_lib:format("~.3f", [(Puzzle#aoc_puzzle.parse +
@@ -131,8 +135,7 @@ tabulate(Solutions) ->
                                                                         P#aoc_puzzle.part2) end, Solutions)) / 1000.0])
                 ]),
 
-  io:format("All times are in milliseconds.~n", []),
-  io:format("~s~n", [tabulate(list_to_binary(Table), Sep)]).
+  io:format("~n~n~s~n", [tabulate(list_to_binary(Table), Sep)]).
 
 tabulate(Binary, Sep) ->
   TempFile = "/tmp/tabulate" ++ integer_to_list(rand:uniform(1 bsl 127)),

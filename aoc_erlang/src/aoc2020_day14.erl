@@ -1,24 +1,92 @@
-%%% Advent of Code solution for 2020 day 14.
-%%% Created: 2020-12-14T06:13:49+00:00
-
+%%%=============================================================================
+%%% @doc Advent of code puzzle solution
+%%% @end
+%%%=============================================================================
 -module(aoc2020_day14).
--include_lib("eunit/include/eunit.hrl").
 
-%% Puzzle solution
-part1(Input) ->
-  Masks = parse(Input),
+-behavior(aoc_puzzle).
+
+-export([ parse/1
+        , solve1/1
+        , solve2/1
+        , info/0
+        ]).
+
+-include("aoc_puzzle.hrl").
+
+%%------------------------------------------------------------------------------
+%% @doc info/0
+%% Returns info about this puzzle.
+%% @end
+%%------------------------------------------------------------------------------
+-spec info() -> aoc_puzzle().
+info() ->
+  #aoc_puzzle{ module = ?MODULE
+             , year = 2020
+             , day = 14
+             , name = "Docking Data"
+             , expected = {8471403462063, 2667858637669}
+             , has_input_file = true
+             }.
+
+%%==============================================================================
+%% Types
+%%==============================================================================
+-type write() :: { write
+                  , Address :: integer()
+                  , Value :: integer()
+                  }.
+-type writes() :: [write()].
+-type mask_block() :: {Mask :: string(),
+                       Writes :: writes()}.
+-type mask_blocks() :: [mask_block()].
+-type input_type() :: mask_blocks().
+-type result1_type() :: any().
+-type result2_type() :: result1_type().
+
+%%------------------------------------------------------------------------------
+%% @doc parse/1
+%% Parses input file.
+%% @end
+%%------------------------------------------------------------------------------
+-spec parse(Input :: binary()) -> input_type().
+parse(Input) ->
+  lists:filtermap(
+    fun(Bin) ->
+        [First|Rest] = re:split(Bin, "\n", [multiline]),
+        Writes = parse_writes(filter_empty(Rest), []),
+        {true, {binary_to_list(First), Writes}}
+    end, filter_empty(re:split(Input, "mask = ", [multiline]))).
+
+%%------------------------------------------------------------------------------
+%% @doc solve1/1
+%% Solves part 1. Receives parsed input as returned from parse/1.
+%% @end
+%%------------------------------------------------------------------------------
+-spec solve1(Masks :: input_type()) -> result1_type().
+solve1(Masks) ->
   Memory = apply_masks(Masks, #{}),
   lists:sum(maps:values(Memory)).
 
-part2(Input) ->
-  Masks = parse(Input),
+%%------------------------------------------------------------------------------
+%% @doc solve2/1
+%% Solves part 2. Receives parsed input as returned from parse/1.
+%% @end
+%%------------------------------------------------------------------------------
+-spec solve2(Masks :: input_type()) -> result2_type().
+solve2(Masks) ->
   Memory = apply_masks2(Masks, #{}),
   lists:sum(maps:values(Memory)).
 
-%% ======================================================================
-%% Part 1
-%% ======================================================================
+%%==============================================================================
+%% Internals
+%%==============================================================================
 
+%%==============================================================================
+%% Part 1
+%%==============================================================================
+
+-spec parse_writes(Lines :: [binary()], Acc :: writes()) -> writes().
 parse_writes([], Writes) ->
   lists:reverse(Writes);
 parse_writes([Write|Rest], Writes) ->
@@ -56,10 +124,9 @@ write_bits(Addr, Value, Pos, [MaskBit|Rest]) ->
     end,
   write_bits(Addr, Value0, Pos - 1, Rest).
 
-%% ======================================================================
+%%==============================================================================
 %% Part 2
-%% ======================================================================
-
+%%==============================================================================
 apply_masks2(Masks, Memory) ->
   lists:foldl(
     fun({Mask, Writes}, MemoryIn) ->
@@ -113,54 +180,11 @@ make_expanded_mask(Addr, Bits, N) ->
 with_index(L) ->
   lists:zip(lists:seq(0, length(L) - 1), L).
 
-%% ======================================================================
-%% Helpers
-%% ======================================================================
-
+-spec filter_empty([binary()]) -> [binary()].
 filter_empty(L) ->
   lists:filter(fun(<<>>) -> false;
                   (_) -> true
                end, L).
-
-parse(Input) ->
-  lists:filtermap(
-    fun(Bin) ->
-        [First|Rest] = re:split(Bin, "\n", [multiline]),
-        Writes = parse_writes(filter_empty(Rest), []),
-        {true, {binary_to_list(First), Writes}}
-    end, filter_empty(re:split(Input, "mask = ", [multiline]))).
-
-
-%% Input reader (place downloaded input file in
-%% priv/inputs/2020/input14.txt).
-get_input() ->
-  inputs:get_as_binary(2020, 14).
-
-%% Tests
-main_test_() ->
-  Input = get_input(),
-
-  [ {"Part 1", ?_assertEqual(8471403462063, part1(Input))}
-  , {"Part 2", ?_assertEqual(2667858637669, part2(Input))}
-  ].
-
-test_input() ->
-  <<"mask = XXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXX0X\n",
-    "mem[8] = 11\n",
-    "mem[7] = 101\n",
-    "mem[8] = 0\n">>.
-
-ex1_test_() ->
-  ?_assertEqual(165, part1(test_input())).
-
-test_input2() ->
-  <<"mask = 000000000000000000000000000000X1001X\n"
-    "mem[42] = 100\n"
-    "mask = 00000000000000000000000000000000X0XX\n"
-    "mem[26] = 1\n">>.
-
-ex2_test_() ->
-  ?_assertEqual(208, part2(test_input2())).
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:

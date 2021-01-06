@@ -1,14 +1,57 @@
-%%% Advent of Code solution for 2020 day 12.
-%%% Created: 2020-12-12T05:24:44+00:00
-
+%%%=============================================================================
+%%% @doc Advent of code puzzle solution
+%%% @end
+%%%=============================================================================
 -module(aoc2020_day12).
--include_lib("eunit/include/eunit.hrl").
 
-%% ======================================================================
-%% Part 1
-%% ======================================================================
+-behavior(aoc_puzzle).
 
-part1(Lines) ->
+-export([ parse/1
+        , solve1/1
+        , solve2/1
+        , info/0
+        ]).
+
+-include("aoc_puzzle.hrl").
+
+%%------------------------------------------------------------------------------
+%% @doc info/0
+%% Returns info about this puzzle.
+%% @end
+%%------------------------------------------------------------------------------
+-spec info() -> aoc_puzzle().
+info() ->
+  #aoc_puzzle{ module = ?MODULE
+             , year = 2020
+             , day = 12
+             , name = "Rain Risk"
+             , expected = {845, 27016}
+             , has_input_file = true
+             }.
+
+%%==============================================================================
+%% Types
+%%==============================================================================
+-type input_type() :: [string()].
+-type result1_type() :: integer().
+-type result2_type() :: result1_type().
+
+%%------------------------------------------------------------------------------
+%% @doc parse/1
+%% Parses input file.
+%% @end
+%%------------------------------------------------------------------------------
+-spec parse(Input :: binary()) -> input_type().
+parse(Input) ->
+  string:tokens(binary_to_list(Input), "\n\r").
+
+%%------------------------------------------------------------------------------
+%% @doc solve1/1
+%% Solves part 1. Receives parsed input as returned from parse/1.
+%% @end
+%%------------------------------------------------------------------------------
+-spec solve1(Lines :: input_type()) -> result1_type().
+solve1(Lines) ->
   {Xfinal, Yfinal, _} =
     lists:foldl(
       fun(S, {X, Y, Dir}) ->
@@ -30,21 +73,13 @@ part1(Lines) ->
       end, {0, 0, 90}, Lines),
   abs(Xfinal) + abs(Yfinal).
 
-%% Helpers
-left(Dir, Value) -> ((Dir + 360) - Value) rem 360.
-right(Dir, Value) -> ((Dir + 360) + Value) rem 360.
-
-forward(X, Y, Value, 0) -> {X, Y - Value};
-forward(X, Y, Value, 90) -> {X + Value, Y};
-forward(X, Y, Value, 180) -> {X, Y + Value};
-forward(X, Y, Value, 270) -> {X - Value, Y}.
-
-
-%% ======================================================================
-%% Part 2
-%% ======================================================================
-
-part2(Lines) ->
+%%------------------------------------------------------------------------------
+%% @doc solve2/1
+%% Solves part 2. Receives parsed input as returned from parse/1.
+%% @end
+%%------------------------------------------------------------------------------
+-spec solve2(Lines :: input_type()) -> result2_type().
+solve2(Lines) ->
   {_, {Xfinal, Yfinal}} =
     lists:foldl(
       fun(S, {WP, Ship}) ->
@@ -68,6 +103,19 @@ part2(Lines) ->
       end, {{10, -1}, {0, 0}}, Lines),
   abs(Xfinal) + abs(Yfinal).
 
+%%==============================================================================
+%% Internals
+%%==============================================================================
+
+%% Helpers
+left(Dir, Value) -> ((Dir + 360) - Value) rem 360.
+right(Dir, Value) -> ((Dir + 360) + Value) rem 360.
+
+forward(X, Y, Value, 0) -> {X, Y - Value};
+forward(X, Y, Value, 90) -> {X + Value, Y};
+forward(X, Y, Value, 180) -> {X, Y + Value};
+forward(X, Y, Value, 270) -> {X - Value, Y}.
+
 %% Rotate waypoint left, N degrees
 wp_left({X, Y}, 0) -> {X, Y};
 wp_left({X, Y}, N) -> wp_left({Y, -X}, N - 90).
@@ -75,35 +123,6 @@ wp_left({X, Y}, N) -> wp_left({Y, -X}, N - 90).
 %% Rotate waypoint right, N degrees
 wp_right({X, Y}, 0) -> {X, Y};
 wp_right({X, Y}, N) -> wp_right({-Y, X}, N - 90).
-
-
-
-%% Input reader (place downloaded input file in
-%% priv/inputs/2020/input12.txt).
-get_input() ->
-  inputs:get_as_lines(2020, 12).
-
-%% Tests
-main_test_() ->
-  Input = get_input(),
-
-  [ {"Part 1", ?_assertEqual(845, part1(Input))}
-  , {"Part 2", ?_assertEqual(27016, part2(Input))}
-  ].
-
-test_input() ->
-  ["F10",
-   "N3",
-   "F7",
-   "R90",
-   "F11"].
-
-ex1_test_() ->
-  ?_assertEqual(25, part1(test_input())).
-
-ex2_test_() ->
-  ?_assertEqual(286, part2(test_input())).
-
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:

@@ -1,25 +1,70 @@
-%%% Advent of Code solution for 2020 day 13.
-%%% Created: 2020-12-13T06:55:07+00:00
-
+%%%=============================================================================
+%%% @doc Advent of code puzzle solution
+%%% @end
+%%%=============================================================================
 -module(aoc2020_day13).
--include_lib("eunit/include/eunit.hrl").
 
-%% Puzzle solution
-part1(Lines) ->
+-behavior(aoc_puzzle).
+
+-export([ parse/1
+        , solve1/1
+        , solve2/1
+        , info/0
+        ]).
+
+-include("aoc_puzzle.hrl").
+
+%%------------------------------------------------------------------------------
+%% @doc info/0
+%% Returns info about this puzzle.
+%% @end
+%%------------------------------------------------------------------------------
+-spec info() -> aoc_puzzle().
+info() ->
+  #aoc_puzzle{ module = ?MODULE
+             , year = 2020
+             , day = 13
+             , name = "Shuttle Search"
+             , expected = {333, 690123192779524}
+             , has_input_file = true
+             }.
+
+%%==============================================================================
+%% Types
+%%==============================================================================
+-type input_type() :: [string()].
+-type result1_type() :: integer().
+-type result2_type() :: result1_type().
+
+%%------------------------------------------------------------------------------
+%% @doc parse/1
+%% Parses input file.
+%% @end
+%%------------------------------------------------------------------------------
+-spec parse(Input :: binary()) -> input_type().
+parse(Input) ->
+  string:tokens(binary_to_list(Input), "\n\r").
+
+%%------------------------------------------------------------------------------
+%% @doc solve1/1
+%% Solves part 1. Receives parsed input as returned from parse/1.
+%% @end
+%%------------------------------------------------------------------------------
+-spec solve1(Lines :: input_type()) -> result1_type().
+solve1(Lines) ->
   [TimestampStr, DepartureStr] = Lines,
   TS = list_to_integer(TimestampStr),
   Deps = lists:map(fun list_to_integer/1,
                    re:split(DepartureStr, "[,x]+", [{return, list}])),
   find_next_dep(TS, Deps).
 
-find_next_dep(TS, Deps) ->
-  [{T, ID}|_] =
-    lists:sort(lists:map(fun(ID0) ->
-                             {ID0 - (TS rem ID0), ID0}
-                         end, Deps)),
-  T * ID.
-
-part2(Lines) ->
+%%------------------------------------------------------------------------------
+%% @doc solve2/1
+%% Solves part 2. Receives parsed input as returned from parse/1.
+%% @end
+%%------------------------------------------------------------------------------
+-spec solve2(Lines :: input_type()) -> result2_type().
+solve2(Lines) ->
   [_, DepartureStr] = Lines,
   L = re:split(DepartureStr, ",", [{return, list}]),
   Congruences =
@@ -32,9 +77,20 @@ part2(Lines) ->
                     lists:zip(lists:seq(0, length(L)-1), L)),
   chinese_remainder(Congruences).
 
-%% ======================================================================
+%%==============================================================================
+%% Internals
+%%==============================================================================
+
+find_next_dep(TS, Deps) ->
+  [{T, ID}|_] =
+    lists:sort(lists:map(fun(ID0) ->
+                             {ID0 - (TS rem ID0), ID0}
+                         end, Deps)),
+  T * ID.
+
+%%==============================================================================
 %% CRT impl from https://rosettacode.org/wiki/Chinese_remainder_theorem#Erlang
-%% ======================================================================
+%%==============================================================================
 
 egcd(_, 0) -> {1, 0};
 egcd(A, B) ->
@@ -80,41 +136,6 @@ chinese_remainder(Congruences) ->
                   ]),
       mod(Solution, ModPI)
   end.
-
-%% Input reader (place downloaded input file in
-%% priv/inputs/2020/input13.txt).
-get_input() ->
-  inputs:get_as_lines(2020, 13).
-
-%% Tests
-main_test_() ->
-  Input = get_input(),
-
-  [ {"Part 1", ?_assertEqual(333, part1(Input))}
-  , {"Part 2", ?_assertEqual(690123192779524, part2(Input))}
-  ].
-
-ex1_test_() ->
-  ?_assertEqual(295, find_next_dep(939, [7, 13, 59, 31, 19])).
-
-ex2_test_() ->
-  [ ?_assertEqual(1068781, part2(["", "7,13,x,x,59,x,31,19"]))
-  , ?_assertEqual(3417, part2(["", "17,x,13,19"]))
-  , ?_assertEqual(754018, part2(["", "67,7,59,61"]))
-  ].
-
-%% Test cases from https://rosettacode.org/wiki/Chinese_remainder_theorem#Erlang.
-crt_test_() ->
-  [ ?_assertEqual(1000, chinese_remainder([{10 , 11},
-                                           {4  , 12},
-                                           {12 , 13}]))
-  , ?_assertEqual(undefined, chinese_remainder([{10 , 11},
-                                                {4  , 22},
-                                                {9  , 19}]))
-  , ?_assertEqual(23, chinese_remainder([{2 , 3},
-                                         {3 , 5},
-                                         {2 , 7}]))
-  ].
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:

@@ -1,17 +1,63 @@
-%%% Advent of Code solution for 2020 day 19.
-%%% Created: 2020-12-19T06:02:22+00:00
-
+%%%=============================================================================
+%%% @doc Advent of code puzzle solution
+%%% @end
+%%%=============================================================================
 -module(aoc2020_day19).
--include_lib("eunit/include/eunit.hrl").
 
--compile([nowarn_unused_function]).
+-behavior(aoc_puzzle).
 
-%% ======================================================================
-%% Part 1
-%% ======================================================================
+-export([ parse/1
+        , solve1/1
+        , solve2/1
+        , info/0
+        ]).
 
-part1(Input) ->
-  {Rules, Messages} = parse(Input),
+-include("aoc_puzzle.hrl").
+
+%%------------------------------------------------------------------------------
+%% @doc info/0
+%% Returns info about this puzzle.
+%% @end
+%%------------------------------------------------------------------------------
+-spec info() -> aoc_puzzle().
+info() ->
+  #aoc_puzzle{ module = ?MODULE
+             , year = 2020
+             , day = 19
+             , name = "Monster Messages"
+             , expected = {147, 263}
+             , has_input_file = true
+             }.
+
+%%==============================================================================
+%% Types
+%%==============================================================================
+-type rules() :: map(). %% TODO refine
+-type messages() :: [binary()].
+-type input_type() :: { rules(), messages() }.
+-type result1_type() :: integer().
+-type result2_type() :: result1_type().
+
+%%------------------------------------------------------------------------------
+%% @doc parse/1
+%% Parses input file.
+%% @end
+%%------------------------------------------------------------------------------
+-spec parse(Input :: binary()) -> input_type().
+parse(Input) ->
+  [RuleBlock, MessageBlock] = binary:split(Input, <<"\n\n">>),
+  Rules = binary:split(RuleBlock, <<"\n">>, [global]),
+  Messages = binary:split(MessageBlock, <<"\n">>, [global]),
+  Rules0 = lists:foldl(fun parse_rule/2, #{}, Rules),
+  {Rules0, Messages}.
+
+%%------------------------------------------------------------------------------
+%% @doc solve1/1
+%% Solves part 1. Receives parsed input as returned from parse/1.
+%% @end
+%%------------------------------------------------------------------------------
+-spec solve1(Input :: input_type()) -> result1_type().
+solve1({Rules, Messages}) ->
   RE = to_regex(0, Rules),
   {ok, CompiledRE} = re:compile("^" ++ RE ++ "$"),
   lists:foldl(fun(M, Acc) ->
@@ -21,8 +67,9 @@ part1(Input) ->
                   end
               end, 0, Messages).
 
-
 %% ======================================================================
+%% @doc solve2/1
+%%
 %% Part 2
 %%
 %% The input rules are modified so that they contain loops. The
@@ -44,9 +91,8 @@ part1(Input) ->
 %%    nothing else.
 %%
 %% ======================================================================
-
-part2(Input) ->
-  {Rules, Messages} = parse(Input),
+-spec solve2(Input :: input_type()) -> result2_type().
+solve2({Rules, Messages}) ->
   RE_42_str = to_regex(42, Rules),
   {ok, RE_42} = re:compile("^(" ++ RE_42_str ++ ")+$"),
   {ok, RE_42_end} = re:compile("^(?<first>.*)" ++ RE_42_str ++ "$"),
@@ -59,6 +105,10 @@ part2(Input) ->
           false -> Acc
         end
     end, 0, Messages).
+
+%%==============================================================================
+%% Internals
+%%==============================================================================
 
 is_match(M, RE_42, RE_42_end, RE_31_end) ->
   {N_31, Rest} = is_match_31(M, RE_31_end, 0),
@@ -101,56 +151,6 @@ is_match_42(Str, RE_42) ->
   end.
 
 %% ======================================================================
-%% Graph generator
-%% ======================================================================
-
-%% Generate .dot+.png graphs for the rules, to easier spot the
-%% differences.
-generate_dot_graphs(Rules, Id) ->
-  Dot = to_dot(Rules),
-  Basename = io_lib:format("day19_~s", [Id]),
-  %% ?debugFmt("Generating dot graph: ~s.dot~n", [Basename]),
-  ok = file:write_file(Basename ++ ".dot", Dot),
-  [] = os:cmd(lists:flatten(io_lib:format("dot -Tpng -o ~s.png ~s.dot",
-                                          [Basename, Basename]))).
-to_dot(RuleMap) ->
-  "digraph rules {\n" ++
-    to_dot0(RuleMap) ++
-    "}\n".
-
-to_dot0(RuleMap) ->
-  lists:map(
-    fun({LHS, RHS}) ->
-        %% ?debugFmt("~p", [{LHS, RHS}]),
-        case RHS of
-          [R] ->
-            io_lib:format("rule_~w -> rule_~w;~n", [LHS, R]);
-          _ ->
-            %% If RHS consists of multiple rules, we need an
-            %% intermediary node to represent the "logical and".
-            RHSNode = make_rhs_node(RHS),
-            io_lib:format("rule_~w -> ~s;~n", [LHS, RHSNode]) ++
-              lists:map(
-                fun(R) ->
-                    io_lib:format("~s -> rule_~w;~n",
-                                  [RHSNode, R])
-                end, RHS)
-        end
-    end,
-    [{LHS, RHS} || {LHS, RHSList} <- maps:to_list(RuleMap),
-                   RHS <- RHSList]).
-
-make_rhs_node(RHS) ->
-  "_" ++
-    lists:join("_and_",
-               lists:map(fun(R) when is_atom(R) ->
-                             atom_to_list(R);
-                            (R) when is_integer(R) ->
-                             integer_to_list(R)
-                         end, RHS)) ++ "_".
-
-
-%% ======================================================================
 %% Regexp rewriting
 %% ======================================================================
 
@@ -182,13 +182,6 @@ to_regex(Key, _RuleMap) when is_atom(Key) ->
 %% Parser
 %% ======================================================================
 
-parse(Input) ->
-  [RuleBlock, MessageBlock] = binary:split(Input, <<"\n\n">>),
-  Rules = binary:split(RuleBlock, <<"\n">>, [global]),
-  Messages = binary:split(MessageBlock, <<"\n">>, [global]),
-  Rules0 = lists:foldl(fun parse_rule/2, #{}, Rules),
-  {Rules0, Messages}.
-
 parse_rule(Binary, Acc) ->
   [LHS, RHS] = binary:split(Binary, <<":">>),
   SubRules = lists:map(
@@ -206,93 +199,13 @@ parse_rule(Binary, Acc) ->
   maps:put(LHS0, SubRules, Acc).
 
 btoi(B) ->
+  %% TODO compile this RE to speed up parsing
   case re:run(B, "\"([ab])\"|(\\d+)", [{capture, all_but_first, list}]) of
     {match, [[], RuleNum]} ->
       list_to_integer(RuleNum);
     {match, [Terminal]} ->
       list_to_atom(Terminal)
   end.
-
-%% Input reader (place downloaded input file in
-%% priv/inputs/2020/input19.txt).
-get_input() ->
-  inputs:get_as_binary(2020, 19).
-
-%% Tests
-main_test_() ->
-  Input = get_input(),
-  [ {"Part 1", ?_assertEqual(147, part1(Input))}
-  , {"Part 2", ?_assertEqual(263, part2(Input))}
-  ].
-
-test_input1() ->
-  <<"0: 4 1 5\n"
-    "1: 2 3 | 3 2\n"
-    "2: 4 4 | 5 5\n"
-    "3: 4 5 | 5 4\n"
-    "4: \"a\"\n"
-    "5: \"b\"\n"
-    "\n"
-    "ababbb\n"
-    "bababa\n"
-    "abbbab\n"
-    "aaabbb\n"
-    "aaaabbb">>.
-
-ex1_test_() ->
-  ?_assertEqual(2, part1(test_input1())).
-
-test_input2() ->
-  <<"42: 9 14 | 10 1\n"
-    "9: 14 27 | 1 26\n"
-    "10: 23 14 | 28 1\n"
-    "1: \"a\"\n"
-    "11: 42 31 | 42 11 31 \n"
-    "5: 1 14 | 15 1\n"
-    "19: 14 1 | 14 14\n"
-    "12: 24 14 | 19 1\n"
-    "16: 15 1 | 14 14\n"
-    "31: 14 17 | 1 13\n"
-    "6: 14 14 | 1 14\n"
-    "2: 1 24 | 14 4\n"
-    "0: 8 11\n"
-    "13: 14 3 | 1 12\n"
-    "15: 1 | 14\n"
-    "17: 14 2 | 1 7\n"
-    "23: 25 1 | 22 14\n"
-    "28: 16 1\n"
-    "4: 1 1\n"
-    "20: 14 14 | 1 15\n"
-    "3: 5 14 | 16 1\n"
-    "27: 1 6 | 14 18\n"
-    "14: \"b\"\n"
-    "21: 14 1 | 1 14\n"
-    "25: 1 1 | 1 14\n"
-    "22: 14 14\n"
-    "8: 42 | 42 8\n"
-    "26: 14 22 | 1 20\n"
-    "18: 15 15\n"
-    "7: 14 5 | 1 21\n"
-    "24: 14 1\n"
-    "\n"
-    "abbbbbabbbaaaababbaabbbbabababbbabbbbbbabaaaa\n"
-    "bbabbbbaabaabba\n"
-    "babbbbaabbbbbabbbbbbaabaaabaaa\n"
-    "aaabbbbbbaaaabaababaabababbabaaabbababababaaa\n"
-    "bbbbbbbaaaabbbbaaabbabaaa\n"
-    "bbbababbbbaaaaaaaabbababaaababaabab\n"
-    "ababaaaaaabaaab\n"
-    "ababaaaaabbbaba\n"
-    "baabbaaaabbaaaababbaababb\n"
-    "abbbbabbbbaaaababbbbbbaaaababb\n"
-    "aaaaabbaabaaaaababaa\n"
-    "aaaabbaaaabbaaa\n"
-    "aaaabbaabbaaaaaaabbbabbbaaabbaabaaa\n"
-    "babaaabbbaaabaababbaabababaaab\n"
-    "aabbbbbaabbbaaaaaabbbbbababaaaaabbaaabba\n">>.
-
-ex2_test_() ->
-  ?_assertEqual(12, part2(test_input2())).
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:
