@@ -43,7 +43,7 @@ timestamp() ->
 
 run_with_timing(M, F, A) ->
   io:format(".", []),
-  Repeats = 1000,
+  Repeats = 1,
   MaxMicros = 1000000, %% 1s
   Start = timestamp(),
   {T, R, V, _} =
@@ -220,16 +220,30 @@ tabulate(Solutions) ->
                 fmt(TotalPerPuzzle / 1000.0)
                 ]),
 
+  Bin = list_to_binary(Table),
+
   io:format("~n~n", []),
   io:format("Language: erlang~n", []),
   io:format("System version: ~s~n", [erlang:system_info(system_version)]),
-  io:format("~n~s~n", [tabulate(list_to_binary(Table), Sep)]).
+  io:format("~n~s~n", [tabulate(Bin, Sep)]),
+
+  ok = file:write_file("table.csv", Bin),
+  tabulate(Bin, Sep, "table.html", "html").
 
 tabulate(Binary, Sep) ->
   TempFile = "/tmp/tabulate" ++ integer_to_list(rand:uniform(1 bsl 127)),
   try
     ok = file:write_file(TempFile, Binary),
-    os:cmd("tabulate -f simple -s '" ++ Sep ++ "' " ++ TempFile)
+    os:cmd("tabulate -s '" ++ Sep ++ "' " ++ TempFile)
+  after
+    file:delete(TempFile)
+  end.
+
+tabulate(Binary, Sep, Filename, Format) ->
+  TempFile = "/tmp/tabulate" ++ integer_to_list(rand:uniform(1 bsl 127)),
+  try
+    ok = file:write_file(TempFile, Binary),
+    [] = os:cmd("tabulate -f " ++ Format ++ " -s '" ++ Sep ++ "' -o " ++ Filename ++ " " ++ TempFile)
   after
     file:delete(TempFile)
   end.

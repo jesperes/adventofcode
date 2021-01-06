@@ -242,6 +242,8 @@ public class Aoc2020 {
         } finally {
             Files.delete(path);
         }
+
+        Files.write(Path.of("table.csv"), cmd.toString().getBytes());
     }
 
     private static String formatSumOverRuns(List<AocPuzzleRun<?, ?, ?>> runs,
