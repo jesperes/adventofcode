@@ -2,7 +2,8 @@
 %%% @doc Advent of code puzzle solution
 %%% @end
 %%%=============================================================================
--module(aoc2020_day09).
+-module(template).
+
 -behavior(aoc_puzzle).
 
 -export([ parse/1
@@ -22,16 +23,16 @@
 info() ->
   #aoc_puzzle{ module = ?MODULE
              , year = 2020
-             , day = 9
-             , name = "Encoding Error"
-             , expected = {138879426, 23761694}
+             , day = 1
+             , name = "..."
+             , expected = {none, none}
              , has_input_file = true
              }.
 
 %%==============================================================================
 %% Types
 %%==============================================================================
--type input_type() :: [integer()].
+-type input_type() :: binary().
 -type result1_type() :: any().
 -type result2_type() :: result1_type().
 
@@ -42,8 +43,7 @@ info() ->
 %%------------------------------------------------------------------------------
 -spec parse(Input :: binary()) -> input_type().
 parse(Input) ->
-  lists:map(fun erlang:list_to_integer/1,
-            string:tokens(binary_to_list(Input), "\n\r")).
+  Input.
 
 %%------------------------------------------------------------------------------
 %% @doc solve1/1
@@ -51,60 +51,35 @@ parse(Input) ->
 %% @end
 %%------------------------------------------------------------------------------
 -spec solve1(Input :: input_type()) -> result1_type().
-solve1(Input) ->
-  find_first_invalid(Input, 25).
+solve1(_Input) ->
+  throw(not_implemented).
 
 %%------------------------------------------------------------------------------
 %% @doc solve2/1
 %% Solves part 2. Receives parsed input as returned from parse/1.
 %% @end
 %%------------------------------------------------------------------------------
--spec solve2(Prog :: input_type()) -> result2_type().
-solve2(Input) ->
-  find_range(Input, 138879426).
+-spec solve2(Input :: input_type()) -> result2_type().
+solve2(_Input) ->
+  throw(not_implemented).
 
 %%==============================================================================
 %% Internals
 %%==============================================================================
 
-find_first_invalid([_|Rest] = List, N) ->
-  {Preamble, [Next|_]} = lists:split(N, List),
-  case [Next || X <- Preamble,
-                Y <- Preamble,
-                X /= Y, X + Y == Next] of
-    [_|_] ->
-      find_first_invalid(Rest, N);
-    _ ->
-      Next
-  end.
+%%==============================================================================
+%% Unit tests
+%%==============================================================================
 
-find_range(List, Num) ->
-  find_range(List, 2, Num).
+-ifdef(EUNIT).
+-include_lib("eunit/include/eunit.hrl").
 
-find_range(List, Len, Num) when Len < length(List) ->
-  case find_range0(List, Len, Num) of
-    N when is_integer(N) ->
-      N;
-    false ->
-      %% No range of len Num was found, try a longer one
-      find_range(List, Len + 1, Num)
-  end.
+ex1_test_() ->
+  ?_assert(remove_if_unused).
 
-%% Find a range in `List' of length `Len' which sums up to `Num`.
-%% Returns the sum of the first and last numbers if found, or false if
-%% no such range was found.
-find_range0(List, Len, _Num) when length(List) < Len ->
-  false;
-find_range0([_|Rest] = List, Len, Num) ->
-  {Range, _} = lists:split(Len, List),
-  Sum = lists:sum(Range),
-  if Sum == Num ->
-      lists:min(Range) + lists:max(Range);
-     true ->
-      find_range0(Rest, Len, Num)
-  end.
+-endif.
 
-%%%_* Emacs ====================================================================
+%%% === Emacs ===
 %%% Local Variables:
 %%% allout-layout: t
 %%% erlang-indent-level: 2

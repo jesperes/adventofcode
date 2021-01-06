@@ -1,16 +1,25 @@
 %%% Created: 2020-12-08T05:38:36+00:00
 
 -module(aoc2020_day08).
--include_lib("eunit/include/eunit.hrl").
+-behavior(aoc_puzzle).
 
-%% Puzzle solution
-part1(Prog) ->
-  {loop, Acc} = execute(Prog),
-  Acc.
+-export([ parse/1
+        , solve1/1
+        , solve2/1
+        , info/0
+        ]).
 
-part2(Prog) ->
-  repair(Prog).
+-include("aoc_puzzle.hrl").
 
+-spec info() -> aoc_puzzle().
+info() ->
+  #aoc_puzzle{ module = ?MODULE
+             , year = 2020
+             , day = 8
+             , name = "Handheld Halting"
+             , expected = {1384, 761}
+             , has_input_file = true
+             }.
 %% Types
 -type opcode() :: nop
                 | acc
@@ -23,6 +32,30 @@ part2(Prog) ->
 
 -type prog_result() :: {eop, Acc :: integer()}    %% Program finished
                      | {loop, Acc :: integer()}.  %% Program loop detected
+
+-type input_type() :: prog().
+-type result1_type() :: integer().
+-type result2_type() :: result1_type().
+
+-spec parse(Input :: binary()) -> input_type().
+parse(Input) ->
+  {_, Prog} =
+    lists:foldl(fun(S, {N, Map}) ->
+                    [Instr, Op] = string:split(S, " "),
+                    {N + 1, maps:put(N, {list_to_atom(Instr),
+                                         list_to_integer(Op)}, Map)}
+                end, {0, #{}},
+                string:tokens(binary_to_list(Input), "\n\r")),
+  Prog.
+
+-spec solve1(Prog :: input_type()) -> result1_type().
+solve1(Prog) ->
+  {loop, Acc} = execute(Prog),
+  Acc.
+
+-spec solve2(Prog :: input_type()) -> result2_type().
+solve2(Prog) ->
+  repair(Prog).
 
 %% ======================================================================
 %% Part 1: Find value of acc register immediately before an
@@ -94,43 +127,6 @@ jmp_and_nops(Prog) ->
                (_PC, _Instr, Acc) ->
                 Acc
             end, [], Prog).
-
-%% Input reader (place downloaded input file in
-%% priv/inputs/2020/input08.txt).
-get_input() ->
-  parse_input(inputs:get_as_lines(2020, 08)).
-
-parse_input(Lines) ->
-  {_, Prog} =
-    lists:foldl(fun(S, {N, Map}) ->
-                    [Instr, Op] = string:split(S, " "),
-                    {N + 1, maps:put(N, {list_to_atom(Instr),
-                                         list_to_integer(Op)}, Map)}
-                end, {0, #{}}, Lines),
-  Prog.
-
-%% Tests
-main_test_() ->
-  Input = get_input(),
-
-  [ {"Part 1", ?_assertEqual(1384, part1(Input))}
-  , {"Part 2", ?_assertEqual(761, part2(Input))}
-  ].
-
-test_input() ->
-  ["nop +0",
-   "acc +1",
-   "jmp +4",
-   "acc +3",
-   "jmp -3",
-   "acc -99",
-   "acc +1",
-   "jmp -4",
-   "acc +6"].
-
-ex1_test_() ->
-  ?_assertEqual({loop, 5}, execute(parse_input(test_input()))).
-
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:
