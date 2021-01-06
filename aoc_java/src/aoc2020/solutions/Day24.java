@@ -59,6 +59,7 @@ public class Day24 implements IAocPuzzle<List<String>, Integer, Integer> {
             return set;
         }
 
+        // Returns a set of all adjacents (including c itself).
         static public Set<HexCoord> getAdjacents(HexCoord c) {
             return cache.computeIfAbsent(c, v -> computeAdjacents(v));
         }
@@ -68,7 +69,10 @@ public class Day24 implements IAocPuzzle<List<String>, Integer, Integer> {
             for (int dx = -1; dx <= 1; dx++) {
                 for (int dy = -1; dy <= 1; dy++) {
                     for (int dz = -1; dz <= 1; dz++) {
-                        nbrs.add(new HexCoord(c.x + dx, c.y + dy, c.z + dz));
+                        if (dx + dy + dz == 0) {
+                            nbrs.add(
+                                    new HexCoord(c.x + dx, c.y + dy, c.z + dz));
+                        }
                     }
                 }
             }
@@ -77,21 +81,17 @@ public class Day24 implements IAocPuzzle<List<String>, Integer, Integer> {
 
         public int countBlackAdjacents(HexCoord c) {
             int n = 0;
-            for (int dx = -1; dx <= 1; dx++) {
-                for (int dy = -1; dy <= 1; dy++) {
-                    for (int dz = -1; dz <= 1; dz++) {
-                        if (dx == 0 && dy == 0 && dz == 0)
-                            continue;
 
-                        if (dx + dy + dz == 0) {
-                            if (isBlack(new HexCoord(c.x + dx, c.y + dy,
-                                    c.z + dz))) {
-                                n++;
-                            }
-                        }
-                    }
+            for (HexCoord adj : getAdjacents(c)) {
+                if (adj.equals(c)) {
+                    continue;
+                }
+
+                if (isBlack(adj)) {
+                    n++;
                 }
             }
+
             return n;
         }
     }
