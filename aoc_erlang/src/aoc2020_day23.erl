@@ -1,16 +1,79 @@
-%%% Advent of Code solution for 2020 day 23.
-%%% Created: 2020-12-23T05:43:00+00:00
-
+%%%=============================================================================
+%%% @doc Advent of code puzzle solution
+%%% @end
+%%%=============================================================================
 -module(aoc2020_day23).
--include_lib("eunit/include/eunit.hrl").
 
--define(ONE_MILLION, 1000000).
--define(TEN_MILLION, 10000000).
+-behavior(aoc_puzzle).
+
+-export([ parse/1
+        , solve1/1
+        , solve2/1
+        , info/0
+        ]).
+
+-include("aoc_puzzle.hrl").
+
+%%------------------------------------------------------------------------------
+%% @doc info/0
+%% Returns info about this puzzle.
+%% @end
+%%------------------------------------------------------------------------------
+-spec info() -> aoc_puzzle().
+info() ->
+  #aoc_puzzle{ module = ?MODULE
+             , year = 2020
+             , day = 23
+             , name = "Crab Cups"
+             , expected = {"28946753", 519044017360}
+             , has_input_file = false
+             }.
+
+%%==============================================================================
+%% Types
+%%==============================================================================
+-type input_type() :: [integer()].
+-type result1_type() :: string().
+-type result2_type() :: integer().
+
+%%------------------------------------------------------------------------------
+%% @doc parse/1
+%% Parses input file.
+%% @end
+%%------------------------------------------------------------------------------
+-spec parse(_) -> input_type().
+parse(_) ->
+  [5, 8, 6, 4, 3, 9, 1, 7, 2].
+
+%%------------------------------------------------------------------------------
+%% @doc solve1/1
+%% Solves part 1. Receives parsed input as returned from parse/1.
+%% @end
+%%------------------------------------------------------------------------------
+-spec solve1(Input :: input_type()) -> result1_type().
+solve1(Input) ->
+  solve(Input, 100).
+
+%%------------------------------------------------------------------------------
+%% @doc solve2/1
+%% Solves part 2. Receives parsed input as returned from parse/1.
+%% @end
+%%------------------------------------------------------------------------------
+-spec solve2(Input :: input_type()) -> result2_type().
+solve2(Input) ->
+  solve_extended(Input).
+
+%%==============================================================================
+%% Helpers
+%%==============================================================================
 
 solve([First|_] = Input, Moves) ->
   init(Input),
   do_moves(First, Moves),
   lists:map(fun(C) -> C + $0 end, tl(to_list(1))).
+
+-define(ONE_MILLION, 1000000).
+-define(TEN_MILLION, 10000000).
 
 solve_extended(Input) ->
   solve_extended(Input, ?ONE_MILLION, ?TEN_MILLION).
@@ -82,32 +145,6 @@ find_dest(Current) ->
     undefined -> find_dest(Dest);
     N when is_integer(N) -> Dest
   end.
-
-%% ======================================================================
-%% Helpers
-%% ======================================================================
-
-%% Input reader (place downloaded input file in
-%% priv/inputs/2020/input23.txt).
-get_input() ->
-  [5, 8, 6, 4, 3, 9, 1, 7, 2].
-
-%% Tests
-main_test_() ->
-  Input = get_input(),
-  [ {"Part 1", ?_assertEqual("28946753", solve(Input, 100))}
-  , {timeout, 600,
-     {"Part 2",
-      ?_assertEqual(
-         519044017360,
-         solve_extended(Input))}}
-  ].
-
-ex1_test_() ->
-  TestInput = [3, 8, 9, 1, 2, 5, 4, 6, 7],
-  [ ?_assertEqual("92658374", solve(TestInput, 10))
-  , ?_assertEqual("67384529", solve(TestInput, 100))
-  ].
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:

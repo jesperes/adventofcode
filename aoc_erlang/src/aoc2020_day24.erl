@@ -1,32 +1,82 @@
-%%% Advent of Code solution for 2020 day 24.
-%%% Created: 2020-12-24T05:02:46+00:00
-
+%%%=============================================================================
+%%% @doc Advent of code puzzle solution
+%%% @end
+%%%=============================================================================
 -module(aoc2020_day24).
--include_lib("eunit/include/eunit.hrl").
 
-%% For an explanation of how to use 3D coords to represent hexagons,
-%% https://www.redblobgames.com/grids/hexagons/
+-behavior(aoc_puzzle).
 
-%% ======================================================================
-%% Part 1
-%% ======================================================================
-part1(Input) ->
-  Tiles = flip_tiles(Input),
+-export([ parse/1
+        , solve1/1
+        , solve2/1
+        , info/0
+        ]).
+
+-include("aoc_puzzle.hrl").
+
+%%------------------------------------------------------------------------------
+%% @doc info/0
+%% Returns info about this puzzle.
+%% @end
+%%------------------------------------------------------------------------------
+-spec info() -> aoc_puzzle().
+info() ->
+  #aoc_puzzle{ module = ?MODULE
+             , year = 2020
+             , day = 24
+             , name = "Lobby Layout"
+             , expected = {300, 3466}
+             , has_input_file = true
+             }.
+
+%%==============================================================================
+%% Types
+%%==============================================================================
+-type coord() :: { X :: integer()
+                 , Y :: integer()
+                 , Z :: integer()
+                 }.
+-type hexgrid() :: #{ coord() => black }.
+-type input_type() :: hexgrid().
+
+-type result1_type() :: integer().
+-type result2_type() :: result1_type().
+
+%%------------------------------------------------------------------------------
+%% @doc parse/1
+%% Parses input file.
+%% @end
+%%------------------------------------------------------------------------------
+-spec parse(Input :: binary()) -> input_type().
+parse(Input) ->
+  flip_tiles(string:tokens(binary_to_list(Input), "\n\r")).
+
+%%------------------------------------------------------------------------------
+%% @doc solve1/1
+%% Solves part 1. Receives parsed input as returned from parse/1.
+%% @end
+%%------------------------------------------------------------------------------
+-spec solve1(Input :: input_type()) -> result1_type().
+solve1(Tiles) ->
   maps:size(Tiles).
 
-%% ======================================================================
-%% Part 2
-%% ======================================================================
-part2(Input, N) ->
-  Tiles = flip_tiles(Input),
+%%------------------------------------------------------------------------------
+%% @doc solve2/1
+%% Solves part 2. Receives parsed input as returned from parse/1.
+%% @end
+%%------------------------------------------------------------------------------
+-spec solve2(Tiles :: input_type()) -> result2_type().
+solve2(Tiles) ->
+  N = 100,
   Final = lists:foldl(fun do_one_iter/2, Tiles, lists:seq(1, N)),
   maps:size(Final).
 
-%% ======================================================================
-%% Solutions
-%% ======================================================================
+%%==============================================================================
+%% Helpers
+%%==============================================================================
 
 %% Perform the initial tile flipping.
+-spec flip_tiles(Input :: [string()]) -> hexgrid().
 flip_tiles(Input) ->
   lists:foldl(
     fun(Line, Acc) ->
@@ -116,59 +166,6 @@ neighbors({X, Y, Z} = Coord) ->
       Nbrs;
     Nbrs -> Nbrs
   end.
-
-%% Input reader (place downloaded input file in
-%% priv/inputs/2020/input24.txt).
-get_input() ->
-  inputs:get_as_lines(2020, 24).
-
-%% Tests
-main_test_() ->
-  Input = get_input(),
-
-  [ {"Part 1", ?_assertEqual(300, part1(Input))}
-  , {"Part 2", ?_assertEqual(3466, part2(Input, 100))}
-  ].
-
-neighbors_test_() ->
-  ?_assertEqual([{-1,0,1},
-                 {-1,1,0},
-                 {0,-1,1},
-                 {0,1,-1},
-                 {1,-1,0},
-                 {1,0,-1}], lists:sort(maps:keys(neighbors({0, 0, 0})))).
-
-fold_coords_test_() ->
-  ?_assertEqual(["e", "se", "ne", "e"],
-                fold_coords(fun(Dir, Acc) ->
-                                Acc ++ [Dir]
-                            end, [], "esenee")).
-
-test_input() ->
-  [ "sesenwnenenewseeswwswswwnenewsewsw"
-  , "neeenesenwnwwswnenewnwwsewnenwseswesw"
-  , "seswneswswsenwwnwse"
-  , "nwnwneseeswswnenewneswwnewseswneseene"
-  , "swweswneswnenwsewnwneneseenw"
-  , "eesenwseswswnenwswnwnwsewwnwsene"
-  , "sewnenenenesenwsewnenwwwse"
-  , "wenwwweseeeweswwwnwwe"
-  , "wsweesenenewnwwnwsenewsenwwsesesenwne"
-  , "neeswseenwwswnwswswnw"
-  , "nenwswwsewswnenenewsenwsenwnesesenew"
-  , "enewnwewneswsewnwswenweswnenwsenwsw"
-  , "sweneswneswneneenwnewenewwneswswnese"
-  , "swwesenesewenwneswnwwneseswwne"
-  , "enesenwswwswneneswsenwnewswseenwsese"
-  , "wnwnesenesenenwwnenwsewesewsesesew"
-  , "nenewswnwewswnenesenwnesewesw"
-  , "eneswnwswnwsenenwnwnwwseeswneewsenese"
-  , "neswnwewnwnwseenwseesewsenwsweewe"
-  , "wseweeenwnesenwwwswnew"
-  ].
-
-ex1_test_() ->
-  ?_assertEqual(23, part2(test_input(), 5)).
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:

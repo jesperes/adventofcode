@@ -1,17 +1,71 @@
-%%% Advent of Code solution for 2020 day 22.
-%%% Created: 2020-12-22T06:17:29+00:00
-
+%%%=============================================================================
+%%% @doc Advent of code puzzle solution
+%%% @end
+%%%=============================================================================
 -module(aoc2020_day22).
--include_lib("eunit/include/eunit.hrl").
 
--compile([nowarn_unused_function]).
+-behavior(aoc_puzzle).
 
-%% Puzzle solution
-part1({Deck1, Deck2}) ->
+-export([ parse/1
+        , solve1/1
+        , solve2/1
+        , info/0
+        ]).
+
+-include("aoc_puzzle.hrl").
+
+%%------------------------------------------------------------------------------
+%% @doc info/0
+%% Returns info about this puzzle.
+%% @end
+%%------------------------------------------------------------------------------
+-spec info() -> aoc_puzzle().
+info() ->
+  #aoc_puzzle{ module = ?MODULE
+             , year = 2020
+             , day = 22
+             , name = "Crab Combat"
+             , expected = {32677, 33661}
+             , has_input_file = false
+             }.
+
+%%==============================================================================
+%% Types
+%%==============================================================================
+-type input_type() :: {[integer()], [integer()]}.
+-type result1_type() :: integer().
+-type result2_type() :: result1_type().
+
+%%------------------------------------------------------------------------------
+%% @doc parse/1
+%% Parses input file.
+%% @end
+%%------------------------------------------------------------------------------
+-spec parse(_) -> input_type().
+parse(_) ->
+  {[ 29, 21, 38, 30, 25, 7, 2, 36, 16, 44, 20, 12, 45,
+     4, 31, 34, 33, 42, 50, 14, 39, 37, 11, 43, 18],
+   [ 32, 24, 10, 41, 13, 3, 6, 5, 9, 8, 48, 49, 46, 17,
+     22, 35, 1, 19, 23, 28, 40, 26, 47, 15, 27]}.
+
+%%------------------------------------------------------------------------------
+%% @doc solve1/1
+%% Solves part 1. Receives parsed input as returned from parse/1.
+%% @end
+%%------------------------------------------------------------------------------
+-spec solve1(Input :: input_type()) -> result1_type().
+solve1({Deck1, Deck2}) ->
   crab_combat(Deck1, Deck2).
 
-part2({Deck1, Deck2}) ->
-  rec_crab_combat(Deck1, Deck2).
+%%------------------------------------------------------------------------------
+%% @doc solve2/1
+%% Solves part 2. Receives parsed input as returned from parse/1.
+%% @end
+%%------------------------------------------------------------------------------
+-spec solve2(Input :: input_type()) -> result2_type().
+solve2({Deck1, Deck2}) ->
+  {_, Result} = rec_crab_combat(Deck1, Deck2),
+  Result.
 
 %% =======================================================================
 %% Regular crab combat
@@ -83,38 +137,6 @@ sum_deck(Deck) ->
   lists:foldl(fun({N, D}, Acc) ->
                   N * D + Acc
               end, 0, lists:zip(lists:seq(Len, 1, -1), Deck)).
-
-get_input() ->
-  {[ 29, 21, 38, 30, 25, 7, 2, 36, 16, 44, 20, 12, 45,
-     4, 31, 34, 33, 42, 50, 14, 39, 37, 11, 43, 18],
-   [ 32, 24, 10, 41, 13, 3, 6, 5, 9, 8, 48, 49, 46, 17,
-     22, 35, 1, 19, 23, 28, 40, 26, 47, 15, 27]}.
-
-%% Tests
-main_test_() ->
-  Input = get_input(),
-
-  [ {"Part 1", ?_assertEqual(32677, part1(Input))}
-  , {"Part 2", ?_assertMatch({_, 33661}, part2(Input))}
-  ].
-
-test_input() ->
-  {[9, 2, 6, 3, 1],
-   [5, 8, 4, 7, 10]}.
-
-ex1_test_() ->
-  {Deck1, Deck2} = test_input(),
-  ?_assertEqual(306, crab_combat(Deck1, Deck2)).
-
-ex2_test_() ->
-  {Deck1, Deck2} = test_input(),
-  ?_assertMatch({_, 291}, rec_crab_combat(Deck1, Deck2)).
-
-ex2b_test_() ->
-  Deck1 = [43, 19],
-  Deck2 = [2, 29, 14],
-  %% This is just to test termination (so no timeout here!)
-  fun() -> rec_crab_combat(Deck1, Deck2) end.
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:

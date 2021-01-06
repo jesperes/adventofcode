@@ -1,60 +1,48 @@
-%%% Advent of Code solution for 2020 day 21.
-%%% Created: 2020-12-21T06:27:53+00:00
-
+%%%=============================================================================
+%%% @doc Advent of code puzzle solution
+%%% @end
+%%%=============================================================================
 -module(aoc2020_day21).
--include_lib("eunit/include/eunit.hrl").
 
--compile([nowarn_unused_function]).
+-behavior(aoc_puzzle).
 
-%% Puzzle solution
-part1(Input) ->
-  Map = parse(Input),
-  IngredientsWithAllergens = ingredients_with_allergens(Map),
-  IngredientsWithoutAllergens =
-    sets:subtract(maps:get(ingredients, Map),
-                  IngredientsWithAllergens),
-  Freq = maps:get(freq, Map),
-  sets:fold(
-    fun(I, Acc) ->
-        Acc + maps:get(I, Freq)
-    end, 0, IngredientsWithoutAllergens).
+-export([ parse/1
+        , solve1/1
+        , solve2/1
+        , info/0
+        ]).
 
-ingredients_with_allergens(Map) ->
-  M0 = maps:remove(ingredients, Map),
-  M1 = maps:remove(allergens, M0),
-  M2 = maps:remove(freq, M1),
-  sets:union(maps:values(M2)).
+-include("aoc_puzzle.hrl").
 
-map_to_str(M) ->
-  maps:map(fun(_, V) when is_tuple(V) andalso element(1, V) =:= set ->
-               sets:to_list(V);
-              (_, V) -> V
-           end, M).
+%%------------------------------------------------------------------------------
+%% @doc info/0
+%% Returns info about this puzzle.
+%% @end
+%%------------------------------------------------------------------------------
+-spec info() -> aoc_puzzle().
+info() ->
+  #aoc_puzzle{ module = ?MODULE
+             , year = 2020
+             , day = 21
+             , name = "Allergen Assessment"
+             , expected = {2428, "bjq,jznhvh,klplr,dtvhzt,sbzd,tlgjzx,ctmbr,kqms"}
+             , has_input_file = true
+             }.
 
-part2(_Input) ->
-  %% For part 2 I printed out the map from allergens to their
-  %% ingredients then matched them up by hand to get this:
-  CDI =
-    [{eggs, bjq},
-     {fish, jznhvh},
-     {nuts, klplr},
-     {peanuts, dtvhzt},
-     {sesame, sbzd},
-     {shellfish, tlgjzx},
-     {soy, ctmbr},
-     {wheat, kqms}],
+%%==============================================================================
+%% Types
+%%==============================================================================
+-type input_type() :: map().
+-type result1_type() :: integer().
+-type result2_type() :: string().
 
-  %% Sort them by allergen, and make into comma-separated list.
-  lists:flatten(
-    lists:join(",",
-               lists:map(fun({_, X}) -> atom_to_list(X) end,
-                         lists:sort(CDI)))).
-
-
-%% ======================================================================
-%% Parser
-%% ======================================================================
-parse(Lines) ->
+%%------------------------------------------------------------------------------
+%% @doc parse/1
+%% Parses input file.
+%% @end
+%%------------------------------------------------------------------------------
+-spec parse(Input :: binary()) -> input_type().
+parse(Input) ->
   lists:foldl(
     fun(L, Acc) ->
         case re:run(L, "(.*) \\(contains (.*)\\)",
@@ -90,7 +78,59 @@ parse(Lines) ->
             _Acc3 = update_frequencies(I, Acc2)
 
         end
-    end, #{}, Lines).
+    end, #{}, string:tokens(binary_to_list(Input), "\r\n")).
+
+%%------------------------------------------------------------------------------
+%% @doc solve1/1
+%% Solves part 1. Receives parsed input as returned from parse/1.
+%% @end
+%%------------------------------------------------------------------------------
+-spec solve1(Map :: input_type()) -> result1_type().
+solve1(Map) ->
+  IngredientsWithAllergens = ingredients_with_allergens(Map),
+  IngredientsWithoutAllergens =
+    sets:subtract(maps:get(ingredients, Map),
+                  IngredientsWithAllergens),
+  Freq = maps:get(freq, Map),
+  sets:fold(
+    fun(I, Acc) ->
+        Acc + maps:get(I, Freq)
+    end, 0, IngredientsWithoutAllergens).
+
+%%------------------------------------------------------------------------------
+%% @doc solve2/1
+%% Solves part 2. Receives parsed input as returned from parse/1.
+%% @end
+%%------------------------------------------------------------------------------
+-spec solve2(Input :: input_type()) -> result2_type().
+solve2(_) ->
+  %% For part 2 I printed out the map from allergens to their
+  %% ingredients then matched them up by hand to get this:
+  CDI =
+    [{eggs, bjq},
+     {fish, jznhvh},
+     {nuts, klplr},
+     {peanuts, dtvhzt},
+     {sesame, sbzd},
+     {shellfish, tlgjzx},
+     {soy, ctmbr},
+     {wheat, kqms}],
+
+  %% Sort them by allergen, and make into comma-separated list.
+  lists:flatten(
+    lists:join(",",
+               lists:map(fun({_, X}) -> atom_to_list(X) end,
+                         lists:sort(CDI)))).
+
+%%==============================================================================
+%% Helpers
+%%==============================================================================
+
+ingredients_with_allergens(Map) ->
+  M0 = maps:remove(ingredients, Map),
+  M1 = maps:remove(allergens, M0),
+  M2 = maps:remove(freq, M1),
+  sets:union(maps:values(M2)).
 
 update_frequencies(Ingredients, Map) ->
   lists:foldl(
@@ -116,28 +156,6 @@ update_allergens(Ingredients, Allergens, Map) ->
               sets:intersection(Ingredients, Old)
           end, Ingredients, Acc)
     end, Map, Allergens).
-
-%% Input reader (place downloaded input file in
-%% priv/inputs/2020/input21.txt).
-get_input() ->
-  inputs:get_as_lines(2020, 21).
-
-%% Tests
-main_test_() ->
-  Input = get_input(),
-
-  [ {"Part 1", ?_assertEqual(2428, part1(Input))}
-  , {"Part 2", ?_assertEqual("bjq,jznhvh,klplr,dtvhzt,sbzd,tlgjzx,ctmbr,kqms", part2(Input))}
-  ].
-
-test_input() ->
-  ["mxmxvkd kfcds sqjhc nhms (contains dairy, fish)",
-   "trh fvjkl sbzzf mxmxvkd (contains dairy)",
-   "sqjhc fvjkl (contains soy)",
-   "sqjhc mxmxvkd sbzzf (contains fish)"].
-
-ex1_test_() ->
-  ?_assertEqual(5, part1(test_input())).
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:

@@ -56,6 +56,13 @@ public class Aoc2020 {
         System.out.format("Running %d puzzles...", puzzles.size());
         final var runs = runPuzzles(puzzles);
         System.out.println();
+        var properties = System.getProperties();
+        System.out.println();
+        System.out.println("Language: java");
+        System.out.format("System version: %s (%s)",
+                properties.getProperty("java.runtime.name"),
+                properties.getProperty("java.runtime.version"));
+        System.out.println();
         printTable(runs);
         writeResultsToFile(runs);
     }
@@ -192,11 +199,41 @@ public class Aoc2020 {
             }
         }).collect(Collectors.joining(sep)) + "\n");
 
+        cmd.append(Arrays.stream(columns).map(col -> {
+            switch (col) {
+            case Name:
+                return "Per puzzle";
+            case Parsing:
+                return formatSumOverRuns(runs, run -> {
+                    if (run.puzzle().getInfo().hasInputFile()) {
+                        return run.result().timing().get().parsing()
+                                / runs.size();
+                    } else {
+                        return 0L;
+                    }
+                });
+            case Part1Time:
+                return formatSumOverRuns(runs,
+                        run -> run.result().timing().get().part1()
+                                / runs.size());
+            case Part2Time:
+                return formatSumOverRuns(runs,
+                        run -> run.result().timing().get().part2()
+                                / runs.size());
+            case TotalTime:
+                return formatSumOverRuns(runs,
+                        run -> run.result().timing().get().total()
+                                / runs.size());
+            default:
+                return "";
+            }
+        }).collect(Collectors.joining(sep)) + "\n");
+
         final var path = Files.createTempFile("tabulate", ".txt");
         try {
             Files.writeString(path, cmd.toString());
-            final var pb = new ProcessBuilder("tabulate", "-f", "fancy_grid",
-                    "-s", sep, path.toString());
+            final var pb = new ProcessBuilder("tabulate", "-f", "simple", "-s",
+                    sep, path.toString());
             pb.inheritIO();
             final var p = pb.start();
             p.waitFor();
@@ -209,8 +246,7 @@ public class Aoc2020 {
 
     private static String formatSumOverRuns(List<AocPuzzleRun<?, ?, ?>> runs,
             Function<AocPuzzleRun<?, ?, ?>, Long> mapping) {
-        return String.format("%.3f secs",
-                sumOverRuns(runs, mapping) / 1000000000.0);
+        return String.format("%.3f", sumOverRuns(runs, mapping) / 1000000.0);
     }
 
     private static long sumOverRuns(List<AocPuzzleRun<?, ?, ?>> runs,
@@ -231,6 +267,7 @@ public class Aoc2020 {
     private static <T, P1, P2> AocPuzzleRun<T, P1, P2> run(
             IAocPuzzle<T, P1, P2> puzzle) throws IOException {
         final var info = puzzle.getInfo();
+        System.out.format("[%d]", info.day());
         File inputFile = null;
         AocResult<P1, P2> result;
 

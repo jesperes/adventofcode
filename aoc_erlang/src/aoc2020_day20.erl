@@ -1,13 +1,103 @@
-%%% Advent of Code solution for 2020 day 20.
-%%% Created: 2020-12-20T06:51:18+00:00
-
+%%%=============================================================================
+%%% @doc Advent of code puzzle solution
+%%% @end
+%%%=============================================================================
 -module(aoc2020_day20).
--include_lib("eunit/include/eunit.hrl").
 
-%% Day 20: Jurassic Jigsaw
+-behavior(aoc_puzzle).
 
-solve(Input) ->
-  Tiles = parse_tiles(Input),
+-export([ parse/1
+        , solve1/1
+        , solve2/1
+        , info/0
+        ]).
+
+-include_lib("stdlib/include/assert.hrl").
+-include("aoc_puzzle.hrl").
+
+%%------------------------------------------------------------------------------
+%% @doc info/0
+%% Returns info about this puzzle.
+%% @end
+%%------------------------------------------------------------------------------
+-spec info() -> aoc_puzzle().
+info() ->
+  #aoc_puzzle{ module = ?MODULE
+             , year = 2020
+             , day = 20
+             , name = "Jurassic Jigsaw"
+             , expected = {66020135789767, 1537}
+             , has_input_file = true
+             }.
+
+%%==============================================================================
+%% Types
+%%==============================================================================
+-type tile_id() :: {TileNum :: integer(),
+                    Symmetry :: atom()}.
+-type input_type() :: #{tile_id() => map()}.
+-type result1_type() :: integer().
+-type result2_type() :: result1_type().
+
+%%------------------------------------------------------------------------------
+%% @doc parse/1
+%% Parses input file.
+%% @end
+%%------------------------------------------------------------------------------
+-spec parse(Input :: binary()) -> input_type().
+parse(Input) ->
+  L = binary:split(Input, <<"Tile ">>, [global]),
+  lists:foldl(fun(<<>>, Acc) -> Acc;
+                 (TileBin, Acc) ->
+                  maps:merge(Acc, parse_tile(TileBin))
+              end, #{}, L).
+
+%%------------------------------------------------------------------------------
+%% @doc solve1/1
+%% Solves part 1. Receives parsed input as returned from parse/1.
+%% @end
+%%------------------------------------------------------------------------------
+-spec solve1(Tiles :: input_type()) -> result1_type().
+solve1(Tiles) ->
+  Size = floor(math:sqrt(maps:size(Tiles) div 8)),
+  PlacedTiles = place_tiles(Tiles),
+  lists:foldl(
+    fun(Coord, Acc) ->
+        {TileId, _} = maps:get(Coord, PlacedTiles),
+        Acc * TileId
+    end, 1, [{0, 0},
+             {Size - 1, 0},
+             {0, Size - 1},
+             {Size - 1, Size - 1}]).
+
+%%------------------------------------------------------------------------------
+%% @doc solve2/1
+%% Solves part 2. Receives parsed input as returned from parse/1.
+%% @end
+%%------------------------------------------------------------------------------
+-spec solve2(Tiles :: input_type()) -> result2_type().
+solve2(Tiles) ->
+  Size = floor(math:sqrt(maps:size(Tiles) div 8)),
+  PlacedTiles = place_tiles(Tiles),
+  FinalGrid = join_tiles(PlacedTiles, Tiles, Size),
+  SM = sea_monster(),
+  maps:fold(
+    fun(_Id, Grid, not_found) ->
+        AllHashes = sets:from_list(maps:keys(Grid) -- [size]),
+        NumHashes = sets:size(AllHashes),
+        RemainingPixels = find_sea_monster(SM, Grid, AllHashes),
+        case sets:size(RemainingPixels) of
+          N when N < NumHashes -> N;
+          _ -> not_found
+        end;
+       (_Id, _Grid, Solution) -> Solution
+    end, not_found, all_symmetries(final, FinalGrid)).
+
+%%==============================================================================
+%% Helpers
+%%==============================================================================
+
+place_tiles(Tiles) ->
   Size = floor(math:sqrt(maps:size(Tiles) div 8)),
   [First|_Rest] = [{X, Y} || X <- lists:seq(0, Size - 1),
                             Y <- lists:seq(0, Size - 1)],
@@ -20,38 +110,8 @@ solve(Input) ->
   RemainingTiles = remove_tile(StartTile, Tiles),
 
   %% Place remaining tiles, row-by-row
-  FinalPlacement = place_row(0, Size, StartTile, RemainingTiles,
-                             BorderMap, PlacedTiles),
-
-  Part1Solution = get_part1_sol(FinalPlacement, Size),
-
-  FinalGrid = join_tiles(FinalPlacement, Tiles, Size),
-
-  SM = sea_monster(),
-  Part2Solution =
-    maps:fold(
-      fun(_Id, Grid, not_found) ->
-          AllHashes = sets:from_list(maps:keys(Grid) -- [size]),
-          NumHashes = sets:size(AllHashes),
-          RemainingPixels = find_sea_monster(SM, Grid, AllHashes),
-          case sets:size(RemainingPixels) of
-            N when N < NumHashes -> N;
-            _ -> not_found
-          end;
-         (_Id, _Grid, Solution) -> Solution
-      end, not_found, all_symmetries(final, FinalGrid)),
-
-  {Part1Solution, Part2Solution}.
-
-get_part1_sol(FinalPlacement, Size) ->
-  lists:foldl(
-    fun(Coord, Acc) ->
-        {TileId, _} = maps:get(Coord, FinalPlacement),
-        Acc * TileId
-    end, 1, [{0, 0},
-             {Size - 1, 0},
-             {0, Size - 1},
-             {Size - 1, Size - 1}]).
+  place_row(0, Size, StartTile, RemainingTiles,
+            BorderMap, PlacedTiles).
 
 %% Build coord-map of the sea monster.
 sea_monster() ->
@@ -241,13 +301,6 @@ border_map(Tiles) ->
 %% Parser
 %% ======================================================================
 
-parse_tiles(Input) ->
-  L = binary:split(Input, <<"Tile ">>, [global]),
-  lists:foldl(fun(<<>>, Acc) -> Acc;
-                 (TileBin, Acc) ->
-                  maps:merge(Acc, parse_tile(TileBin))
-              end, #{}, L).
-
 parse_tile(TileBin) ->
   [Header, Rows] = binary:split(TileBin, <<"\n">>),
   {match, Matches} =
@@ -326,133 +379,6 @@ all_symmetries(Num, Rows) ->
     {Num, 'f90'}  => FlipR90,
     {Num, 'f180'} => FlipR180,
     {Num, 'f270'} => FlipR270}.
-
-%% ======================================================================
-%% Input
-%% ======================================================================
-
-get_input() ->
-  inputs:get_as_binary(2020, 20).
-
-%% ======================================================================
-%% Tests
-%% ======================================================================
-
-main_test_() ->
-  ?_assertEqual({66020135789767, 1537}, solve(get_input())).
-
-test_input() ->
-  <<"Tile 2311:\n"
-    "..##.#..#.\n"
-    "##..#.....\n"
-    "#...##..#.\n"
-    "####.#...#\n"
-    "##.##.###.\n"
-    "##...#.###\n"
-    ".#.#.#..##\n"
-    "..#....#..\n"
-    "###...#.#.\n"
-    "..###..###\n"
-    "\n"
-    "Tile 1951:\n"
-    "#.##...##.\n"
-    "#.####...#\n"
-    ".....#..##\n"
-    "#...######\n"
-    ".##.#....#\n"
-    ".###.#####\n"
-    "###.##.##.\n"
-    ".###....#.\n"
-    "..#.#..#.#\n"
-    "#...##.#..\n"
-    "\n"
-    "Tile 1171:\n"
-    "####...##.\n"
-    "#..##.#..#\n"
-    "##.#..#.#.\n"
-    ".###.####.\n"
-    "..###.####\n"
-    ".##....##.\n"
-    ".#...####.\n"
-    "#.##.####.\n"
-    "####..#...\n"
-    ".....##...\n"
-    "\n"
-    "Tile 1427:\n"
-    "###.##.#..\n"
-    ".#..#.##..\n"
-    ".#.##.#..#\n"
-    "#.#.#.##.#\n"
-    "....#...##\n"
-    "...##..##.\n"
-    "...#.#####\n"
-    ".#.####.#.\n"
-    "..#..###.#\n"
-    "..##.#..#.\n"
-    "\n"
-    "Tile 1489:\n"
-    "##.#.#....\n"
-    "..##...#..\n"
-    ".##..##...\n"
-    "..#...#...\n"
-    "#####...#.\n"
-    "#..#.#.#.#\n"
-    "...#.#.#..\n"
-    "##.#...##.\n"
-    "..##.##.##\n"
-    "###.##.#..\n"
-    "\n"
-    "Tile 2473:\n"
-    "#....####.\n"
-    "#..#.##...\n"
-    "#.##..#...\n"
-    "######.#.#\n"
-    ".#...#.#.#\n"
-    ".#########\n"
-    ".###.#..#.\n"
-    "########.#\n"
-    "##...##.#.\n"
-    "..###.#.#.\n"
-    "\n"
-    "Tile 2971:\n"
-    "..#.#....#\n"
-    "#...###...\n"
-    "#.#.###...\n"
-    "##.##..#..\n"
-    ".#####..##\n"
-    ".#..####.#\n"
-    "#..#.#..#.\n"
-    "..####.###\n"
-    "..#.#.###.\n"
-    "...#.#.#.#\n"
-    "\n"
-    "Tile 2729:\n"
-    "...#.#.#.#\n"
-    "####.#....\n"
-    "..#.#.....\n"
-    "....#..#.#\n"
-    ".##..##.#.\n"
-    ".#.####...\n"
-    "####.#.#..\n"
-    "##.####...\n"
-    "##..#.##..\n"
-    "#.##...##.\n"
-    "\n"
-    "Tile 3079:\n"
-    "#.#.#####.\n"
-    ".#..######\n"
-    "..#.......\n"
-    "######....\n"
-    "####.#..#.\n"
-    ".#...#.##.\n"
-    "#.#####.##\n"
-    "..#.###...\n"
-    "..#.......\n"
-    "..#.###...\n">>.
-
-ex1_test_() ->
-  ?_assertEqual({20899048083289, 273}, solve(test_input())).
-
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:
