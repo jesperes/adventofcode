@@ -1,40 +1,58 @@
 package aoc2015;
 
-import static org.junit.Assert.assertEquals;
+import java.io.File;
+import java.util.Optional;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocIntPuzzle;
+import common2.InputUtils;
 
-import org.junit.Test;
+public class Day01 implements IAocIntPuzzle<String> {
 
-public class Day01 {
-    @Test
-    public void testDay01() throws Exception {
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2015, 1, "Not Quite Lisp", true);
+    }
+
+    @Override
+    public AocResult<Integer, Integer> getExpected() {
+        return AocResult.of(232, 1783);
+    }
+
+    @Override
+    public String parse(Optional<File> file) {
+        return InputUtils.asString(file.get());
+    }
+
+    @Override
+    public Integer part1(String input) {
         int floor = 0;
-        int basementPos = 0;
+        for (char ch : input.toCharArray()) {
+            if (ch == '(')
+                floor++;
+            else if (ch == ')')
+                floor--;
+        }
+        return floor;
+    }
 
-        try (BufferedReader reader = new BufferedReader(
-                new FileReader("inputs/2015/day01.txt"))) {
-            int c;
-            int i = 0;
-            while ((c = reader.read()) != -1) {
-                switch (c) {
-                case '(':
-                    floor++;
-                    break;
-                case ')':
-                    floor--;
-                    break;
-                }
-                if (floor < 0 && basementPos == 0) {
-                    basementPos = i + 1;
-                }
+    @Override
+    public Integer part2(String input) {
+        int floor = 0;
+        int pos = 1;
+        for (char ch : input.toCharArray()) {
+            if (ch == '(')
+                floor++;
+            else if (ch == ')')
+                floor--;
 
-                i++;
+            if (floor == -1) {
+                return pos;
+            } else {
+                pos++;
             }
         }
-
-        assertEquals(232, floor);
-        assertEquals(1783, basementPos);
+        throw new RuntimeException();
     }
 }
