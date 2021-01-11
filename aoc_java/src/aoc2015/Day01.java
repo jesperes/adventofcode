@@ -8,7 +8,7 @@ import common2.AocResult;
 import common2.IAocIntPuzzle;
 import common2.InputUtils;
 
-public class Day01 implements IAocIntPuzzle<String> {
+public class Day01 implements IAocIntPuzzle<byte[]> {
 
     @Override
     public AocPuzzleInfo getInfo() {
@@ -21,14 +21,14 @@ public class Day01 implements IAocIntPuzzle<String> {
     }
 
     @Override
-    public String parse(Optional<File> file) {
-        return InputUtils.asString(file.get());
+    public byte[] parse(Optional<File> file) {
+        return InputUtils.asByteArray(file.get());
     }
 
     @Override
-    public Integer part1(String input) {
+    public Integer part1(byte[] input) {
         int floor = 0;
-        for (char ch : input.toCharArray()) {
+        for (byte ch : input) {
             if (ch == '(')
                 floor++;
             else if (ch == ')')
@@ -38,10 +38,10 @@ public class Day01 implements IAocIntPuzzle<String> {
     }
 
     @Override
-    public Integer part2(String input) {
+    public Integer part2(byte[] input) {
         int floor = 0;
         int pos = 1;
-        for (char ch : input.toCharArray()) {
+        for (byte ch : input) {
             if (ch == '(')
                 floor++;
             else if (ch == ')')

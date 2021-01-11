@@ -3,25 +3,25 @@
   "platform": "OpenJDK Runtime Environment",
   "version": "15.0.1+9-18",
   "totals": {
-    "parsing": 595430,
-    "part1": 97614,
-    "part2": 75201,
-    "total": 768245
+    "parsing": 523951,
+    "part1": 88768075,
+    "part2": 2664291635,
+    "total": 2753583661
   },
   "runs": [
     {
       "name": "Not Quite Lisp",
       "year": 2015,
       "day": 1,
-      "parsing": 73664,
-      "total": 171512,
+      "parsing": 42381,
+      "total": 91907,
       "part1": {
-        "time": 71118,
+        "time": 28874,
         "result": "232",
         "status": true
       },
       "part2": {
-        "time": 26730,
+        "time": 20652,
         "result": "1783",
         "status": true
       }
@@ -30,16 +30,50 @@
       "name": "I Was Told There Would Be No Math",
       "year": 2015,
       "day": 2,
-      "parsing": 521766,
-      "total": 596733,
+      "parsing": 467984,
+      "total": 554618,
       "part1": {
-        "time": 26496,
+        "time": 40451,
         "result": "1586300",
         "status": true
       },
       "part2": {
-        "time": 48471,
+        "time": 46183,
         "result": "3737498",
+        "status": true
+      }
+    },
+    {
+      "name": "Perfectly Spherical Houses in a Vacuum",
+      "year": 2015,
+      "day": 3,
+      "parsing": 13147,
+      "total": 953233,
+      "part1": {
+        "time": 395820,
+        "result": "2572",
+        "status": true
+      },
+      "part2": {
+        "time": 544266,
+        "result": "2631",
+        "status": true
+      }
+    },
+    {
+      "name": "The Ideal Stocking Stuffer",
+      "year": 2015,
+      "day": 4,
+      "parsing": 439,
+      "total": 2751983903,
+      "part1": {
+        "time": 88302930,
+        "result": "282749",
+        "status": true
+      },
+      "part2": {
+        "time": 2663680534,
+        "result": "9962624",
         "status": true
       }
     }

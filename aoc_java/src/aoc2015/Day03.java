@@ -1,30 +1,33 @@
 package aoc2015;
 
-import static org.junit.Assert.assertEquals;
-
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.Reader;
+import java.io.File;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
-import org.junit.Test;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocIntPuzzle;
+import common2.InputUtils;
 
-import common.IntPair;
+public class Day03 implements IAocIntPuzzle<byte[]> {
 
-public class Day03 {
+    record House(int x, int y) {
+    }
 
     class Santa {
-        private int x, y;
-        private Set<IntPair> houses;
+        private int x = 0, y = 0;
+        private Set<House> houses;
 
-        public Santa(int x, int y, Set<IntPair> houses) {
-            this.x = x;
-            this.y = y;
+        public Santa() {
+            this.houses = new HashSet<>();
+        }
+
+        public Santa(Set<House> houses) {
             this.houses = houses;
         }
 
-        void move(int c) {
+        void move(byte c) {
             switch (c) {
             case '<':
                 x--;
@@ -42,38 +45,60 @@ public class Day03 {
         }
 
         void deliver() {
-            houses.add(new IntPair(x, y));
+            houses.add(new House(x, y));
+        }
+
+        int numHouses() {
+            return houses.size();
         }
     }
 
-    @Test
-    public void testDay03() throws IOException {
-        Set<IntPair> p1 = new HashSet<>();
-        Set<IntPair> p2 = new HashSet<>();
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2015, 3,
+                "Perfectly Spherical Houses in a Vacuum", true);
+    }
 
-        Santa santa1 = new Santa(0, 0, p1);
-        Santa santa2 = new Santa(0, 0, p2);
-        Santa roboSanta = new Santa(0, 0, p2);
+    @Override
+    public AocResult<Integer, Integer> getExpected() {
+        return AocResult.of(2572, 2631);
+    }
 
-        try (Reader reader = new FileReader("inputs/2015/day03.txt")) {
-            int c;
-            int i = 0;
-            while ((c = reader.read()) != -1) {
-                santa1.deliver();
-                santa2.deliver();
-                roboSanta.deliver();
+    @Override
+    public byte[] parse(Optional<File> file) {
+        return InputUtils.asByteArray(file.get());
+    }
 
-                santa1.move(c);
-                if (i % 2 == 0)
-                    santa2.move(c);
-                else
-                    roboSanta.move(c);
+    @Override
+    public Integer part1(byte[] input) {
+        Santa santa = new Santa();
 
-                i++;
-            }
+        for (byte b : input) {
+            santa.deliver();
+            santa.move(b);
         }
 
-        assertEquals(2572, p1.size());
-        assertEquals(2631, p2.size());
+        return santa.numHouses();
+    }
+
+    @Override
+    public Integer part2(byte[] input) {
+        Set<House> houses = new HashSet<>();
+        Santa santa = new Santa(houses);
+        Santa roboSanta = new Santa(houses);
+        int i = 0;
+
+        for (byte b : input) {
+            santa.deliver();
+            roboSanta.deliver();
+
+            if (i % 2 == 0)
+                santa.move(b);
+            else
+                roboSanta.move(b);
+            i++;
+        }
+
+        return houses.size();
     }
 }

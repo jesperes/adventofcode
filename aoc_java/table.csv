@@ -1,5 +1,7 @@
 Year@Day@Name@Parsing@Part 1@Part 2@Total@Part 1 result@Part 2 resutl@Part 1 status@Part 2 status
-2015@1@Not Quite Lisp@0.074@0.071@0.027@0.172@232@1783@OK@OK
-2015@2@I Was Told There Would Be No Math@0.522@0.026@0.048@0.597@1586300@3737498@OK@OK
-@@Total@0.595@0.098@0.075@0.768@@@@
-@@Per puzzle@0.298@0.049@0.038@0.384@@@@
+2015@1@Not Quite Lisp@0.042@0.029@0.021@0.092@232@1783@OK@OK
+2015@2@I Was Told There Would Be No Math@0.468@0.040@0.046@0.555@1586300@3737498@OK@OK
+2015@3@Perfectly Spherical Houses in a Vacuum@0.013@0.396@0.544@0.953@2572@2631@OK@OK
+2015@4@The Ideal Stocking Stuffer@-@88.303@2663.681@2751.984@282749@9962624@OK@OK
+@@Total@0.524@88.768@2664.292@2753.584@@@@
+@@Per puzzle@0.131@22.192@666.073@688.396@@@@

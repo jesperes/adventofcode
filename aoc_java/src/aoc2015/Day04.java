@@ -1,11 +1,13 @@
 package aoc2015;
 
-import static org.junit.Assert.assertEquals;
-
+import java.io.File;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Optional;
 
-import org.junit.Test;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocIntPuzzle;
 
 /**
  * The performance of this one is bound by the MD5 algorithm, so there is really
@@ -13,45 +15,58 @@ import org.junit.Test;
  *
  * @author jesperes
  */
-public class Day04 {
-    static private final String INPUT = "yzbqklnj";
-    private MessageDigest md5;
+public class Day04 implements IAocIntPuzzle<String> {
+    static private MessageDigest md5 = getMessageDigest();
 
-    public Day04() throws NoSuchAlgorithmException {
-        md5 = MessageDigest.getInstance("MD5");
+    static private MessageDigest getMessageDigest() {
+        try {
+            return MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    boolean isPart1Solution(byte[] digest) {
-        return digest[0] == 0 && digest[1] == 0 && (digest[2] & 0xf0) == 0;
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2015, 4, "The Ideal Stocking Stuffer", false);
     }
 
-    boolean isPart2Solution(byte[] digest) {
-        return digest[0] == 0 && digest[1] == 0 && digest[2] == 0;
+    @Override
+    public AocResult<Integer, Integer> getExpected() {
+        return AocResult.of(282749, 9962624);
     }
 
-    @Test
-    public void testDay04() throws Exception {
-        int p1 = 0;
-        int p2 = 0;
-        StringBuilder s = new StringBuilder(INPUT);
+    @Override
+    public String parse(Optional<File> file) {
+        return "yzbqklnj";
+    }
+
+    @Override
+    public Integer part1(String input) {
+        StringBuilder s = new StringBuilder(input);
 
         for (int i = 1;; i++) {
-            s.setLength(INPUT.length());
+            s.setLength(input.length());
             s.append(String.valueOf(i));
-
             byte[] digest = md5.digest(s.toString().getBytes());
-
-            if (p1 == 0 && isPart1Solution(digest)) {
-                p1 = i;
+            if (digest[0] == 0 && digest[1] == 0 && (digest[2] & 0xf0) == 0) {
+                return i;
             }
-            if (isPart2Solution(digest)) {
-                p2 = i;
-                break;
-            }
-
         }
+    }
 
-        assertEquals(282749, p1);
-        assertEquals(9962624, p2);
+    @Override
+    public Integer part2(String input) {
+        StringBuilder s = new StringBuilder(input);
+
+        // Start at the part 1 solution
+        for (int i = 282749;; i++) {
+            s.setLength(input.length());
+            s.append(String.valueOf(i));
+            byte[] digest = md5.digest(s.toString().getBytes());
+            if (digest[0] == 0 && digest[1] == 0 && digest[2] == 0) {
+                return i;
+            }
+        }
     }
 }

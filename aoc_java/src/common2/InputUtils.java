@@ -80,4 +80,12 @@ public class InputUtils {
             throw new RuntimeException(e);
         }
     }
+
+    public static byte[] asByteArray(File file) {
+        try {
+            return Files.toByteArray(file);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
