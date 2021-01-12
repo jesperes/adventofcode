@@ -1,36 +1,25 @@
 package aoc2015;
 
-import static org.junit.Assert.assertEquals;
-
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.File;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
-import org.junit.Test;
+import com.google.common.collect.Sets;
 
-import common.IntPair;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocLongPuzzle;
+import common2.InputUtils;
 
-public class Day05 {
+public class Day05 implements IAocLongPuzzle<List<String>> {
 
-    private final static Set<String> UGLY = new HashSet<>();
-
-    private final static Set<Character> VOWELS = new HashSet<>();
-
-    public Day05() {
-        UGLY.add("ab");
-        UGLY.add("cd");
-        UGLY.add("pq");
-        UGLY.add("xy");
-        VOWELS.add('a');
-        VOWELS.add('e');
-        VOWELS.add('i');
-        VOWELS.add('o');
-        VOWELS.add('u');
-    }
+    private final static Set<String> UGLY = Sets.newHashSet("ab", "cd", "pq",
+            "xy");
+    private final static Set<Character> VOWELS = Sets.newHashSet('a', 'e', 'i',
+            'o', 'u');
 
     private boolean isNice1(String str) {
         for (String ugly : UGLY) {
@@ -57,10 +46,9 @@ public class Day05 {
     }
 
     private boolean hasTwoPairs(String str) {
-        Map<IntPair, Integer> map = new HashMap<>();
+        Map<String, Integer> map = new HashMap<>();
         for (int i = 0; i < str.length() - 1; i++) {
-            IntPair pair = new IntPair((int) str.charAt(i),
-                    (int) str.charAt(i + 1));
+            var pair = str.substring(i, i + 2);
             if (map.containsKey(pair)) {
                 if (i >= map.get(pair) + 2)
                     return true;
@@ -86,24 +74,29 @@ public class Day05 {
         return false;
     }
 
-    @Test
-    public void testDay05() throws IOException {
-        try (BufferedReader reader = new BufferedReader(
-                new FileReader("inputs/2015/day05.txt"))) {
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2015, 5,
+                "Doesn't He Have Intern-Elves For This?", true);
+    }
 
-            String str;
-            int nice1 = 0;
-            int nice2 = 0;
+    @Override
+    public AocResult<Long, Long> getExpected() {
+        return AocResult.of(238L, 69L);
+    }
 
-            while ((str = reader.readLine()) != null) {
-                if (isNice1(str))
-                    nice1++;
-                if (isNice2(str))
-                    nice2++;
-            }
+    @Override
+    public List<String> parse(Optional<File> file) {
+        return InputUtils.asStringList(file.get());
+    }
 
-            assertEquals(238, nice1);
-            assertEquals(69, nice2);
-        }
+    @Override
+    public Long part1(List<String> input) {
+        return input.stream().parallel().filter(this::isNice1).count();
+    }
+
+    @Override
+    public Long part2(List<String> input) {
+        return input.stream().parallel().filter(this::isNice2).count();
     }
 }

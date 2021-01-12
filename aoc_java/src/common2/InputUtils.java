@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 
 import com.google.common.io.Files;
@@ -86,6 +87,38 @@ public class InputUtils {
             return Files.toByteArray(file);
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public static <T> T withReader(File file, Function<BufferedReader, T> fun) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            return fun.apply(reader);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read input", e);
+        }
+    }
+
+    /**
+     * Parse test data from a string. For use in tests.
+     * 
+     * @param <T>
+     * @param puzzle
+     * @param data
+     * @return
+     */
+    public static <T> T parseTestData(IAocPuzzle<T, ?, ?> puzzle, String data) {
+        File f = null;
+        try {
+            f = File.createTempFile("tmp", ".txt");
+            Files.write(data.getBytes(), f);
+            return puzzle.parse(Optional.of(f));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (f != null) {
+                f.delete();
+                f.deleteOnExit();
+            }
         }
     }
 }

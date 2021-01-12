@@ -326,7 +326,13 @@ public class AocBase2 {
             IAocPuzzle<T, P1, P2> puzzle) throws IOException {
         System.out.print(".");
 
-        Timing<T> parse = repeatWithTiming("parsing", puzzle::parse, inputFile);
+        Timing<T> parse = repeatWithTiming("parsing", f -> {
+            try {
+                return puzzle.parse(f);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }, inputFile);
         Timing<P1> part1 = repeatWithTiming("part 1", puzzle::part1,
                 parse.result);
         if (puzzle.getInfo().day() != 25) {

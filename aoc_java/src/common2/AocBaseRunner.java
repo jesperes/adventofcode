@@ -2,6 +2,7 @@ package common2;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Optional;
 
 /**
@@ -11,26 +12,28 @@ import java.util.Optional;
  *
  */
 public class AocBaseRunner {
-    public static void run(IAocPuzzle<?, ?, ?> puzzle)
-            throws FileNotFoundException {
-        AocPuzzleInfo info = puzzle.getInfo();
-        if (info.hasInputFile()) {
-            File inputFile = new File(String.format("inputs/%d/input%02d.txt",
-                    info.year(), info.day()));
-            if (!inputFile.exists()) {
-                throw new FileNotFoundException(
-                        "Input file is missing: " + inputFile);
+    public static void run(IAocPuzzle<?, ?, ?> puzzle) {
+        try {
+            AocPuzzleInfo info = puzzle.getInfo();
+            if (info.hasInputFile()) {
+                File inputFile = new File(String.format(
+                        "inputs/%d/input%02d.txt", info.year(), info.day()));
+                if (!inputFile.exists()) {
+                    throw new FileNotFoundException(
+                            "Input file is missing: " + inputFile);
+                }
+
+                runWithInput(Optional.of(inputFile), puzzle);
+            } else {
+                runWithInput(Optional.empty(), puzzle);
             }
-
-            runWithInput(Optional.of(inputFile), puzzle);
-        } else {
-            runWithInput(Optional.empty(), puzzle);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-
     }
 
     private static <T, P1, P2> void runWithInput(Optional<File> file,
-            IAocPuzzle<T, P1, P2> puzzle) {
+            IAocPuzzle<T, P1, P2> puzzle) throws IOException {
         AocResult<P1, P2> expected = puzzle.getExpected();
         System.out.print("Parsing... ");
         System.out.flush();

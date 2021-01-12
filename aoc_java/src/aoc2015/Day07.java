@@ -1,147 +1,161 @@
 package aoc2015;
 
-import static org.junit.Assert.assertEquals;
-
-import java.io.BufferedReader;
-import java.io.FileReader;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.nio.file.Files;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.OptionalInt;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
-import org.junit.Test;
+import aoc2015.Day07.Instr;
+import common2.AocBaseRunner;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocIntPuzzle;
 
-public class Day07 {
+public class Day07 implements IAocIntPuzzle<Map<String, Instr>> {
 
     enum Op {
         AND, NOT, OR, RSHIFT, LSHIFT, ASSIGN
     }
 
-    class Instr {
-        Op op;
-        String a, b, c;
+    record Operand(String s, int n) {
+        Operand(String str) {
+            this(str, toInt(str));
+        }
+
+        static int toInt(String str) {
+            if (str.length() > 0 && Character.isDigit(str.charAt(0)))
+                return Integer.parseInt(str);
+            else
+                return -1;
+        }
+
+        static Operand of(String str) {
+            return new Operand(str);
+        }
+
+        static Operand empty() {
+            return new Operand("");
+        }
+
+        boolean isInt() {
+            return n >= 0;
+        }
     }
 
-    @FunctionalInterface
-    interface BinaryOpFun {
-        public int apply(int a, int b);
-    }
+    record Instr(Op op, Operand a, Operand b, Operand c) {
+        static Instr fromStr(String line) {
+            String s[] = line.split(" ");
 
-    @FunctionalInterface
-    interface UnaryOpFun {
-        public int apply(int a);
-    }
-
-    private OptionalInt readWire(Map<String, Integer> wires, String wire) {
-        try {
-            return OptionalInt.of(Integer.valueOf(wire));
-        } catch (NumberFormatException e) {
-            if (wires.containsKey(wire)) {
-                return OptionalInt.of(wires.get(wire));
+            if (s[0].equals("NOT")) {
+                return new Instr(Op.NOT, Operand.of(s[1]), Operand.of(s[3]),
+                        Operand.empty());
+            } else if (s[1].equals("->")) {
+                return new Instr(Op.ASSIGN, Operand.of(s[0]), Operand.of(s[2]),
+                        Operand.empty());
             } else {
-                return OptionalInt.empty();
+                return new Instr(Op.valueOf(s[1]), Operand.of(s[0]),
+                        Operand.of(s[2]), Operand.of(s[4]));
             }
         }
-    }
 
-    private void doBinaryOp(Instr instr, Map<String, Integer> wires,
-            BinaryOpFun fun) {
-        if (wires.containsKey(instr.c))
-            return;
-
-        OptionalInt valueA = readWire(wires, instr.a);
-        OptionalInt valueB = readWire(wires, instr.b);
-        if (valueA.isPresent() && valueB.isPresent()) {
-            wires.put(instr.c, fun.apply(valueA.getAsInt(), valueB.getAsInt()));
-        }
-    }
-
-    private void doUnaryOp(Instr instr, Map<String, Integer> wires,
-            UnaryOpFun fun) {
-        if (wires.containsKey(instr.b))
-            return;
-
-        OptionalInt valueA = readWire(wires, instr.a);
-        if (valueA.isPresent()) {
-            wires.put(instr.b, fun.apply(valueA.getAsInt()));
-        }
-    }
-
-    private void runPass(List<Instr> instrs, Map<String, Integer> wires) {
-        for (Instr instr : instrs) {
-            switch (instr.op) {
-            case AND:
-                doBinaryOp(instr, wires, (a, b) -> a & b);
-                break;
-            case OR:
-                doBinaryOp(instr, wires, (a, b) -> a | b);
-                break;
-            case LSHIFT:
-                doBinaryOp(instr, wires, (a, b) -> a << b);
-                break;
-            case RSHIFT:
-                doBinaryOp(instr, wires, (a, b) -> a >> b);
-                break;
+        private String dest() {
+            switch (op) {
             case NOT:
-                doUnaryOp(instr, wires, (a) -> ~a);
-                break;
+                return b.s();
             case ASSIGN:
-                doUnaryOp(instr, wires, (a) -> a);
-            }
-        }
-    }
-
-    private int runUntilWire(List<Instr> instrs, Map<String, Integer> wires,
-            String wire) {
-        while (!wires.containsKey(wire)) {
-            runPass(instrs, wires);
-        }
-        return wires.get(wire);
-    }
-
-    @Test
-    public void testDay07() throws IOException {
-
-        List<Instr> instrs = new ArrayList<>();
-
-        try (BufferedReader reader = new BufferedReader(
-                new FileReader("inputs/2015/day07.txt"))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String s[] = line.split(" ");
-                Instr instr = new Instr();
-
-                if (s[0].equals("NOT")) {
-                    instr.op = Op.NOT;
-                    instr.a = s[1];
-                    instr.b = s[3];
-                    instr.c = null;
-                } else if (s[1].equals("->")) {
-                    instr.op = Op.ASSIGN;
-                    instr.a = s[0];
-                    instr.b = s[2];
-                    instr.c = null;
-                } else {
-                    instr.op = Op.valueOf(s[1]);
-                    instr.a = s[0];
-                    instr.b = s[2];
-                    instr.c = s[4];
-                }
-
-                instrs.add(instr);
+                return b.s();
+            default:
+                return c.s();
             }
         }
 
-        Map<String, Integer> wires = new HashMap<>();
-        int p1 = runUntilWire(instrs, wires, "a");
-        assertEquals(956, p1);
-
-        wires.clear();
-        wires.put("b", p1);
-        int p2 = runUntilWire(instrs, wires, "a");
-        assertEquals(40149, p2);
     }
 
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2015, 7, "Some Assembly Required", true);
+    }
+
+    @Override
+    public AocResult<Integer, Integer> getExpected() {
+        return AocResult.of(956, 40149);
+    }
+
+    @Override
+    public Map<String, Instr> parse(Optional<File> file) throws IOException {
+        return Files.lines(file.get().toPath()).map(Instr::fromStr)
+                .collect(Collectors.toUnmodifiableMap(instr -> instr.dest(),
+                        instr -> instr));
+    }
+
+    private int findSignal(Map<String, Instr> instrs,
+            Map<Operand, Integer> wires, Operand wire) {
+        if (wires.containsKey(wire))
+            return wires.get(wire);
+
+        if (wire.isInt())
+            return wire.n();
+
+        Instr instr = instrs.get(wire.s);
+        int c;
+        switch (instr.op) {
+        case AND: {
+            var a = findSignal(instrs, wires, instr.a);
+            var b = findSignal(instrs, wires, instr.b);
+            c = a & b;
+            break;
+        }
+        case OR: {
+            var a = findSignal(instrs, wires, instr.a);
+            var b = findSignal(instrs, wires, instr.b);
+            c = a | b;
+            break;
+        }
+        case LSHIFT: {
+            var a = findSignal(instrs, wires, instr.a);
+            var b = instr.b.n();
+            c = a << b;
+            break;
+        }
+        case RSHIFT: {
+            var a = findSignal(instrs, wires, instr.a);
+            var b = instr.b.n();
+            c = a >> b;
+            break;
+        }
+        case ASSIGN: {
+            c = findSignal(instrs, wires, instr.a);
+            break;
+        }
+        case NOT: {
+            c = ~(findSignal(instrs, wires, instr.a));
+            break;
+        }
+        default:
+            throw new RuntimeException();
+        }
+
+        wires.put(wire, c);
+        return c;
+    }
+
+    @Override
+    public Integer part1(Map<String, Instr> instrs) {
+        return findSignal(instrs, new HashMap<>(), Operand.of("a"));
+    }
+
+    @Override
+    public Integer part2(Map<String, Instr> instrs) {
+        Map<Operand, Integer> wires = new HashMap<>();
+        wires.put(Operand.of("b"), getExpected().p1().get());
+        return findSignal(instrs, wires, Operand.of("a"));
+    }
+
+    public static void main(String[] args) throws FileNotFoundException {
+        AocBaseRunner.run(new Day07());
+    }
 }

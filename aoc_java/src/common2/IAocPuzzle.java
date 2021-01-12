@@ -1,6 +1,7 @@
 package common2;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Optional;
 
 /**
@@ -21,8 +22,9 @@ public interface IAocPuzzle<TInput, TPart1, TPart2> {
      * 
      * @param reader
      * @return
+     * @throws IOException
      */
-    public TInput parse(Optional<File> file);
+    public TInput parse(Optional<File> file) throws IOException;
 
     public TPart1 part1(TInput input);
 

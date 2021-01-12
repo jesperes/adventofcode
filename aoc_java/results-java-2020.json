@@ -3,25 +3,25 @@
   "platform": "OpenJDK Runtime Environment",
   "version": "15.0.1+9-18",
   "totals": {
-    "parsing": 523951,
-    "part1": 88768075,
-    "part2": 2664291635,
-    "total": 2753583661
+    "parsing": 1890760,
+    "part1": 87098044,
+    "part2": 2659529509,
+    "total": 2748518313
   },
   "runs": [
     {
       "name": "Not Quite Lisp",
       "year": 2015,
       "day": 1,
-      "parsing": 42381,
-      "total": 91907,
+      "parsing": 53606,
+      "total": 110414,
       "part1": {
-        "time": 28874,
+        "time": 28951,
         "result": "232",
         "status": true
       },
       "part2": {
-        "time": 20652,
+        "time": 27857,
         "result": "1783",
         "status": true
       }
@@ -30,15 +30,15 @@
       "name": "I Was Told There Would Be No Math",
       "year": 2015,
       "day": 2,
-      "parsing": 467984,
-      "total": 554618,
+      "parsing": 584531,
+      "total": 658547,
       "part1": {
-        "time": 40451,
+        "time": 26463,
         "result": "1586300",
         "status": true
       },
       "part2": {
-        "time": 46183,
+        "time": 47553,
         "result": "3737498",
         "status": true
       }
@@ -47,15 +47,15 @@
       "name": "Perfectly Spherical Houses in a Vacuum",
       "year": 2015,
       "day": 3,
-      "parsing": 13147,
-      "total": 953233,
+      "parsing": 11497,
+      "total": 1056561,
       "part1": {
-        "time": 395820,
+        "time": 513856,
         "result": "2572",
         "status": true
       },
       "part2": {
-        "time": 544266,
+        "time": 531208,
         "result": "2631",
         "status": true
       }
@@ -64,16 +64,67 @@
       "name": "The Ideal Stocking Stuffer",
       "year": 2015,
       "day": 4,
-      "parsing": 439,
-      "total": 2751983903,
+      "parsing": 356,
+      "total": 2725543726,
       "part1": {
-        "time": 88302930,
+        "time": 78746379,
         "result": "282749",
         "status": true
       },
       "part2": {
-        "time": 2663680534,
+        "time": 2646796991,
         "result": "9962624",
+        "status": true
+      }
+    },
+    {
+      "name": "Doesn\u0027t He Have Intern-Elves For This?",
+      "year": 2015,
+      "day": 5,
+      "parsing": 130403,
+      "total": 1218552,
+      "part1": {
+        "time": 441524,
+        "result": "238",
+        "status": true
+      },
+      "part2": {
+        "time": 646625,
+        "result": "69",
+        "status": true
+      }
+    },
+    {
+      "name": "Probably a Fire Hazard",
+      "year": 2015,
+      "day": 6,
+      "parsing": 775305,
+      "total": 19455531,
+      "part1": {
+        "time": 7247422,
+        "result": "543903",
+        "status": true
+      },
+      "part2": {
+        "time": 11432804,
+        "result": "14687245",
+        "status": true
+      }
+    },
+    {
+      "name": "Some Assembly Required",
+      "year": 2015,
+      "day": 7,
+      "parsing": 335062,
+      "total": 474982,
+      "part1": {
+        "time": 93449,
+        "result": "956",
+        "status": true
+      },
+      "part2": {
+        "time": 46471,
+        "result": "40149",
         "status": true
       }
     }

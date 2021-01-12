@@ -1,7 +1,10 @@
 Year@Day@Name@Parsing@Part 1@Part 2@Total@Part 1 result@Part 2 resutl@Part 1 status@Part 2 status
-2015@1@Not Quite Lisp@0.042@0.029@0.021@0.092@232@1783@OK@OK
-2015@2@I Was Told There Would Be No Math@0.468@0.040@0.046@0.555@1586300@3737498@OK@OK
-2015@3@Perfectly Spherical Houses in a Vacuum@0.013@0.396@0.544@0.953@2572@2631@OK@OK
-2015@4@The Ideal Stocking Stuffer@-@88.303@2663.681@2751.984@282749@9962624@OK@OK
-@@Total@0.524@88.768@2664.292@2753.584@@@@
-@@Per puzzle@0.131@22.192@666.073@688.396@@@@
+2015@1@Not Quite Lisp@0.054@0.029@0.028@0.110@232@1783@OK@OK
+2015@2@I Was Told There Would Be No Math@0.585@0.026@0.048@0.659@1586300@3737498@OK@OK
+2015@3@Perfectly Spherical Houses in a Vacuum@0.011@0.514@0.531@1.057@2572@2631@OK@OK
+2015@4@The Ideal Stocking Stuffer@-@78.746@2646.797@2725.544@282749@9962624@OK@OK
+2015@5@Doesn't He Have Intern-Elves For This?@0.130@0.442@0.647@1.219@238@69@OK@OK
+2015@6@Probably a Fire Hazard@0.775@7.247@11.433@19.456@543903@14687245@OK@OK
+2015@7@Some Assembly Required@0.335@0.093@0.046@0.475@956@40149@OK@OK
+@@Total@1.890@87.098@2659.530@2748.518@@@@
+@@Per puzzle@0.270@12.443@379.933@392.645@@@@
