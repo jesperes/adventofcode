@@ -65,11 +65,11 @@ public class Day07 implements IAocIntPuzzle<Map<String, Instr>> {
         private String dest() {
             switch (op) {
             case NOT:
-                return b.s();
+                return b.s;
             case ASSIGN:
-                return b.s();
+                return b.s;
             default:
-                return c.s();
+                return c.s;
             }
         }
 
@@ -98,7 +98,7 @@ public class Day07 implements IAocIntPuzzle<Map<String, Instr>> {
             return wires.get(wire);
 
         if (wire.isInt())
-            return wire.n();
+            return wire.n;
 
         Instr instr = instrs.get(wire.s);
         int c;
