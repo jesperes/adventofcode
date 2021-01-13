@@ -1,21 +1,26 @@
 package aoc2015;
 
-import static org.junit.Assert.assertEquals;
-
-import java.io.BufferedReader;
-import java.io.FileReader;
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-import org.junit.Test;
-
+import aoc2015.Day09.InputData;
 import common.Combinatorics;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocIntPuzzle;
+import common2.InputUtils;
 
-public class Day09 {
+public class Day09 implements IAocIntPuzzle<InputData> {
+
+    record InputData(Set<String> cities, Map<String, Integer> routes) {
+    }
 
     String makeKey(String s1, String s2) {
         if (s1.compareTo(s2) < 0) {
@@ -35,36 +40,46 @@ public class Day09 {
         return len;
     }
 
-    @Test
-    public void testDay09() throws IOException {
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2015, 9, "All in a Single Night", true);
+    }
+
+    @Override
+    public AocResult<Integer, Integer> getExpected() {
+        return AocResult.of(251, 898);
+    }
+
+    @Override
+    public InputData parse(Optional<File> file) throws IOException {
         Set<String> cities = new HashSet<>();
         Map<String, Integer> routes = new HashMap<>();
 
-        try (BufferedReader reader = new BufferedReader(
-                new FileReader("inputs/2015/day09.txt"))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String s[] = line.split(" ");
-                String from = s[0];
-                String to = s[2];
-                routes.put(makeKey(from, to), Integer.valueOf(s[4]));
-                cities.add(from);
-                cities.add(to);
-            }
+        for (String line : InputUtils.asStringList(file.get())) {
+            String s[] = line.split(" ");
+            String from = s[0];
+            String to = s[2];
+            routes.put(makeKey(from, to), Integer.valueOf(s[4]));
+            cities.add(from);
+            cities.add(to);
         }
 
-        List<List<String>> permutations = Combinatorics.permutations(cities);
+        return new InputData(cities, routes);
+    }
 
-        int minRouteLen = Integer.MAX_VALUE;
-        int maxRouteLen = Integer.MIN_VALUE;
+    @Override
+    public Integer part1(InputData input) {
+        return Combinatorics.permutations(input.cities).stream()
+                .collect(Collectors
+                        .summarizingInt(route -> routeLen(route, input.routes)))
+                .getMin();
+    }
 
-        for (List<String> route : permutations) {
-            int l = routeLen(route, routes);
-            minRouteLen = Math.min(l, minRouteLen);
-            maxRouteLen = Math.max(l, maxRouteLen);
-        }
-
-        assertEquals(251, minRouteLen);
-        assertEquals(898, maxRouteLen);
+    @Override
+    public Integer part2(InputData input) {
+        return Combinatorics.permutations(input.cities).stream()
+                .collect(Collectors
+                        .summarizingInt(route -> routeLen(route, input.routes)))
+                .getMax();
     }
 }

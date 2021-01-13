@@ -101,7 +101,7 @@ public class Day07 implements IAocIntPuzzle<Map<String, Instr>> {
             return wire.n;
 
         Instr instr = instrs.get(wire.s);
-        int c;
+        int c = 0;
         switch (instr.op) {
         case AND: {
             var a = findSignal(instrs, wires, instr.a);
@@ -135,10 +135,7 @@ public class Day07 implements IAocIntPuzzle<Map<String, Instr>> {
             c = ~(findSignal(instrs, wires, instr.a));
             break;
         }
-        default:
-            throw new RuntimeException();
         }
-
         wires.put(wire, c);
         return c;
     }

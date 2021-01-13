@@ -3,25 +3,25 @@
   "platform": "OpenJDK Runtime Environment",
   "version": "15.0.1+9-18",
   "totals": {
-    "parsing": 3829483,
-    "part1": 192391904,
-    "part2": 4149318201,
-    "total": 4345539588
+    "parsing": 3540022,
+    "part1": 236600912,
+    "part2": 4362086299,
+    "total": 4602227233
   },
   "runs": [
     {
       "name": "Not Quite Lisp",
       "year": 2015,
       "day": 1,
-      "parsing": 102992,
-      "total": 181717,
+      "parsing": 97423,
+      "total": 181011,
       "part1": {
-        "time": 49961,
+        "time": 60707,
         "result": "232",
         "status": true
       },
       "part2": {
-        "time": 28764,
+        "time": 22881,
         "result": "1783",
         "status": true
       }
@@ -30,15 +30,15 @@
       "name": "I Was Told There Would Be No Math",
       "year": 2015,
       "day": 2,
-      "parsing": 636913,
-      "total": 756219,
+      "parsing": 943891,
+      "total": 996833,
       "part1": {
-        "time": 48852,
+        "time": 31702,
         "result": "1586300",
         "status": true
       },
       "part2": {
-        "time": 70454,
+        "time": 21240,
         "result": "3737498",
         "status": true
       }
@@ -47,15 +47,15 @@
       "name": "Perfectly Spherical Houses in a Vacuum",
       "year": 2015,
       "day": 3,
-      "parsing": 21852,
-      "total": 1644467,
+      "parsing": 9436,
+      "total": 2182480,
       "part1": {
-        "time": 730227,
+        "time": 765495,
         "result": "2572",
         "status": true
       },
       "part2": {
-        "time": 892388,
+        "time": 1407549,
         "result": "2631",
         "status": true
       }
@@ -64,15 +64,15 @@
       "name": "The Ideal Stocking Stuffer",
       "year": 2015,
       "day": 4,
-      "parsing": 330,
-      "total": 4221213361,
+      "parsing": 583,
+      "total": 3590236763,
       "part1": {
-        "time": 113045094,
+        "time": 103742514,
         "result": "282749",
         "status": true
       },
       "part2": {
-        "time": 4108167937,
+        "time": 3486493666,
         "result": "9962624",
         "status": true
       }
@@ -81,15 +81,15 @@
       "name": "Doesn\u0027t He Have Intern-Elves For This?",
       "year": 2015,
       "day": 5,
-      "parsing": 269120,
-      "total": 2342288,
+      "parsing": 140251,
+      "total": 2939716,
       "part1": {
-        "time": 789408,
+        "time": 782800,
         "result": "238",
         "status": true
       },
       "part2": {
-        "time": 1283760,
+        "time": 2016665,
         "result": "69",
         "status": true
       }
@@ -98,15 +98,15 @@
       "name": "Probably a Fire Hazard",
       "year": 2015,
       "day": 6,
-      "parsing": 2128695,
-      "total": 118563398,
+      "parsing": 1942221,
+      "total": 43693569,
       "part1": {
-        "time": 77626390,
+        "time": 24421748,
         "result": "543903",
         "status": true
       },
       "part2": {
-        "time": 38808313,
+        "time": 17329600,
         "result": "14687245",
         "status": true
       }
@@ -115,16 +115,67 @@
       "name": "Some Assembly Required",
       "year": 2015,
       "day": 7,
-      "parsing": 669581,
-      "total": 838138,
+      "parsing": 315903,
+      "total": 447557,
       "part1": {
-        "time": 101972,
+        "time": 79348,
         "result": "956",
         "status": true
       },
       "part2": {
-        "time": 66585,
+        "time": 52306,
         "result": "40149",
+        "status": true
+      }
+    },
+    {
+      "name": "Matchsticks",
+      "year": 2015,
+      "day": 8,
+      "parsing": 49176,
+      "total": 279549,
+      "part1": {
+        "time": 200436,
+        "result": "1371",
+        "status": true
+      },
+      "part2": {
+        "time": 29937,
+        "result": "2117",
+        "status": true
+      }
+    },
+    {
+      "name": "All in a Single Night",
+      "year": 2015,
+      "day": 9,
+      "parsing": 40871,
+      "total": 105833446,
+      "part1": {
+        "time": 54817426,
+        "result": "251",
+        "status": true
+      },
+      "part2": {
+        "time": 50975149,
+        "result": "898",
+        "status": true
+      }
+    },
+    {
+      "name": "Elves Look, Elves Say",
+      "year": 2015,
+      "day": 10,
+      "parsing": 267,
+      "total": 855436309,
+      "part1": {
+        "time": 51698736,
+        "result": "492982",
+        "status": true
+      },
+      "part2": {
+        "time": 803737306,
+        "result": "6989950",
         "status": true
       }
     }

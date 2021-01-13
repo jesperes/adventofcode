@@ -1,15 +1,17 @@
 package aoc2015;
 
-import static org.junit.Assert.assertEquals;
-
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
-import org.junit.Test;
+import common2.AocBaseRunner;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocIntPuzzle;
 
-public class Day10 {
-    static final String INPUT = "1321131112";
-
+public class Day10 implements IAocIntPuzzle<String> {
     private int prefixLen(List<Character> buf) {
         // Hot code
         char c = buf.get(0);
@@ -37,28 +39,50 @@ public class Day10 {
         }
     }
 
-    @Test
-    public void testDay10() {
-        List<Character> buf1 = new ArrayList<>();
-        List<Character> buf2 = new ArrayList<>();
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2015, 10, "Elves Look, Elves Say", false);
+    }
 
-        for (char c : INPUT.toCharArray()) {
+    @Override
+    public AocResult<Integer, Integer> getExpected() {
+        return AocResult.of(492982, 6989950);
+    }
+
+    @Override
+    public String parse(Optional<File> file) throws IOException {
+        return "1321131112";
+    }
+
+    private int play(String input, int limit) {
+        List<Character> buf1 = new ArrayList<>(1_000_000);
+        List<Character> buf2 = new ArrayList<>(1_000_000);
+
+        for (char c : input.toCharArray()) {
             buf1.add(c);
         }
 
-        int part1Limit = 40;
-        int part2Limit = 50;
-        for (int i = 0; i < part2Limit; i++) {
-            if (i == part1Limit) {
-                assertEquals(492982, buf1.size());
-            }
-
+        for (int i = 0; i < limit; i++) {
             lookAndSay(buf1, buf2);
-            List<Character> tmp = buf1;
+            var tmp = buf1;
             buf1 = buf2;
             buf2 = tmp;
         }
 
-        assertEquals(6989950, buf1.size());
+        return buf1.size();
+    }
+
+    @Override
+    public Integer part1(String input) {
+        return play(input, 40);
+    }
+
+    @Override
+    public Integer part2(String input) {
+        return play(input, 50);
+    }
+
+    public static void main(String[] args) {
+        AocBaseRunner.run(new Day10());
     }
 }

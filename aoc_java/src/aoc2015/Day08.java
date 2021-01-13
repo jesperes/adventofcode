@@ -1,14 +1,16 @@
 package aoc2015;
 
-import static org.junit.Assert.assertEquals;
-
-import java.io.BufferedReader;
-import java.io.FileReader;
+import java.io.File;
 import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
 
-import org.junit.Test;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocIntPuzzle;
+import common2.InputUtils;
 
-public class Day08 {
+public class Day08 implements IAocIntPuzzle<List<String>> {
 
     int memoryChars(String line) {
         int chars = 0;
@@ -44,24 +46,40 @@ public class Day08 {
         return chars;
     }
 
-    @Test
-    public void testDay08() throws IOException {
-        try (BufferedReader reader = new BufferedReader(
-                new FileReader("inputs/2015/day08.txt"))) {
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2015, 8, "Matchsticks", true);
+    }
 
-            String line;
-            int memChars = 0;
-            int litChars = 0;
-            int totalChars = 0;
+    @Override
+    public AocResult<Integer, Integer> getExpected() {
+        return AocResult.of(1371, 2117);
+    }
 
-            while ((line = reader.readLine()) != null) {
-                totalChars += line.length();
-                memChars += memoryChars(line);
-                litChars += literalChars(line);
-            }
+    @Override
+    public List<String> parse(Optional<File> file) throws IOException {
+        return InputUtils.asStringList(file.get());
+    }
 
-            assertEquals(1371, totalChars - memChars);
-            assertEquals(2117, litChars - totalChars);
+    @Override
+    public Integer part1(List<String> input) {
+        int memChars = 0;
+        int totalChars = 0;
+        for (String line : input) {
+            totalChars += line.length();
+            memChars += memoryChars(line);
         }
+        return totalChars - memChars;
+    }
+
+    @Override
+    public Integer part2(List<String> input) {
+        int litChars = 0;
+        int totalChars = 0;
+        for (String line : input) {
+            totalChars += line.length();
+            litChars += literalChars(line);
+        }
+        return litChars - totalChars;
     }
 }
