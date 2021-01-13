@@ -1,34 +1,25 @@
 package aoc2015;
 
-import static org.junit.Assert.assertEquals;
-
-import java.io.BufferedReader;
-import java.io.FileReader;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
-import org.junit.Test;
+import aoc2015.Day15.Ingredient;
+import common2.AocBaseRunner;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocIntPuzzle;
+import common2.InputUtils;
 
-public class Day15 {
-    class Ingredient {
-        String name;
-        int capacity;
-        int durability;
-        int flavor;
-        int texture;
-        int calories;
+public class Day15 implements IAocIntPuzzle<List<Ingredient>> {
 
-        public Ingredient(String name, int capacity, int durability, int flavor,
-                int texture, int calories) {
-            this.name = name;
-            this.capacity = capacity;
-            this.durability = durability;
-            this.flavor = flavor;
-            this.texture = texture;
-            this.calories = calories;
-        }
+    record Ingredient(String name, int capacity, int durability, int flavor,
+            int texture, int calories) {
     }
 
     List<List<Integer>> get4IngredientCombos() {
@@ -55,7 +46,7 @@ public class Day15 {
         return combos;
     }
 
-    int getProperty(List<Integer> combos, List<Ingredient> ingredients,
+    private int getProperty(List<Integer> combos, List<Ingredient> ingredients,
             Function<Ingredient, Integer> fun) {
         int propsum = 0;
         for (int i = 0; i < combos.size(); i++) {
@@ -64,53 +55,55 @@ public class Day15 {
         return Math.max(0, propsum);
     }
 
-    @Test
-    public void testDay15() throws Exception {
+    private int score(List<Ingredient> ingredients, List<Integer> combo) {
+        return getProperty(combo, ingredients, ingr -> ingr.capacity)
+                * getProperty(combo, ingredients, ingr -> ingr.durability)
+                * getProperty(combo, ingredients, ingr -> ingr.flavor)
+                * getProperty(combo, ingredients, ingr -> ingr.texture);
+    }
 
-        List<Ingredient> ingredients = new ArrayList<>();
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2015, 15, "Science for Hungry People", true);
+    }
 
-        try (BufferedReader reader = new BufferedReader(
-                new FileReader("inputs/2015/day15.txt"))) {
-            String line;
+    @Override
+    public AocResult<Integer, Integer> getExpected() {
+        return AocResult.of(222870, 117936);
+    }
 
-            while ((line = reader.readLine()) != null) {
-                String[] s = line.split("[ :,]");
-                String name = s[0];
-                int capacity = Integer.valueOf(s[3]);
-                int durability = Integer.valueOf(s[6]);
-                int flavor = Integer.valueOf(s[9]);
-                int texture = Integer.valueOf(s[12]);
-                int calories = Integer.valueOf(s[15]);
-                Ingredient ingr = new Ingredient(name, capacity, durability,
-                        flavor, texture, calories);
-                ingredients.add(ingr);
-            }
-        }
+    @Override
+    public List<Ingredient> parse(Optional<File> file) throws IOException {
+        return InputUtils.asStringList(file.get()).stream().map(line -> {
+            String[] s = line.split("[ :,]");
+            String name = s[0];
+            int capacity = Integer.valueOf(s[3]);
+            int durability = Integer.valueOf(s[6]);
+            int flavor = Integer.valueOf(s[9]);
+            int texture = Integer.valueOf(s[12]);
+            int calories = Integer.valueOf(s[15]);
+            return new Ingredient(name, capacity, durability, flavor, texture,
+                    calories);
+        }).collect(Collectors.toUnmodifiableList());
+    }
 
-        int max = Integer.MIN_VALUE;
-        int maxCal500 = Integer.MIN_VALUE;
+    @Override
+    public Integer part1(List<Ingredient> ingredients) {
+        return get4IngredientCombos().stream()
+                .mapToInt(combo -> score(ingredients, combo))
+                .summaryStatistics().getMax();
+    }
 
-        for (List<Integer> combo : get4IngredientCombos()) {
+    @Override
+    public Integer part2(List<Ingredient> ingredients) {
+        return get4IngredientCombos().stream()
+                .filter(combo -> getProperty(combo, ingredients,
+                        ingr -> ingr.calories) == 500)
+                .mapToInt(combo -> score(ingredients, combo))
+                .summaryStatistics().getMax();
+    }
 
-            int capacity = getProperty(combo, ingredients,
-                    ingr -> ingr.capacity);
-            int durability = getProperty(combo, ingredients,
-                    ingr -> ingr.durability);
-            int flavor = getProperty(combo, ingredients, ingr -> ingr.flavor);
-            int texture = getProperty(combo, ingredients, ingr -> ingr.texture);
-            int calories = getProperty(combo, ingredients,
-                    ingr -> ingr.calories);
-
-            int score = capacity * durability * flavor * texture;
-            if (score > max)
-                max = score;
-
-            if (calories == 500 && score > maxCal500) {
-                maxCal500 = score;
-            }
-        }
-
-        assertEquals(222870, max);
-        assertEquals(117936, maxCal500);
+    public static void main(String[] args) {
+        AocBaseRunner.run(new Day15());
     }
 }

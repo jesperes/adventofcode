@@ -2,9 +2,18 @@ package aoc2015;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Optional;
+
 import org.junit.Test;
 
-public class Day11 {
+import common2.AocBaseRunner;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocPuzzle;
+
+public class Day11 implements IAocPuzzle<String, String, String> {
 
     static final String INPUT = "cqjxjnds";
 
@@ -77,5 +86,38 @@ public class Day11 {
         assertEquals("cqjxxyzz", password.toString());
         nextPassword(password);
         assertEquals("cqkaabcc", password.toString());
+    }
+
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2015, 11, "Corporate Policy", false);
+    }
+
+    @Override
+    public AocResult<String, String> getExpected() {
+        return AocResult.of("cqjxxyzz", "cqkaabcc");
+    }
+
+    @Override
+    public String parse(Optional<File> file) throws IOException {
+        return "cqjxjnds";
+    }
+
+    @Override
+    public String part1(String input) {
+        StringBuilder password = new StringBuilder(INPUT);
+        nextPassword(password);
+        return password.toString();
+    }
+
+    @Override
+    public String part2(String input) {
+        StringBuilder password = new StringBuilder(getExpected().p1().get());
+        nextPassword(password);
+        return password.toString();
+    }
+
+    public static void main(String[] args) {
+        AocBaseRunner.run(new Day11());
     }
 }

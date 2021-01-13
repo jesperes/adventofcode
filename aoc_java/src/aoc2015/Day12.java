@@ -1,31 +1,21 @@
 package aoc2015;
 
-import static org.junit.Assert.assertEquals;
-
-import java.io.BufferedReader;
-import java.io.FileReader;
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-
-import org.junit.Test;
+import java.util.Optional;
 
 import com.google.gson.Gson;
 
-public class Day12 {
+import common2.AocBaseRunner;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocIntPuzzle;
+import common2.InputUtils;
 
-    @Test
-    public void testDay12() throws IOException {
-        Gson gson = new Gson();
-        try (BufferedReader reader = new BufferedReader(
-                new FileReader("inputs/2015/day12.txt"))) {
-
-            Object json = gson.fromJson(reader, Object.class);
-
-            assertEquals(119433, countNumbers(json, false));
-            assertEquals(68466, countNumbers(json, true));
-        }
-    }
+public class Day12 implements IAocIntPuzzle<Object> {
+    static Gson gson = new Gson();
 
     @SuppressWarnings({ "rawtypes" })
     private int countNumbers(Object json, boolean excludeReds) {
@@ -51,5 +41,34 @@ public class Day12 {
         }
 
         return nums;
+    }
+
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2015, 12, "JSAbacusFramework.io", true);
+    }
+
+    @Override
+    public AocResult<Integer, Integer> getExpected() {
+        return AocResult.of(119433, 68466);
+    }
+
+    @Override
+    public Object parse(Optional<File> file) throws IOException {
+        return gson.fromJson(InputUtils.asString(file.get()), Object.class);
+    }
+
+    @Override
+    public Integer part1(Object input) {
+        return countNumbers(input, false);
+    }
+
+    @Override
+    public Integer part2(Object input) {
+        return countNumbers(input, true);
+    }
+
+    public static void main(String[] args) {
+        AocBaseRunner.run(new Day12());
     }
 }
