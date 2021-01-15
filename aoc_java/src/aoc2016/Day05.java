@@ -4,8 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 import common2.AocBaseRunner;
@@ -45,27 +43,29 @@ public class Day05 implements IAocPuzzle<String, String, String> {
         return (byte) ((b <= 9) ? b + 48 : b + 87);
     }
 
-    private static Map<Integer, byte[]> md5cache = new HashMap<>();
+    static long timeSpentInMD5 = 0;
+
+    private byte[] md5(byte[] bytes) {
+        long t0 = System.nanoTime();
+        try {
+            return MD5.digest(bytes);
+        } finally {
+            timeSpentInMD5 += (System.nanoTime() - t0);
+        }
+    }
 
     private boolean hasLeadingZeroes(String input, int n, byte[] hexdigest) {
-
-        if (md5cache.containsKey(n)) {
-            byte[] cachedHexDigest = md5cache.get(n);
-            System.arraycopy(cachedHexDigest, 0, hexdigest, 0,
-                    cachedHexDigest.length);
-        } else {
-            String s = input + Integer.toString(n);
-            byte[] digest = MD5.digest(s.getBytes());
-            if (digest[0] == 0 && digest[1] == 0 && (digest[2] & 0xf0) == 0) {
-                for (int i = 0; i < 16; i++) {
-                    hexdigest[i * 2] = toHexb((byte) ((digest[i] & 0xf0) >> 4));
-                    hexdigest[i * 2 + 1] = toHexb((byte) (digest[i] & 0x0f));
-                }
-
-                return true;
-            } else {
-                return false;
+        String s = input + Integer.toString(n);
+        byte[] digest = md5(s.getBytes());
+        if (digest[0] == 0 && digest[1] == 0 && (digest[2] & 0xf0) == 0) {
+            for (int i = 0; i < 16; i++) {
+                hexdigest[i * 2] = toHexb((byte) ((digest[i] & 0xf0) >> 4));
+                hexdigest[i * 2 + 1] = toHexb((byte) (digest[i] & 0x0f));
             }
+
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -99,6 +99,13 @@ public class Day05 implements IAocPuzzle<String, String, String> {
     }
 
     public static void main(String[] args) {
+        long t0 = System.nanoTime();
         AocBaseRunner.run(new Day05());
+        long elapsed = System.nanoTime() - t0;
+        double md5Secs = (timeSpentInMD5 / 1_000_000_000.0);
+        double totalSecs = elapsed / 1_000_000_000.0;
+        System.out.println("Time spent in MD5: " + md5Secs);
+        System.out.format("Percentage of time spent in MD5: %.3g%%%n",
+                ((md5Secs / totalSecs) * 100.0));
     }
 }
