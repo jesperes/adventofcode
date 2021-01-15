@@ -1,18 +1,24 @@
 package aoc2015;
 
-import static org.junit.Assert.assertEquals;
-
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
-import org.junit.Test;
+import aoc2015.Day22.Input;
+import common2.AocBaseRunner;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocIntPuzzle;
 
-public class Day22 {
-    final static int HP = 51;
-    final static int DAMAGE = 9;
+public class Day22 implements IAocIntPuzzle<Input> {
+
+    record Input(int hp, int damage) {
+    }
 
     enum Spell {
         MagicMissile(53, 0) {
@@ -100,12 +106,12 @@ public class Day22 {
             this.activeEffects = new HashMap<>(activeEffects);
         }
 
-        public State(int hp, int mana, int hpPenalty) {
+        public State(Input input, int hp, int mana, int hpPenalty) {
             this.hp = hp;
             this.mana = mana;
             this.manaSpent = 0;
-            this.bossHp = HP;
-            this.bossDamage = DAMAGE;
+            this.bossHp = input.hp;
+            this.bossDamage = input.damage;
             this.armor = 0;
             this.hpPenalty = hpPenalty;
         }
@@ -202,9 +208,32 @@ public class Day22 {
         }
     }
 
-    @Test
-    public void testDay22() throws Exception {
-        assertEquals(900, battlePlayer(new State(50, 500, 0)));
-        assertEquals(1216, battlePlayer(new State(50, 500, 1)));
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2015, 22, "Wizard Simulator 20XX", false);
+    }
+
+    @Override
+    public AocResult<Integer, Integer> getExpected() {
+        return AocResult.of(900, 1216);
+    }
+
+    @Override
+    public Input parse(Optional<File> file) throws IOException {
+        return new Input(51, 9);
+    }
+
+    @Override
+    public Integer part1(Input input) {
+        return battlePlayer(new State(input, 50, 500, 0));
+    }
+
+    @Override
+    public Integer part2(Input input) {
+        return battlePlayer(new State(input, 50, 500, 1));
+    }
+
+    public static void main(String[] args) {
+        AocBaseRunner.run(new Day22());
     }
 }

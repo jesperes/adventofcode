@@ -1,13 +1,37 @@
 package aoc2015;
 
-import static org.junit.Assert.assertEquals;
+import java.io.File;
+import java.io.IOException;
+import java.util.Optional;
 
-import org.junit.Test;
+import aoc2015.Day25.RowCol;
+import common2.AocBaseRunner;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocPuzzle;
 
-public class Day25 {
+public class Day25 implements IAocPuzzle<RowCol, Long, Void> {
 
-    @Test
-    public void testDay25() throws Exception {
+    record RowCol(int row, int col) {
+    }
+
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2015, 25, "Let It Snow", false);
+    }
+
+    @Override
+    public AocResult<Long, Void> getExpected() {
+        return AocResult.of(8997277L, null);
+    }
+
+    @Override
+    public RowCol parse(Optional<File> file) throws IOException {
+        return new RowCol(3010, 3019);
+    }
+
+    @Override
+    public Long part1(RowCol input) {
         int row = 1;
         int col = 1;
         long value = 20151125L;
@@ -23,10 +47,17 @@ public class Day25 {
                 col++;
             }
 
-            if (row == 3010 && col == 3019)
-                break;
+            if (row == input.row && col == input.col)
+                return value;
         }
+    }
 
-        assertEquals(8997277L, value);
+    @Override
+    public Void part2(RowCol input) {
+        return null;
+    }
+
+    public static void main(String[] args) {
+        AocBaseRunner.run(new Day25());
     }
 }

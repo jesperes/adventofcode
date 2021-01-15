@@ -1,20 +1,24 @@
 package aoc2015;
 
-import static org.junit.Assert.assertEquals;
-
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.junit.Test;
-
 import com.google.common.collect.Sets;
 
-public class Day24 {
+import common2.AocBaseRunner;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocLongPuzzle;
+
+public class Day24 implements IAocLongPuzzle<Set<Long>> {
     int[] packages = new int[] { 1, 2, 3, 7, 11, 13, 17, 19, 23, 31, 37, 41, 43,
             47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109,
             113 };
@@ -27,7 +31,7 @@ public class Day24 {
         return set.stream().mapToLong(x -> x).sum();
     }
 
-    long splitIntoGroups(int n) {
+    long splitIntoGroups(Set<Long> input, int n) {
         Set<Long> packageSet = Arrays.stream(packages).asLongStream().boxed()
                 .collect(Collectors.toSet());
 
@@ -53,9 +57,33 @@ public class Day24 {
         return product(groups.stream().min(order).get());
     }
 
-    @Test
-    public void testDay24() throws Exception {
-        assertEquals(11846773891L, splitIntoGroups(3));
-        assertEquals(80393059L, splitIntoGroups(4));
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2015, 24, "It Hangs in the Balance", false);
+    }
+
+    @Override
+    public AocResult<Long, Long> getExpected() {
+        return AocResult.of(11846773891L, 80393059L);
+    }
+
+    @Override
+    public Set<Long> parse(Optional<File> file) throws IOException {
+        return Arrays.stream(packages).asLongStream().boxed()
+                .collect(Collectors.toSet());
+    }
+
+    @Override
+    public Long part1(Set<Long> input) {
+        return splitIntoGroups(input, 3);
+    }
+
+    @Override
+    public Long part2(Set<Long> input) {
+        return splitIntoGroups(input, 4);
+    }
+
+    public static void main(String[] args) {
+        AocBaseRunner.run(new Day24());
     }
 }

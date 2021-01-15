@@ -26,7 +26,7 @@ import com.google.gson.JsonObject;
 
 public class AocBase2 {
 
-    private static final int MAX_REPEATS = 1000;
+    private static final int MAX_REPEATS = 5000;
     private static final int MAX_REPEAT_NS = 1_000_000_000;
 
     private List<IAocPuzzle<?, ?, ?>> puzzles;

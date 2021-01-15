@@ -1,11 +1,15 @@
 package aoc2015;
 
-import static org.junit.Assert.assertEquals;
-
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
-import org.junit.Test;
+import common2.AocBaseRunner;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocIntPuzzle;
 
 /**
  * There are an infinite (enumerable) amount of elves, numbered 1, 2, 3, etc.
@@ -29,18 +33,28 @@ import org.junit.Test;
  * @author jesperes
  *
  */
-public class Day20 {
+public class Day20 implements IAocIntPuzzle<Integer> {
 
-    static final int INPUT = 36000000;
     static final int BLOCK_SIZE = 100000;
 
-    @Test
-    public void testDay20() throws Exception {
-        assertEquals(831600, part1());
-        assertEquals(884520, part2());
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2015, 20, "Infinite Elves and Infinite Houses",
+                false);
     }
 
-    private int part1() {
+    @Override
+    public AocResult<Integer, Integer> getExpected() {
+        return AocResult.of(831600, 884520);
+    }
+
+    @Override
+    public Integer parse(Optional<File> file) throws IOException {
+        return 36000000;
+    }
+
+    @Override
+    public Integer part1(Integer input) {
         /*
          * Divide the houses into blocks, to limit the number of houses we need
          * to track at a time.
@@ -58,7 +72,7 @@ public class Day20 {
                 }
 
                 if (elf >= start) {
-                    if (presents[elf - start] >= INPUT) {
+                    if (presents[elf - start] >= input) {
                         return elf;
                     }
                 }
@@ -66,7 +80,8 @@ public class Day20 {
         }
     }
 
-    private int part2() {
+    @Override
+    public Integer part2(Integer input) {
         /*
          * Same as part2, but elfs stop after 50 presents. This could be merged
          * into part1 to gain performance.
@@ -90,11 +105,15 @@ public class Day20 {
                 }
 
                 if (elf >= start) {
-                    if (presents[elf - start] >= INPUT) {
+                    if (presents[elf - start] >= input) {
                         return elf;
                     }
                 }
             }
         }
+    }
+
+    public static void main(String[] args) {
+        AocBaseRunner.run(new Day20());
     }
 }

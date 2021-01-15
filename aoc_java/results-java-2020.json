@@ -3,264 +3,94 @@
   "platform": "OpenJDK Runtime Environment",
   "version": "15.0.1+9-18",
   "totals": {
-    "parsing": 3224989,
-    "part1": 373631881,
-    "part2": 5890170269,
-    "total": 6267027139
+    "parsing": 2942685,
+    "part1": 3109635246,
+    "part2": 8291482252,
+    "total": 11404060183
   },
   "runs": [
     {
-      "name": "Not Quite Lisp",
-      "year": 2015,
+      "name": "No Time for a Taxicab",
+      "year": 2016,
       "day": 1,
-      "parsing": 69502,
-      "total": 202321,
+      "parsing": 92313,
+      "total": 234871,
       "part1": {
-        "time": 90565,
-        "result": "232",
+        "time": 21298,
+        "result": "278",
         "status": true
       },
       "part2": {
-        "time": 42254,
-        "result": "1783",
+        "time": 121260,
+        "result": "161",
         "status": true
       }
     },
     {
-      "name": "I Was Told There Would Be No Math",
-      "year": 2015,
+      "name": "Bathroom Security",
+      "year": 2016,
       "day": 2,
-      "parsing": 967620,
-      "total": 1055798,
+      "parsing": 38973,
+      "total": 143894,
       "part1": {
-        "time": 46209,
-        "result": "1586300",
+        "time": 39852,
+        "result": "56983",
         "status": true
       },
       "part2": {
-        "time": 41969,
-        "result": "3737498",
+        "time": 65069,
+        "result": "8B8B1",
         "status": true
       }
     },
     {
-      "name": "Perfectly Spherical Houses in a Vacuum",
-      "year": 2015,
+      "name": "Squares With Three Sides",
+      "year": 2016,
       "day": 3,
-      "parsing": 19147,
-      "total": 1471061,
+      "parsing": 1712868,
+      "total": 1731897,
       "part1": {
-        "time": 806991,
-        "result": "2572",
+        "time": 5170,
+        "result": "917",
         "status": true
       },
       "part2": {
-        "time": 644923,
-        "result": "2631",
+        "time": 13859,
+        "result": "1649",
         "status": true
       }
     },
     {
-      "name": "The Ideal Stocking Stuffer",
-      "year": 2015,
+      "name": "Security Through Obscurity",
+      "year": 2016,
       "day": 4,
-      "parsing": 264,
-      "total": 3793270628,
+      "parsing": 1098409,
+      "total": 5614737,
       "part1": {
-        "time": 103243421,
-        "result": "282749",
+        "time": 3359839,
+        "result": "185371",
         "status": true
       },
       "part2": {
-        "time": 3690026943,
-        "result": "9962624",
+        "time": 1156489,
+        "result": "984",
         "status": true
       }
     },
     {
-      "name": "Doesn\u0027t He Have Intern-Elves For This?",
-      "year": 2015,
+      "name": "How About a Nice Game of Chess?",
+      "year": 2016,
       "day": 5,
-      "parsing": 121478,
-      "total": 1428120,
+      "parsing": 122,
+      "total": 11396334784,
       "part1": {
-        "time": 474256,
-        "result": "238",
+        "time": 3106209087,
+        "result": "4543c154",
         "status": true
       },
       "part2": {
-        "time": 832386,
-        "result": "69",
-        "status": true
-      }
-    },
-    {
-      "name": "Probably a Fire Hazard",
-      "year": 2015,
-      "day": 6,
-      "parsing": 521943,
-      "total": 20620056,
-      "part1": {
-        "time": 7536623,
-        "result": "543903",
-        "status": true
-      },
-      "part2": {
-        "time": 12561490,
-        "result": "14687245",
-        "status": true
-      }
-    },
-    {
-      "name": "Some Assembly Required",
-      "year": 2015,
-      "day": 7,
-      "parsing": 325601,
-      "total": 495823,
-      "part1": {
-        "time": 93835,
-        "result": "956",
-        "status": true
-      },
-      "part2": {
-        "time": 76387,
-        "result": "40149",
-        "status": true
-      }
-    },
-    {
-      "name": "Matchsticks",
-      "year": 2015,
-      "day": 8,
-      "parsing": 50442,
-      "total": 228208,
-      "part1": {
-        "time": 149807,
-        "result": "1371",
-        "status": true
-      },
-      "part2": {
-        "time": 27959,
-        "result": "2117",
-        "status": true
-      }
-    },
-    {
-      "name": "All in a Single Night",
-      "year": 2015,
-      "day": 9,
-      "parsing": 33084,
-      "total": 111062416,
-      "part1": {
-        "time": 57380436,
-        "result": "251",
-        "status": true
-      },
-      "part2": {
-        "time": 53648896,
-        "result": "898",
-        "status": true
-      }
-    },
-    {
-      "name": "Elves Look, Elves Say",
-      "year": 2015,
-      "day": 10,
-      "parsing": 691,
-      "total": 1357505176,
-      "part1": {
-        "time": 78957364,
-        "result": "492982",
-        "status": true
-      },
-      "part2": {
-        "time": 1278547121,
-        "result": "6989950",
-        "status": true
-      }
-    },
-    {
-      "name": "Corporate Policy",
-      "year": 2015,
-      "day": 11,
-      "parsing": 588,
-      "total": 45993985,
-      "part1": {
-        "time": 11430243,
-        "result": "cqjxxyzz",
-        "status": true
-      },
-      "part2": {
-        "time": 34563154,
-        "result": "cqkaabcc",
-        "status": true
-      }
-    },
-    {
-      "name": "JSAbacusFramework.io",
-      "year": 2015,
-      "day": 12,
-      "parsing": 768624,
-      "total": 1347804,
-      "part1": {
-        "time": 345196,
-        "result": "119433",
-        "status": true
-      },
-      "part2": {
-        "time": 233984,
-        "result": "68466",
-        "status": true
-      }
-    },
-    {
-      "name": "Knights of the Dinner Table",
-      "year": 2015,
-      "day": 13,
-      "parsing": 202635,
-      "total": 838399051,
-      "part1": {
-        "time": 61865155,
-        "result": "709",
-        "status": true
-      },
-      "part2": {
-        "time": 776331261,
-        "result": "668",
-        "status": true
-      }
-    },
-    {
-      "name": "Reindeer Olympics",
-      "year": 2015,
-      "day": 14,
-      "parsing": 66146,
-      "total": 1359608,
-      "part1": {
-        "time": 164115,
-        "result": "2655",
-        "status": true
-      },
-      "part2": {
-        "time": 1129347,
-        "result": "1059",
-        "status": true
-      }
-    },
-    {
-      "name": "Science for Hungry People",
-      "year": 2015,
-      "day": 15,
-      "parsing": 77224,
-      "total": 92587084,
-      "part1": {
-        "time": 51047665,
-        "result": "222870",
-        "status": true
-      },
-      "part2": {
-        "time": 41462195,
-        "result": "117936",
+        "time": 8290125575,
+        "result": "1050cbbd",
         "status": true
       }
     }

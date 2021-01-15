@@ -2,14 +2,23 @@ package aoc2015;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.Test;
 
-public class Day21 {
+import common2.AocBaseRunner;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocIntPuzzle;
+
+public class Day21 implements IAocIntPuzzle<Void> {
 
     final static int bossHp = 100;
     final static int bossDamage = 8;
@@ -122,7 +131,7 @@ public class Day21 {
                 }
             }
         }
-        return players;
+        return Collections.unmodifiableList(players);
     }
 
     @Test
@@ -145,5 +154,56 @@ public class Day21 {
 
         assertEquals(91, minGold);
         assertEquals(158, maxGold);
+    }
+
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2015, 21, "RPG Simulator 20XX", false);
+    }
+
+    @Override
+    public AocResult<Integer, Integer> getExpected() {
+        return AocResult.of(91, 158);
+    }
+
+    @Override
+    public Void parse(Optional<File> file) throws IOException {
+        return null;
+    }
+
+    @Override
+    public Integer part1(Void input) {
+        int minGold = Integer.MAX_VALUE;
+
+        for (Combatant player : makeAllPlayers()) {
+            Combatant boss = Combatant.boss();
+            Combatant winner = battle(player, boss);
+
+            if (!winner.isBoss && player.cost <= minGold) {
+                minGold = player.cost;
+            }
+        }
+
+        return minGold;
+    }
+
+    @Override
+    public Integer part2(Void input) {
+        int maxGold = Integer.MIN_VALUE;
+
+        for (Combatant player : makeAllPlayers()) {
+            Combatant boss = Combatant.boss();
+            Combatant winner = battle(player, boss);
+
+            if (winner.isBoss && player.cost >= maxGold) {
+                maxGold = player.cost;
+            }
+        }
+
+        return maxGold;
+    }
+
+    public static void main(String[] args) {
+        AocBaseRunner.run(new Day21());
     }
 }

@@ -1,61 +1,63 @@
 package aoc2015;
 
-import static org.junit.Assert.assertEquals;
-
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.util.ArrayList;
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
-import org.junit.Test;
+import aoc2015.Day23.IInstr;
+import common2.AocBaseRunner;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocIntPuzzle;
+import common2.InputUtils;
 
-public class Day23 {
+public class Day23 implements IAocIntPuzzle<List<IInstr>> {
     enum Op {
         hlf {
             @Override
-            public Instr<?, ?> parse(String[] line) {
+            public IInstr parse(String[] line) {
                 return new ArithmInstr(this, line[1], v -> v / 2);
             }
         },
         tpl {
             @Override
-            public Instr<?, ?> parse(String[] line) {
+            public IInstr parse(String[] line) {
                 return new ArithmInstr(this, line[1], v -> v * 3);
             }
         },
         inc {
             @Override
-            public Instr<?, ?> parse(String[] line) {
+            public IInstr parse(String[] line) {
                 return new ArithmInstr(this, line[1], v -> v + 1);
             }
         },
         jmp {
             @Override
-            public Instr<?, ?> parse(String[] line) {
+            public IInstr parse(String[] line) {
                 return new JumpInstr(this, Integer.valueOf(line[1]));
             }
         },
         jio {
             @Override
-            public Instr<?, ?> parse(String[] line) {
+            public IInstr parse(String[] line) {
                 return new CondJumpInstr(this, line[1],
                         Integer.valueOf(line[2]), v -> v == 1);
             }
         },
         jie {
             @Override
-            public Instr<?, ?> parse(String[] line) {
+            public IInstr parse(String[] line) {
                 return new CondJumpInstr(this, line[1],
                         Integer.valueOf(line[2]), v -> v % 2 == 0);
             }
         };
 
-        public Instr<?, ?> parse(String[] line) {
-            return null;
-        }
+        abstract public IInstr parse(String[] line);
     }
 
     /**
@@ -111,7 +113,11 @@ public class Day23 {
         }
     }
 
-    static abstract class Instr<T1, T2> {
+    static abstract interface IInstr {
+        abstract int execute(Map<String, Integer> regs, int pc);
+    }
+
+    static abstract class Instr<T1, T2> implements IInstr {
         final Op op;
         final T1 arg1;
         final T2 arg2;
@@ -121,11 +127,9 @@ public class Day23 {
             this.arg1 = arg1;
             this.arg2 = arg2;
         }
-
-        public abstract int execute(Map<String, Integer> regs, int pc);
     }
 
-    private int execute(List<Instr<?, ?>> instrs, int a) {
+    private int execute(List<IInstr> instrs, int a) {
         int pc = 0;
         Map<String, Integer> regs = new HashMap<>();
         regs.put("a", a);
@@ -135,20 +139,35 @@ public class Day23 {
         return regs.get("b");
     }
 
-    @Test
-    public void testDay23() throws Exception {
-        List<Instr<?, ?>> instrs = new ArrayList<>();
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2015, 23, "Opening the Turing Lock", true);
+    }
 
-        try (BufferedReader reader = new BufferedReader(
-                new FileReader("inputs/2015/day23.txt"))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String s[] = line.split("[ ,]+");
-                instrs.add(Op.valueOf(s[0]).parse(s));
-            }
-        }
+    @Override
+    public AocResult<Integer, Integer> getExpected() {
+        return AocResult.of(255, 334);
+    }
 
-        assertEquals(255, execute(instrs, 0));
-        assertEquals(334, execute(instrs, 1));
+    @Override
+    public List<IInstr> parse(Optional<File> file) throws IOException {
+        return InputUtils.asStringList(file.get()).stream().map(line -> {
+            String s[] = line.split("[ ,]+");
+            return Op.valueOf(s[0]).parse(s);
+        }).collect(Collectors.toUnmodifiableList());
+    }
+
+    @Override
+    public Integer part1(List<IInstr> input) {
+        return execute(input, 0);
+    }
+
+    @Override
+    public Integer part2(List<IInstr> input) {
+        return execute(input, 1);
+    }
+
+    public static void main(String[] args) {
+        AocBaseRunner.run(new Day23());
     }
 }
