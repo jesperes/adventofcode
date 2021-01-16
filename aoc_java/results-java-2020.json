@@ -3,25 +3,25 @@
   "platform": "OpenJDK Runtime Environment",
   "version": "15.0.1+9-18",
   "totals": {
-    "parsing": 2942685,
-    "part1": 3109635246,
-    "part2": 8291482252,
-    "total": 11404060183
+    "parsing": 5393022,
+    "part1": 3770014078,
+    "part2": 9987264296,
+    "total": 13762671396
   },
   "runs": [
     {
       "name": "No Time for a Taxicab",
       "year": 2016,
       "day": 1,
-      "parsing": 92313,
-      "total": 234871,
+      "parsing": 84112,
+      "total": 286217,
       "part1": {
-        "time": 21298,
+        "time": 32309,
         "result": "278",
         "status": true
       },
       "part2": {
-        "time": 121260,
+        "time": 169796,
         "result": "161",
         "status": true
       }
@@ -30,15 +30,15 @@
       "name": "Bathroom Security",
       "year": 2016,
       "day": 2,
-      "parsing": 38973,
-      "total": 143894,
+      "parsing": 41600,
+      "total": 128460,
       "part1": {
-        "time": 39852,
+        "time": 51463,
         "result": "56983",
         "status": true
       },
       "part2": {
-        "time": 65069,
+        "time": 35397,
         "result": "8B8B1",
         "status": true
       }
@@ -47,15 +47,15 @@
       "name": "Squares With Three Sides",
       "year": 2016,
       "day": 3,
-      "parsing": 1712868,
-      "total": 1731897,
+      "parsing": 1613131,
+      "total": 1638960,
       "part1": {
-        "time": 5170,
+        "time": 5368,
         "result": "917",
         "status": true
       },
       "part2": {
-        "time": 13859,
+        "time": 20461,
         "result": "1649",
         "status": true
       }
@@ -64,15 +64,15 @@
       "name": "Security Through Obscurity",
       "year": 2016,
       "day": 4,
-      "parsing": 1098409,
-      "total": 5614737,
+      "parsing": 3611365,
+      "total": 6808299,
       "part1": {
-        "time": 3359839,
+        "time": 2516907,
         "result": "185371",
         "status": true
       },
       "part2": {
-        "time": 1156489,
+        "time": 680027,
         "result": "984",
         "status": true
       }
@@ -81,16 +81,33 @@
       "name": "How About a Nice Game of Chess?",
       "year": 2016,
       "day": 5,
-      "parsing": 122,
-      "total": 11396334784,
+      "parsing": 155,
+      "total": 13753478731,
       "part1": {
-        "time": 3106209087,
+        "time": 3767238914,
         "result": "4543c154",
         "status": true
       },
       "part2": {
-        "time": 8290125575,
+        "time": 9986239662,
         "result": "1050cbbd",
+        "status": true
+      }
+    },
+    {
+      "name": "Signals and Noise",
+      "year": 2016,
+      "day": 6,
+      "parsing": 42659,
+      "total": 330729,
+      "part1": {
+        "time": 169117,
+        "result": "dzqckwsd",
+        "status": true
+      },
+      "part2": {
+        "time": 118953,
+        "result": "lragovly",
         "status": true
       }
     }
