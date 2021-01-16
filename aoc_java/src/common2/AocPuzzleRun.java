@@ -1,6 +1,7 @@
 package common2;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public record AocPuzzleRun<T, P1, P2> (IAocPuzzle<T, P1, P2> puzzle,
@@ -51,6 +52,6 @@ public record AocPuzzleRun<T, P1, P2> (IAocPuzzle<T, P1, P2> puzzle,
     }
 
     private String timeToStr(long nanosecs) {
-        return String.format("%.3f", nanosecs / 1000000.0);
+        return String.format(Locale.ROOT, "%.3f", nanosecs / 1000000.0);
     }
 }
