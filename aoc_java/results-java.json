@@ -3,25 +3,25 @@
   "platform": "OpenJDK Runtime Environment",
   "version": "15.0.1+9-18",
   "totals": {
-    "parsing": 3332725,
-    "part1": 4168506327,
-    "part2": 28391654166,
-    "total": 32563493218
+    "parsing": 3339360,
+    "part1": 3872936414,
+    "part2": 27922630487,
+    "total": 31798906261
   },
   "runs": [
     {
       "name": "No Time for a Taxicab",
       "year": 2016,
       "day": 1,
-      "parsing": 104365,
-      "total": 234238,
+      "parsing": 100944,
+      "total": 207633,
       "part1": {
-        "time": 14581,
+        "time": 13279,
         "result": "278",
         "status": true
       },
       "part2": {
-        "time": 115292,
+        "time": 93410,
         "result": "161",
         "status": true
       }
@@ -30,15 +30,15 @@
       "name": "Bathroom Security",
       "year": 2016,
       "day": 2,
-      "parsing": 77938,
-      "total": 123040,
+      "parsing": 75733,
+      "total": 112826,
       "part1": {
-        "time": 22212,
+        "time": 20376,
         "result": "56983",
         "status": true
       },
       "part2": {
-        "time": 22890,
+        "time": 16717,
         "result": "8B8B1",
         "status": true
       }
@@ -47,15 +47,15 @@
       "name": "Squares With Three Sides",
       "year": 2016,
       "day": 3,
-      "parsing": 1335224,
-      "total": 1354892,
+      "parsing": 1307831,
+      "total": 1322179,
       "part1": {
-        "time": 5380,
+        "time": 5749,
         "result": "917",
         "status": true
       },
       "part2": {
-        "time": 14288,
+        "time": 8599,
         "result": "1649",
         "status": true
       }
@@ -64,15 +64,15 @@
       "name": "Security Through Obscurity",
       "year": 2016,
       "day": 4,
-      "parsing": 1049562,
-      "total": 4376270,
+      "parsing": 996383,
+      "total": 3502796,
       "part1": {
-        "time": 2818397,
+        "time": 2077283,
         "result": "185371",
         "status": true
       },
       "part2": {
-        "time": 508311,
+        "time": 429130,
         "result": "984",
         "status": true
       }
@@ -81,15 +81,15 @@
       "name": "How About a Nice Game of Chess?",
       "year": 2016,
       "day": 5,
-      "parsing": 126,
-      "total": 13666777326,
+      "parsing": 155,
+      "total": 13513150755,
       "part1": {
-        "time": 3749989050,
+        "time": 3588079700,
         "result": "4543c154",
         "status": true
       },
       "part2": {
-        "time": 9916788150,
+        "time": 9925070900,
         "result": "1050cbbd",
         "status": true
       }
@@ -98,15 +98,15 @@
       "name": "Signals and Noise",
       "year": 2016,
       "day": 6,
-      "parsing": 90924,
-      "total": 452890,
+      "parsing": 81215,
+      "total": 315311,
       "part1": {
-        "time": 227483,
+        "time": 127813,
         "result": "dzqckwsd",
         "status": true
       },
       "part2": {
-        "time": 134483,
+        "time": 106283,
         "result": "lragovly",
         "status": true
       }
@@ -115,16 +115,33 @@
       "name": "Internet Protocol Version 7",
       "year": 2016,
       "day": 7,
-      "parsing": 473949,
-      "total": 3889172,
+      "parsing": 421334,
+      "total": 3341705,
       "part1": {
-        "time": 1136753,
+        "time": 1006608,
         "result": "115",
         "status": true
       },
       "part2": {
-        "time": 2278470,
+        "time": 1913763,
         "result": "231",
+        "status": true
+      }
+    },
+    {
+      "name": "Two-Factor Authentication",
+      "year": 2016,
+      "day": 8,
+      "parsing": 126130,
+      "total": 141861,
+      "part1": {
+        "time": 15612,
+        "result": "115",
+        "status": true
+      },
+      "part2": {
+        "time": 119,
+        "result": "EFEYKFRFIJ",
         "status": true
       }
     },
@@ -132,15 +149,15 @@
       "name": "Explosives in Cyberspace",
       "year": 2016,
       "day": 9,
-      "parsing": 54400,
-      "total": 242403,
+      "parsing": 55647,
+      "total": 226762,
       "part1": {
-        "time": 9010,
+        "time": 7578,
         "result": "74532",
         "status": true
       },
       "part2": {
-        "time": 178993,
+        "time": 163537,
         "result": "11558231665",
         "status": true
       }
@@ -149,15 +166,15 @@
       "name": "One-Time Pad",
       "year": 2016,
       "day": 14,
-      "parsing": 130,
-      "total": 17602236217,
+      "parsing": 147,
+      "total": 17160448516,
       "part1": {
-        "time": 15926487,
+        "time": 14746569,
         "result": "23890",
         "status": true
       },
       "part2": {
-        "time": 17586309600,
+        "time": 17145701800,
         "result": "22696",
         "status": true
       }
@@ -166,15 +183,15 @@
       "name": "An Elephant Named Joseph",
       "year": 2016,
       "day": 19,
-      "parsing": 126,
-      "total": 566837826,
+      "parsing": 112,
+      "total": 455095003,
       "part1": {
-        "time": 398227400,
+        "time": 266665025,
         "result": "1834471",
         "status": true
       },
       "part2": {
-        "time": 168610300,
+        "time": 188429866,
         "result": "1420064",
         "status": true
       }
@@ -183,15 +200,15 @@
       "name": "Scrambled Letters and Hash",
       "year": 2016,
       "day": 21,
-      "parsing": 88639,
-      "total": 716911249,
+      "parsing": 118955,
+      "total": 660985826,
       "part1": {
-        "time": 129360,
+        "time": 170621,
         "result": "cbeghdaf",
         "status": true
       },
       "part2": {
-        "time": 716693250,
+        "time": 660696250,
         "result": "bacdefgh",
         "status": true
       }
@@ -200,15 +217,15 @@
       "name": "Safe Cracking",
       "year": 2016,
       "day": 23,
-      "parsing": 57342,
-      "total": 57695,
+      "parsing": 54774,
+      "total": 55088,
       "part1": {
-        "time": 214,
+        "time": 201,
         "result": "11130",
         "status": true
       },
       "part2": {
-        "time": 139,
+        "time": 113,
         "result": "479007690",
         "status": true
       }
