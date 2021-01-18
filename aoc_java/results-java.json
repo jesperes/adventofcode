@@ -3,25 +3,25 @@
   "platform": "OpenJDK Runtime Environment",
   "version": "15.0.1+9-18",
   "totals": {
-    "parsing": 3339360,
-    "part1": 3872936414,
-    "part2": 27922630487,
-    "total": 31798906261
+    "parsing": 4325550,
+    "part1": 4349692672,
+    "part2": 28821407655,
+    "total": 33175425877
   },
   "runs": [
     {
       "name": "No Time for a Taxicab",
       "year": 2016,
       "day": 1,
-      "parsing": 100944,
-      "total": 207633,
+      "parsing": 122037,
+      "total": 268671,
       "part1": {
-        "time": 13279,
+        "time": 16630,
         "result": "278",
         "status": true
       },
       "part2": {
-        "time": 93410,
+        "time": 130004,
         "result": "161",
         "status": true
       }
@@ -30,15 +30,15 @@
       "name": "Bathroom Security",
       "year": 2016,
       "day": 2,
-      "parsing": 75733,
-      "total": 112826,
+      "parsing": 83073,
+      "total": 130239,
       "part1": {
-        "time": 20376,
+        "time": 21654,
         "result": "56983",
         "status": true
       },
       "part2": {
-        "time": 16717,
+        "time": 25512,
         "result": "8B8B1",
         "status": true
       }
@@ -47,15 +47,15 @@
       "name": "Squares With Three Sides",
       "year": 2016,
       "day": 3,
-      "parsing": 1307831,
-      "total": 1322179,
+      "parsing": 1514603,
+      "total": 1533876,
       "part1": {
-        "time": 5749,
+        "time": 5306,
         "result": "917",
         "status": true
       },
       "part2": {
-        "time": 8599,
+        "time": 13967,
         "result": "1649",
         "status": true
       }
@@ -64,15 +64,15 @@
       "name": "Security Through Obscurity",
       "year": 2016,
       "day": 4,
-      "parsing": 996383,
-      "total": 3502796,
+      "parsing": 1086137,
+      "total": 3966362,
       "part1": {
-        "time": 2077283,
+        "time": 2422839,
         "result": "185371",
         "status": true
       },
       "part2": {
-        "time": 429130,
+        "time": 457386,
         "result": "984",
         "status": true
       }
@@ -81,15 +81,15 @@
       "name": "How About a Nice Game of Chess?",
       "year": 2016,
       "day": 5,
-      "parsing": 155,
-      "total": 13513150755,
+      "parsing": 107,
+      "total": 13780767057,
       "part1": {
-        "time": 3588079700,
+        "time": 4002271700,
         "result": "4543c154",
         "status": true
       },
       "part2": {
-        "time": 9925070900,
+        "time": 9778495250,
         "result": "1050cbbd",
         "status": true
       }
@@ -98,15 +98,15 @@
       "name": "Signals and Noise",
       "year": 2016,
       "day": 6,
-      "parsing": 81215,
-      "total": 315311,
+      "parsing": 90053,
+      "total": 404150,
       "part1": {
-        "time": 127813,
+        "time": 182352,
         "result": "dzqckwsd",
         "status": true
       },
       "part2": {
-        "time": 106283,
+        "time": 131745,
         "result": "lragovly",
         "status": true
       }
@@ -115,15 +115,15 @@
       "name": "Internet Protocol Version 7",
       "year": 2016,
       "day": 7,
-      "parsing": 421334,
-      "total": 3341705,
+      "parsing": 466994,
+      "total": 3935254,
       "part1": {
-        "time": 1006608,
+        "time": 1149363,
         "result": "115",
         "status": true
       },
       "part2": {
-        "time": 1913763,
+        "time": 2318897,
         "result": "231",
         "status": true
       }
@@ -132,15 +132,15 @@
       "name": "Two-Factor Authentication",
       "year": 2016,
       "day": 8,
-      "parsing": 126130,
-      "total": 141861,
+      "parsing": 124668,
+      "total": 139516,
       "part1": {
-        "time": 15612,
+        "time": 14755,
         "result": "115",
         "status": true
       },
       "part2": {
-        "time": 119,
+        "time": 93,
         "result": "EFEYKFRFIJ",
         "status": true
       }
@@ -149,16 +149,33 @@
       "name": "Explosives in Cyberspace",
       "year": 2016,
       "day": 9,
-      "parsing": 55647,
-      "total": 226762,
+      "parsing": 59599,
+      "total": 244981,
       "part1": {
-        "time": 7578,
+        "time": 8496,
         "result": "74532",
         "status": true
       },
       "part2": {
-        "time": 163537,
+        "time": 176886,
         "result": "11558231665",
+        "status": true
+      }
+    },
+    {
+      "name": "Balance Bots",
+      "year": 2016,
+      "day": 10,
+      "parsing": 631346,
+      "total": 721325,
+      "part1": {
+        "time": 89876,
+        "result": "161",
+        "status": true
+      },
+      "part2": {
+        "time": 103,
+        "result": "133163",
         "status": true
       }
     },
@@ -166,15 +183,15 @@
       "name": "One-Time Pad",
       "year": 2016,
       "day": 14,
-      "parsing": 147,
-      "total": 17160448516,
+      "parsing": 77,
+      "total": 18121409640,
       "part1": {
-        "time": 14746569,
+        "time": 15607113,
         "result": "23890",
         "status": true
       },
       "part2": {
-        "time": 17145701800,
+        "time": 18105802450,
         "result": "22696",
         "status": true
       }
@@ -183,15 +200,15 @@
       "name": "An Elephant Named Joseph",
       "year": 2016,
       "day": 19,
-      "parsing": 112,
-      "total": 455095003,
+      "parsing": 98,
+      "total": 553346338,
       "part1": {
-        "time": 266665025,
+        "time": 327771300,
         "result": "1834471",
         "status": true
       },
       "part2": {
-        "time": 188429866,
+        "time": 225574940,
         "result": "1420064",
         "status": true
       }
@@ -200,15 +217,15 @@
       "name": "Scrambled Letters and Hash",
       "year": 2016,
       "day": 21,
-      "parsing": 118955,
-      "total": 660985826,
+      "parsing": 87819,
+      "total": 708498919,
       "part1": {
-        "time": 170621,
+        "time": 131000,
         "result": "cbeghdaf",
         "status": true
       },
       "part2": {
-        "time": 660696250,
+        "time": 708280100,
         "result": "bacdefgh",
         "status": true
       }
@@ -217,15 +234,15 @@
       "name": "Safe Cracking",
       "year": 2016,
       "day": 23,
-      "parsing": 54774,
-      "total": 55088,
+      "parsing": 58939,
+      "total": 59549,
       "part1": {
-        "time": 201,
+        "time": 288,
         "result": "11130",
         "status": true
       },
       "part2": {
-        "time": 113,
+        "time": 322,
         "result": "479007690",
         "status": true
       }

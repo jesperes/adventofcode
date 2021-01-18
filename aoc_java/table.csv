@@ -1,16 +1,17 @@
 Year@Day@Name@Parsing@Part 1@Part 2@Total@Part 1 result@Part 2 resutl@Part 1 status@Part 2 status
-2016@1@No Time for a Taxicab@0.101@0.013@0.093@0.208@278@161@OK@OK
-2016@2@Bathroom Security@0.076@0.020@0.017@0.113@56983@8B8B1@OK@OK
-2016@3@Squares With Three Sides@1.308@0.006@0.009@1.322@917@1649@OK@OK
-2016@4@Security Through Obscurity@0.996@2.077@0.429@3.503@185371@984@OK@OK
-2016@5@How About a Nice Game of Chess?@-@3588.080@9925.071@13513.151@4543c154@1050cbbd@OK@OK
-2016@6@Signals and Noise@0.081@0.128@0.106@0.315@dzqckwsd@lragovly@OK@OK
-2016@7@Internet Protocol Version 7@0.421@1.007@1.914@3.342@115@231@OK@OK
-2016@8@Two-Factor Authentication@0.126@0.016@0.000@0.142@115@EFEYKFRFIJ@OK@OK
-2016@9@Explosives in Cyberspace@0.056@0.008@0.164@0.227@74532@11558231665@OK@OK
-2016@14@One-Time Pad@-@14.747@17145.702@17160.449@23890@22696@OK@OK
-2016@19@An Elephant Named Joseph@-@266.665@188.430@455.095@1834471@1420064@OK@OK
-2016@21@Scrambled Letters and Hash@0.119@0.171@660.696@660.986@cbeghdaf@bacdefgh@OK@OK
-2016@23@Safe Cracking@0.055@0.000@0.000@0.055@11130@479007690@OK@OK
-@@Total@3.339@3872.936@27922.630@31798.906@@@@
-@@Per puzzle@0.257@297.918@2147.895@2446.070@@@@
+2016@1@No Time for a Taxicab@0.122@0.017@0.130@0.269@278@161@OK@OK
+2016@2@Bathroom Security@0.083@0.022@0.026@0.130@56983@8B8B1@OK@OK
+2016@3@Squares With Three Sides@1.515@0.005@0.014@1.534@917@1649@OK@OK
+2016@4@Security Through Obscurity@1.086@2.423@0.457@3.966@185371@984@OK@OK
+2016@5@How About a Nice Game of Chess?@-@4002.272@9778.495@13780.767@4543c154@1050cbbd@OK@OK
+2016@6@Signals and Noise@0.090@0.182@0.132@0.404@dzqckwsd@lragovly@OK@OK
+2016@7@Internet Protocol Version 7@0.467@1.149@2.319@3.935@115@231@OK@OK
+2016@8@Two-Factor Authentication@0.125@0.015@0.000@0.140@115@EFEYKFRFIJ@OK@OK
+2016@9@Explosives in Cyberspace@0.060@0.008@0.177@0.245@74532@11558231665@OK@OK
+2016@10@Balance Bots@0.631@0.090@0.000@0.721@161@133163@OK@OK
+2016@14@One-Time Pad@-@15.607@18105.802@18121.410@23890@22696@OK@OK
+2016@19@An Elephant Named Joseph@-@327.771@225.575@553.346@1834471@1420064@OK@OK
+2016@21@Scrambled Letters and Hash@0.088@0.131@708.280@708.499@cbeghdaf@bacdefgh@OK@OK
+2016@23@Safe Cracking@0.059@0.000@0.000@0.060@11130@479007690@OK@OK
+@@Total@4.325@4349.693@28821.408@33175.426@@@@
+@@Per puzzle@0.309@310.692@2058.672@2369.673@@@@
