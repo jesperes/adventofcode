@@ -1,15 +1,25 @@
 package aoc2016;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.junit.Test;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Streams;
 
 import aoc2016.Day11.State;
 import common2.AocPuzzleInfo;
@@ -18,277 +28,318 @@ import common2.IAocIntPuzzle;
 
 public class Day11 implements IAocIntPuzzle<State> {
 
-	enum Type {
-		GENERATOR, MICROCHIP;
-	}
+    record Substance(long id, int genFloor, int chipFloor) {
+    }
 
-	record Component(Type type, int num, int floor) {
-		public String toString() {
-			return String.format("%d%s@F%d", num, type.toString().charAt(0), floor);
-		}
-	}
+    record State(List<Integer> components, int elevator) {
 
-	record State(List<Component> components, int elevator) {
-		boolean isEndState() {
-			return components.stream().allMatch(comp -> comp.floor == 4);
-		}
+        public String toString() {
+            StringBuilder b = new StringBuilder();
 
-		/*
-		 * Create a copy of the current state, moving one or more components. If the new
-		 * state is valid, add it to the list of states.
-		 */
-		void move(int newfloor, List<Component> toMove, List<State> states) {
-			assertEquals(1, Math.abs(elevator - newfloor)); // elevator can only move one floor at a time
-			List<Component> listcopy = new ArrayList<>();
-			for (Component c : components) {
-				if (toMove.contains(c)) {
-					assertEquals(1, Math.abs(c.floor - newfloor));
-					assertTrue(newfloor >= 1 && newfloor <= 4);
-					listcopy.add(new Component(c.type, c.num, newfloor));
-				} else {
-					listcopy.add(new Component(c.type, c.num, c.floor));
-				}
-			}
+            for (int floor = 4; floor >= 1; floor--) {
+                b.append(String.format("F%d ", floor));
 
-			var newstate = new State(listcopy, newfloor);
-			if (newstate.isValid()) {
-				System.out.format("Moved %s to %d%n", toMove, newfloor);
-				states.add(newstate);
-			}
-		}
+                if (elevator == floor) {
+                    b.append("E ");
+                } else {
+                    b.append(". ");
+                }
 
-		private boolean isValid() {
-			// Loop over all components to check if any components would
-			// be fried if moved to this state.
-			for (Component chip : components) {
-				if (chip.type == Type.GENERATOR)
-					continue;
+                for (int i = 0; i < components.size(); i++) {
+                    char type = (i % 2 == 0) ? 'G' : 'M';
+                    int id = Math.floorDiv(i, 2);
+                    char subst = (char) (id + 'A');
+                    if (components.get(i) == floor) {
+                        b.append(String.format("%c%c ", subst, type));
+                    } else {
+                        b.append(".  ");
+                    }
+                }
+                b.append("\n");
+            }
+            return b.toString();
+        }
+    }
 
-				// Is microchip shielded?
-				boolean isShielded = false;
-				for (Component shield : components) {
-					if (shield.floor == chip.floor && chip.type == Type.GENERATOR && shield.num == chip.num) {
-						isShielded = true;
-						break;
-					}
-				}
+    // Unpacks this state into a set of substances
+    List<Substance> unpack(State state) {
+        return Streams
+                .mapWithIndex(Lists.partition(state.components, 2).stream(),
+                        (pair, id) -> new Substance(id, pair.get(0).intValue(),
+                                pair.get(1)))
+                .collect(Collectors.toUnmodifiableList());
+    }
 
-				// If it is shielded, we're ok. Proceed to check remaining components.
-				if (isShielded)
-					continue;
+    static void pack(State oldState, List<State> states,
+            List<Substance> substances, int elevator, Substance... replace) {
 
-				// If it is not shielded, check if there is generator on the same floor
-				// which will fry it.
-				for (Component otherGenerator : components) {
-					if (otherGenerator.type == Type.GENERATOR && //
-							otherGenerator.floor == chip.floor && //
-							otherGenerator.num != chip.num) {
-						return false;
-					}
-				}
-			}
+        List<Substance> list = new ArrayList<>();
+        for (Substance s : substances) {
+            boolean replaced = false;
+            for (Substance r : replace) {
+                if (s.id == r.id) {
+                    list.add(r);
+                    replaced = true;
+                }
+            }
 
-			// All components are safe.
-			return true;
-		}
+            if (!replaced)
+                list.add(s);
+        }
 
-		/**
-		 * Returns a collection of possible next states.
-		 * 
-		 * @return
-		 */
-		List<State> getNextStates() {
-			List<State> states = new ArrayList<>();
+        // Check that all substances are either shielded or on a floor
+        // without another generator on.
+        for (Substance a : list) {
+            if (a.chipFloor == a.genFloor)
+                // chip(a) is shielded by gen(a)
+                continue;
 
-			// See
-			// https://www.reddit.com/r/adventofcode/comments/5hoia9/2016_day_11_solutions/db1v1ws?utm_source=share&utm_medium=web2x&context=3
+            for (Substance other : list) {
+                if (a.id != other.id) {
+                    if (a.chipFloor == other.genFloor) {
+                        return;
+                    }
+                }
+            }
+        }
 
-			// TODO (2) if floors 1-n are empty, do not move down to floor n.
-			// TODO (1) don't bother just moving one item if you can move two
+        // At this point, we know that the state is valid, and we can
+        // add it to the list.
 
-			for (Component a : components) {
-				// Can only move components on the elevator floor
-				if (a.floor != elevator)
-					continue;
+        State state = new State(list.stream().flatMap(subst -> {
+            for (Substance r : replace) {
+                if (r.id == subst.id) {
+                    return Stream.of(r.genFloor, r.chipFloor);
+                }
+            }
+            return Stream.of(subst.genFloor, subst.chipFloor);
+        }).collect(Collectors.toUnmodifiableList()), elevator);
 
-				// Move just one component up or down
-				if (elevator < 4) {
-					move(elevator + 1, List.of(a), states);
-				} else if (elevator > 1) {
-					move(elevator - 1, List.of(a), states);
-				}
+//        System.out.println("-------------------------------------------");
+//        System.out.println("Old state:");
+//        System.out.println(oldState);
+//        System.out.println(" -> ");
+//        System.out.println();
+//        System.out.println(state);
+//        System.out.println("-------------------------------------------");
+//        System.out.println();
+        states.add(state);
+    }
 
-				// Move two components up or down
-				for (Component b : components) {
-					if (b.equals(a) || b.floor != elevator)
-						continue;
+    boolean isChipShielded(Substance subst) {
+        return subst.genFloor == subst.chipFloor;
+    }
 
-					if (elevator < 4) {
-						move(elevator + 1, List.of(a, b), states);
-					} else if (elevator > 1) {
-						move(elevator - 1, List.of(a, b), states);
-					}
-				}
-			}
+    boolean isTargetState(State state) {
+        for (int n : state.components) {
+            if (n != 4)
+                return false;
+        }
+        return true;
+    }
 
-			return states;
-		}
+    /**
+     * Returns a collection of possible next states.
+     */
+    List<State> getNextStates(State state) {
+        List<State> states = new ArrayList<>();
+        List<Substance> substances = unpack(state);
+        int elevator = state.elevator;
+        int[] destFloors = new int[] { elevator + 1, elevator - 1 };
 
-		public String toString() {
-			int minnr = components.stream().mapToInt(c -> c.num).min().getAsInt();
-			int maxnr = components.stream().mapToInt(c -> c.num).max().getAsInt();
-			StringBuilder b = new StringBuilder();
-			for (int floor = 4; floor >= 1; floor--) {
-				b.append(String.format("F%d ", floor));
+        int min = Integer.MAX_VALUE;
+        for (var n : state.components) {
+            min = Math.min(n, min);
+        }
 
-				if (floor == elevator) {
-					b.append(" E ");
-				} else {
-					b.append(" . ");
-				}
-				for (int pos = minnr; pos <= maxnr; pos++) {
-					if (components.contains(new Component(Type.GENERATOR, pos, floor))) {
-						b.append(String.format(" %dG ", pos));
-					} else {
-						b.append(" .  ");
-					}
-					if (components.contains(new Component(Type.MICROCHIP, pos, floor))) {
-						b.append(String.format(" %dM ", pos));
-					} else {
-						b.append(" .  ");
-					}
-				}
-				b.append("\n");
-			}
-			return b.toString();
-		}
-	}
+        for (int destFloor : destFloors) {
+            if (destFloor < min || destFloor > 4)
+                continue;
 
-	@Override
-	public AocPuzzleInfo getInfo() {
-		return new AocPuzzleInfo(2016, 11, "Radioisotope Thermoelectric Generators", false);
-	}
+            for (Substance a : substances) {
+                for (Substance b : substances) {
+                    if (a.id == b.id) {
+                        if (a.chipFloor == elevator && a.genFloor == elevator) {
+                            // Move chip and gen of same kind
+                            pack(state, states, substances, destFloor,
+                                    new Substance(a.id, destFloor, destFloor));
+                        }
+                    } else {
+                        // Move either two chips or two generators.
+                        // (We can never move a chip + generator of different
+                        // kinds; the generator will fry the chip.)
+                        if (a.chipFloor == elevator
+                                && b.chipFloor == elevator) {
+                            pack(state, states, substances, destFloor,
+                                    new Substance(a.id, a.genFloor, destFloor),
+                                    new Substance(b.id, b.genFloor, destFloor));
+                        }
+                        if (a.genFloor == elevator && b.genFloor == elevator) {
+                            pack(state, states, substances, destFloor,
+                                    new Substance(a.id, destFloor, a.chipFloor),
+                                    new Substance(b.id, destFloor,
+                                            b.chipFloor));
+                        }
+                    }
+                }
 
-	@Override
-	public AocResult<Integer, Integer> getExpected() {
-		return AocResult.of(37, 61);
-	}
+                // Move just chip(a)
+                if (a.chipFloor == elevator) {
+                    pack(state, states, substances, destFloor,
+                            new Substance(a.id, a.genFloor, destFloor));
+                }
 
-	/**
-	 * Rules
-	 * 
-	 * 1. Microchips without their generators cannot be on the same floor as another
-	 * generator.
-	 * 
-	 * 2. Elevator can hold one or two components (either microchip or generator)
-	 * 
-	 * 3. When moving components on the elevator, each component in the elevator
-	 * must obey rule (1) as if the components where unloaded at that level.
-	 * 
-	 * Representation
-	 * 
-	 * 1. We need to be able to generate all possible ways to move components from a
-	 * given state.
-	 *
-	 * @formatter:off
-	 * - all moves consisting on moving a single component either up or down, so potentially
-	 *   N * 2.
-	 * - all moves consisting on moving any pair of components either up or down, so 
-	 *   (N * (N - 1) * 2)
-	 * @formatter:on
-	 * 
-	 * This means for 5 components a maximum 10 one-component moves + 180 two-component moves,
-	 * but large parts of these are invalid (moving chips to floors where they will be fried,
-	 * or moving chips to non-existing floors).
-	 * 
-	 * 1b. Write code for validating a state.
-	 * 
-	 * 2. We need to "normalize" a state so that equivalent states becomes
-	 * identical. We should be able to do this by "renumbering" components from the
-	 * bottom up:
-	 * 
-	 * @formatter:off
-	 * for floor in floors:
-	 *     for component in components[floor]:
-	 *         skip if already renamed
-	 *         id <- take next lowest id
-	 *         "rename" component to id (replace both occurrences, maybe on other floors)
-	 * @formatter:on
-	 * 
-	 * This step will allow us to prune the search space significantly.
-	 * 
-	 * 3. So we will have a function next(S) such that invoking next(S) yields a collection of
-	 * new states which are both valid and unique.
-	 *  
-	 * 4. Breadth-first search to find the shortest number of steps to move all 
-	 * components to the top floor. 
-	 * 
-	 * (We cannot use A* because we don't have an "admissible heuristic", i.e. we cannot 
-	 * safely estimate the number of steps from a given state to the end-state such that
-	 * we are guaranteed to always choose the "best" next step.)
-	 */
-	@Override
-	public State parse(Optional<File> file) throws IOException {
+                // Move just gen(a)
+                if (a.genFloor == elevator) {
+                    pack(state, states, substances, destFloor,
+                            new Substance(a.id, destFloor, a.chipFloor));
+                }
+            }
+        }
 
-//		The first floor contains a strontium generator, a strontium-compatible microchip, a plutonium generator, and a plutonium-compatible microchip.
-//		The second floor contains a thulium generator, a ruthenium generator, a ruthenium-compatible microchip, a curium generator, and a curium-compatible microchip.
-//		The third floor contains a thulium-compatible microchip.
-//		The fourth floor contains nothing relevant.
+        return states;
+    }
 
-		return new State(List.of( //
-				new Component(Type.GENERATOR, 1, 1), // strontium generator
-				new Component(Type.MICROCHIP, 1, 1), // strontium microchip
-				new Component(Type.GENERATOR, 2, 1), // plutonium generator
-				new Component(Type.MICROCHIP, 2, 1), // plutonium microchip
-				new Component(Type.GENERATOR, 3, 2), // thulium generator
-				new Component(Type.GENERATOR, 4, 2), // ruthenium generator
-				new Component(Type.MICROCHIP, 4, 2), // ruthenium microchip
-				new Component(Type.GENERATOR, 5, 2), // curium generator
-				new Component(Type.MICROCHIP, 5, 2), // curium microchip
-				new Component(Type.MICROCHIP, 3, 3) // thulium
-		), 1);
-	}
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2016, 11,
+                "Radioisotope Thermoelectric Generators", false);
+    }
 
-	@Override
-	public Integer part1(State input) {
-		return 0;
-	}
+    @Override
+    public AocResult<Integer, Integer> getExpected() {
+        return AocResult.of(37, 61);
+    }
 
-	@Override
-	public Integer part2(State input) {
-		return 0;
-	}
+    @Override
+    public State parse(Optional<File> file) throws IOException {
+        return part1input();
+    }
 
-	/*
-	 * Helpers
-	 */
+    @Override
+    public Integer part1(State input) {
+        Deque<State> queue = new LinkedList<>();
+        Set<State> seen = new HashSet<>();
+        Map<State, Integer> depthMap = new HashMap<>();
+        int count = 0;
 
-	/*
-	 * Tests
-	 */
+        queue.add(input);
+        while (!queue.isEmpty()) {
+            var s = queue.removeFirst();
+            var depth = depthMap.getOrDefault(s, 0);
 
-	@Test
-	public void testEquals() throws Exception {
-		assertEquals(parse(null), parse(null));
-	}
+            count++;
 
-	@Test
-	public void testNextState() throws Exception {
-//		The first floor contains a hydrogen-compatible microchip and a lithium-compatible microchip.
-//		The second floor contains a hydrogen generator.
-//		The third floor contains a lithium generator.
-//		The fourth floor contains nothing relevant.
-		var state = new State(List.of(//
-				new Component(Type.MICROCHIP, 1, 1), // hydrogen microchip
-				new Component(Type.MICROCHIP, 2, 1), // lithium microchip
-				new Component(Type.GENERATOR, 1, 2), // hydrogen generator
-				new Component(Type.GENERATOR, 2, 3) // lithium generator
-		), 1);
-		System.out.println(state);
-		System.out.println("Next states:");
-		for (State s : state.getNextStates()) {
-			System.out.println(s);
-			System.out.println();
-		}
-	}
+            if (count % 100000 == 0) {
+                System.out.println("Count: " + count);
+                System.out.println("Depth: " + depth);
+            }
+
+            if (isTargetState(s)) {
+                System.out.println("Done!");
+                System.out.println("Depth: " + depth);
+                System.out.println("States checked: " + count);
+                return depth;
+            }
+
+            for (State n : getNextStates(s)) {
+                if (seen.contains(n)) {
+                    continue;
+                } else {
+//                    System.out.println("New state seen:");
+//                    System.out.println(n);
+                    queue.add(n);
+                    seen.add(n);
+                    depthMap.put(n, depth + 1);
+                }
+            }
+        }
+        throw new RuntimeException();
+    }
+
+    @Override
+    public Integer part2(State input) {
+        return 0;
+    }
+
+    /*
+     * Tests
+     */
+
+    @Test
+    public void testEquals() throws Exception {
+        assertEquals(parse(null), parse(null));
+    }
+
+//    @Test
+//    public void testPackState() throws Exception {
+//        {
+//            var state = ex1State();
+//            assertEquals(state, pack(unpack(state), state.elevator));
+//        }
+//        {
+//            var state = part1input();
+//            assertEquals(state, pack(unpack(state), state.elevator));
+//        }
+//        {
+//            var state = part2input();
+//            assertEquals(state, pack(unpack(state), state.elevator));
+//        }
+//    }
+
+    @Test
+    public void testPart1() throws Exception {
+        part1(ex1State());
+        part1(part1input());
+        part1(part2input());
+    }
+
+    @Test
+    public void testToString() throws Exception {
+        System.out.println(ex1State());
+    }
+
+    private State part1input() {
+        // The first floor contains a strontium generator, a
+        // strontium-compatible microchip, a plutonium generator, and a
+        // plutonium-compatible microchip.
+        // The second floor contains a thulium generator, a ruthenium generator,
+        // a ruthenium-compatible microchip, a curium generator, and a
+        // curium-compatible microchip.
+        // The third floor contains a thulium-compatible microchip.
+        // The fourth floor contains nothing relevant.
+        return new State(//
+                List.of(1, 1, // strontium
+                        1, 1, // plutonium
+                        2, 2, // ruthenium
+                        2, 2, // curium
+                        2, 3 // thulium
+                ), 1);
+    }
+
+    private State part2input() {
+        // Like part1, but elerium + dilithium on first floor.
+        return new State(//
+                List.of(1, 1, // strontium
+                        1, 1, // plutonium
+                        1, 1, // elerium
+                        1, 1, // dilithium
+                        2, 2, // ruthenium
+                        2, 2, // curium
+                        2, 3 // thulium
+                ), 1);
+    }
+
+    private State ex1State() {
+        // The first floor contains a hydrogen-compatible microchip and a
+        // lithium-compatible microchip.
+        // The second floor contains a hydrogen generator.
+        // The third floor contains a lithium generator.
+        // The fourth floor contains nothing relevant.
+        return new State(List.of(//
+                2, 1, // hydrogen
+                3, 1 // lithium
+        ), 1);
+    }
+
 }
