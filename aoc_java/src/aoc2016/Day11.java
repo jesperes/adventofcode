@@ -23,6 +23,22 @@ import common2.AocPuzzleInfo;
 import common2.AocResult;
 import common2.IAocIntPuzzle;
 
+/**
+ * This is the infamous "Radioisotope Thermoelectric Generators" puzzle from
+ * 2016 day 11.
+ * 
+ * Representation is really important here. Each substance is interchangeable
+ * with another as long as their components (microchip and generator) are on the
+ * same floors. So we represent a substance (e.g. "hydrogen") as a pair of
+ * "genFloor" and "chipFloor" (but not the substance name), and the entire state
+ * (i.e. the building) as a (sorted) list of such substances + the elevator
+ * floor. This means that symmetric states will be considered equal, and we can
+ * exclude them in the search.
+ * 
+ * Part 2 is constructed such that there is an explosion of equivalent states,
+ * so without the ability to exclude equivalent states, part 2 takes forever to
+ * run.
+ */
 public class Day11 implements IAocIntPuzzle<State> {
 
     class Substance {
@@ -54,10 +70,6 @@ public class Day11 implements IAocIntPuzzle<State> {
     record State(List<Substance> substances, int elevator) {
     }
 
-    boolean isChipShielded(Substance subst) {
-        return subst.genFloor == subst.chipFloor;
-    }
-
     boolean isTargetState(State state) {
         for (var subst : state.substances) {
             if (subst.chipFloor != 4 || subst.genFloor != 4) {
@@ -67,6 +79,10 @@ public class Day11 implements IAocIntPuzzle<State> {
         return true;
     }
 
+    /**
+     * Make a copy of the given state for moving to the given floor. The list of
+     * substances will typically be altered afterwards.
+     */
     State copy(State old, int destFloor) {
         List<Substance> list = new ArrayList<>();
         for (Substance s : old.substances) {
@@ -75,6 +91,11 @@ public class Day11 implements IAocIntPuzzle<State> {
         return new State(list, destFloor);
     }
 
+    /**
+     * Checks if a state is valid, and adds it to the given set if so. It will
+     * also, if the state is valid, sort the substances so that equivalent
+     * states compare equals.
+     */
     void addIfValid(Set<State> states, State state) {
         // Check that all chips are either shielded or on a floor
         // without another generator on.
@@ -193,6 +214,10 @@ public class Day11 implements IAocIntPuzzle<State> {
     int bfs(State input) {
         Deque<State> queue = new LinkedList<>();
         Set<State> seen = new HashSet<>();
+
+        // Track search depth in a separate map (we cannot put a depth
+        // field in the State record, as that would alter the comparison
+        // semantics).
         Map<State, Integer> depthMap = new HashMap<>();
 
         queue.add(input);
