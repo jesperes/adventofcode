@@ -1,18 +1,19 @@
 Year@Day@Name@Parsing@Part 1@Part 2@Total@Part 1 result@Part 2 resutl@Part 1 status@Part 2 status
-2016@1@No Time for a Taxicab@0.083@0.018@0.172@0.273@278@161@OK@OK
-2016@2@Bathroom Security@0.057@0.087@0.077@0.222@56983@8B8B1@OK@OK
-2016@3@Squares With Three Sides@3.060@0.018@0.050@3.129@917@1649@OK@OK
-2016@4@Security Through Obscurity@17.996@8.216@0.577@26.789@185371@984@OK@OK
-2016@5@How About a Nice Game of Chess?@-@3973.531@10863.492@14837.023@4543c154@1050cbbd@OK@OK
-2016@6@Signals and Noise@0.050@0.197@0.166@0.413@dzqckwsd@lragovly@OK@OK
-2016@7@Internet Protocol Version 7@0.409@0.587@2.856@3.851@115@231@OK@OK
-2016@8@Two-Factor Authentication@0.093@0.017@0.000@0.110@115@EFEYKFRFIJ@OK@OK
-2016@9@Explosives in Cyberspace@0.017@0.019@0.237@0.273@74532@11558231665@OK@OK
-2016@10@Balance Bots@0.714@0.149@0.000@0.864@161@133163@OK@OK
-2016@11@Radioisotope Thermoelectric Generators@-@64.022@263.646@327.668@37@61@OK@OK
-2016@14@One-Time Pad@-@8573.065@19467.060@28040.125@23890@22696@OK@OK
-2016@19@An Elephant Named Joseph@-@202.375@334.546@536.920@1834471@1420064@OK@OK
-2016@21@Scrambled Letters and Hash@0.033@0.140@984.595@984.767@cbeghdaf@bacdefgh@OK@OK
-2016@23@Safe Cracking@0.014@0.000@0.000@0.014@11130@479007690@OK@OK
-@@Total@22.525@12822.441@31917.474@44762.440@@@@
-@@Per puzzle@1.502@854.829@2127.832@2984.163@@@@
+2016@1@No Time for a Taxicab@0.142@0.040@0.267@0.449@278@161@OK@OK
+2016@2@Bathroom Security@0.070@0.065@0.053@0.188@56983@8B8B1@OK@OK
+2016@3@Squares With Three Sides@2.389@0.008@0.019@2.416@917@1649@OK@OK
+2016@4@Security Through Obscurity@1.581@4.120@2.571@8.273@185371@984@OK@OK
+2016@5@How About a Nice Game of Chess?@-@4894.598@11882.183@16776.782@4543c154@1050cbbd@OK@OK
+2016@6@Signals and Noise@0.048@0.475@0.209@0.732@dzqckwsd@lragovly@OK@OK
+2016@7@Internet Protocol Version 7@0.625@0.963@2.737@4.325@115@231@OK@OK
+2016@8@Two-Factor Authentication@0.099@0.026@0.000@0.125@115@EFEYKFRFIJ@OK@OK
+2016@9@Explosives in Cyberspace@0.017@0.015@0.224@0.256@74532@11558231665@OK@OK
+2016@10@Balance Bots@0.894@0.218@0.000@1.112@161@133163@OK@OK
+2016@11@Radioisotope Thermoelectric Generators@-@83.682@224.007@307.689@37@61@OK@OK
+2016@12@Leonardo's Monorail@0.030@17.702@395.526@413.258@318003@9227657@OK@OK
+2016@14@One-Time Pad@-@16.139@20289.090@20305.229@23890@22696@OK@OK
+2016@19@An Elephant Named Joseph@-@349.927@438.173@788.100@1834471@1420064@OK@OK
+2016@21@Scrambled Letters and Hash@0.053@0.145@1058.767@1058.965@cbeghdaf@bacdefgh@OK@OK
+2016@23@Safe Cracking@0.013@0.000@0.000@0.013@11130@479007690@OK@OK
+@@Total@5.961@5368.125@34293.826@39667.912@@@@
+@@Per puzzle@0.373@335.508@2143.364@2479.245@@@@
