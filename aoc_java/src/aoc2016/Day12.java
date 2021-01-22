@@ -86,33 +86,36 @@ public class Day12 implements IAocIntPuzzle<Prog> {
 
     int execute(Prog prog, int[] regs) {
         int pc = 0;
+        var map = prog.map;
 
         while (true) {
-            if (!prog.map.containsKey(pc))
+            if (!map.containsKey(pc))
                 return regs[0];
 
-            Instr instr = prog.map.get(pc);
+            Instr instr = map.get(pc);
+            var y = instr.y;
+            var x = instr.x;
 
             switch (instr.op) {
             case cpy:
-                writeReg(regs, instr.y, readReg(regs, instr.x));
+                writeReg(regs, y, readReg(regs, x));
                 pc++;
                 break;
             case dec:
-                writeReg(regs, instr.x, readReg(regs, instr.x) - 1);
+                writeReg(regs, x, readReg(regs, x) - 1);
                 pc++;
                 break;
             case inc:
-                writeReg(regs, instr.x, readReg(regs, instr.x) + 1);
+                writeReg(regs, x, readReg(regs, x) + 1);
                 pc++;
                 break;
             case jnz:
-                switch (readReg(regs, instr.x)) {
+                switch (readReg(regs, x)) {
                 case 0:
                     pc++;
                     break;
                 default:
-                    pc += instr.y.value.getAsInt();
+                    pc += y.value.getAsInt();
                     break;
                 }
                 break;
