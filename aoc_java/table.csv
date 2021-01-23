@@ -1,19 +1,21 @@
 Year@Day@Name@Parsing@Part 1@Part 2@Total@Part 1 result@Part 2 resutl@Part 1 status@Part 2 status
-2016@1@No Time for a Taxicab@0.142@0.040@0.267@0.449@278@161@OK@OK
-2016@2@Bathroom Security@0.070@0.065@0.053@0.188@56983@8B8B1@OK@OK
-2016@3@Squares With Three Sides@2.389@0.008@0.019@2.416@917@1649@OK@OK
-2016@4@Security Through Obscurity@1.581@4.120@2.571@8.273@185371@984@OK@OK
-2016@5@How About a Nice Game of Chess?@-@4894.598@11882.183@16776.782@4543c154@1050cbbd@OK@OK
-2016@6@Signals and Noise@0.048@0.475@0.209@0.732@dzqckwsd@lragovly@OK@OK
-2016@7@Internet Protocol Version 7@0.625@0.963@2.737@4.325@115@231@OK@OK
-2016@8@Two-Factor Authentication@0.099@0.026@0.000@0.125@115@EFEYKFRFIJ@OK@OK
-2016@9@Explosives in Cyberspace@0.017@0.015@0.224@0.256@74532@11558231665@OK@OK
-2016@10@Balance Bots@0.894@0.218@0.000@1.112@161@133163@OK@OK
-2016@11@Radioisotope Thermoelectric Generators@-@83.682@224.007@307.689@37@61@OK@OK
-2016@12@Leonardo's Monorail@0.030@17.702@395.526@413.258@318003@9227657@OK@OK
-2016@14@One-Time Pad@-@16.139@20289.090@20305.229@23890@22696@OK@OK
-2016@19@An Elephant Named Joseph@-@349.927@438.173@788.100@1834471@1420064@OK@OK
-2016@21@Scrambled Letters and Hash@0.053@0.145@1058.767@1058.965@cbeghdaf@bacdefgh@OK@OK
+2016@1@No Time for a Taxicab@0.069@0.022@0.144@0.235@278@161@OK@OK
+2016@2@Bathroom Security@0.040@0.045@0.038@0.123@56983@8B8B1@OK@OK
+2016@3@Squares With Three Sides@1.544@0.005@0.015@1.564@917@1649@OK@OK
+2016@4@Security Through Obscurity@1.648@2.728@0.607@4.984@185371@984@OK@OK
+2016@5@How About a Nice Game of Chess?@-@3568.418@9435.048@13003.467@4543c154@1050cbbd@OK@OK
+2016@6@Signals and Noise@0.043@0.170@0.120@0.333@dzqckwsd@lragovly@OK@OK
+2016@7@Internet Protocol Version 7@0.345@0.622@2.479@3.446@115@231@OK@OK
+2016@8@Two-Factor Authentication@0.088@0.018@0.000@0.106@115@EFEYKFRFIJ@OK@OK
+2016@9@Explosives in Cyberspace@0.014@0.014@0.195@0.223@74532@11558231665@OK@OK
+2016@10@Balance Bots@0.580@0.168@0.000@0.748@161@133163@OK@OK
+2016@11@Radioisotope Thermoelectric Generators@-@48.192@216.971@265.162@37@61@OK@OK
+2016@12@Leonardo's Monorail@0.026@10.738@293.361@304.126@318003@9227657@OK@OK
+2016@13@A Maze of Twisty Little Cubicles@-@0.135@0.055@0.189@86@127@OK@OK
+2016@14@One-Time Pad@-@15.294@17889.275@17904.569@23890@22696@OK@OK
+2016@15@Timing is Everything@-@0.002@0.001@0.003@400589@3045959@OK@OK
+2016@19@An Elephant Named Joseph@-@383.025@362.101@745.126@1834471@1420064@OK@OK
+2016@21@Scrambled Letters and Hash@0.024@0.207@1003.265@1003.496@cbeghdaf@bacdefgh@OK@OK
 2016@23@Safe Cracking@0.013@0.000@0.000@0.013@11130@479007690@OK@OK
-@@Total@5.961@5368.125@34293.826@39667.912@@@@
-@@Per puzzle@0.373@335.508@2143.364@2479.245@@@@
+@@Total@4.434@4029.805@29203.674@33237.914@@@@
+@@Per puzzle@0.246@223.878@1622.426@1846.551@@@@
