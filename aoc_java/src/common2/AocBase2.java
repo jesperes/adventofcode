@@ -15,6 +15,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -70,8 +73,10 @@ public class AocBase2 {
 		Collections.sort(impls, new Comparator<IAocPuzzle<?, ?, ?>>() {
 			@Override
 			public int compare(IAocPuzzle<?, ?, ?> o1, IAocPuzzle<?, ?, ?> o2) {
-				return ComparisonChain.start().compare(o1.getInfo().year(), o2.getInfo().year())
-						.compare(o1.getInfo().day(), o2.getInfo().day()).result();
+				return ComparisonChain.start()
+						.compare(o1.getInfo().year(), o2.getInfo().year())
+						.compare(o1.getInfo().day(), o2.getInfo().day())
+						.result();
 			}
 		});
 
@@ -86,7 +91,8 @@ public class AocBase2 {
 		var properties = System.getProperties();
 		System.out.println();
 		System.out.println("Language: java");
-		System.out.format("System version: %s (%s)", properties.getProperty("java.runtime.name"),
+		System.out.format("System version: %s (%s)",
+				properties.getProperty("java.runtime.name"),
 				properties.getProperty("java.runtime.version"));
 		System.out.println();
 		printTable(runs);
@@ -100,14 +106,19 @@ public class AocBase2 {
 		Properties properties = System.getProperties();
 		JsonObject root = new JsonObject();
 		root.addProperty("language", "java");
-		root.addProperty("platform", properties.getProperty("java.runtime.name"));
-		root.addProperty("version", properties.getProperty("java.runtime.version"));
+		root.addProperty("platform",
+				properties.getProperty("java.runtime.name"));
+		root.addProperty("version",
+				properties.getProperty("java.runtime.version"));
 
-		long parsetime = runs.stream().map(run -> run.result().timing().get().parsing())
+		long parsetime = runs.stream()
+				.map(run -> run.result().timing().get().parsing())
 				.collect(Collectors.summingLong(n -> n));
-		long part1time = runs.stream().map(run -> run.result().timing().get().part1())
+		long part1time = runs.stream()
+				.map(run -> run.result().timing().get().part1())
 				.collect(Collectors.summingLong(n -> n));
-		long part2time = runs.stream().map(run -> run.result().timing().get().part2())
+		long part2time = runs.stream()
+				.map(run -> run.result().timing().get().part2())
 				.collect(Collectors.summingLong(n -> n));
 		long grandTotal = parsetime + part1time + part2time;
 
@@ -132,19 +143,22 @@ public class AocBase2 {
 			obj.addProperty("year", info.year());
 			obj.addProperty("day", info.day());
 			obj.addProperty("parsing", timing.parsing());
-			obj.addProperty("total", timing.parsing() + timing.part1() + timing.part2());
+			obj.addProperty("total",
+					timing.parsing() + timing.part1() + timing.part2());
 
 			var part1 = new JsonObject();
 			part1.addProperty("time", timing.part1());
 			part1.addProperty("result", result.p1().get().toString());
-			part1.addProperty("status", result.p1().get().equals(expected.p1().get()));
+			part1.addProperty("status",
+					result.p1().get().equals(expected.p1().get()));
 			obj.add("part1", part1);
 
 			if (info.day() != 25) {
 				var part2 = new JsonObject();
 				part2.addProperty("time", timing.part2());
 				part2.addProperty("result", result.p2().get().toString());
-				part2.addProperty("status", result.p2().get().equals(expected.p2().get()));
+				part2.addProperty("status",
+						result.p2().get().equals(expected.p2().get()));
 				obj.add("part2", part2);
 			}
 			array.add(obj);
@@ -161,7 +175,8 @@ public class AocBase2 {
 		}
 	}
 
-	private void printTable(List<AocPuzzleRun<?, ?, ?>> runs) throws IOException {
+	private void printTable(List<AocPuzzleRun<?, ?, ?>> runs)
+			throws IOException {
 		final var sep = "@";
 		final var cmd = new StringBuilder();
 
@@ -180,12 +195,24 @@ public class AocBase2 {
 		};
 
 		// Headers
-		cmd.append(Arrays.stream(columns).map(col -> col.label).collect(Collectors.joining(sep)) + "\n");
+		cmd.append(Arrays.stream(columns).map(col -> col.label)
+				.collect(Collectors.joining(sep)) + "\n");
+
+		Collections.sort(runs, new Comparator<AocPuzzleRun<?, ?, ?>>() {
+			@Override
+			public int compare(AocPuzzleRun<?, ?, ?> o1,
+					AocPuzzleRun<?, ?, ?> o2) {
+				Long a = o1.result().timing().get().total();
+				Long b = o2.result().timing().get().total();
+				return a.compareTo(b);
+			}
+		});
 
 		for (final AocPuzzleRun<?, ?, ?> run : runs) {
 			final var map = run.toTableRow();
-			cmd.append(Arrays.stream(columns).map(col -> map.getOrDefault(col, "-")).collect(Collectors.joining(sep))
-					+ "\n");
+			cmd.append(Arrays.stream(columns)
+					.map(col -> map.getOrDefault(col, "-"))
+					.collect(Collectors.joining(sep)) + "\n");
 		}
 
 		cmd.append(Arrays.stream(columns).map(col -> {
@@ -201,11 +228,14 @@ public class AocBase2 {
 					}
 				});
 			case Part1Time:
-				return formatSumOverRuns(runs, run -> run.result().timing().get().part1());
+				return formatSumOverRuns(runs,
+						run -> run.result().timing().get().part1());
 			case Part2Time:
-				return formatSumOverRuns(runs, run -> run.result().timing().get().part2());
+				return formatSumOverRuns(runs,
+						run -> run.result().timing().get().part2());
 			case TotalTime:
-				return formatSumOverRuns(runs, run -> run.result().timing().get().total());
+				return formatSumOverRuns(runs,
+						run -> run.result().timing().get().total());
 			default:
 				return "";
 			}
@@ -218,31 +248,38 @@ public class AocBase2 {
 			case Parsing:
 				return formatSumOverRuns(runs, run -> {
 					if (run.puzzle().getInfo().hasInputFile()) {
-						return run.result().timing().get().parsing() / runs.size();
+						return run.result().timing().get().parsing()
+								/ runs.size();
 					} else {
 						return 0L;
 					}
 				});
 			case Part1Time:
-				return formatSumOverRuns(runs, run -> run.result().timing().get().part1() / runs.size());
+				return formatSumOverRuns(runs,
+						run -> run.result().timing().get().part1()
+								/ runs.size());
 			case Part2Time:
-				return formatSumOverRuns(runs, run -> run.result().timing().get().part2() / runs.size());
+				return formatSumOverRuns(runs,
+						run -> run.result().timing().get().part2()
+								/ runs.size());
 			case TotalTime:
-				return formatSumOverRuns(runs, run -> run.result().timing().get().total() / runs.size());
+				return formatSumOverRuns(runs,
+						run -> run.result().timing().get().total()
+								/ runs.size());
 			default:
 				return "";
 			}
 		}).collect(Collectors.joining(sep)) + "\n");
 
 		/*
-		 * Produces a nice table of the results using the "tabulate" python package. Install using
-		 * "sudo apt install python3-tabulate".
+		 * Produces a nice table of the results using the "tabulate" python
+		 * package. Install using "sudo apt install python3-tabulate".
 		 */
 		var csv = Path.of("table.csv");
 		Files.write(csv, cmd.toString().getBytes());
 		try {
 			var pb = new ProcessBuilder();
-			
+
 			if (System.getProperty("os.name").toLowerCase().contains("win")) {
 				// If windows, use "tabulate" from WSL.
 				pb.command().add("wsl");
@@ -259,39 +296,80 @@ public class AocBase2 {
 		}
 	}
 
-	private String formatSumOverRuns(List<AocPuzzleRun<?, ?, ?>> runs, Function<AocPuzzleRun<?, ?, ?>, Long> mapping) {
-		return String.format(Locale.ROOT, "%.3f", sumOverRuns(runs, mapping) / 1000000.0);
+	private String formatSumOverRuns(List<AocPuzzleRun<?, ?, ?>> runs,
+			Function<AocPuzzleRun<?, ?, ?>, Long> mapping) {
+		return String.format(Locale.ROOT, "%.3f",
+				sumOverRuns(runs, mapping) / 1000000.0);
 	}
 
-	private long sumOverRuns(List<AocPuzzleRun<?, ?, ?>> runs, Function<AocPuzzleRun<?, ?, ?>, Long> mapping) {
-		return runs.stream().map(mapping).collect(Collectors.summingLong(n -> n));
+	private long sumOverRuns(List<AocPuzzleRun<?, ?, ?>> runs,
+			Function<AocPuzzleRun<?, ?, ?>, Long> mapping) {
+		return runs.stream().map(mapping)
+				.collect(Collectors.summingLong(n -> n));
 	}
 
-	private List<AocPuzzleRun<?, ?, ?>> runPuzzles(List<IAocPuzzle<?, ?, ?>> puzzles) throws IOException {
+	private List<AocPuzzleRun<?, ?, ?>> runPuzzles(
+			List<IAocPuzzle<?, ?, ?>> puzzles) throws IOException {
+		ExecutorService exec = Executors.newCachedThreadPool();
+		long t0 = System.nanoTime();
 		final List<AocPuzzleRun<?, ?, ?>> runs = new ArrayList<>();
 		for (final IAocPuzzle<?, ?, ?> puzzle : puzzles) {
-			runs.add(run(puzzle));
+			exec.execute(() -> {
+				try {
+					runs.add(run(puzzle));
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+			});
 		}
+		exec.shutdown();
+		try {
+			if (!exec.awaitTermination(5, TimeUnit.MINUTES)) {
+				throw new RuntimeException("timeout");
+			}
+		} catch (InterruptedException e) {
+			throw new RuntimeException();
+		}
+		long t1 = System.nanoTime();
+		double elapsedSecs = (t1 - t0) / 1000000000.0;
+
+		System.out.println();
+		System.out.format(Locale.ROOT, "%nTotal wall time: %.3f seconds%n",
+				elapsedSecs);
+		System.out.format(Locale.ROOT, "Wall time per puzzle: %.3f seconds%n",
+				elapsedSecs / puzzles.size());
+
+		double puzzleTotalTimeSecs = runs.stream()
+				.mapToLong(run -> run.result().timing().get().total()).sum()
+				/ 1000000000.0;
+
+		System.out.format(Locale.ROOT, "Speedup with parallel runs: %.3f%n",
+				puzzleTotalTimeSecs / elapsedSecs);
+
 		return runs;
 	}
 
-	private <T, P1, P2> AocPuzzleRun<T, P1, P2> run(IAocPuzzle<T, P1, P2> puzzle) throws IOException {
+	private <T, P1, P2> AocPuzzleRun<T, P1, P2> run(
+			IAocPuzzle<T, P1, P2> puzzle) throws IOException {
 		final var info = puzzle.getInfo();
-		System.out.format("[%d]", info.day());
 		File inputFile = null;
 		AocResult<P1, P2> result;
 
 		if (info.hasInputFile()) {
 
-			inputFile = new File(String.format("inputs/%d/input%02d.txt", info.year(), info.day()));
+			inputFile = new File(String.format("inputs/%d/input%02d.txt",
+					info.year(), info.day()));
 			if (!inputFile.exists()) {
-				throw new FileNotFoundException("Input file is missing: " + inputFile);
+				throw new FileNotFoundException(
+						"Input file is missing: " + inputFile);
 			}
 
 			result = runWithInput(Optional.of(inputFile), puzzle);
 		} else {
 			result = runWithInput(Optional.empty(), puzzle);
 		}
+
+		// System.out.format("[%d.%d]", info.year(), info.day());
 
 		return new AocPuzzleRun<T, P1, P2>(puzzle, result);
 	}
@@ -300,10 +378,8 @@ public class AocBase2 {
 
 	}
 
-	private <T, P1, P2> AocResult<P1, P2> runWithInput(Optional<File> inputFile, IAocPuzzle<T, P1, P2> puzzle)
-			throws IOException {
-		System.out.print(".");
-
+	private <T, P1, P2> AocResult<P1, P2> runWithInput(Optional<File> inputFile,
+			IAocPuzzle<T, P1, P2> puzzle) throws IOException {
 		Timing<T> parse = repeatWithTiming("parsing", f -> {
 			try {
 				return puzzle.parse(f);
@@ -311,26 +387,30 @@ public class AocBase2 {
 				throw new RuntimeException(e);
 			}
 		}, inputFile);
-		Timing<P1> part1 = repeatWithTiming("part 1", puzzle::part1, parse.result);
+		Timing<P1> part1 = repeatWithTiming("part 1", puzzle::part1,
+				parse.result);
 		if (puzzle.getInfo().day() != 25) {
-			Timing<P2> part2 = repeatWithTiming("part 2", puzzle::part2, parse.result);
-			return AocResult.of(part1.result, part2.result, new AocTiming(parse.elapsed, part1.elapsed, part2.elapsed,
-					parse.elapsed + part1.elapsed + part2.elapsed));
+			Timing<P2> part2 = repeatWithTiming("part 2", puzzle::part2,
+					parse.result);
+			return AocResult.of(part1.result, part2.result,
+					new AocTiming(parse.elapsed, part1.elapsed, part2.elapsed,
+							parse.elapsed + part1.elapsed + part2.elapsed));
 		} else {
-			return AocResult.of(part1.result, null,
-					new AocTiming(parse.elapsed, part1.elapsed, 0, parse.elapsed + part1.elapsed));
+			return AocResult.of(part1.result, null, new AocTiming(parse.elapsed,
+					part1.elapsed, 0, parse.elapsed + part1.elapsed));
 		}
 	}
 
 	/**
-	 * Run a function with a given argument a number of times and return the result
-	 * (of the first invocation) + the average elapsed time per iteration (in
-	 * nanoseconds).
+	 * Run a function with a given argument a number of times and return the
+	 * result (of the first invocation) + the average elapsed time per iteration
+	 * (in nanoseconds).
 	 * 
 	 * To get any sort of accuracy in performance measurements in Java, it is
 	 * necessary to let the JIT compiler warm up first.
 	 */
-	private <T, R> Timing<R> repeatWithTiming(String prefix, Function<T, R> fun, T arg) throws IOException {
+	private <T, R> Timing<R> repeatWithTiming(String prefix, Function<T, R> fun,
+			T arg) throws IOException {
 		final var t0 = System.nanoTime();
 		R result = fun.apply(arg);
 		int reps = 1;
@@ -345,9 +425,6 @@ public class AocBase2 {
 		final var t1 = System.nanoTime();
 		var totalElapsed = t1 - t0;
 		var elapsedPerCall = totalElapsed / reps;
-		System.out.print(".");
-		System.out.flush();
 		return new Timing<R>(elapsedPerCall, result);
 	}
-
 }
