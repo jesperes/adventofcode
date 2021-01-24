@@ -19,6 +19,8 @@ import common2.IAocPuzzle;
 
 public class Day17 implements IAocPuzzle<String, String, Integer> {
 
+	MD5 md5 = new MD5();
+
 	record Pos(int x, int y, String str) {
 	}
 
@@ -79,11 +81,11 @@ public class Day17 implements IAocPuzzle<String, String, Integer> {
 
 	private Collection<Pos> neighbors(Pos node, String input) {
 		List<Pos> list = new ArrayList<>();
-		var md5 = MD5.hexdigest(input + node.str);
-		addIfOpen(list, md5.charAt(0), node.str, "U", node.x, node.y - 1);
-		addIfOpen(list, md5.charAt(1), node.str, "D", node.x, node.y + 1);
-		addIfOpen(list, md5.charAt(2), node.str, "L", node.x - 1, node.y);
-		addIfOpen(list, md5.charAt(3), node.str, "R", node.x + 1, node.y);
+		byte[] checksum = md5.hexdigest((input + node.str).getBytes());
+		addIfOpen(list, (char) checksum[0], node.str, "U", node.x, node.y - 1);
+		addIfOpen(list, (char) checksum[1], node.str, "D", node.x, node.y + 1);
+		addIfOpen(list, (char) checksum[2], node.str, "L", node.x - 1, node.y);
+		addIfOpen(list, (char) checksum[3], node.str, "R", node.x + 1, node.y);
 		return list;
 	}
 
@@ -96,5 +98,10 @@ public class Day17 implements IAocPuzzle<String, String, Integer> {
 
 	public static void main(String[] args) {
 		AocBaseRunner.run(new Day17());
+	}
+
+	@Override
+	public void dumpStats() {
+		md5.dumpStats(getInfo().toString());
 	}
 }

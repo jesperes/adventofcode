@@ -97,6 +97,10 @@ public class AocBase2 {
 		System.out.println();
 		printTable(runs);
 		writeResultsToFile(runs);
+
+		for (var p : puzzles) {
+			p.dumpStats();
+		}
 	}
 
 	private void writeResultsToFile(List<AocPuzzleRun<?, ?, ?>> runs) {

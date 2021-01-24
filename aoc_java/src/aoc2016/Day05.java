@@ -2,110 +2,88 @@ package aoc2016;
 
 import java.io.File;
 import java.io.IOException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
 
+import common.MD5;
 import common2.AocBaseRunner;
 import common2.AocPuzzleInfo;
 import common2.AocResult;
 import common2.IAocPuzzle;
 
 public class Day05 implements IAocPuzzle<String, String, String> {
+	MD5 md5 = new MD5();
 
-    static private final MessageDigest MD5 = getMD5();
+	@Override
+	public AocPuzzleInfo getInfo() {
+		return new AocPuzzleInfo(2016, 5, "How About a Nice Game of Chess?",
+				false);
+	}
 
-    @Override
-    public AocPuzzleInfo getInfo() {
-        return new AocPuzzleInfo(2016, 5, "How About a Nice Game of Chess?",
-                false);
-    }
+	@Override
+	public AocResult<String, String> getExpected() {
+		return AocResult.of("4543c154", "1050cbbd");
+	}
 
-    private static MessageDigest getMD5() {
-        try {
-            return MessageDigest.getInstance("MD5");
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
-    }
+	@Override
+	public String parse(Optional<File> file) throws IOException {
+		return "ojvtpuvg";
+	}
 
-    @Override
-    public AocResult<String, String> getExpected() {
-        return AocResult.of("4543c154", "1050cbbd");
-    }
+	private byte toHexb(byte b) {
+		return (byte) ((b <= 9) ? b + 48 : b + 87);
+	}
 
-    @Override
-    public String parse(Optional<File> file) throws IOException {
-        return "ojvtpuvg";
-    }
+	private boolean hasLeadingZeroes(String input, int n, byte[] hexdigest) {
+		String s = input + Integer.toString(n);
+		byte[] digest = md5.digest(s.getBytes());
+		if (digest[0] == 0 && digest[1] == 0 && (digest[2] & 0xf0) == 0) {
+			for (int i = 0; i < 16; i++) {
+				hexdigest[i * 2] = toHexb((byte) ((digest[i] & 0xf0) >> 4));
+				hexdigest[i * 2 + 1] = toHexb((byte) (digest[i] & 0x0f));
+			}
 
-    private byte toHexb(byte b) {
-        return (byte) ((b <= 9) ? b + 48 : b + 87);
-    }
+			return true;
+		} else {
+			return false;
+		}
+	}
 
-    static long timeSpentInMD5 = 0;
+	@Override
+	public String part1(String input) {
+		StringBuilder pwd = new StringBuilder();
+		byte[] hexdigest = new byte[32];
+		for (int i = 0; pwd.length() < 8; i++) {
+			if (hasLeadingZeroes(input, i, hexdigest)) {
+				pwd.append((char) hexdigest[5]);
+			}
+		}
+		return pwd.toString();
+	}
 
-    private byte[] md5(byte[] bytes) {
-        long t0 = System.nanoTime();
-        try {
-            return MD5.digest(bytes);
-        } finally {
-            timeSpentInMD5 += (System.nanoTime() - t0);
-        }
-    }
+	@Override
+	public String part2(String input) {
+		byte[] pwd = new byte[8];
+		byte[] hexdigest = new byte[32];
 
-    private boolean hasLeadingZeroes(String input, int n, byte[] hexdigest) {
-        String s = input + Integer.toString(n);
-        byte[] digest = md5(s.getBytes());
-        if (digest[0] == 0 && digest[1] == 0 && (digest[2] & 0xf0) == 0) {
-            for (int i = 0; i < 16; i++) {
-                hexdigest[i * 2] = toHexb((byte) ((digest[i] & 0xf0) >> 4));
-                hexdigest[i * 2 + 1] = toHexb((byte) (digest[i] & 0x0f));
-            }
+		for (int i = 0, n = 0; n < 8; i++) {
+			if (hasLeadingZeroes(input, i, hexdigest)) {
+				char pos = (char) hexdigest[5];
+				if (pos >= '0' && pos <= '7' && pwd[pos - '0'] == 0) {
+					pwd[pos - '0'] = hexdigest[6];
+					n++;
+				}
+			}
+		}
+		return new String(pwd);
+	}
 
-            return true;
-        } else {
-            return false;
-        }
-    }
+	public static void main(String[] args) {
+		AocBaseRunner.run(new Day05());
+	}
 
-    @Override
-    public String part1(String input) {
-        StringBuilder pwd = new StringBuilder();
-        byte[] hexdigest = new byte[32];
-        for (int i = 0; pwd.length() < 8; i++) {
-            if (hasLeadingZeroes(input, i, hexdigest)) {
-                pwd.append((char) hexdigest[5]);
-            }
-        }
-        return pwd.toString();
-    }
+	@Override
+	public void dumpStats() {
+		md5.dumpStats(getInfo().toString());
+	}
 
-    @Override
-    public String part2(String input) {
-        byte[] pwd = new byte[8];
-        byte[] hexdigest = new byte[32];
-
-        for (int i = 0, n = 0; n < 8; i++) {
-            if (hasLeadingZeroes(input, i, hexdigest)) {
-                char pos = (char) hexdigest[5];
-                if (pos >= '0' && pos <= '7' && pwd[pos - '0'] == 0) {
-                    pwd[pos - '0'] = hexdigest[6];
-                    n++;
-                }
-            }
-        }
-        return new String(pwd);
-    }
-
-    public static void main(String[] args) {
-        long t0 = System.nanoTime();
-        AocBaseRunner.run(new Day05());
-        long elapsed = System.nanoTime() - t0;
-        double md5Secs = (timeSpentInMD5 / 1_000_000_000.0);
-        double totalSecs = elapsed / 1_000_000_000.0;
-        System.out.println("Time spent in MD5: " + md5Secs);
-        System.out.format("Percentage of time spent in MD5: %.3g%%%n",
-                ((md5Secs / totalSecs) * 100.0));
-    }
 }
