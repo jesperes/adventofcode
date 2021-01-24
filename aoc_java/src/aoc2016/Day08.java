@@ -5,13 +5,10 @@ import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import org.junit.Test;
 
 import aoc2016.Day08.Instr;
 import common2.AocBaseRunner;
@@ -32,7 +29,8 @@ public class Day08 implements IAocPuzzle<List<Instr>, Integer, String> {
 	}
 
 	enum Op {
-		RotateColumn(Pattern.compile("rotate column x=(?<x>\\d+) by (?<y>\\d+)")) {
+		RotateColumn(
+				Pattern.compile("rotate column x=(?<x>\\d+) by (?<y>\\d+)")) {
 			@Override
 			void apply(int x, int y, char[][] array) {
 				char[] col = new char[array.length];
@@ -71,7 +69,8 @@ public class Day08 implements IAocPuzzle<List<Instr>, Integer, String> {
 		Instr parse(String line) {
 			var m = pattern.matcher(line);
 			if (m.matches()) {
-				return new Instr(this, Integer.valueOf(m.group("x")), Integer.valueOf(m.group("y")));
+				return new Instr(this, Integer.valueOf(m.group("x")),
+						Integer.valueOf(m.group("y")));
 			} else {
 				return null;
 			}
@@ -158,16 +157,5 @@ public class Day08 implements IAocPuzzle<List<Instr>, Integer, String> {
 
 	public static void main(String[] args) {
 		AocBaseRunner.run(new Day08());
-	}
-
-	/*
-	 * Tests
-	 */
-
-	@Test
-	public void testRotateRow() throws Exception {
-		var array = new char[] { 'a', 'b', 'c', 'd', 'e' };
-		rotate(array, 2);
-		System.out.println(Arrays.toString(array));
 	}
 }
