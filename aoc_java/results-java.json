@@ -3,145 +3,43 @@
   "platform": "OpenJDK Runtime Environment",
   "version": "15.0.1+9-18",
   "totals": {
-    "parsing": 6507438617,
-    "part1": 54942220690,
-    "part2": 87703675267,
-    "total": 149153334574
+    "parsing": 1679974750,
+    "part1": 10686118700,
+    "part2": 37274569916,
+    "total": 49640663366
   },
   "runs": [
+    {
+      "name": "Timing is Everything",
+      "year": 2016,
+      "day": 15,
+      "parsing": 3236,
+      "total": 11024,
+      "part1": {
+        "time": 5502,
+        "result": "400589",
+        "status": true
+      },
+      "part2": {
+        "time": 2286,
+        "result": "3045959",
+        "status": true
+      }
+    },
     {
       "name": "Safe Cracking",
       "year": 2016,
       "day": 23,
-      "parsing": 2396580,
-      "total": 2397538,
+      "parsing": 991522,
+      "total": 1005437,
       "part1": {
-        "time": 643,
+        "time": 13639,
         "result": "11130",
         "status": true
       },
       "part2": {
-        "time": 315,
+        "time": 276,
         "result": "479007690",
-        "status": true
-      }
-    },
-    {
-      "name": "Shuttle Search",
-      "year": 2020,
-      "day": 13,
-      "parsing": 3545444,
-      "total": 3824279,
-      "part1": {
-        "time": 109894,
-        "result": "333",
-        "status": true
-      },
-      "part2": {
-        "time": 168941,
-        "result": "690123192779524",
-        "status": true
-      }
-    },
-    {
-      "name": "Toboggan Trajectory",
-      "year": 2020,
-      "day": 3,
-      "parsing": 5798836,
-      "total": 6216467,
-      "part1": {
-        "time": 261152,
-        "result": "230",
-        "status": true
-      },
-      "part2": {
-        "time": 156479,
-        "result": "9533698720",
-        "status": true
-      }
-    },
-    {
-      "name": "Not Quite Lisp",
-      "year": 2015,
-      "day": 1,
-      "parsing": 10215584,
-      "total": 12886512,
-      "part1": {
-        "time": 2632725,
-        "result": "232",
-        "status": true
-      },
-      "part2": {
-        "time": 38203,
-        "result": "1783",
-        "status": true
-      }
-    },
-    {
-      "name": "No Time for a Taxicab",
-      "year": 2016,
-      "day": 1,
-      "parsing": 2913877,
-      "total": 13115765,
-      "part1": {
-        "time": 3369596,
-        "result": "278",
-        "status": true
-      },
-      "part2": {
-        "time": 6832292,
-        "result": "161",
-        "status": true
-      }
-    },
-    {
-      "name": "Adapter Array",
-      "year": 2020,
-      "day": 10,
-      "parsing": 9891292,
-      "total": 14100436,
-      "part1": {
-        "time": 172755,
-        "result": "2738",
-        "status": true
-      },
-      "part2": {
-        "time": 4036389,
-        "result": "74049191673856",
-        "status": true
-      }
-    },
-    {
-      "name": "Bathroom Security",
-      "year": 2016,
-      "day": 2,
-      "parsing": 2169536,
-      "total": 15986136,
-      "part1": {
-        "time": 9737699,
-        "result": "56983",
-        "status": true
-      },
-      "part2": {
-        "time": 4078901,
-        "result": "8B8B1",
-        "status": true
-      }
-    },
-    {
-      "name": "RPG Simulator 20XX",
-      "year": 2015,
-      "day": 21,
-      "parsing": 45183,
-      "total": 17417639,
-      "part1": {
-        "time": 7937976,
-        "result": "91",
-        "status": true
-      },
-      "part2": {
-        "time": 9434480,
-        "result": "158",
         "status": true
       }
     },
@@ -149,441 +47,33 @@
       "name": "Two-Factor Authentication",
       "year": 2016,
       "day": 8,
-      "parsing": 19454121,
-      "total": 19903436,
+      "parsing": 3790211,
+      "total": 4391263,
       "part1": {
-        "time": 449221,
+        "time": 565650,
         "result": "115",
         "status": true
       },
       "part2": {
-        "time": 94,
+        "time": 35402,
         "result": "EFEYKFRFIJ",
         "status": true
       }
     },
     {
-      "name": "Explosives in Cyberspace",
+      "name": "Bathroom Security",
       "year": 2016,
-      "day": 9,
-      "parsing": 1272310,
-      "total": 20863776,
-      "part1": {
-        "time": 1988069,
-        "result": "74532",
-        "status": true
-      },
-      "part2": {
-        "time": 17603397,
-        "result": "11558231665",
-        "status": true
-      }
-    },
-    {
-      "name": "Timing is Everything",
-      "year": 2016,
-      "day": 15,
-      "parsing": 75713,
-      "total": 24906676,
-      "part1": {
-        "time": 47465,
-        "result": "400589",
-        "status": true
-      },
-      "part2": {
-        "time": 24783498,
-        "result": "3045959",
-        "status": true
-      }
-    },
-    {
-      "name": "Rain Risk",
-      "year": 2020,
-      "day": 12,
-      "parsing": 21945619,
-      "total": 26017990,
-      "part1": {
-        "time": 2858409,
-        "result": "845",
-        "status": true
-      },
-      "part2": {
-        "time": 1213962,
-        "result": "27016",
-        "status": true
-      }
-    },
-    {
-      "name": "A Maze of Twisty Little Cubicles",
-      "year": 2016,
-      "day": 13,
-      "parsing": 51511,
-      "total": 30169859,
-      "part1": {
-        "time": 27223082,
-        "result": "86",
-        "status": true
-      },
-      "part2": {
-        "time": 2895266,
-        "result": "127",
-        "status": true
-      }
-    },
-    {
-      "name": "Matchsticks",
-      "year": 2015,
-      "day": 8,
-      "parsing": 4402859,
-      "total": 32615442,
-      "part1": {
-        "time": 27508941,
-        "result": "1371",
-        "status": true
-      },
-      "part2": {
-        "time": 703642,
-        "result": "2117",
-        "status": true
-      }
-    },
-    {
-      "name": "Password Philosophy",
-      "year": 2020,
       "day": 2,
-      "parsing": 36671812,
-      "total": 41907804,
+      "parsing": 2116145,
+      "total": 5496472,
       "part1": {
-        "time": 4477984,
-        "result": "660",
+        "time": 3195066,
+        "result": "56983",
         "status": true
       },
       "part2": {
-        "time": 758008,
-        "result": "530",
-        "status": true
-      }
-    },
-    {
-      "name": "Report Repair",
-      "year": 2020,
-      "day": 1,
-      "parsing": 3755255,
-      "total": 44616307,
-      "part1": {
-        "time": 39837515,
-        "result": "987339",
-        "status": true
-      },
-      "part2": {
-        "time": 1023537,
-        "result": "259521570",
-        "status": true
-      }
-    },
-    {
-      "name": "Opening the Turing Lock",
-      "year": 2015,
-      "day": 23,
-      "parsing": 2884363,
-      "total": 46668320,
-      "part1": {
-        "time": 9009202,
-        "result": "255",
-        "status": true
-      },
-      "part2": {
-        "time": 34774755,
-        "result": "334",
-        "status": true
-      }
-    },
-    {
-      "name": "I Was Told There Would Be No Math",
-      "year": 2015,
-      "day": 2,
-      "parsing": 31911545,
-      "total": 49404888,
-      "part1": {
-        "time": 16674176,
-        "result": "1586300",
-        "status": true
-      },
-      "part2": {
-        "time": 819167,
-        "result": "3737498",
-        "status": true
-      }
-    },
-    {
-      "name": "Binary Boarding",
-      "year": 2020,
-      "day": 5,
-      "parsing": 60979464,
-      "total": 61345342,
-      "part1": {
-        "time": 185,
-        "result": "928",
-        "status": true
-      },
-      "part2": {
-        "time": 365693,
-        "result": "610",
-        "status": true
-      }
-    },
-    {
-      "name": "Aunt Sue",
-      "year": 2015,
-      "day": 16,
-      "parsing": 65077816,
-      "total": 82849149,
-      "part1": {
-        "time": 11276482,
-        "result": "213",
-        "status": true
-      },
-      "part2": {
-        "time": 6494851,
-        "result": "323",
-        "status": true
-      }
-    },
-    {
-      "name": "Encoding Error",
-      "year": 2020,
-      "day": 9,
-      "parsing": 6643921,
-      "total": 90536826,
-      "part1": {
-        "time": 505914,
-        "result": "138879426",
-        "status": true
-      },
-      "part2": {
-        "time": 83386991,
-        "result": "23761694",
-        "status": true
-      }
-    },
-    {
-      "name": "Medicine for Rudolph",
-      "year": 2015,
-      "day": 19,
-      "parsing": 2863296,
-      "total": 132925911,
-      "part1": {
-        "time": 129351763,
-        "result": "576",
-        "status": true
-      },
-      "part2": {
-        "time": 710852,
-        "result": "207",
-        "status": true
-      }
-    },
-    {
-      "name": "Squares With Three Sides",
-      "year": 2016,
-      "day": 3,
-      "parsing": 172791510,
-      "total": 193161924,
-      "part1": {
-        "time": 81727,
-        "result": "917",
-        "status": true
-      },
-      "part2": {
-        "time": 20288687,
-        "result": "1649",
-        "status": true
-      }
-    },
-    {
-      "name": "Allergen Assessment",
-      "year": 2020,
-      "day": 21,
-      "parsing": 44877030,
-      "total": 209526138,
-      "part1": {
-        "time": 155660530,
-        "result": "2428",
-        "status": true
-      },
-      "part2": {
-        "time": 8988578,
-        "result": "bjq,jznhvh,klplr,dtvhzt,sbzd,tlgjzx,ctmbr,kqms",
-        "status": true
-      }
-    },
-    {
-      "name": "Passport Processing",
-      "year": 2020,
-      "day": 4,
-      "parsing": 97655930,
-      "total": 213840794,
-      "part1": {
-        "time": 103677842,
-        "result": "200",
-        "status": true
-      },
-      "part2": {
-        "time": 12507022,
-        "result": "116",
-        "status": true
-      }
-    },
-    {
-      "name": "Reindeer Olympics",
-      "year": 2015,
-      "day": 14,
-      "parsing": 6725357,
-      "total": 284351245,
-      "part1": {
-        "time": 178668916,
-        "result": "2655",
-        "status": true
-      },
-      "part2": {
-        "time": 98956972,
-        "result": "1059",
-        "status": true
-      }
-    },
-    {
-      "name": "JSAbacusFramework.io",
-      "year": 2015,
-      "day": 12,
-      "parsing": 285497733,
-      "total": 319328615,
-      "part1": {
-        "time": 25327464,
-        "result": "119433",
-        "status": true
-      },
-      "part2": {
-        "time": 8503418,
-        "result": "68466",
-        "status": true
-      }
-    },
-    {
-      "name": "Custom Customs",
-      "year": 2020,
-      "day": 6,
-      "parsing": 11549699,
-      "total": 431109656,
-      "part1": {
-        "time": 28593991,
-        "result": "27",
-        "status": false
-      },
-      "part2": {
-        "time": 390965966,
-        "result": "0",
-        "status": false
-      }
-    },
-    {
-      "name": "Perfectly Spherical Houses in a Vacuum",
-      "year": 2015,
-      "day": 3,
-      "parsing": 1154920,
-      "total": 482316220,
-      "part1": {
-        "time": 456724966,
-        "result": "2572",
-        "status": true
-      },
-      "part2": {
-        "time": 24436334,
-        "result": "2631",
-        "status": true
-      }
-    },
-    {
-      "name": "Some Assembly Required",
-      "year": 2015,
-      "day": 7,
-      "parsing": 17120818,
-      "total": 576775598,
-      "part1": {
-        "time": 554629550,
-        "result": "956",
-        "status": true
-      },
-      "part2": {
-        "time": 5025230,
-        "result": "40149",
-        "status": true
-      }
-    },
-    {
-      "name": "Balance Bots",
-      "year": 2016,
-      "day": 10,
-      "parsing": 609333800,
-      "total": 632079225,
-      "part1": {
-        "time": 22745336,
-        "result": "161",
-        "status": true
-      },
-      "part2": {
-        "time": 89,
-        "result": "133163",
-        "status": true
-      }
-    },
-    {
-      "name": "Monster Messages",
-      "year": 2020,
-      "day": 19,
-      "parsing": 32774094,
-      "total": 665276099,
-      "part1": {
-        "time": 53985355,
-        "result": "147",
-        "status": true
-      },
-      "part2": {
-        "time": 578516650,
-        "result": "263",
-        "status": true
-      }
-    },
-    {
-      "name": "Handheld Halting",
-      "year": 2020,
-      "day": 8,
-      "parsing": 629569633,
-      "total": 666539224,
-      "part1": {
-        "time": 672013,
-        "result": "1384",
-        "status": true
-      },
-      "part2": {
-        "time": 36297578,
-        "result": "761",
-        "status": true
-      }
-    },
-    {
-      "name": "Internet Protocol Version 7",
-      "year": 2016,
-      "day": 7,
-      "parsing": 12819497,
-      "total": 669351469,
-      "part1": {
-        "time": 534101150,
-        "result": "115",
-        "status": true
-      },
-      "part2": {
-        "time": 122430822,
-        "result": "231",
+        "time": 185261,
+        "result": "8B8B1",
         "status": true
       }
     },
@@ -591,79 +81,152 @@
       "name": "Signals and Noise",
       "year": 2016,
       "day": 6,
-      "parsing": 1460163,
-      "total": 697297565,
+      "parsing": 1111855,
+      "total": 12516843,
       "part1": {
-        "time": 669869700,
+        "time": 9812614,
         "result": "dzqckwsd",
         "status": true
       },
       "part2": {
-        "time": 25967702,
+        "time": 1592374,
         "result": "lragovly",
         "status": true
       }
     },
     {
-      "name": "Docking Data",
-      "year": 2020,
-      "day": 14,
-      "parsing": 34854094,
-      "total": 790773190,
+      "name": "A Maze of Twisty Little Cubicles",
+      "year": 2016,
+      "day": 13,
+      "parsing": 855,
+      "total": 24447447,
       "part1": {
-        "time": 6560446,
-        "result": "8471403462063",
+        "time": 22801852,
+        "result": "86",
         "status": true
       },
       "part2": {
-        "time": 749358650,
-        "result": "2667858637669",
+        "time": 1644740,
+        "result": "127",
         "status": true
       }
     },
     {
-      "name": "Doesn\u0027t He Have Intern-Elves For This?",
-      "year": 2015,
-      "day": 5,
-      "parsing": 5611262,
-      "total": 1028347599,
+      "name": "Squares With Three Sides",
+      "year": 2016,
+      "day": 3,
+      "parsing": 50398055,
+      "total": 50618742,
       "part1": {
-        "time": 966095350,
-        "result": "238",
+        "time": 74197,
+        "result": "917",
         "status": true
       },
       "part2": {
-        "time": 56640987,
-        "result": "69",
+        "time": 146490,
+        "result": "1649",
         "status": true
       }
     },
     {
-      "name": "Probably a Fire Hazard",
-      "year": 2015,
-      "day": 6,
-      "parsing": 14372573,
-      "total": 1049401306,
+      "name": "Balance Bots",
+      "year": 2016,
+      "day": 10,
+      "parsing": 55585500,
+      "total": 59023964,
       "part1": {
-        "time": 671238700,
-        "result": "543903",
+        "time": 3438303,
+        "result": "161",
         "status": true
       },
       "part2": {
-        "time": 363790033,
-        "result": "14687245",
+        "time": 161,
+        "result": "133163",
         "status": true
       }
     },
     {
-      "name": "Let It Snow",
-      "year": 2015,
-      "day": 25,
-      "parsing": 21255,
-      "total": 1149603105,
+      "name": "Grid Computing",
+      "year": 2016,
+      "day": 22,
+      "parsing": 47136486,
+      "total": 69902634,
       "part1": {
-        "time": 1149581850,
-        "result": "8997277",
+        "time": 22729397,
+        "result": "864",
+        "status": true
+      },
+      "part2": {
+        "time": 36751,
+        "result": "244",
+        "status": true
+      }
+    },
+    {
+      "name": "Firewall Rules",
+      "year": 2016,
+      "day": 20,
+      "parsing": 80249892,
+      "total": 84043210,
+      "part1": {
+        "time": 57944,
+        "result": "17348574",
+        "status": true
+      },
+      "part2": {
+        "time": 3735374,
+        "result": "104",
+        "status": true
+      }
+    },
+    {
+      "name": "Internet Protocol Version 7",
+      "year": 2016,
+      "day": 7,
+      "parsing": 9485778,
+      "total": 110452862,
+      "part1": {
+        "time": 25316792,
+        "result": "115",
+        "status": true
+      },
+      "part2": {
+        "time": 75650292,
+        "result": "231",
+        "status": true
+      }
+    },
+    {
+      "name": "Explosives in Cyberspace",
+      "year": 2016,
+      "day": 9,
+      "parsing": 533174350,
+      "total": 535660085,
+      "part1": {
+        "time": 121198,
+        "result": "74532",
+        "status": true
+      },
+      "part2": {
+        "time": 2364537,
+        "result": "11558231665",
+        "status": true
+      }
+    },
+    {
+      "name": "No Time for a Taxicab",
+      "year": 2016,
+      "day": 1,
+      "parsing": 543121150,
+      "total": 545676881,
+      "part1": {
+        "time": 114636,
+        "result": "278",
+        "status": true
+      },
+      "part2": {
+        "time": 2441095,
+        "result": "161",
         "status": true
       }
     },
@@ -671,101 +234,28 @@
       "name": "Security Through Obscurity",
       "year": 2016,
       "day": 4,
-      "parsing": 418710875,
-      "total": 1270775577,
+      "parsing": 342056633,
+      "total": 569350780,
       "part1": {
-        "time": 809768550,
+        "time": 208962660,
         "result": "185371",
         "status": true
       },
       "part2": {
-        "time": 42296152,
+        "time": 18331487,
         "result": "984",
         "status": true
       }
     },
     {
-      "name": "Ticket Translation",
-      "year": 2020,
-      "day": 16,
-      "parsing": 1311713200,
-      "total": 1379622204,
-      "part1": {
-        "time": 67897273,
-        "result": "27850",
-        "status": true
-      },
-      "part2": {
-        "time": 11731,
-        "result": "491924517533",
-        "status": true
-      }
-    },
-    {
-      "name": "Handy Haversacks",
-      "year": 2020,
-      "day": 7,
-      "parsing": 1004502850,
-      "total": 1511307571,
-      "part1": {
-        "time": 506727600,
-        "result": "355",
-        "status": true
-      },
-      "part2": {
-        "time": 77121,
-        "result": "5312",
-        "status": true
-      }
-    },
-    {
-      "name": "Operation Order",
-      "year": 2020,
-      "day": 18,
-      "parsing": 3066744,
-      "total": 1885676260,
-      "part1": {
-        "time": 1713970100,
-        "result": "8298263963837",
-        "status": true
-      },
-      "part2": {
-        "time": 168639416,
-        "result": "145575710203332",
-        "status": true
-      }
-    },
-    {
-      "name": "Jurassic Jigsaw",
-      "year": 2020,
-      "day": 20,
-      "parsing": 480322800,
-      "total": 1979967150,
-      "part1": {
-        "time": 811065200,
-        "result": "66020135789767",
-        "status": true
-      },
-      "part2": {
-        "time": 688579150,
-        "result": "1537",
-        "status": true
-      }
-    },
-    {
-      "name": "Like a Rogue",
+      "name": "Clock Signal",
       "year": 2016,
-      "day": 18,
-      "parsing": 60736,
-      "total": 2038567793,
+      "day": 25,
+      "parsing": 997436,
+      "total": 881433786,
       "part1": {
-        "time": 2793807,
-        "result": "2035",
-        "status": true
-      },
-      "part2": {
-        "time": 2035713250,
-        "result": "20000577",
+        "time": 880436350,
+        "result": "180",
         "status": true
       }
     },
@@ -773,186 +263,50 @@
       "name": "Two Steps Forward",
       "year": 2016,
       "day": 17,
-      "parsing": 26636,
-      "total": 2081289760,
+      "parsing": 4075,
+      "total": 887316444,
       "part1": {
-        "time": 6799174,
+        "time": 5541869,
         "result": "DDRRUDLRRD",
         "status": true
       },
       "part2": {
-        "time": 2074463950,
+        "time": 881770500,
         "result": "488",
         "status": true
       }
     },
     {
-      "name": "Like a GIF For Your Yard",
-      "year": 2015,
+      "name": "Like a Rogue",
+      "year": 2016,
       "day": 18,
-      "parsing": 2187018,
-      "total": 2151028868,
+      "parsing": 304,
+      "total": 1170230216,
       "part1": {
-        "time": 902113150,
-        "result": "768",
+        "time": 197812,
+        "result": "2035",
         "status": true
       },
       "part2": {
-        "time": 1246728700,
-        "result": "781",
+        "time": 1170032100,
+        "result": "20000577",
         "status": true
       }
     },
     {
-      "name": "Wizard Simulator 20XX",
-      "year": 2015,
-      "day": 22,
-      "parsing": 383,
-      "total": 2192948333,
-      "part1": {
-        "time": 736347600,
-        "result": "900",
-        "status": true
-      },
-      "part2": {
-        "time": 1456600350,
-        "result": "1216",
-        "status": true
-      }
-    },
-    {
-      "name": "Science for Hungry People",
-      "year": 2015,
-      "day": 15,
-      "parsing": 2388814,
-      "total": 2255969930,
-      "part1": {
-        "time": 1882901250,
-        "result": "222870",
-        "status": true
-      },
-      "part2": {
-        "time": 370679866,
-        "result": "117936",
-        "status": true
-      }
-    },
-    {
-      "name": "Corporate Policy",
-      "year": 2015,
-      "day": 11,
-      "parsing": 7211,
-      "total": 2681971511,
-      "part1": {
-        "time": 1183941150,
-        "result": "cqjxxyzz",
-        "status": true
-      },
-      "part2": {
-        "time": 1498023150,
-        "result": "cqkaabcc",
-        "status": true
-      }
-    },
-    {
-      "name": "Lobby Layout",
-      "year": 2020,
+      "name": "Air Duct Spelunking",
+      "year": 2016,
       "day": 24,
-      "parsing": 4111600,
-      "total": 2691986054,
+      "parsing": 6064787,
+      "total": 1491705877,
       "part1": {
-        "time": 109443554,
-        "result": "300",
+        "time": 1251193250,
+        "result": "462",
         "status": true
       },
       "part2": {
-        "time": 2578430900,
-        "result": "3466",
-        "status": true
-      }
-    },
-    {
-      "name": "Crab Cups",
-      "year": 2020,
-      "day": 23,
-      "parsing": 45689,
-      "total": 2843155929,
-      "part1": {
-        "time": 78840,
-        "result": "28946753",
-        "status": true
-      },
-      "part2": {
-        "time": 2843031400,
-        "result": "519044017360",
-        "status": true
-      }
-    },
-    {
-      "name": "Dragon Checksum",
-      "year": 2016,
-      "day": 16,
-      "parsing": 77653,
-      "total": 2844312872,
-      "part1": {
-        "time": 695669,
-        "result": "10100101010101101",
-        "status": true
-      },
-      "part2": {
-        "time": 2843539550,
-        "result": "01100001101101001",
-        "status": true
-      }
-    },
-    {
-      "name": "All in a Single Night",
-      "year": 2015,
-      "day": 9,
-      "parsing": 3159576,
-      "total": 2858347376,
-      "part1": {
-        "time": 2416563900,
-        "result": "251",
-        "status": true
-      },
-      "part2": {
-        "time": 438623900,
-        "result": "898",
-        "status": true
-      }
-    },
-    {
-      "name": "An Elephant Named Joseph",
-      "year": 2016,
-      "day": 19,
-      "parsing": 90678,
-      "total": 2861038628,
-      "part1": {
-        "time": 1915176000,
-        "result": "1834471",
-        "status": true
-      },
-      "part2": {
-        "time": 945771950,
-        "result": "1420064",
-        "status": true
-      }
-    },
-    {
-      "name": "Conway Cubes",
-      "year": 2020,
-      "day": 17,
-      "parsing": 124856,
-      "total": 2939696306,
-      "part1": {
-        "time": 778321950,
-        "result": "242",
-        "status": true
-      },
-      "part2": {
-        "time": 2161249500,
-        "result": "2292",
+        "time": 234447840,
+        "result": "676",
         "status": true
       }
     },
@@ -960,79 +314,33 @@
       "name": "Leonardo\u0027s Monorail",
       "year": 2016,
       "day": 12,
-      "parsing": 2582256,
-      "total": 3000610406,
+      "parsing": 1801219,
+      "total": 1571957519,
       "part1": {
-        "time": 1039200900,
+        "time": 617920600,
         "result": "318003",
         "status": true
       },
       "part2": {
-        "time": 1958827250,
+        "time": 952235700,
         "result": "9227657",
         "status": true
       }
     },
     {
-      "name": "Combo Breaker",
-      "year": 2020,
-      "day": 25,
-      "parsing": 846,
-      "total": 3090830096,
-      "part1": {
-        "time": 3090829250,
-        "result": "1890859",
-        "status": true
-      }
-    },
-    {
-      "name": "Rambunctious Recitation",
-      "year": 2020,
-      "day": 15,
-      "parsing": 49538,
-      "total": 3395259682,
-      "part1": {
-        "time": 84144,
-        "result": "475",
-        "status": true
-      },
-      "part2": {
-        "time": 3395126000,
-        "result": "11261",
-        "status": true
-      }
-    },
-    {
-      "name": "Crab Combat",
-      "year": 2020,
-      "day": 22,
-      "parsing": 43597,
-      "total": 3589607821,
-      "part1": {
-        "time": 7090074,
-        "result": "32677",
-        "status": true
-      },
-      "part2": {
-        "time": 3582474150,
-        "result": "33661",
-        "status": true
-      }
-    },
-    {
-      "name": "Radioisotope Thermoelectric Generators",
+      "name": "An Elephant Named Joseph",
       "year": 2016,
-      "day": 11,
-      "parsing": 33310,
-      "total": 3607812510,
+      "day": 19,
+      "parsing": 20603,
+      "total": 1581531153,
       "part1": {
-        "time": 2220135100,
-        "result": "37",
+        "time": 985425150,
+        "result": "1834471",
         "status": true
       },
       "part2": {
-        "time": 1387644100,
-        "result": "61",
+        "time": 596085400,
+        "result": "1420064",
         "status": true
       }
     },
@@ -1040,135 +348,50 @@
       "name": "Scrambled Letters and Hash",
       "year": 2016,
       "day": 21,
-      "parsing": 3532113,
-      "total": 3755923684,
+      "parsing": 1846376,
+      "total": 1802513664,
       "part1": {
-        "time": 6021721,
+        "time": 3558738,
         "result": "cbeghdaf",
         "status": true
       },
       "part2": {
-        "time": 3746369850,
+        "time": 1797108550,
         "result": "bacdefgh",
         "status": true
       }
     },
     {
-      "name": "Seating System",
-      "year": 2020,
+      "name": "Dragon Checksum",
+      "year": 2016,
+      "day": 16,
+      "parsing": 3630,
+      "total": 1938959461,
+      "part1": {
+        "time": 159131,
+        "result": "10100101010101101",
+        "status": true
+      },
+      "part2": {
+        "time": 1938796700,
+        "result": "01100001101101001",
+        "status": true
+      }
+    },
+    {
+      "name": "Radioisotope Thermoelectric Generators",
+      "year": 2016,
       "day": 11,
-      "parsing": 984309650,
-      "total": 3845709550,
+      "parsing": 5138,
+      "total": 1970576288,
       "part1": {
-        "time": 2038263800,
-        "result": "2093",
+        "time": 801342300,
+        "result": "37",
         "status": true
       },
       "part2": {
-        "time": 823136100,
-        "result": "1862",
-        "status": true
-      }
-    },
-    {
-      "name": "Infinite Elves and Infinite Houses",
-      "year": 2015,
-      "day": 20,
-      "parsing": 19574,
-      "total": 3883565524,
-      "part1": {
-        "time": 706222400,
-        "result": "831600",
-        "status": true
-      },
-      "part2": {
-        "time": 3177323550,
-        "result": "884520",
-        "status": true
-      }
-    },
-    {
-      "name": "Knights of the Dinner Table",
-      "year": 2015,
-      "day": 13,
-      "parsing": 10760154,
-      "total": 5018550354,
-      "part1": {
-        "time": 2709746550,
-        "result": "709",
-        "status": true
-      },
-      "part2": {
-        "time": 2298043650,
-        "result": "668",
-        "status": true
-      }
-    },
-    {
-      "name": "Elves Look, Elves Say",
-      "year": 2015,
-      "day": 10,
-      "parsing": 36073,
-      "total": 5071065473,
-      "part1": {
-        "time": 2301839600,
-        "result": "492982",
-        "status": true
-      },
-      "part2": {
-        "time": 2769189800,
-        "result": "6989950",
-        "status": true
-      }
-    },
-    {
-      "name": "It Hangs in the Balance",
-      "year": 2015,
-      "day": 24,
-      "parsing": 74538,
-      "total": 5121292688,
-      "part1": {
-        "time": 4259239600,
-        "result": "11846773891",
-        "status": true
-      },
-      "part2": {
-        "time": 861978550,
-        "result": "80393059",
-        "status": true
-      }
-    },
-    {
-      "name": "No Such Thing as Too Much",
-      "year": 2015,
-      "day": 17,
-      "parsing": 2205711,
-      "total": 5520195511,
-      "part1": {
-        "time": 4414859550,
-        "result": "1638",
-        "status": true
-      },
-      "part2": {
-        "time": 1103130250,
-        "result": "17",
-        "status": true
-      }
-    },
-    {
-      "name": "The Ideal Stocking Stuffer",
-      "year": 2015,
-      "day": 4,
-      "parsing": 1075,
-      "total": 8039884125,
-      "part1": {
-        "time": 2683770200,
-        "result": "282749",
-        "status": true
-      },
-      "part2": {
-        "time": 5356112850,
-        "result": "9962624",
+        "time": 1169228850,
+        "result": "61",
         "status": true
       }
     },
@@ -1176,15 +399,15 @@
       "name": "How About a Nice Game of Chess?",
       "year": 2016,
       "day": 5,
-      "parsing": 272,
-      "total": 19761849322,
+      "parsing": 5184,
+      "total": 14990197384,
       "part1": {
-        "time": 8673092500,
+        "time": 5496524550,
         "result": "4543c154",
         "status": true
       },
       "part2": {
-        "time": 11088756550,
+        "time": 9493667650,
         "result": "1050cbbd",
         "status": true
       }
@@ -1193,15 +416,15 @@
       "name": "One-Time Pad",
       "year": 2016,
       "day": 14,
-      "parsing": 37286,
-      "total": 23133760236,
+      "parsing": 4330,
+      "total": 19281643930,
       "part1": {
-        "time": 1073574800,
+        "time": 346609500,
         "result": "23890",
         "status": true
       },
       "part2": {
-        "time": 22060148150,
+        "time": 18935030100,
         "result": "22696",
         "status": true
       }

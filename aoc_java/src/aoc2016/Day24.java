@@ -59,9 +59,45 @@ public class Day24 implements IAocIntPuzzle<Grid> {
 
 	@Override
 	public Integer part1(Grid input) {
+		return shortestPath(input, false);
+	}
+
+	@Override
+	public Integer part2(Grid input) {
+		return shortestPath(input, true);
+	}
+
+	private Integer shortestPath(Grid input, boolean part2) {
+		Map<Pair, Integer> distances = calculateDistances(input);
+
+		List<Integer> numbers = new ArrayList<>();
+		numbers.addAll(input.numbers.keySet());
+		numbers.removeIf(n -> n.equals(0));
+		int mindist = Integer.MAX_VALUE;
+
+		for (List<Integer> permutation : Combinatorics.permutations(numbers)) {
+			int from = 0;
+			int dist = 0;
+			for (int b : permutation) {
+				dist += distances.get(new Pair(from, b));
+				from = b;
+			}
+
+			// For part 2, we need to go back to 0.
+			if (part2)
+				dist += distances.get(new Pair(from, 0));
+
+			if (dist < mindist) {
+				mindist = dist;
+			}
+		}
+
+		return mindist;
+	}
+
+	private Map<Pair, Integer> calculateDistances(Grid input) {
 		Map<Pair, Integer> distances = new HashMap<>();
 
-		System.out.println("Computing distances...");
 		for (int a : input.numbers.keySet()) {
 			for (int b : input.numbers.keySet()) {
 				if (a == b)
@@ -78,32 +114,7 @@ public class Day24 implements IAocIntPuzzle<Grid> {
 				distances.put(new Pair(a, b), dist);
 			}
 		}
-		System.out.println(distances);
-
-		List<Integer> numbers = new ArrayList<>();
-		numbers.removeIf(n -> n.equals(0));
-		numbers.addAll(input.numbers.keySet());
-
-		int mindist = Integer.MAX_VALUE;
-
-		for (List<Integer> permutation : Combinatorics.permutations(numbers)) {
-			int a = 0;
-			int dist = 0;
-			for (int b : permutation) {
-				dist += distances.get(new Pair(a, b));
-				a = b;
-			}
-			if (dist < mindist) {
-				mindist = dist;
-			}
-		}
-
-		return mindist;
-	}
-
-	@Override
-	public Integer part2(Grid input) {
-		return 0;
+		return distances;
 	}
 
 	int distance(Pos from, Pos to, Map<Pos, Character> map) {

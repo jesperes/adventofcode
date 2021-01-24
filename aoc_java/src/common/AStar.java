@@ -1,5 +1,8 @@
 package common;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -63,6 +66,10 @@ public class AStar<T> {
 				(node, nbr) -> 1); // distfun
 	}
 
+	/**
+	 * @return The shortest path to the target node. This list contains the
+	 *         target node, but not the start node.
+	 */
 	public static <T> List<T> astar(T start, Function<T, Integer> heuristic,
 			Function<T, Collection<T>> neighbors, Function<T, Boolean> isGoal,
 			BiFunction<T, T, Integer> distance) {
@@ -82,6 +89,8 @@ public class AStar<T> {
 				List<T> path = new ArrayList<>();
 				collectPath(cameFrom, current, path);
 				Collections.reverse(path);
+				assertFalse(path.contains(start));
+				assertTrue(path.contains(current));
 				return path;
 			}
 
