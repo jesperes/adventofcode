@@ -1,85 +1,25 @@
 package aoc2017;
 
-import static org.junit.Assert.assertEquals;
-
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.junit.Test;
+import aoc2017.Day07.Node;
+import common2.AocBaseRunner;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocPuzzle;
+import common2.InputUtils;
 
-import common.AocPuzzle;
+public class Day07 implements IAocPuzzle<Node, String, Integer> {
 
-/**
- * deo edw edwed wed
- *
- * @formatter:off
-
-	pbga (66)
-	xhth (57)
-	ebii (61)
-	havc (66)
-	ktlj (57)
-	fwft (72) -> ktlj, cntj, xhth
-	qoyq (66)
-	padx (45) -> pbga, havc, qoyq
-	tknk (41) -> ugml, padx, fwft
-	jptl (61)
-	ugml (68) -> gyxo, ebii, jptl
-	gyxo (61)
-	cntj (57)
-
-                gyxo
-              /
-         ugml - ebii
-       /      \
-      |         jptl
-      |
-      |         pbga
-     /        /
-tknk --- padx - havc
-     \        \
-      |         goyq
-      |
-      |         ktlj
-       \      /
-         fwft - cntj
-              \
-                xhth
-
- * @formatter:on
- *
- * @author jespe
- *
- */
-public class Day07 extends AocPuzzle {
-
-    public Day07() {
-        super(2017, 7);
-    }
-
-    // @formatter:off
-	private static final String[] PUZZLE_INPUT = {
-			"pbga (66)",
-			"xhth (57)",
-			"ebii (61)",
-			"havc (66)",
-			"ktlj (57)",
-			"fwft (72) -> ktlj, cntj, xhth",
-			"qoyq (66)",
-			"padx (45) -> pbga, havc, qoyq",
-			"tknk (41) -> ugml, padx, fwft",
-			"jptl (61)",
-			"ugml (68) -> gyxo, ebii, jptl",
-			"gyxo (61)",
-			"cntj (57)"
-	};
-	// @formatter:on
-
-    static class Node {
+    public static class Node {
         String name;
         int weight;
         List<String> children = new ArrayList<>();
@@ -103,52 +43,17 @@ public class Day07 extends AocPuzzle {
     Map<String, Node> nodes = new HashMap<>();
     Map<String, Node> parents = new HashMap<>();
 
-    private Node getRootNode(String[] puzzleInput) {
+    class UnbalancedProgramException extends RuntimeException {
+        private static final long serialVersionUID = 1L;
+        int weight;
 
-        /*
-         * Construct the graph using a hashmap of name -> node objects.
-         */
-        for (String line : puzzleInput) {
-            Node node = new Node(line);
-            nodes.put(node.name, node);
-        }
-
-        /*
-         * Construct the reverse graph from children -> parents.
-         */
-        for (Entry<String, Node> entry : nodes.entrySet()) {
-            for (String child : entry.getValue().children) {
-                parents.put(child, nodes.get(entry.getKey()));
-            }
-        }
-
-        /*
-         * Take any node and follow it to the root. When the node has no parent,
-         * we are at the bottom. (Assuming that the input is well-formed.)
-         */
-        Node node = nodes.values().iterator().next();
-        while (true) {
-            if (parents.containsKey(node.name)) {
-                node = parents.get(node.name);
-            } else {
-                // Node has no parent, i.e. it must be the bottom-most one.
-                return node;
-            }
+        public UnbalancedProgramException(int weight) {
+            this.weight = weight;
         }
     }
 
-    private int getWeightOfUnbalancedProgram(String[] puzzleInput) {
-        Node root = getRootNode(puzzleInput);
-        return getWeightOfUnbalancedProgram(root);
-    }
-
-    private int getWeightOfUnbalancedProgram(Node node) {
-        /*
-         * The combined weight of all children must be the same. Given that
-         * there is exactly one program which is unbalanced, what should its
-         * weight be?
-         */
-
+    private int getWeightOfUnbalancedProgram(Node node)
+            throws UnbalancedProgramException {
         /*
          * Construct a map keeping track of all child weights.
          */
@@ -166,9 +71,10 @@ public class Day07 extends AocPuzzle {
 
         /*
          * If this map contains more than one element, the node is unbalanced.
+         * The puzzle require us to calculate the correct weight of the node for
+         * it to balance the entire table.
          */
         if (node.children.size() > 1 && grouped.size() > 1) {
-            // This is the weight which is deviating from the others.
             int deviantWeight = grouped.entrySet().stream()
                     .filter(e -> e.getValue() == 1).findAny()
                     .map(e -> Integer.valueOf(e.getKey().toString())).orElse(0);
@@ -183,48 +89,64 @@ public class Day07 extends AocPuzzle {
                 }
             }
 
-            int delta = -(deviantWeight - normalWeight);
-            // int adjustedWeight = deviatingNode.weight + delta;
-
-            // Adjust the map of child weights, so that when we calculate
-            // the weight below we get the right value.
-            childWeights.put(deviatingNode.name,
-                    childWeights.get(deviatingNode.name) + delta);
-
-//            System.out.format(
-//                    "The node %s weighing %d is unbalanced. Its correct weight should be %d%n",
-//                    deviatingNode.name, deviatingNode.weight, adjustedWeight);
+            throw new UnbalancedProgramException(
+                    deviatingNode.weight - deviantWeight + normalWeight);
         }
 
         return node.weight + childWeights.values().stream()
                 .collect(Collectors.summingInt(n -> n));
     }
 
-    @Test
-    public void testPart1_small() throws Exception {
-        assertEquals("tknk", getRootNode(PUZZLE_INPUT).name);
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2017, 7, "Recursive Circus", true);
     }
 
-    @Test
-    public void testPart2_small() {
-        assertEquals(770, getWeightOfUnbalancedProgram(PUZZLE_INPUT));
+    @Override
+    public AocResult<String, Integer> getExpected() {
+        return AocResult.of("xegshds", 299);
     }
 
-    @Test
-    public void testPart1_full() throws Exception {
-        String[] puzzleInput = getInputAsLines().toArray(n -> new String[n]);
-        Node root = getRootNode(puzzleInput);
-        assertEquals("xegshds", root.name);
+    @Override
+    public Node parse(Optional<File> file) throws IOException {
+
+        for (String line : InputUtils.asStringList(file.get())) {
+            Node node = new Node(line);
+            nodes.put(node.name, node);
+        }
+
+        for (Entry<String, Node> entry : nodes.entrySet()) {
+            for (String child : entry.getValue().children) {
+                parents.put(child, nodes.get(entry.getKey()));
+            }
+        }
+
+        Node node = nodes.values().iterator().next();
+        while (true) {
+            if (parents.containsKey(node.name)) {
+                node = parents.get(node.name);
+            } else {
+                return node;
+            }
+        }
     }
 
-    @Test
-    public void testPart2_full() throws Exception {
-        String[] puzzleInput = getInputAsLines().toArray(n -> new String[n]);
-        int weight = getWeightOfUnbalancedProgram(puzzleInput);
-        /*
-         * TODO the actual answer (299) to this part is printed by
-         * getWeightOfUnbalancedProgram (see "adjustedWeight" variable).
-         */
-        assertEquals(510008, weight);
+    @Override
+    public String part1(Node input) {
+        return input.name;
+    }
+
+    @Override
+    public Integer part2(Node input) {
+        try {
+            getWeightOfUnbalancedProgram(input);
+            throw new RuntimeException();
+        } catch (UnbalancedProgramException e) {
+            return e.weight;
+        }
+    }
+
+    public static void main(String[] args) {
+        AocBaseRunner.run(new Day07());
     }
 }
