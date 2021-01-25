@@ -1,23 +1,45 @@
 package aoc2017;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import org.junit.Test;
+import common2.AocBaseRunner;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocIntPuzzle;
+import common2.InputUtils;
 
-import common.AocPuzzle;
+public class Day04 implements IAocIntPuzzle<List<String>> {
 
-public class Day04 extends AocPuzzle {
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2017, 4, "High-Entropy Passphrases", true);
+    }
 
-    public Day04() {
-        super(2017, 4);
+    @Override
+    public AocResult<Integer, Integer> getExpected() {
+        return AocResult.of(466, 251);
+    }
+
+    @Override
+    public List<String> parse(Optional<File> file) throws IOException {
+        return InputUtils.asStringList(file.get());
+    }
+
+    @Override
+    public Integer part1(List<String> input) {
+        return (int) input.stream().filter(this::isValid).count();
+    }
+
+    @Override
+    public Integer part2(List<String> input) {
+        return (int) input.stream().filter(this::isValidPart2).count();
     }
 
     boolean isValid(String passphrase) {
@@ -51,39 +73,7 @@ public class Day04 extends AocPuzzle {
         return true;
     }
 
-    /*
-     * -----------------------------------------------------------------------
-     * Test cases
-     * -----------------------------------------------------------------------
-     */
-
-    @Test
-    public void testPart1_short() throws Exception {
-        assertTrue(isValid("aa bb cc dd ee"));
-        assertFalse(isValid("aa bb cc dd aa"));
-        assertTrue(isValid("aa bb cc dd aaa"));
-    }
-
-    @Test
-    public void testPart1_full() throws Exception {
-        try (Stream<String> lines = getInputAsStream()) {
-            assertEquals(466, lines.filter(this::isValid).count());
-        }
-    }
-
-    @Test
-    public void testPart2_short() {
-        assertTrue(isValidPart2("abcde fghij"));
-        assertFalse(isValidPart2("abcde xyz ecdab"));
-        assertTrue(isValidPart2("a ab abc abd abf abj"));
-        assertTrue(isValidPart2("iiii oiii ooii oooi oooo"));
-        assertFalse(isValidPart2("oiii ioii iioi iiio"));
-    }
-
-    @Test
-    public void testPart2_full() throws Exception {
-        try (Stream<String> lines = getInputAsStream()) {
-            assertEquals(251, lines.filter(this::isValidPart2).count());
-        }
+    public static void main(String[] args) {
+        AocBaseRunner.run(new Day04());
     }
 }
