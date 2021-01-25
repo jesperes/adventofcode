@@ -22,5 +22,7 @@ jobs:
         java-version: 15
     - name: Build with Maven
       run: "cd aoc_java && mvn -B package"
+    - name: Install 'tabulate'
+      run: "sudo -y apt install python3-tabulate"
     - name: Run puzzles
       run: "cd aoc_java && java --enable-preview -jar target/*-with-dependencies.jar"
