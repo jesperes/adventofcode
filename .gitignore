@@ -26,3 +26,5 @@ hs_err_pid*
 /aoc_erlang/src/aoc2020_*_lexer.erl
 /aoc_erlang/src/aoc2020_*_parser.erl
 /aoc_python/2020/__pycache__/
+/aoc_java/table.csv
+/aoc_java/results-java.json
