@@ -1,33 +1,22 @@
 package aoc2017;
 
-import static org.junit.Assert.assertEquals;
-
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 
-import org.junit.Test;
+import common2.AocBaseRunner;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocIntPuzzle;
+import common2.InputUtils;
 
-import common.AocPuzzle;
-
-public class Day12 extends AocPuzzle {
-
-    public Day12() {
-        super(2017, 12);
-    }
-
-    // @formatter:off
-    static String SMALL_INPUT = "0 <-> 2\n" +
-            "1 <-> 1\n" +
-            "2 <-> 0, 3, 4\n" +
-            "3 <-> 2, 4\n" +
-            "4 <-> 2, 3, 6\n" +
-            "5 <-> 6\n" +
-            "6 <-> 4, 5\n";
-    // @formatter:on
+public class Day12 implements IAocIntPuzzle<Map<Integer, Set<Integer>>> {
 
     private void addLink(Map<Integer, Set<Integer>> graph, int a, int b) {
         if (!graph.containsKey(a)) {
@@ -100,22 +89,33 @@ public class Day12 extends AocPuzzle {
         return numberOfConnectedSets;
     }
 
-    @Test
-    public void testSmall() throws Exception {
-        Map<Integer, Set<Integer>> graph = computeGraph(SMALL_INPUT);
-        assertEquals(6, getConnectedSet(graph, 0).size());
-        assertEquals(2, getTotalNumberOfGroups(graph));
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2017, 12, "Digital Plumber", true);
     }
 
-    @Test
-    public void testLarge() throws Exception {
-        String input = getInputAsString();
-        Map<Integer, Set<Integer>> graph = computeGraph(input);
+    @Override
+    public AocResult<Integer, Integer> getExpected() {
+        return AocResult.of(141, 171);
+    }
 
-        int part1 = getConnectedSet(graph, 0).size();
-        assertEquals(141, part1);
+    @Override
+    public Map<Integer, Set<Integer>> parse(Optional<File> file)
+            throws IOException {
+        return computeGraph(InputUtils.asString(file.get()));
+    }
 
-        int part2 = getTotalNumberOfGroups(graph);
-        assertEquals(171, part2);
+    @Override
+    public Integer part1(Map<Integer, Set<Integer>> input) {
+        return getConnectedSet(input, 0).size();
+    }
+
+    @Override
+    public Integer part2(Map<Integer, Set<Integer>> input) {
+        return getTotalNumberOfGroups(input);
+    }
+
+    public static void main(String[] args) {
+        AocBaseRunner.run(new Day12());
     }
 }

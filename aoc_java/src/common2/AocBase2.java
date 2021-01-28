@@ -320,6 +320,7 @@ public class AocBase2 {
         for (final IAocPuzzle<?, ?, ?> puzzle : puzzles) {
             exec.execute(() -> {
                 try {
+                    Thread.currentThread().setName(puzzle.getInfo().name());
                     runs.add(run(puzzle));
                     System.out.print(".");
                 } catch (IOException e) {

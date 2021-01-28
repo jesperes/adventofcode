@@ -3,13 +3,21 @@ package aoc2017;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.junit.Test;
 
-public class Day10 {
+import common2.AocBaseRunner;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocPuzzle;
+
+public class Day10 implements IAocPuzzle<int[], Integer, String> {
 
     int pos = 0;
     int skip = 0;
@@ -144,5 +152,36 @@ public class Day10 {
     public void testPart2_full() throws Exception {
         String input = "130,126,1,11,140,2,255,207,18,254,246,164,29,104,0,224";
         assertEquals("e1462100a34221a7f0906da15c1c979a", knotHash(input));
+    }
+
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2017, 10, "Knot Hash", false);
+    }
+
+    @Override
+    public AocResult<Integer, String> getExpected() {
+        return AocResult.of(38628, "e1462100a34221a7f0906da15c1c979a");
+    }
+
+    @Override
+    public int[] parse(Optional<File> file) throws IOException {
+        return new int[] { 130, 126, 1, 11, 140, 2, 255, 207, 18, 254, 246, 164,
+                29, 104, 0, 224 };
+    }
+
+    @Override
+    public Integer part1(int[] input) {
+        return knotHashSingleIter(makeInput(256), input);
+    }
+
+    @Override
+    public String part2(int[] input) {
+        return knotHash(Arrays.stream(input).mapToObj(n -> String.valueOf(n))
+                .collect(Collectors.joining(",")));
+    }
+
+    public static void main(String[] args) {
+        AocBaseRunner.run(new Day10());
     }
 }

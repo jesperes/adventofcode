@@ -1,15 +1,17 @@
 package aoc2017;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
+import java.io.File;
+import java.io.IOException;
+import java.util.Optional;
 import java.util.stream.IntStream;
 
-import org.junit.Test;
+import common2.AocBaseRunner;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocIntPuzzle;
 
-public class Day14 {
+public class Day14 implements IAocIntPuzzle<String> {
 
-    String input1 = "flqrgnkx";
     String input2 = "hfdlxzhv";
 
     public int[] knotHashDense(String str) {
@@ -52,12 +54,11 @@ public class Day14 {
      * @param input
      * @return
      */
-    private long computeNumberOfOnes(String input) {
-        long numberOfOnes = IntStream.range(0, 128)
+    private int computeNumberOfOnes(String input) {
+        return (int) IntStream.range(0, 128)
                 .mapToObj(n -> input + "-" + String.valueOf(n))
                 .flatMapToInt(s -> knotHashAsBinaryString(s).chars())
                 .filter(n -> n == '1').count();
-        return numberOfOnes;
     }
 
     /**
@@ -135,49 +136,32 @@ public class Day14 {
         }
     }
 
-    @Test
-    public void testColorGridArray() throws Exception {
-        int[][] grid = createColorGrid("foobar");
-        int elems = 0;
-        for (int[] row : grid) {
-            for (int color : row) {
-                assertTrue(color == -1 || color == 0);
-                elems++;
-            }
-        }
-        assertEquals(128 * 128, elems);
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2017, 14, "Disk Defragmentation", false);
     }
 
-    @Test
-    public void toBinaryString() throws Exception {
-        assertEquals("00000000", byteToBinaryString((byte) 0));
-        assertEquals("00000001", byteToBinaryString((byte) 1));
-        assertEquals("00000010", byteToBinaryString((byte) 2));
-        assertEquals("00000011", byteToBinaryString((byte) 3));
-        assertEquals("00000100", byteToBinaryString((byte) 4));
-        assertEquals("00000101", byteToBinaryString((byte) 5));
+    @Override
+    public AocResult<Integer, Integer> getExpected() {
+        return AocResult.of(8230, 1103);
     }
 
-    @Test
-    public void testShort() throws Exception {
-        assertEquals(8108, computeNumberOfOnes(input1));
+    @Override
+    public String parse(Optional<File> file) throws IOException {
+        return "hfdlxzhv";
     }
 
-    @Test
-    public void testFull() throws Exception {
-        long numberOfOnes = computeNumberOfOnes(input2);
-        assertEquals(8230, numberOfOnes);
+    @Override
+    public Integer part1(String input) {
+        return computeNumberOfOnes(input);
     }
 
-    @Test
-    public void testColorGrid1() throws Exception {
-        int[][] grid = createColorGrid(input1);
-        assertEquals(1242, assignColors(grid));
+    @Override
+    public Integer part2(String input) {
+        return assignColors(createColorGrid(input));
     }
 
-    @Test
-    public void testColorGrid2() throws Exception {
-        int[][] grid = createColorGrid(input2);
-        assertEquals(1103, assignColors(grid));
+    public static void main(String[] args) {
+        AocBaseRunner.run(new Day14());
     }
 }

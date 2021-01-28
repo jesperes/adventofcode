@@ -12,7 +12,7 @@ import common2.InputUtils;
 
 public class Day05 implements IAocIntPuzzle<int[]> {
 
-    public int execute(int[] input, boolean part2) {
+    public int execute(int[] input, final boolean part2) {
         // Make a copy of the input, since we need to change it.
         int[] program = new int[input.length];
         System.arraycopy(input, 0, program, 0, input.length);
@@ -21,8 +21,8 @@ public class Day05 implements IAocIntPuzzle<int[]> {
 
         while (pc >= 0 && pc < program.length) {
             // Each instruction is a relative jump.
-            int offset = program[pc];
-            int nextPc = pc + offset;
+            final int offset = program[pc];
+            final int nextPc = pc + offset;
 
             // Increment each offset after taking it. For part2, if the
             // offset is 3 or more, instead decrease it by 1.

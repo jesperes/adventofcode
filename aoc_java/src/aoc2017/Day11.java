@@ -1,19 +1,23 @@
 package aoc2017;
 
-import static org.junit.Assert.assertEquals;
+import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
-import org.junit.Test;
-
-import common.AocPuzzle;
+import aoc2017.Day11.Direction;
+import common2.AocBaseRunner;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocIntPuzzle;
+import common2.InputUtils;
 
 /**
  * https://www.redblobgames.com/grids/hexagons/
  */
-public class Day11 extends AocPuzzle {
-
-    public Day11() {
-        super(2017, 11);
-    }
+public class Day11 implements IAocIntPuzzle<List<Direction>> {
 
     enum Direction {
         nw, ne, sw, se, n, s
@@ -23,9 +27,6 @@ public class Day11 extends AocPuzzle {
         int x = 0;
         int y = 0;
         int z = 0;
-
-        public Position() {
-        }
 
         public Position(int x, int y, int z) {
             this.x = x;
@@ -80,32 +81,17 @@ public class Day11 extends AocPuzzle {
         }
     }
 
-    class Result {
-        Position pos;
-        int dist;
-        int maxDist;
-
-        public Result(Position pos, int dist, int maxDist) {
-            this.pos = pos;
-            this.dist = dist;
-            this.maxDist = maxDist;
-        }
-
-        @Override
-        public String toString() {
-            return "Result [pos=" + pos + ", dist=" + dist + ", maxDist="
-                    + maxDist + "]";
-        }
+    record Result(Position pos, int dist, int maxDist) {
     }
 
-    Result computeDistance(String turns) {
-        Position pos = new Position();
-        Position startPos = new Position();
+    Result computeDistance(List<Direction> turns) {
+        Position pos = new Position(0, 0, 0);
+        Position startPos = new Position(0, 0, 0);
 
         int maxDist = Integer.MIN_VALUE;
 
-        for (String dir : turns.split(",")) {
-            Position.move(pos, Direction.valueOf(dir));
+        for (Direction dir : turns) {
+            Position.move(pos, dir);
             int currentDistance = pos.distanceTo(startPos);
             if (currentDistance > maxDist) {
                 maxDist = currentDistance;
@@ -116,18 +102,36 @@ public class Day11 extends AocPuzzle {
         return new Result(pos, dist, maxDist);
     }
 
-    @Test
-    public void testExamples() throws Exception {
-        assertEquals(3, computeDistance("ne,ne,ne").dist);
-        assertEquals(0, computeDistance("ne,ne,sw,sw").dist);
-        assertEquals(2, computeDistance("ne,ne,s,s").dist);
-        assertEquals(3, computeDistance("se,sw,se,sw,sw").dist);
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2017, 11, "Hex Ed", true);
     }
 
-    @Test
-    public void testPuzzle() throws Exception {
-        Result result = computeDistance(getInputAsString());
-        assertEquals(685, result.dist); // Part 1
-        assertEquals(1457, result.maxDist); // Part 2
+    @Override
+    public AocResult<Integer, Integer> getExpected() {
+        return AocResult.of(685, 1457);
+    }
+
+    @Override
+    public List<Direction> parse(Optional<File> file) throws IOException {
+        return Arrays.stream(InputUtils.asString(file.get()).split(","))
+                .map(str -> Direction.valueOf(str))
+                .collect(Collectors.toUnmodifiableList());
+    }
+
+    @Override
+    public Integer part1(List<Direction> input) {
+        Result result = computeDistance(input);
+        return result.dist;
+    }
+
+    @Override
+    public Integer part2(List<Direction> input) {
+        Result result = computeDistance(input);
+        return result.maxDist;
+    }
+
+    public static void main(String[] args) {
+        AocBaseRunner.run(new Day11());
     }
 }

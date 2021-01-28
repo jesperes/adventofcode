@@ -1,59 +1,23 @@
 package aoc2017;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-
+import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import org.junit.Test;
+import aoc2017.Day13.Firewall;
+import common2.AocBaseRunner;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocIntPuzzle;
+import common2.InputUtils;
 
-import common.AocPuzzle;
+public class Day13 implements IAocIntPuzzle<Map<Integer, Firewall>> {
 
-public class Day13 extends AocPuzzle {
-
-    public Day13() {
-        super(2017, 13);
-    }
-
-    private Map<Integer, Firewall> getShortInput() {
-        return Stream.of(
-        // @formatter:off
-                "0: 3",
-                "1: 2",
-                "4: 4",
-                "6: 4")
-                // @formatter:on
-                .map(s -> new Firewall(s))
-                .collect(Collectors.toMap(fw -> fw.depth, Function.identity()));
-    }
-
-    private Map<Integer, Firewall> getLongInput() throws IOException {
-        try (Stream<String> lines = getInputAsStream()) {
-            return lines.map(s -> new Firewall(s)).collect(
-                    Collectors.toMap(fw -> fw.depth, Function.identity()));
-        }
-    }
-
-    class Firewall {
-        public final int depth;
-        public final int range;
-
-        public Firewall(String line) {
-            String[] elems = line.split(":");
-            this.depth = Integer.valueOf(elems[0].trim());
-            this.range = Integer.valueOf(elems[1].trim());
-        }
-
+    record Firewall(int depth, int range) {
         public boolean isAtTop(int time) {
-            /*
-             * Is the scanner at top? It will be at the top every ((range * 2) -
-             * 2) steps.
-             */
             return time % ((range * 2) - 2) == 0;
         }
 
@@ -63,90 +27,14 @@ public class Day13 extends AocPuzzle {
     }
 
     private int getMaxDepth(Map<Integer, Firewall> firewalls) {
-        return firewalls.keySet().stream().mapToInt(Integer::intValue).max()
-                .getAsInt();
+        return firewalls.keySet().stream().mapToInt(n -> n).max().getAsInt();
     }
 
     private int getMaxRange(Map<Integer, Firewall> firewalls) {
-        return firewalls.values().stream().map(fw -> fw.range)
-                .mapToInt(Integer::intValue).max().getAsInt();
+        return firewalls.values().stream().map(fw -> fw.range).mapToInt(n -> n)
+                .max().getAsInt();
     }
 
-    public static void printFirewalls(Map<Integer, Firewall> firewalls,
-            int maxDepth, int maxRange, int time, int currentDepth) {
-
-        System.out.println("Firewall configuration at time == " + time);
-        for (int depth = 0; depth <= maxDepth; depth++) {
-            System.out.format("%2d  ", depth);
-        }
-
-        System.out.println();
-
-        for (int range = 0; range < maxRange; range++) {
-            for (int depth = 0; depth <= maxDepth; depth++) {
-                if (firewalls.containsKey(depth)) {
-                    Firewall fw = firewalls.get(depth);
-                    if (range >= fw.range) {
-                        System.out.print("    ");
-                        continue;
-                    }
-
-                    char left;
-                    char right;
-                    if (currentDepth == depth && range == 0) {
-                        left = '(';
-                        right = ')';
-                    } else {
-                        left = '[';
-                        right = ']';
-                    }
-
-                    if (range == 0) {
-                        if (fw.isAtTop(time)) {
-                            System.out.format("%cS%c ", left, right);
-                        } else {
-                            System.out.format("%c %c ", left, right);
-                        }
-                    } else {
-                        System.out.format("%c?%c ", left, right);
-                    }
-
-                } else {
-                    if (currentDepth == depth && range == 0)
-                        System.out.print("(.) ");
-                    else if (range == 0)
-                        System.out.print("... ");
-                    else
-                        System.out.print("    ");
-                    continue;
-                }
-            }
-
-            System.out.println();
-        }
-
-    }
-
-    /**
-     * Compute the severity of any collisions with firewall scanners. Note that
-     * we do not need to "simulate" the firewalls, we can simply compute where
-     * the scanners are expected to be.
-     *
-     * @param firewalls      The firewalls. The index here is the depth of the
-     *                       firewalls, so if there are no firewall at a certain
-     *                       index, the array has a null element.
-     * @param maxDepth       The maximum depth of the firewalls
-     * @param maxRange       The maximum range of any firewall.
-     * @param delay          The delay before starting to travel through the
-     *                       firewall.
-     * @param onlyCollisions If true, only collisions will be reported, and not
-     *                       the severity. This allows the function to return
-     *                       immediately when a collision is detected.
-     * @return An optional integer. If present, this is the total severity of
-     *         all collisions. If onlyCollisions is true, the total severity (in
-     *         case of a collision) is 1. If not present, no collisions were
-     *         found.
-     */
     private Optional<Integer> computeSeverity(Map<Integer, Firewall> firewalls,
             int maxDepth, int maxRange, int delay, boolean onlyCollisions) {
 
@@ -155,9 +43,6 @@ public class Day13 extends AocPuzzle {
         int collisions = 0;
 
         for (int i = 0; i <= maxDepth; i++) {
-
-            // printFirewalls(firewalls, maxDepth, maxRange, time, i);
-
             if (firewalls.containsKey(i)) {
                 Firewall fw = firewalls.get(i);
                 if (fw.isAtTop(time)) {
@@ -189,48 +74,39 @@ public class Day13 extends AocPuzzle {
         }
     }
 
-    @Test
-    public void testShort() throws Exception {
-        Map<Integer, Firewall> firewalls = getShortInput();
-        int maxDepth = getMaxDepth(firewalls);
-        int maxRange = getMaxRange(firewalls);
-
-        assertEquals(24,
-                computeSeverity(firewalls, maxDepth, maxRange, 0, false)
-                        .orElse(0).intValue());
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2017, 13, "Packet Scanners", true);
     }
 
-    @Test
-    public void testShort_Part2() throws Exception {
-        Map<Integer, Firewall> firewalls = getShortInput();
-        int maxDepth = getMaxDepth(firewalls);
-        int maxRange = getMaxRange(firewalls);
-
-        assertFalse(computeSeverity(firewalls, maxDepth, maxRange, 10, false)
-                .isPresent());
-        assertEquals(10,
-                computeDelayUntilNotCaught(firewalls, maxDepth, maxRange));
-        assertEquals(24,
-                computeSeverity(firewalls, maxDepth, maxRange, 0, false)
-                        .orElse(-1).intValue());
+    @Override
+    public AocResult<Integer, Integer> getExpected() {
+        return AocResult.of(788, 3905748);
     }
 
-    @Test
-    public void testFull() throws Exception {
-        Map<Integer, Firewall> firewalls = getLongInput();
-        int maxDepth = getMaxDepth(firewalls);
-        int maxRange = getMaxRange(firewalls);
-        int part1 = computeSeverity(firewalls, maxDepth, maxRange, 0, false)
-                .orElse(0).intValue();
-        assertEquals(788, part1);
+    @Override
+    public Map<Integer, Firewall> parse(Optional<File> file)
+            throws IOException {
+        return InputUtils.asStringList(file.get()).stream().map(s -> {
+            String[] elems = s.split(":");
+            return new Firewall(Integer.valueOf(elems[0].trim()),
+                    Integer.valueOf(elems[1].trim()));
+        }).collect(Collectors.toMap(fw -> fw.depth, Function.identity()));
     }
 
-    @Test
-    public void testFull_Part2() throws Exception {
-        Map<Integer, Firewall> firewalls = getLongInput();
-        int maxDepth = getMaxDepth(firewalls);
-        int maxRange = getMaxRange(firewalls);
-        int part2 = computeDelayUntilNotCaught(firewalls, maxDepth, maxRange);
-        assertEquals(3905748, part2);
+    @Override
+    public Integer part1(Map<Integer, Firewall> firewalls) {
+        return computeSeverity(firewalls, getMaxDepth(firewalls),
+                getMaxRange(firewalls), 0, false).get();
+    }
+
+    @Override
+    public Integer part2(Map<Integer, Firewall> firewalls) {
+        return computeDelayUntilNotCaught(firewalls, getMaxDepth(firewalls),
+                getMaxRange(firewalls));
+    }
+
+    public static void main(String[] args) {
+        AocBaseRunner.run(new Day13());
     }
 }
