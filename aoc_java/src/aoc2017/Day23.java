@@ -3,13 +3,13 @@ package aoc2017;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.file.Files;
 import java.util.Optional;
 
 import common2.AocBaseRunner;
 import common2.AocPuzzleInfo;
 import common2.AocResult;
 import common2.IAocIntPuzzle;
-import common2.InputUtils;
 
 /**
  * Assembly optimization puzzle. The assembly code in the input is really a
@@ -38,14 +38,8 @@ public class Day23 implements IAocIntPuzzle<Integer> {
      */
     @Override
     public Integer parse(Optional<File> file) throws IOException {
-        return InputUtils.withReader(file.get(), reader -> {
-            try {
-                int x = Integer.parseInt(reader.readLine().split(" ")[2]);
-                return x;
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
+        return Integer.parseInt(Files.lines(file.get().toPath()).findFirst()
+                .get().split(" ")[2]);
     }
 
     @Override
