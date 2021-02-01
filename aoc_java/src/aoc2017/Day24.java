@@ -1,237 +1,216 @@
 package aoc2017;
 
-import static org.junit.Assert.assertEquals;
-
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import org.junit.Test;
+import aoc2017.Day24.Component;
+import common2.AocBaseRunner;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocIntPuzzle;
+import common2.InputUtils;;
 
-import common.AocPuzzle;
+public class Day24 implements IAocIntPuzzle<List<List<Component>>> {
 
-public class Day24 extends AocPuzzle {
+	static class Component {
+		final int p_in;
+		final int p_out;
 
-    public Day24() {
-        super(2017, 24);
-    }
+		public Component(String str) {
+			String[] elems = str.split("/");
+			this.p_in = Integer.valueOf(elems[0]);
+			this.p_out = Integer.valueOf(elems[1]);
+		}
 
-    LinkedList<Component> components = new LinkedList<>(
-            Stream.of("0/2", "2/2", "2/3", "3/4", "3/5", "0/1", "10/1", "9/10")
-                    .map(s -> new Component(s)).collect(Collectors.toList()));
+		public Component(int p_in, int p_out) {
+			this.p_in = p_in;
+			this.p_out = p_out;
+		}
 
-    static class Component {
-        final int p_in;
-        final int p_out;
+		/**
+		 * Flip this component if necessary to match the given number of
+		 * in-pins. Returns an empty optional if the component does not match.
+		 */
+		public Optional<Component> maybeFlip(int in) {
+			if (p_in == in)
+				return Optional.of(this);
+			else if (p_out == in)
+				return Optional.of(new Component(p_out, p_in));
+			else
+				return Optional.empty();
+		}
 
-        public Component(String str) {
-            String[] elems = str.split("/");
-            this.p_in = Integer.valueOf(elems[0]);
-            this.p_out = Integer.valueOf(elems[1]);
-        }
+		@Override
+		public String toString() {
+			return String.format("%d/%d", p_in, p_out);
+		}
 
-        public Component(int p_in, int p_out) {
-            this.p_in = p_in;
-            this.p_out = p_out;
-        }
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + p_in;
+			result = prime * result + p_out;
+			return result;
+		}
 
-        /**
-         * Flip this component if necessary to match the given number of
-         * in-pins. Returns an empty optional if the component does not match.
-         */
-        public Optional<Component> maybeFlip(int in) {
-            if (p_in == in)
-                return Optional.of(this);
-            else if (p_out == in)
-                return Optional.of(new Component(p_out, p_in));
-            else
-                return Optional.empty();
-        }
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			Component other = (Component) obj;
+			if (p_in != other.p_in)
+				return false;
+			if (p_out != other.p_out)
+				return false;
+			return true;
+		}
 
-        @Override
-        public String toString() {
-            return String.format("%d/%d", p_in, p_out);
-        }
+	}
 
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + p_in;
-            result = prime * result + p_out;
-            return result;
-        }
+	static int strength(List<Component> bridge) {
+		int s = bridge.stream().mapToInt(c -> c.p_in + c.p_out).sum();
+		// System.out.format("Length %s == %d%n", bridge, s);
+		return s;
+	}
 
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            Component other = (Component) obj;
-            if (p_in != other.p_in)
-                return false;
-            if (p_out != other.p_out)
-                return false;
-            return true;
-        }
+	@SafeVarargs
+	static final <T> List<T> ListOf(T... elems) {
+		List<T> list = new LinkedList<T>();
+		for (T e : elems) {
+			list.add(e);
+		}
+		return list;
+	}
 
-    }
+	/**
+	 * Compute the strongest bridge which can be formed by taking 'first' and
+	 * appending elements from 'components'.
+	 *
+	 * @param first
+	 * @param components
+	 * @return
+	 */
+	List<List<Component>> getAllBridges(int first, List<Component> components) {
 
-    static int strength(List<Component> bridge) {
-        int s = bridge.stream().mapToInt(c -> c.p_in + c.p_out).sum();
-        // System.out.format("Length %s == %d%n", bridge, s);
-        return s;
-    }
+		List<List<Component>> list = new ArrayList<>();
 
-    @SafeVarargs
-    static final <T> LinkedList<T> linkedListOf(T... elems) {
-        LinkedList<T> list = new LinkedList<T>();
-        for (T e : elems) {
-            list.add(e);
-        }
-        return list;
-    }
+		// Find all components matching the digit we are to start with.
+		for (Component comp : components) {
+			comp.maybeFlip(first).ifPresent(match -> {
 
-    /**
-     * Compute the strongest bridge which can be formed by taking 'first' and
-     * appending elements from 'components'.
-     *
-     * @param first
-     * @param components
-     * @return
-     */
-    List<LinkedList<Component>> getAllBridges(int first,
-            LinkedList<Component> components) {
+				/*
+				 * There is always a sub-list containing just the matching
+				 * elements (in case there are no more matching elements in the
+				 * the rest of the list.
+				 */
+				list.add(ListOf(match));
 
-        List<LinkedList<Component>> list = new ArrayList<>();
+				/*
+				 * Construct all sub-bridges from the list of components minus
+				 * the one we've already used up in this step.
+				 */
+				List<Component> sublist = new LinkedList<>();
+				components.forEach(c -> {
+					if (!c.equals(comp))
+						sublist.add(c);
+				});
 
-        // Find all components matching the digit we are to start with.
-        for (Component comp : components) {
-            comp.maybeFlip(first).ifPresent(match -> {
+				List<List<Component>> allSubBridges = getAllBridges(match.p_out,
+						sublist);
 
-                /*
-                 * There is always a sub-list containing just the matching
-                 * elements (in case there are no more matching elements in the
-                 * the rest of the list.
-                 */
-                list.add(linkedListOf(match));
+				/*
+				 * Pre-pend 'comp' (the component we have used in this step) to
+				 * all of the output lists.
+				 */
+				for (List<Component> o : allSubBridges) {
+					o.add(0, match); // 'match' is comp, but flipped to match
+					list.add(o);
+				}
+			});
+		}
 
-                /*
-                 * Construct all sub-bridges from the list of components minus
-                 * the one we've already used up in this step.
-                 */
-                LinkedList<Component> sublist = new LinkedList<>();
-                components.forEach(c -> {
-                    if (!c.equals(comp))
-                        sublist.add(c);
-                });
+		return list;
+	}
 
-                List<LinkedList<Component>> allSubBridges = getAllBridges(
-                        match.p_out, sublist);
+	public List<Component> getStrongestBridge(
+			List<List<Component>> allBridges) {
 
-                /*
-                 * Pre-pend 'comp' (the component we have used in this step) to
-                 * all of the output lists.
-                 */
-                for (LinkedList<Component> o : allSubBridges) {
-                    o.add(0, match); // 'match' is comp, but flipped to match
-                    list.add(o);
-                }
-            });
-        }
+		int maxStrength = Integer.MIN_VALUE;
+		List<Component> strongest = null;
 
-        return list;
-    }
+		for (List<Component> l : allBridges) {
+			int strength = strength(l);
+			if (strength > maxStrength) {
+				strongest = l;
+				maxStrength = strength;
+			}
+		}
 
-    public List<Component> getStrongestBridge(
-            List<LinkedList<Component>> allBridges) {
+		return strongest;
+	}
 
-        int maxStrength = Integer.MIN_VALUE;
-        List<Component> strongest = null;
+	public List<Component> getLongestBridge(List<List<Component>> allBridges) {
 
-        for (LinkedList<Component> l : allBridges) {
-            int strength = strength(l);
-            if (strength > maxStrength) {
-                strongest = l;
-                maxStrength = strength;
-            }
-        }
+		int maxLength = Integer.MIN_VALUE;
+		int currentStrength = 0; // strength of currently longest bridge
+		List<Component> longest = null;
 
-        return strongest;
-    }
+		for (List<Component> l : allBridges) {
+			int length = l.size();
+			if (length > maxLength) {
+				longest = l;
+				maxLength = length;
+				currentStrength = strength(l);
+			} else if (length == maxLength) {
+				int s = strength(l);
+				if (s > currentStrength) {
+					longest = l;
+					maxLength = length;
+					currentStrength = s;
+				}
+			}
+		}
 
-    public List<Component> getLongestBridge(
-            List<LinkedList<Component>> allBridges) {
+		return longest;
+	}
 
-        int maxLength = Integer.MIN_VALUE;
-        int currentStrength = 0; // strength of currently longest bridge
-        List<Component> longest = null;
+	@Override
+	public AocPuzzleInfo getInfo() {
+		return new AocPuzzleInfo(2017, 24, "Electromagnetic Moat", true);
+	}
 
-        for (LinkedList<Component> l : allBridges) {
-            int length = l.size();
-            if (length > maxLength) {
-                longest = l;
-                maxLength = length;
-                currentStrength = strength(l);
-            } else if (length == maxLength) {
-                int s = strength(l);
-                if (s > currentStrength) {
-                    longest = l;
-                    maxLength = length;
-                    currentStrength = s;
-                }
-            }
-        }
+	@Override
+	public AocResult<Integer, Integer> getExpected() {
+		return AocResult.of(2006, 1994);
+	}
 
-        return longest;
-    }
+	@Override
+	public List<List<Component>> parse(Optional<File> file) throws IOException {
+		return getAllBridges(0, InputUtils.asStringList(file.get()).stream()
+				.map(Component::new).collect(Collectors.toList()));
+	}
 
-    @Test
-    public void testMaybeFlip() throws Exception {
-        Component p1 = new Component(0, 1);
-        assertEquals(Optional.of(new Component(1, 0)), p1.maybeFlip(1));
-        assertEquals(Optional.of(new Component(0, 1)), p1.maybeFlip(0));
-    }
+	@Override
+	public Integer part1(List<List<Component>> input) {
+		return strength(getStrongestBridge(input));
+	}
 
-    @Test
-    public void miniTestCase() throws Exception {
-        List<LinkedList<Component>> list = getAllBridges(0,
-                linkedListOf(new Component(0, 1), new Component(0, 3),
-                        new Component(2, 1), new Component(1, 3)));
-        assertEquals(8, list.size());
-    }
+	@Override
+	public Integer part2(List<List<Component>> input) {
+		return strength(getLongestBridge(input));
+	}
 
-    @Test
-    public void bridgeStrength() throws Exception {
-        assertEquals(7, strength(linkedListOf(new Component(0, 1),
-                new Component(0, 3), new Component(2, 1))));
-    }
-
-    @Test
-    public void shortTestCase() throws Exception {
-        List<LinkedList<Component>> allBridges = getAllBridges(0, components);
-        assertEquals(11, allBridges.size());
-        assertEquals(31, strength(getStrongestBridge(allBridges)));
-        assertEquals(19, strength(getLongestBridge(allBridges)));
-    }
-
-    @Test
-    public void fullTestCase() throws Exception {
-        LinkedList<Component> list = linkedListOf();
-        getInputAsStream().map(s -> new Component(s)).forEach(list::add);
-
-        List<LinkedList<Component>> allBridges = getAllBridges(0, list);
-
-        List<Component> strongest = getStrongestBridge(allBridges);
-        List<Component> longest = getLongestBridge(allBridges);
-
-        assertEquals(2006, strength(strongest));
-        assertEquals(1994, strength(longest));
-    }
+	public static void main(String[] args) {
+		AocBaseRunner.run(new Day24());
+	}
 }

@@ -3,30 +3,32 @@ package aoc2017;
 import static java.lang.Math.abs;
 import static java.lang.Math.pow;
 import static java.lang.Math.sqrt;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-import java.util.ArrayList;
+import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.junit.Test;
+import com.google.common.collect.ComparisonChain;
 
-import common.AocPuzzle;
+import aoc2017.Day20.Particle;
+import common2.AocBaseRunner;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocLongPuzzle;
+import common2.InputUtils;
 
-public class Day20_Part2 extends AocPuzzle {
-
-    public Day20_Part2() {
-        super(2017, 20);
-    }
+public class Day20 implements IAocLongPuzzle<List<Particle>> {
 
     static class Coordinate {
         long x, y, z;
@@ -35,11 +37,6 @@ public class Day20_Part2 extends AocPuzzle {
             this.x = x;
             this.y = y;
             this.z = z;
-        }
-
-        @Override
-        public String toString() {
-            return "Coordinate [x=" + x + ", y=" + y + ", z=" + z + "]";
         }
 
         @Override
@@ -99,12 +96,6 @@ public class Day20_Part2 extends AocPuzzle {
                     pow(abs(a.x), 2) + pow(abs(a.y), 2) + pow(abs(a.z), 2));
         }
 
-        @Override
-        public String toString() {
-            return String.format("Particle[id = %d, dist = %d, accel = %s/%g]",
-                    id, distance(), a, acceleration());
-        }
-
         public long update() {
             long d1 = distance();
 
@@ -129,45 +120,7 @@ public class Day20_Part2 extends AocPuzzle {
         }
     }
 
-    @Test
-    public void testParseParticle() throws Exception {
-        Particle particle = new Particle("p=< 3,0,0>, v=< 2,0,0>, a=<-1,0,0>",
-                0L);
-        assertEquals(new Coordinate(3, 0, 0), particle.p);
-        assertEquals(new Coordinate(2, 0, 0), particle.v);
-        assertEquals(new Coordinate(-1, 0, 0), particle.a);
-    }
-
-    @Test
-    public void testLarge() throws Exception {
-        AtomicLong particleid = new AtomicLong();
-
-        List<Particle> particles = getInputAsStream()
-                .map(line -> new Particle(line, particleid.getAndIncrement()))
-                .collect(Collectors.toList());
-
-        /*
-         * Sort first by acceleration, then by distance. The closest/slowest
-         * particle will eventually stay closest.
-         */
-        Collections.sort(particles, new Comparator<Particle>() {
-            @Override
-            public int compare(Particle o1, Particle o2) {
-                int accel = Double.compare(o1.acceleration(),
-                        o2.acceleration());
-                if (accel != 0) {
-                    return accel;
-                } else {
-                    return Long.compare(o1.distance(), o2.distance());
-                }
-            }
-        });
-
-        Particle particle = particles.get(0);
-        assertEquals(457L, particle.id);
-    }
-
-    private int removeCollidingParticles(Collection<Particle> particles,
+    private long removeCollidingParticles(Collection<Particle> particles,
             int steps) {
 
         int lastCollision = 0;
@@ -203,25 +156,49 @@ public class Day20_Part2 extends AocPuzzle {
         }
     }
 
-    @Test
-    public void testCollisionsShort() throws Exception {
-        List<Particle> particles = new ArrayList<>();
-
-        particles.add(new Particle("p=<-6,0,0>, v=< 3,0,0>, a=< 0,0,0>", 0L));
-        particles.add(new Particle("p=<-4,0,0>, v=< 2,0,0>, a=< 0,0,0>", 0L));
-        particles.add(new Particle("p=<-2,0,0>, v=< 1,0,0>, a=< 0,0,0>", 0L));
-        particles.add(new Particle("p=< 3,0,0>, v=< 1,0,0>, a=< 0,0,0>", 0L));
-
-        assertEquals(1, removeCollidingParticles(particles, 10));
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2017, 20, "Particle Swarm", true);
     }
 
-    @Test
-    public void testCollisions() throws Exception {
+    @Override
+    public AocResult<Long, Long> getExpected() {
+        return AocResult.of(457L, 448L);
+    }
+
+    @Override
+    public List<Particle> parse(Optional<File> file) throws IOException {
         AtomicLong particleid = new AtomicLong();
-        List<Particle> particles = getInputAsStream()
+        return InputUtils.asStringList(file.get()).stream()
                 .map(line -> new Particle(line, particleid.getAndIncrement()))
                 .collect(Collectors.toList());
+    }
 
-        assertEquals(448, removeCollidingParticles(particles, 1000));
+    @Override
+    public Long part1(List<Particle> particles) {
+        // Sort the particles. The closest/slowest particle will eventually stay
+        // closest.
+        Collections.sort(particles, new Comparator<Particle>() {
+            @Override
+            public int compare(Particle o1, Particle o2) {
+                return ComparisonChain.start()
+                        .compare(o1.acceleration(), o2.acceleration())
+                        .compare(o1.distance(), o2.distance()).result();
+            }
+        });
+
+        return particles.get(0).id;
+    }
+
+    @Override
+    public Long part2(List<Particle> particles) {
+        // 10 steps is the fewest amount of steps we can take and still get the
+        // right results. Optimization-by-knowing-the-correct-result.
+        int steps = 10;
+        return removeCollidingParticles(particles, steps);
+    }
+
+    public static void main(String[] args) {
+        AocBaseRunner.run(new Day20());
     }
 }

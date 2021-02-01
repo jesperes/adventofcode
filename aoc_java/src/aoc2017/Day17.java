@@ -1,104 +1,113 @@
 package aoc2017;
 
-import static org.junit.Assert.assertEquals;
-
+import java.io.File;
+import java.io.IOException;
 import java.util.LinkedList;
+import java.util.Optional;
 
-import org.junit.Test;
+import common2.AocBaseRunner;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocIntPuzzle;
 
-public class Day17 {
+public class Day17 implements IAocIntPuzzle<Integer> {
 
-    static class Spinlock {
-        int pos = 0;
-        LinkedList<Integer> buffer = new LinkedList<Integer>();
+	static class Spinlock {
+		int pos = 0;
+		LinkedList<Integer> buffer = new LinkedList<Integer>();
 
-        Spinlock() {
-            buffer.add(pos);
-        }
+		Spinlock() {
+			buffer.add(pos);
+		}
 
-        int getValueAfterPos() {
-            return buffer.get((pos + 1) % buffer.size());
-        }
+		int getValueAfterPos() {
+			return buffer.get((pos + 1) % buffer.size());
+		}
 
-        @Override
-        public String toString() {
-            return "Spinlock [pos=" + pos + ", buffer=" + buffer + "]";
-        }
+		@Override
+		public String toString() {
+			return "Spinlock [pos=" + pos + ", buffer=" + buffer + "]";
+		}
 
-        void spinlock(int steps, int startValue, int stopValue) {
-            for (int nextValue = startValue; nextValue <= stopValue; nextValue++) {
-                pos = (pos + steps) % buffer.size();
-                if (pos == buffer.size() - 1) {
-                    // If we are at the end of the list, add the next value
-                    buffer.add(nextValue);
-                    pos = buffer.size() - 1;
-                } else {
-                    // Otherwise insert it at the position after pos.
-                    pos++;
-                    buffer.add(pos, nextValue);
-                }
-            }
-        }
-    }
+		void spinlock(int steps, int startValue, int stopValue) {
+			for (int nextValue = startValue; nextValue <= stopValue; nextValue++) {
+				pos = (pos + steps) % buffer.size();
+				if (pos == buffer.size() - 1) {
+					// If we are at the end of the list, add the next value
+					buffer.add(nextValue);
+					pos = buffer.size() - 1;
+				} else {
+					// Otherwise insert it at the position after pos.
+					pos++;
+					buffer.add(pos, nextValue);
+				}
+			}
+		}
+	}
 
-    /*
-     * In this case, we only need to keep track of the number inserted
-     * immediately after 0.
-     */
-    static class Spinlock2 {
-        int bufferSize;
-        int pos;
-        int valueAfterZero;
+	/*
+	 * In this case, we only need to keep track of the number inserted
+	 * immediately after 0.
+	 */
+	static class Spinlock2 {
+		int bufferSize;
+		int pos;
+		int valueAfterZero;
 
-        void spinlock(int steps, int stopValue) {
-            bufferSize = 1;
-            pos = 0;
+		void spinlock(int steps, int stopValue) {
+			bufferSize = 1;
+			pos = 0;
 
-            for (int nextValue = 1; nextValue <= stopValue; nextValue++) {
-                pos = (pos + steps) % bufferSize;
+			for (int nextValue = 1; nextValue <= stopValue; nextValue++) {
+				pos = (pos + steps) % bufferSize;
 
-                // The only interesting case here is when we end up at
-                // position 0. In that case, we store the next value, and
-                // continue.
-                if (pos == 0) {
-                    valueAfterZero = nextValue;
-                }
+				// The only interesting case here is when we end up at
+				// position 0. In that case, we store the next value, and
+				// continue.
+				if (pos == 0) {
+					valueAfterZero = nextValue;
+				}
 
-                pos++;
-                bufferSize++;
-            }
-        }
+				pos++;
+				bufferSize++;
+			}
+		}
 
-        int getValueAfterZero() {
-            return valueAfterZero;
-        }
-    }
+		int getValueAfterZero() {
+			return valueAfterZero;
+		}
+	}
 
-    @Test
-    public void testShort() throws Exception {
-        Spinlock spinlock = new Spinlock();
+	@Override
+	public AocPuzzleInfo getInfo() {
+		return new AocPuzzleInfo(2017, 17, "Spinlock", false);
+	}
 
-        spinlock.spinlock(3, 1, 3);
-        assertEquals(1, spinlock.getValueAfterPos());
+	@Override
+	public AocResult<Integer, Integer> getExpected() {
+		return AocResult.of(596, 39051595);
+	}
 
-        spinlock.spinlock(3, 4, 4);
-        assertEquals(3, spinlock.getValueAfterPos());
+	@Override
+	public Integer parse(Optional<File> file) throws IOException {
+		return 377;
+	}
 
-        spinlock.spinlock(3, 5, 5);
-        assertEquals(2, spinlock.getValueAfterPos());
-    }
+	@Override
+	public Integer part1(Integer input) {
+		Spinlock spinlock = new Spinlock();
+		spinlock.spinlock(377, 1, 2017);
+		return spinlock.getValueAfterPos();
+	}
 
-    @Test
-    public void testFull() throws Exception {
-        Spinlock spinlock = new Spinlock();
-        spinlock.spinlock(377, 1, 2017);
-        assertEquals(596, spinlock.getValueAfterPos());
-    }
+	@Override
+	public Integer part2(Integer input) {
+		Spinlock2 spinlock = new Spinlock2();
+		spinlock.spinlock(377, 50_000_000);
+		return spinlock.getValueAfterZero();
+	}
 
-    @Test
-    public void testFull_Part2() throws Exception {
-        Spinlock2 spinlock = new Spinlock2();
-        spinlock.spinlock(377, 50_000_000);
-        assertEquals(39051595, spinlock.getValueAfterZero());
-    }
+	public static void main(String[] args) {
+		AocBaseRunner.run(new Day17());
+	}
 }
