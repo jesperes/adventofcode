@@ -3,30 +3,44 @@ package aoc2018;
 import static java.lang.Character.toUpperCase;
 import static java.lang.Math.abs;
 import static java.lang.Math.min;
-import static org.junit.Assert.assertEquals;
 
-import org.junit.Test;
+import java.io.File;
+import java.io.IOException;
+import java.util.Optional;
 
-import common.AocPuzzle;
+import common2.AocBaseRunner;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocIntPuzzle;
+import common2.InputUtils;
 
-public class Day05 extends AocPuzzle {
-    public Day05() {
-        super(2018, 5);
+public class Day05 implements IAocIntPuzzle<String> {
+
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2018, 5, "Alchemical Reduction", true);
     }
 
-    @Test
-    public void testPart1() throws Exception {
-        assertEquals(10496, react(getInputAsCharArray()));
+    @Override
+    public AocResult<Integer, Integer> getExpected() {
+        return AocResult.of(10496, 5774);
     }
 
-    @Test
-    public void testPart2() throws Exception {
-        assertEquals(5774, part2(getInputAsCharArray()));
+    @Override
+    public String parse(Optional<File> file) throws IOException {
+        return InputUtils.asString(file.get());
     }
 
-    private int part2(char[] input) {
+    @Override
+    public Integer part1(String input) {
+        return react(input.toCharArray(), input.length());
+    }
+
+    @Override
+    public Integer part2(String input) {
         int minLen = Integer.MAX_VALUE;
-        char[] buf = new char[input.length];
+        int len = input.length();
+        char[] buf = new char[len];
 
         /*
          * Check each polymer type, remove them one by one, and see which one
@@ -36,8 +50,8 @@ public class Day05 extends AocPuzzle {
             char C = toUpperCase(c);
             int j = 0;
 
-            for (int i = 0; i < input.length; i++) {
-                char x = input[i];
+            for (int i = 0; i < len; i++) {
+                char x = input.charAt(i);
                 if (x != c && x != C)
                     buf[j++] = x;
             }
@@ -48,19 +62,12 @@ public class Day05 extends AocPuzzle {
         return minLen;
     }
 
-    static private int react(char[] buf) {
-        return react(buf, buf.length);
-    }
-
     static private int react(char[] buf, int l) {
-        while (true) {
-            int l0 = react_once(buf, l);
-
-            if (l0 == l)
-                return l0;
-            else
-                l = l0;
+        int l0;
+        while ((l0 = react_once(buf, l)) != l) {
+            l = l0;
         }
+        return l0;
     }
 
     static private int react_once(char[] buf, int len) {
@@ -88,5 +95,9 @@ public class Day05 extends AocPuzzle {
         }
 
         return tgt;
+    }
+
+    public static void main(String[] args) {
+        AocBaseRunner.run(new Day05());
     }
 }

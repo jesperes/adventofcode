@@ -1,87 +1,87 @@
 package aoc2018;
 
-import static common.IntPair.pair;
-import static java.util.stream.Collectors.reducing;
-import static org.junit.Assert.assertEquals;
-
+import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.nio.file.Files;
+import java.util.Optional;
 
-import org.junit.Test;
+import common2.AocBaseRunner;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocPuzzle;
 
-import common.AocPuzzle;
-import common.IntPair;
+public class Day02 implements IAocPuzzle<String[], Integer, String> {
 
-/**
- * Day 2: Inventory Management System
- */
-public class Day02 extends AocPuzzle {
-
-    public Day02() throws IOException {
-        super(2018, 2);
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2018, 2, "Inventory Management System", true);
     }
 
-    private int part1() throws IOException {
-        IntPair result = getInputAsStream()
-                .map(s -> pair(seq_n(s, 2), seq_n(s, 3))).collect(reducing(
-                        pair(0, 0), (a, b) -> pair(a.x + b.x, a.y + b.y)));
-
-        return result.x * result.y;
+    @Override
+    public AocResult<Integer, String> getExpected() {
+        return AocResult.of(9139, "uqcidadzwtnhsljvxyobmkfyr");
     }
 
-    // Return 1 if s has a letter which occurs exactly N times, 0 otherwise
-    private int seq_n(String s, int n) {
-        final Map<Character, Integer> m = new HashMap<>();
-        s.chars().forEach(c -> m.merge((char) c, 1, Integer::sum));
-        return m.containsValue(n) ? 1 : 0;
+    @Override
+    public String[] parse(Optional<File> file) throws IOException {
+        return Files.lines(file.get().toPath()).toArray(n -> new String[n]);
     }
 
-    private String part2() throws IOException {
-        List<String> lines = getInputAsLines();
-        int len = lines.get(0).length();
+    @Override
+    public Integer part1(String[] input) {
+        int twos = 0, threes = 0;
 
+        for (String s : input) {
+            int[] array = new int[26];
+            for (int i = 0; i < s.length(); i++) {
+                array[s.charAt(i) - 'a']++;
+            }
+
+            int hasTwos = 0;
+            int hasThrees = 0;
+
+            for (int i = 0; i < array.length; i++) {
+                int j = array[i];
+                if (j == 2)
+                    hasTwos = 1;
+                if (j == 3)
+                    hasThrees = 1;
+            }
+
+            twos += hasTwos;
+            threes += hasThrees;
+        }
+
+        return twos * threes;
+    }
+
+    @Override
+    public String part2(String[] lines) {
         for (String a : lines) {
+            int len = a.length();
             for (String b : lines) {
-                StringBuilder same = new StringBuilder();
+                if (a == b)
+                    continue;
+
+                int count = 0;
+                char c = 0;
 
                 for (int i = 0; i < len; i++) {
-                    if (a.charAt(i) == b.charAt(i)) {
-                        same.append(a.charAt(i));
+                    if (a.charAt(i) != b.charAt(i)) {
+                        count++;
+                        c = a.charAt(i);
                     }
                 }
 
-                if (same.length() == len - 1) {
-                    return same.toString();
+                if (count == 1) {
+                    return a.replace(String.valueOf(c), "");
                 }
             }
         }
-
-        return null;
+        throw new RuntimeException();
     }
 
-    private int part1Answer() {
-        return 9139;
+    public static void main(String[] args) {
+        AocBaseRunner.run(new Day02());
     }
-
-    private String part2Answer() {
-        return "uqcidadzwtnhsljvxyobmkfyr";
-    }
-
-    /*
-     * -----------------------------------------------------------------------
-     * Tests
-     * -----------------------------------------------------------------------
-     */
-    @Test
-    public void testPart1() throws Exception {
-        assertEquals(part1Answer(), part1());
-    }
-
-    @Test
-    public void testPart2() throws Exception {
-        assertEquals(part2Answer(), part2());
-    }
-
 }

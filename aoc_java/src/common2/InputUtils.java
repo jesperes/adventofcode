@@ -76,7 +76,7 @@ public class InputUtils {
 
     public static String asString(File file) {
         try {
-            return new String(Files.toByteArray(file));
+            return new String(Files.toByteArray(file)).trim();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
