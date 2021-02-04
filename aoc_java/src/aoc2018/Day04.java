@@ -152,7 +152,33 @@ public class Day04 implements IAocIntPuzzle<List<Note>> {
 
     @Override
     public Integer part2(List<Note> input) {
-        return 0;
+        /*
+         * This is a map of (guard-id * minute) -> (how many times this guard
+         * was asleep during that minute). This is choosen since the puzzle's
+         * answer then becomes the key which has the largest value. (I suspect
+         * that the guard-ids were chosen so that this would be possible.)
+         */
+        Map<Integer, Integer> map = new HashMap<>();
+
+        int guardId = -1;
+        int fellAsleepAt = -1;
+        for (Note note : input) {
+            switch (note.status) {
+            case BeginShift:
+                guardId = note.id;
+                break;
+            case FallsAsleep:
+                fellAsleepAt = note.time.minute;
+                break;
+            case WakesUp:
+                for (int i = fellAsleepAt; i < note.time.minute; i++) {
+                    map.compute(guardId * i, (k, v) -> (v == null) ? 1 : v + 1);
+                }
+                break;
+            }
+        }
+
+        return map.entrySet().stream().max(mapValueComparator()).get().getKey();
     }
 
     public static void main(String[] args) {
