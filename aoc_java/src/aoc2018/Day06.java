@@ -81,7 +81,7 @@ public class Day06 implements IAocIntPuzzle<List<Coord>> {
                     }
                 }
 
-                if (d1 != d0) {
+                if (d1 != d0) { // ignore ties
                     if (x == 0 || x == maxx - 1 || y == 0 || y == maxy - 1) {
                         infiniteAreas.add(closest.id);
                     } else {
@@ -103,6 +103,7 @@ public class Day06 implements IAocIntPuzzle<List<Coord>> {
         int maxx = 356;
         int maxy = 353;
         int size = 0;
+
         for (int x = 0; x < maxx; x++) {
             for (int y = 0; y < maxy; y++) {
                 int d = 0;
