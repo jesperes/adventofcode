@@ -4,10 +4,9 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Optional;
 
 import org.jgrapht.Graph;
@@ -81,10 +80,11 @@ public class Day07
     }
 
     Optional<String> getNextAvailableStep(Graph<String, DefaultEdge> graph,
-            Collection<String> done) {
+            Collection<String> done, Collection<String> working) {
         return graph.vertexSet().stream()
-                .filter(step -> isStepAvailable(graph, step, done)).sorted()
-                .findFirst();
+                .filter(step -> !done.contains(step) && !working.contains(step)
+                        && isStepAvailable(graph, step, done))
+                .sorted().findFirst();
     }
 
     @Override
@@ -94,39 +94,45 @@ public class Day07
 
     int part2(Graph<String, DefaultEdge> graph, int numWorkers,
             int minStepTime) {
-        List<String> done = new ArrayList<>();
+        Collection<String> done = new HashSet<>();
+        Collection<String> working = new HashSet<>();
         int numSteps = graph.vertexSet().size();
         int second = 0;
         String[] workerUnit = new String[numWorkers];
         int[] workerTimeLeft = new int[numWorkers];
 
-        while (done.size() < numSteps) {
+        while (true) {
             for (int i = 0; i < numWorkers; i++) {
-                if (workerTimeLeft[i] == 0) {
+                if (workerTimeLeft[i] <= 1) {
                     // worker has finished, pick next available step
 
                     String unit = workerUnit[i];
                     if (unit != null) {
+                        // previous step was completed
                         done.add(unit);
+                        working.remove(unit);
+                        workerUnit[i] = null;
                     }
 
-                    var maybeUnit = getNextAvailableStep(graph, done);
+                    var maybeUnit = getNextAvailableStep(graph, done, working);
                     if (maybeUnit.isEmpty()) {
-                        // no steps left
-                        break;
+                        continue;
                     }
+
                     unit = maybeUnit.get();
-                    graph.removeVertex(unit);
-                    System.out
-                            .println("Unit done, removing from graph: " + unit);
                     workerUnit[i] = unit;
                     workerTimeLeft[i] = minStepTime + (unit.charAt(0) - 'A')
                             + 1;
+                    working.add(unit);
 
                 } else {
                     workerTimeLeft[i]--;
                 }
             }
+
+            if (done.size() == numSteps)
+                break;
+
             second++;
         }
 

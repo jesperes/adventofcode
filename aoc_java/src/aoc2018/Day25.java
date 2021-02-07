@@ -1,29 +1,28 @@
 package aoc2018;
 
 import static java.lang.Math.abs;
-import static org.junit.Assert.assertEquals;
 
-import java.io.FileNotFoundException;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.junit.Test;
+import aoc2018.Day25.Point;
+import common2.AocBaseRunner;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocIntPuzzle;
+import common2.InputUtils;
 
-import common.AocPuzzle;
-
-public class Day25 extends AocPuzzle {
-
-    public Day25() {
-        super(2018, 25);
-    }
+public class Day25 implements IAocIntPuzzle<List<Point>> {
 
     static private final int MAX_CONSTELLATION_DISTANCE = 3;
 
-    static private class Point {
+    class Point {
         final int x, y, z, w;
         Constellation constellation;
 
@@ -95,18 +94,6 @@ public class Day25 extends AocPuzzle {
         }
     }
 
-    private List<Point> parsePointFile()
-            throws FileNotFoundException, IOException {
-        return getInputAsStream().map(line -> new Point(line))
-                .collect(Collectors.toList());
-    }
-
-    @Test
-    public void testPart() throws Exception {
-        List<Point> points = parsePointFile();
-        assertEquals(318, collectConstellations(points));
-    }
-
     private static int collectConstellations(List<Point> points) {
         List<Constellation> constellations = new ArrayList<>();
 
@@ -134,5 +121,35 @@ public class Day25 extends AocPuzzle {
         } while (merges > 0);
 
         return constellations.size();
+    }
+
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2018, 25, "Four-Dimensional Adventure", true);
+    }
+
+    @Override
+    public AocResult<Integer, Integer> getExpected() {
+        return AocResult.of(318, null);
+    }
+
+    @Override
+    public List<Point> parse(Optional<File> file) throws IOException {
+        return InputUtils.asStringList(file.get()).stream().map(Point::new)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Integer part1(List<Point> input) {
+        return collectConstellations(input);
+    }
+
+    @Override
+    public Integer part2(List<Point> input) {
+        return 0;
+    }
+
+    public static void main(String[] args) {
+        AocBaseRunner.run(new Day25());
     }
 }

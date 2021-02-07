@@ -1,9 +1,6 @@
 package aoc2018;
 
-import static org.junit.Assert.assertEquals;
-
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -14,14 +11,13 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.junit.Test;
+import common2.AocBaseRunner;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocLongPuzzle;
+import common2.InputUtils;
 
-import common.AocPuzzle;
-
-public class Day24 extends AocPuzzle {
-    public Day24() {
-        super(2018, 24);
-    }
+public class Day24 implements IAocLongPuzzle<List<String>> {
 
     static Pattern pattern = Pattern.compile(
             "(\\d+) units each with (\\d+) hit points (\\((.*)\\) )?with an attack that does (\\d+) (\\w+) damage at initiative (\\d+)");
@@ -201,28 +197,13 @@ public class Day24 extends AocPuzzle {
         }
     }
 
-    @Test
-    public void testPart1() throws Exception {
-        assertEquals(new BattleResult(25088L, 0, Army.Infection), run());
-    }
-
-    @Test
-    public void testPart2() throws Exception {
-        assertEquals(2002, findLowestBoost());
-    }
-
-    private BattleResult run() throws FileNotFoundException, IOException {
-        return run(0);
-    }
-
     private static int numUnits(List<ArmyGroup> list, Army army) {
         return list.stream().filter(g -> g.army == army).mapToInt(g -> g.units)
                 .sum();
     }
 
-    private BattleResult run(int boost)
-            throws FileNotFoundException, IOException {
-        List<ArmyGroup> armyGroups = parse(boost);
+    private BattleResult run(List<String> lines, int boost) {
+        List<ArmyGroup> armyGroups = parse(lines, boost);
 
         int stalemateAttempts = 5;
 
@@ -289,13 +270,23 @@ public class Day24 extends AocPuzzle {
         }
     }
 
-    private List<ArmyGroup> parse(int boost)
-            throws FileNotFoundException, IOException {
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2018, 24, "Immune System Simulator 20XX",
+                true);
+    }
+
+    @Override
+    public AocResult<Long, Long> getExpected() {
+        return AocResult.of(25088L, 2002L);
+    }
+
+    private List<ArmyGroup> parse(List<String> lines, int boost) {
         List<ArmyGroup> groups = new ArrayList<>();
 
         Army army = null;
         int currid = 0;
-        for (String line : getInputAsLines()) {
+        for (String line : lines) {
             if (line.contains("Immune System:")) {
                 army = Army.ImmuneSystem;
                 currid = 1;
@@ -346,10 +337,25 @@ public class Day24 extends AocPuzzle {
         return groups;
     }
 
-    private long findLowestBoost() throws FileNotFoundException, IOException {
+    @Override
+    public List<String> parse(Optional<File> file) {
+        return InputUtils.asStringList(file.get());
+    }
+
+    @Override
+    public Long part1(List<String> input) {
+        return run(input, 0).winnerUnits;
+    }
+
+    @Override
+    public Long part2(List<String> input) {
+        return findLowestBoost(input);
+    }
+
+    private long findLowestBoost(List<String> lines) {
         int boost = 0;
         while (boost < 2000) {
-            BattleResult result = run(boost);
+            BattleResult result = run(lines, boost);
             if (result.winner.equals(Army.ImmuneSystem)) {
                 return result.winnerUnits;
             } else {
@@ -357,5 +363,9 @@ public class Day24 extends AocPuzzle {
             }
         }
         return -1;
+    }
+
+    public static void main(String[] args) {
+        AocBaseRunner.run(new Day24());
     }
 }

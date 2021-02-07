@@ -1,25 +1,43 @@
 package aoc2019;
 
-import static org.junit.Assert.assertEquals;
-
+import java.io.File;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Optional;
 
-import org.junit.Test;
-
-import common.AocPuzzle;
-import common.IntCode;
+import aoc2019.intcode.IntCode;
+import common2.AocBaseRunner;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocIntPuzzle;
+import common2.InputUtils;
 
 /**
  * Day 2: 1202 Program Alarm
  */
-public class Day02 extends AocPuzzle {
+public class Day02 implements IAocIntPuzzle<String> {
 
-    public Day02() throws IOException {
-        super(2019, 2);
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2019, 2, "Program Alarm", true);
     }
 
-    private int part1(String input, long x, long y) throws IOException {
+    @Override
+    public AocResult<Integer, Integer> getExpected() {
+        return AocResult.of(3654868, 7014);
+    }
+
+    @Override
+    public String parse(Optional<File> file) throws IOException {
+        return InputUtils.asString(file.get());
+    }
+
+    @Override
+    public Integer part1(String input) {
+        return runIntCode(input, 12, 2);
+    }
+
+    int runIntCode(String input, long x, long y) {
         Map<Long, Long> prog = IntCode.parse(input);
         prog.put(1L, x);
         prog.put(2L, y);
@@ -28,18 +46,16 @@ public class Day02 extends AocPuzzle {
         return prog.get(0L).intValue();
     }
 
-    private int part2(String input) throws IOException {
+    @Override
+    public Integer part2(String input) {
         for (int a = 0; a <= 99; a++)
             for (int b = 0; b <= 99; b++)
-                if (part1(input, a, b) == 19690720)
+                if (runIntCode(input, a, b) == 19690720)
                     return a * 100 + b;
-
-        return 0;
+        throw new RuntimeException();
     }
 
-    @Test
-    public void tests() throws Exception {
-        assertEquals(3654868, part1(getInputAsString(), 12, 2));
-        assertEquals(7014, part2(getInputAsString()));
+    public static void main(String[] args) {
+        AocBaseRunner.run(new Day02());
     }
 }

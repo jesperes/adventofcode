@@ -1,32 +1,24 @@
 package aoc2019;
 
 import static java.lang.Math.abs;
-import static org.junit.Assert.assertEquals;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.Optional;
 
-import org.junit.Test;
-
-import common.AocPuzzle;
+import common2.AocBaseRunner;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocPuzzle;
+import common2.InputUtils;
 
 /**
  * Day 16: Flawed Frequency Transmission
  */
-public class Day16 extends AocPuzzle {
+public class Day16 implements IAocPuzzle<String, String, String> {
 
     int[] segments = new int[] { 0, 1, 0, -1 };
 
-    public Day16() throws IOException {
-        super(2019, 16);
-    }
-
-    /**
-     * Implementation of FFT used for part 1.
-     *
-     * @param s       Input String
-     * @param repeats Number of repetitions
-     * @return
-     */
     String fft(String s, int repeats) {
         int[] in = new int[s.length()];
         int[] out = new int[s.length()];
@@ -67,17 +59,28 @@ public class Day16 extends AocPuzzle {
         return new String(c);
     }
 
-    /**
-     * Get the pattern for the given position
-     *
-     * @param i The position in the pattern sequence
-     * @param j The length of the segments
-     */
     int pattern(int i, int j) {
         return segments[((i + 1) / j) % 4];
     }
 
-    String part1(String input) {
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2019, 16, "Flawed Frequency Transmission",
+                true);
+    }
+
+    @Override
+    public AocResult<String, String> getExpected() {
+        return AocResult.of("84970726", "47664469");
+    }
+
+    @Override
+    public String parse(Optional<File> file) throws IOException {
+        return InputUtils.asString(file.get());
+    }
+
+    @Override
+    public String part1(String input) {
         return fft(input, 100).substring(0, 8);
     }
 
@@ -115,7 +118,8 @@ public class Day16 extends AocPuzzle {
      * Key observation 4: Each number in the output sequence can be computed
      * based on the previous on, reducing the quadratic complexity -> linear.
      */
-    String part2(String input) {
+    @Override
+    public String part2(String input) {
 
         final int offset = Integer.valueOf(input.substring(0, 7));
         final int phases = 100;
@@ -145,13 +149,7 @@ public class Day16 extends AocPuzzle {
         return new String(msg);
     }
 
-    @Test
-    public void testPart1() throws Exception {
-        assertEquals("84970726", part1(getInputAsString()));
-    }
-
-    @Test
-    public void testPart2() throws Exception {
-        assertEquals("47664469", part2(getInputAsString()));
+    public static void main(String[] args) {
+        AocBaseRunner.run(new Day16());
     }
 }

@@ -3,30 +3,32 @@ package aoc2019;
 import static common.IntPair.pair;
 import static java.lang.Math.abs;
 import static java.lang.Math.min;
-import static org.junit.Assert.assertEquals;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.junit.Test;
-
-import common.AocPuzzle;
 import common.IntPair;
 import common.Pair;
+import common2.AocBaseRunner;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocIntPuzzle;
+import common2.InputUtils;
 
 /**
  * AoC puzzle template.
  */
-public class Day03 extends AocPuzzle {
+public class Day03 implements IAocIntPuzzle<List<String>> {
 
     private Map<Character, IntPair> deltas = new HashMap<>();
 
-    public Day03() throws IOException {
-        super(2019, 3);
+    public Day03() {
         deltas.put('R', new IntPair(1, 0));
         deltas.put('L', new IntPair(-1, 0));
         deltas.put('U', new IntPair(0, 1));
@@ -38,6 +40,39 @@ public class Day03 extends AocPuzzle {
                 .map(s -> new Pair<Character, Integer>(s.charAt(0),
                         Integer.valueOf(s.substring(1))))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2019, 3, "Crossed Wires", true);
+    }
+
+    @Override
+    public AocResult<Integer, Integer> getExpected() {
+        return AocResult.of(627, 13190);
+    }
+
+    @Override
+    public List<String> parse(Optional<File> file) throws IOException {
+        return InputUtils.asStringList(file.get());
+    }
+
+    @Override
+    public Integer part1(List<String> wires) {
+        Map<IntPair, Integer> grid = new HashMap<>();
+        List<Pair<Character, Integer>> wire1 = parseLine(wires.get(0));
+        List<Pair<Character, Integer>> wire2 = parseLine(wires.get(1));
+        traceWire(grid, wire1, 1);
+        return traceWire(grid, wire2, 2);
+    }
+
+    @Override
+    public Integer part2(List<String> wires) {
+        Map<IntPair, Cell> grid = new HashMap<>();
+        List<Pair<Character, Integer>> wire1 = parseLine(wires.get(0));
+        List<Pair<Character, Integer>> wire2 = parseLine(wires.get(1));
+        traceWirePart2(grid, wire1, 1);
+        return traceWirePart2(grid, wire2, 2);
     }
 
     /*
@@ -73,14 +108,6 @@ public class Day03 extends AocPuzzle {
         }
 
         return closestIntersection;
-    }
-
-    private int part1(List<String> wires) throws IOException {
-        Map<IntPair, Integer> grid = new HashMap<>();
-        List<Pair<Character, Integer>> wire1 = parseLine(wires.get(0));
-        List<Pair<Character, Integer>> wire2 = parseLine(wires.get(1));
-        traceWire(grid, wire1, 1);
-        return traceWire(grid, wire2, 2);
     }
 
     /*
@@ -130,50 +157,7 @@ public class Day03 extends AocPuzzle {
         return shortest;
     }
 
-    private int part2(List<String> wires) {
-        Map<IntPair, Cell> grid = new HashMap<>();
-        List<Pair<Character, Integer>> wire1 = parseLine(wires.get(0));
-        List<Pair<Character, Integer>> wire2 = parseLine(wires.get(1));
-        traceWirePart2(grid, wire1, 1);
-        return traceWirePart2(grid, wire2, 2);
+    public static void main(String[] args) {
+        AocBaseRunner.run(new Day03());
     }
-
-    /*
-     * Tests
-     */
-
-    @Test
-    public void testPart1() throws Exception {
-        assertEquals(627, part1(getInputAsLines()));
-    }
-
-    @Test
-    public void testPart2() throws Exception {
-        assertEquals(13190, part2(getInputAsLines()));
-    }
-
-    @Test
-    public void testExample1() throws Exception {
-        List<String> list = Arrays.asList("R8,U5,L5,D3", "U7,R6,D4,L4");
-        assertEquals(6, part1(list));
-        assertEquals(30, part2(list));
-    }
-
-    @Test
-    public void testExample2() throws Exception {
-        List<String> list = Arrays.asList("R75,D30,R83,U83,L12,D49,R71,U7,L72",
-                "U62,R66,U55,R34,D71,R55,D58,R83");
-        assertEquals(159, part1(list));
-        assertEquals(610, part2(list));
-    }
-
-    @Test
-    public void testExample3() throws Exception {
-        List<String> list = Arrays.asList(
-                "R98,U47,R26,D63,R33,U87,L62,D20,R33,U53,R51",
-                "U98,R91,D20,R16,D67,R40,U7,R15,U6,R7");
-        assertEquals(135, part1(list));
-        assertEquals(410, part2(list));
-    }
-
 }

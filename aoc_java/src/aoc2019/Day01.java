@@ -1,28 +1,36 @@
 package aoc2019;
 
-import static org.junit.Assert.assertEquals;
-
+import java.io.File;
 import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
 
-import org.junit.Test;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocIntPuzzle;
+import common2.InputUtils;
 
-import common.AocPuzzle;
+public class Day01 implements IAocIntPuzzle<List<Integer>> {
 
-/**
- * Day 1: The Tyranny of the Rocket Equation
- */
-public class Day01 extends AocPuzzle {
-
-    public Day01() throws IOException {
-        super(2019, 1);
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2019, 1, "The Tyranny of the Rocket Equation",
+                true);
     }
 
-    private int part1() throws IOException {
-        return getInputAsIntStream().map(mass -> mass / 3 - 2).sum();
+    @Override
+    public AocResult<Integer, Integer> getExpected() {
+        return AocResult.of(3368364, 5049684);
     }
 
-    private int part2() throws IOException {
-        return getInputAsIntStream().map(mass -> fuel(mass)).sum();
+    @Override
+    public List<Integer> parse(Optional<File> file) throws IOException {
+        return InputUtils.asIntList(file.get());
+    }
+
+    @Override
+    public Integer part1(List<Integer> input) {
+        return input.stream().mapToInt(mass -> mass / 3 - 2).sum();
     }
 
     private int fuel(int mass) {
@@ -33,10 +41,8 @@ public class Day01 extends AocPuzzle {
             return f + fuel(f);
     }
 
-    @Test
-    public void tests() throws Exception {
-        assertEquals(3368364, part1());
-        assertEquals(5049684, part2());
+    @Override
+    public Integer part2(List<Integer> input) {
+        return input.stream().mapToInt(mass -> fuel(mass)).sum();
     }
-
 }

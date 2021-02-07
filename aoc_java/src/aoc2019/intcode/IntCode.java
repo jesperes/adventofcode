@@ -1,4 +1,4 @@
-package common;
+package aoc2019.intcode;
 
 import static org.junit.Assert.fail;
 

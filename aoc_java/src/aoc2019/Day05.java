@@ -1,6 +1,6 @@
 package aoc2019;
 
-import static common.IntCode.execute;
+import static aoc2019.intcode.IntCode.execute;
 import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;

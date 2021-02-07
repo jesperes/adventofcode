@@ -1,7 +1,6 @@
 package aoc2018;
 
-import static org.junit.Assert.assertEquals;
-
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -15,18 +14,16 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.junit.Test;
-
-import common.AocPuzzle;
+import common2.AocBaseRunner;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocIntPuzzle;
+import common2.InputUtils;
 
 /*
- * Alternate approach.
+ * The dreaded Elf vs Goblins puzzle. This is in dire need of optimizing.
  */
-public class Day15 extends AocPuzzle {
-
-    public Day15() {
-        super(2018, 15);
-    }
+public class Day15 implements IAocIntPuzzle<List<String>> {
 
     class ElfDeathException extends Exception {
         private static final long serialVersionUID = 1L;
@@ -45,8 +42,8 @@ public class Day15 extends AocPuzzle {
         // The collection of elves and goblins still alive
         List<Unit> units = new ArrayList<>();
 
-        Grid() throws IOException {
-            parseInput(getInputAsLines());
+        Grid(List<String> lines) {
+            parseInput(lines);
         }
 
         // Return a stream of all positions adjacent to the given position.
@@ -182,7 +179,7 @@ public class Day15 extends AocPuzzle {
 
         @Override
         public int hashCode() {
-            return Integer.hashCode(x) ^ Integer.hashCode(y);
+            return Integer.hashCode(x ^ y);
         }
 
         @Override
@@ -362,7 +359,7 @@ public class Day15 extends AocPuzzle {
 
         }
 
-        public int executeRounds() throws ElfDeathException, IOException {
+        public int executeRounds() throws ElfDeathException {
             currentRound = 1;
 
             while (executeRound()) {
@@ -373,7 +370,7 @@ public class Day15 extends AocPuzzle {
                     * roundsFinished;
         }
 
-        public boolean executeRound() throws ElfDeathException, IOException {
+        public boolean executeRound() throws ElfDeathException {
 
             for (Unit unit : grid.getSortedUnits()
                     .collect(Collectors.toList())) {
@@ -398,24 +395,19 @@ public class Day15 extends AocPuzzle {
                 }
 
                 if (attackEnabled) {
-
                     // Adjacent to at least one enemy. Select the one
                     // with lowest hp, break ties on reading order.
                     Optional<Position> toAttack = grid.getAdjacent(unit)
-                            .filter(e -> unit.isEnemy(e))
-                            // .peek(System.out::println)
-                            .min(attackComparator);
+                            .filter(e -> unit.isEnemy(e)).min(attackComparator);
 
                     if (toAttack.isPresent()) {
                         Position pos = toAttack.get();
                         Unit enemyUnit = grid.getUnitAt(pos);
 
                         if (unit.attack(enemyUnit)) {
-
                             if (enemyUnit instanceof Elf && !allowElfDeaths) {
                                 throw new ElfDeathException();
                             }
-
                             grid.kill(enemyUnit);
                         }
                     }
@@ -500,32 +492,51 @@ public class Day15 extends AocPuzzle {
         }
     }
 
-    public int runTestCase(boolean allowElfDeaths)
-            throws IOException, ElfDeathException {
-        Grid grid = new Grid();
+    public int doCombat(List<String> lines, boolean allowElfDeaths)
+            throws ElfDeathException {
+        Grid grid = new Grid(lines);
         GameEngine engine = new GameEngine(grid);
         engine.allowElfDeaths = allowElfDeaths;
         return engine.executeRounds();
     }
 
-    @Test
-    public void testPart1() throws Exception {
-        assertEquals(237996, runTestCase(true));
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2018, 15, "Beverage Bandits", true);
     }
 
-    @Test
-    public void testPart2() throws Exception {
-        ELF_ATTACK_POWER = 4;
-        int outcome;
+    @Override
+    public AocResult<Integer, Integer> getExpected() {
+        return AocResult.of(237996, 69700);
+    }
 
+    @Override
+    public List<String> parse(Optional<File> file) throws IOException {
+        return InputUtils.asStringList(file.get());
+    }
+
+    @Override
+    public Integer part1(List<String> input) {
+        try {
+            return doCombat(input, true);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public Integer part2(List<String> input) {
+        ELF_ATTACK_POWER = 4;
         while (true) {
             try {
-                outcome = runTestCase(false);
-                assertEquals(69700, outcome);
-                return;
+                return doCombat(input, false);
             } catch (ElfDeathException e) {
                 ELF_ATTACK_POWER++;
             }
         }
+    }
+
+    public static void main(String[] args) {
+        AocBaseRunner.run(new Day15());
     }
 }

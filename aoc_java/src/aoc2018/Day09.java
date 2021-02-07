@@ -1,60 +1,96 @@
 package aoc2018;
 
-import static org.junit.Assert.assertEquals;
+import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Optional;
 
-import java.util.Deque;
-import java.util.LinkedList;
+import aoc2018.Day09.Input;
+import common2.AocBaseRunner;
+import common2.AocPuzzleInfo;
+import common2.AocResult;
+import common2.IAocLongPuzzle;
 
-import org.junit.Test;
+public class Day09 implements IAocLongPuzzle<Input> {
 
-public class Day09 {
+    record Input(int players, int points) {
 
-    @Test
-    public void testExample1() {
-        assertEquals(32, marbleGameQueue(9, 25));
     }
 
-    static <T> void rotateCW(Deque<T> ring, int n) {
-        for (int i = 0; i < n; i++) {
-            T last = ring.removeLast();
-            ring.addFirst(last);
+    class Marble {
+        long n;
+        Marble prev; // counter-clockwise direction
+        Marble next; // clockwise direction
+
+        public Marble(long n) {
+            this.n = n;
         }
     }
 
-    static <T> void rotateCCW(Deque<T> ring, int n) {
-        for (int i = 0; i < n; i++) {
-            T first = ring.removeFirst();
-            ring.addLast(first);
-        }
+    @Override
+    public AocPuzzleInfo getInfo() {
+        return new AocPuzzleInfo(2018, 9, "Marble Mania", false);
     }
 
-    static long marbleGameQueue(int numPlayers, int lastMarble) {
-        // We rotate the ring so that ring[0] is the current position
-        Deque<Integer> ring = new LinkedList<>();
-        ring.add(0);
-        long[] scores = new long[numPlayers];
+    @Override
+    public AocResult<Long, Long> getExpected() {
+        return AocResult.of(423717L, 3553108197L);
+    }
 
-        for (int n = 1; n <= lastMarble; n++) {
-            if (n % 23 == 0) {
-                for (int i = 0; i < 7; i++) {
-                    ring.addFirst(ring.removeLast());
-                }
-                int removed = ring.removeFirst();
-                scores[n % numPlayers] += n + removed;
+    @Override
+    public Input parse(Optional<File> file) throws IOException {
+        return new Input(419, 72164);
+    }
+
+    @Override
+    public Long part1(Input input) {
+        long[] score = new long[input.players];
+        Marble current = new Marble(0L);
+        current.prev = current;
+        current.next = current;
+
+        for (long marbleNum = 1; marbleNum < input.points; marbleNum++) {
+            int playerIdx = (int) ((marbleNum - 1) % input.players);
+            if (marbleNum % 23 == 0) {
+                long value = marbleNum;
+                Marble marble = current.prev.prev.prev.prev.prev.prev.prev;
+                value += marble.n;
+                current = marble.next;
+                remove(marble);
+                score[playerIdx] += value;
             } else {
-                // rotate two steps so that the inserted marble ends up in the
-                // right location
-                ring.addLast(ring.removeFirst());
-                ring.addLast(ring.removeFirst());
-                ring.addFirst(n);
+                current = insertCW(current.next, marbleNum);
             }
         }
 
-        long max = 0;
-        for (long n : scores) {
-            if (n > max)
-                max = n;
-        }
-        return max;
+        return Arrays.stream(score).max().getAsLong();
+    }
+
+    @Override
+    public Long part2(Input input) {
+        return part1(new Input(input.players, input.points * 100));
+    }
+
+    /*
+     * Helpers
+     */
+    Marble insertCW(Marble current, long n) {
+        Marble marble = new Marble(n);
+        marble.next = current.next;
+        marble.prev = current;
+        current.next.prev = marble;
+        current.next = marble;
+        return marble;
+    }
+
+    void remove(Marble marble) {
+        Marble prev = marble.prev;
+        Marble next = marble.next;
+        prev.next = next;
+        next.prev = prev;
+    }
+
+    public static void main(String[] args) {
+        AocBaseRunner.run(new Day09());
     }
 }

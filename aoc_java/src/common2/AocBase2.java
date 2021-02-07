@@ -30,6 +30,7 @@ import com.google.gson.JsonObject;
 
 public class AocBase2 {
 
+    private static boolean parallel = true;
     private static final int MAX_REPEATS = 5000;
     private static final int MAX_REPEAT_NS = 1_000_000_000;
 
@@ -84,6 +85,10 @@ public class AocBase2 {
     }
 
     public void run() throws IOException {
+        if (parallel)
+            System.out.println("Multi-threaded.");
+        else
+            System.out.println("Single-threaded.");
 
         System.out.format("Running %d puzzles...", puzzles.size());
         final var runs = runPuzzles(puzzles);
@@ -312,11 +317,10 @@ public class AocBase2 {
                 .collect(Collectors.summingLong(n -> n));
     }
 
-    private List<AocPuzzleRun<?, ?, ?>> runPuzzles(
+    private List<AocPuzzleRun<?, ?, ?>> runPuzzlesParallel(
             List<IAocPuzzle<?, ?, ?>> puzzles) throws IOException {
-        ExecutorService exec = Executors.newCachedThreadPool();
-        long t0 = System.nanoTime();
         final List<AocPuzzleRun<?, ?, ?>> runs = new ArrayList<>();
+        ExecutorService exec = Executors.newCachedThreadPool();
         for (final IAocPuzzle<?, ?, ?> puzzle : puzzles) {
             exec.execute(() -> {
                 try {
@@ -336,7 +340,28 @@ public class AocBase2 {
         } catch (InterruptedException e) {
             throw new RuntimeException();
         }
+        return runs;
+    }
+
+    private List<AocPuzzleRun<?, ?, ?>> runPuzzlesSingle(
+            List<IAocPuzzle<?, ?, ?>> puzzles) throws IOException {
+        List<AocPuzzleRun<?, ?, ?>> runs = new ArrayList<>();
+        for (final IAocPuzzle<?, ?, ?> puzzle : puzzles) {
+            runs.add(run(puzzle));
+            System.out.print(".");
+        }
+        return runs;
+    }
+
+    private List<AocPuzzleRun<?, ?, ?>> runPuzzles(
+            List<IAocPuzzle<?, ?, ?>> puzzles) throws IOException {
+        long t0 = System.nanoTime();
+
+        var runs = parallel ? runPuzzlesParallel(puzzles)
+                : runPuzzlesSingle(puzzles);
+
         long t1 = System.nanoTime();
+
         double elapsedSecs = (t1 - t0) / 1000000000.0;
 
         System.out.println();
@@ -349,8 +374,9 @@ public class AocBase2 {
                 .mapToLong(run -> run.result().timing().get().total()).sum()
                 / 1000000000.0;
 
-        System.out.format(Locale.ROOT, "Speedup with parallel runs: %.3f%n",
-                puzzleTotalTimeSecs / elapsedSecs);
+        if (parallel)
+            System.out.format(Locale.ROOT, "Speedup with parallel runs: %.3f%n",
+                    puzzleTotalTimeSecs / elapsedSecs);
 
         return runs;
     }
@@ -374,8 +400,6 @@ public class AocBase2 {
         } else {
             result = runWithInput(Optional.empty(), puzzle);
         }
-
-        // System.out.format("[%d.%d]", info.year(), info.day());
 
         return new AocPuzzleRun<T, P1, P2>(puzzle, result);
     }
