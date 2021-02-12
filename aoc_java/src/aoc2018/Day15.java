@@ -1,5 +1,7 @@
 package aoc2018;
 
+import static org.junit.Assert.fail;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -11,6 +13,7 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -24,6 +27,9 @@ import common2.InputUtils;
  * The dreaded Elf vs Goblins puzzle. This is in dire need of optimizing.
  */
 public class Day15 implements IAocIntPuzzle<List<String>> {
+
+    long numSearches = 0;
+    long accumulatedShortedPathTime = 0;
 
     class ElfDeathException extends Exception {
         private static final long serialVersionUID = 1L;
@@ -172,6 +178,10 @@ public class Day15 implements IAocIntPuzzle<List<String>> {
             this.y = y;
         }
 
+        public int manhattanDist(Position other) {
+            return Math.abs(x - other.x) + Math.abs(y - other.y);
+        }
+
         @Override
         public String toString() {
             return String.format("{%d,%d}", y, x);
@@ -188,13 +198,13 @@ public class Day15 implements IAocIntPuzzle<List<String>> {
             return x == other.x && y == other.y;
         }
 
-        public boolean isAdjacentTo(Position other) {
-            if ((other.x == x && Math.abs(other.y - y) == 1)
-                    || (other.y == y && Math.abs(other.x - x) == 1))
-                return true;
-
-            return false;
-        }
+//        public boolean isAdjacentTo(Position other) {
+//            if ((other.x == x && Math.abs(other.y - y) == 1)
+//                    || (other.y == y && Math.abs(other.x - x) == 1))
+//                return true;
+//
+//            return false;
+//        }
 
         @Override
         public int compareTo(Position o) {
@@ -333,6 +343,12 @@ public class Day15 implements IAocIntPuzzle<List<String>> {
 
         @Override
         public int compareTo(Path o) {
+//            return ComparisonChain.start() //
+//                    .compare(length, o.length) //
+//                    .compare(target, o.target) //
+//                    .compare(startPos(), o.startPos()) //
+//                    .result();
+
             if (length != o.length) {
                 return Integer.compare(length, o.length);
             } else {
@@ -362,9 +378,18 @@ public class Day15 implements IAocIntPuzzle<List<String>> {
         public int executeRounds() throws ElfDeathException {
             currentRound = 1;
 
+            long t0 = System.nanoTime();
             while (executeRound()) {
                 currentRound++;
+                if (numSearches > 100000)
+                    fail();
             }
+
+            long t1 = System.nanoTime();
+
+            System.out.println("%d rounds in %g seconds, %.3f ms/round"
+                    .formatted(currentRound, (t1 - t0) / 1_000_000_000.0,
+                            ((t1 - t0) / currentRound) / 1_000_000_000.0));
 
             return grid.getSortedUnits().map(u -> u.hp).mapToInt(n -> n).sum()
                     * roundsFinished;
@@ -390,8 +415,9 @@ public class Day15 implements IAocIntPuzzle<List<String>> {
                     continue;
                 }
 
-                if (pathToNearestEnemy.get().positions.size() > 0) {
-                    unit.move(pathToNearestEnemy.get().positions.get(0));
+                List<PathElem> positions = pathToNearestEnemy.get().positions;
+                if (positions.size() > 0) {
+                    unit.move(positions.get(0));
                 }
 
                 if (attackEnabled) {
@@ -442,11 +468,21 @@ public class Day15 implements IAocIntPuzzle<List<String>> {
         public Optional<Path> selectEnemyToAttack(Unit unit) {
             return grid.getSortedUnits().filter(other -> unit.isEnemy(other))
                     .flatMap(enemy -> grid.getAdjacent(enemy))
-                    .map(adj -> findShortestPath(unit, adj))
+                    .map(adj -> time2(this::findShortestPath, unit, adj))
                     .filter(opt -> opt.isPresent()).map(opt -> opt.get())
                     .min(pathComparator);
         }
 
+        <T, T1, T2> T time2(BiFunction<T1, T2, T> fun, T1 t1, T2 t2) {
+            numSearches++;
+            long start = System.nanoTime();
+            T result = fun.apply(t1, t2);
+            long end = System.nanoTime();
+            accumulatedShortedPathTime += (end - start);
+            return result;
+        }
+
+        // TODO replace this with an A* search
         public Optional<Path> findShortestPath(Unit source, Position target) {
 
             Set<Position> visited = new TreeSet<>(); // closed set
@@ -473,7 +509,14 @@ public class Day15 implements IAocIntPuzzle<List<String>> {
                         }
                     }
 
+                    /*
+                     * shortestPath.positions contains the "moves" needed to get
+                     * from source to target. This excludes "source", but
+                     * includes "target".
+                     */
                     Collections.reverse(shortestPath.positions);
+//                    System.out.println("%s --[ %s ]-> %s".formatted(source,
+//                            shortestPath, target));
                     return Optional.of(shortestPath);
                 } else {
                     PathElem p0 = p;
@@ -521,19 +564,32 @@ public class Day15 implements IAocIntPuzzle<List<String>> {
             return doCombat(input, true);
         } catch (Exception e) {
             throw new RuntimeException(e);
+        } finally {
+            dump();
         }
+    }
+
+    void dump() {
+        System.out.println();
+        System.out.println("Number of searches: " + numSearches);
+        System.out.println("Total time to search: %g msecs"
+                .formatted(accumulatedShortedPathTime / 1_000_000.0));
+        System.out.println("Average time to search: %g usecs".formatted(
+                (accumulatedShortedPathTime / numSearches) / 1000.0));
+
     }
 
     @Override
     public Integer part2(List<String> input) {
-        ELF_ATTACK_POWER = 4;
-        while (true) {
-            try {
-                return doCombat(input, false);
-            } catch (ElfDeathException e) {
-                ELF_ATTACK_POWER++;
-            }
-        }
+//        ELF_ATTACK_POWER = 4;
+//        while (true) {
+//            try {
+//                return doCombat(input, false);
+//            } catch (ElfDeathException e) {
+//                ELF_ATTACK_POWER++;
+//            }
+//        }
+        return 0;
     }
 
     public static void main(String[] args) {

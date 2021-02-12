@@ -1,0 +1,258 @@
+-module(aoc15).
+-define(TEST, true).
+-compile(export_all).
+-include_lib("eunit/include/eunit.hrl").
+
+-define(input, << "################################\n"
+                  "##############..######....######\n"
+                  "###########GG.G.#######.########\n"
+                  "############....######..#..#####\n"
+                  "############...#######.....#####\n"
+                  "##############..#G.####....#####\n"
+                  "#############..G#..####...######\n"
+                  "######.#####.G...G..###.#.######\n"
+                  "######...###..........#.########\n"
+                  "######G.................#.######\n"
+                  "######....G.#............G.#####\n"
+                  "######G......G............######\n"
+                  "######.......E#####E.G.....#####\n"
+                  "#####...G....#######.......#####\n"
+                  "#####.......#########......#####\n"
+                  "########....#########.....######\n"
+                  "########G.G.#########...########\n"
+                  "#########...#########.......#.##\n"
+                  "########.G..#########..........#\n"
+                  "#######.E....#######........#..#\n"
+                  "#...........G.#####...E...######\n"
+                  "####.....##................#####\n"
+                  "#####..#.####.#.............####\n"
+                  "########...##EE..G....E.#..E.###\n"
+                  "##########..#................###\n"
+                  "##########.............#.....###\n"
+                  "###########.E.G..........##.####\n"
+                  "###########.........###..##.####\n"
+                  "############.##........E.#######\n"
+                  "################.###.###########\n"
+                  "################.###############\n"
+                  "################################\n"
+               >>).
+
+coords(Width, Offset) ->
+  Y = Offset div Width,
+  X = Offset rem Width,
+  {Y, X}.
+
+units(Board, Width, Unit) ->
+  gb_trees:from_orddict(
+    [{coords(Width, Offset), 200}
+     || {Offset, 1} <- binary:matches(Board, [Unit])
+    ]).
+
+read(#{board := B, width := W, gnomes := Gs, elves := Es}, {Y, X} = Pos) ->
+  case gb_trees:is_defined(Pos, Gs) of
+    true -> $G;
+    false ->
+      case gb_trees:is_defined(Pos, Es) of
+        true -> $E;
+        false ->
+          case binary:at(B, X + Y * W) of
+            $E -> $.;
+            $G -> $.;
+            C  -> C
+          end
+      end
+  end.
+
+game(Board) ->
+  {Eol, 1} = binary:match(Board, <<$\n>>),
+  W = Eol + 1,
+  #{ board => Board
+   , width => W
+   , round => 0
+   , gnomes => units(Board, W, <<$G>>)
+   , elves => units(Board, W, <<$E>>)
+   , elf_attack => 3
+   }.
+
+combat(Game = #{gnomes := Gs, elves := Es}) ->
+  ToMove = ordsets:union(gb_trees:keys(Gs), gb_trees:keys(Es)),
+  combat(ToMove, Game).
+
+combat([], Game = #{round := R}) ->
+  combat(Game#{round => R + 1});
+combat([Pos | ToMove], Game = #{gnomes := Gs, elves := Es, elf_attack := A}) ->
+  {FriendKey, FoeKey, Friends, Foes, Attack} =
+    case gb_trees:is_defined(Pos, Gs) of
+      true  -> {gnomes, elves, Gs, Es, 3};
+      false -> {elves, gnomes, Es, Gs, A}
+    end,
+  case gb_trees:is_empty(Foes) of
+    true ->
+      %% End of game
+      Game;
+    false ->
+      case move(Pos, Game, Foes) of
+        no_route ->
+          combat(ToMove, Game);
+        attack ->
+          attack(Pos, ToMove, Game, FoeKey, Foes, Attack);
+        {move, NewPos} ->
+          Hp = gb_trees:get(Pos, Friends),
+          combat(ToMove, Game#{FriendKey => gb_trees:insert(NewPos, Hp, gb_trees:delete(Pos, Friends))});
+        {move_and_attack, NewPos} ->
+          Hp = gb_trees:get(Pos, Friends),
+          NewGame = Game#{FriendKey => gb_trees:insert(NewPos, Hp, gb_trees:delete(Pos, Friends))},
+          attack(NewPos, ToMove, NewGame, FoeKey, Foes, Attack)
+      end
+  end.
+
+attack(Pos, ToMove, Game, FoeKey, Foes, Attack) ->
+  {Hp, FoePos} = lists:min([{H, P} || P <- neighbours(Pos), {value, H} <- [gb_trees:lookup(P, Foes)]]),
+  {NewFoes, NewToMove} =
+    case Hp - Attack of
+      NewHp when NewHp > 0 ->
+        {gb_trees:update(FoePos, NewHp, Foes), ToMove};
+      _ ->
+        {gb_trees:delete(FoePos, Foes), ordsets:del_element(FoePos, ToMove)}
+    end,
+  combat(NewToMove, Game#{FoeKey => NewFoes}).
+
+move(TargetPos, Game, Foes) ->
+  Start = [{min_cost(Pos, TargetPos), FoePos,  FoePos, Pos}
+           || FoePos <- gb_trees:keys(Foes),
+              Pos <-neighbours(FoePos)
+          ],
+  move(gb_sets:from_list(Start), gb_sets:empty(), TargetPos, Game).
+
+move(Heads, Visited, TargetPos, Game) ->
+  case gb_sets:is_empty(Heads) of
+    true ->
+      %% No route to enemies
+      no_route;
+    false ->
+      {Head, Rest} = gb_sets:take_smallest(Heads),
+      case Head of
+        {0,   _FoePos, _PrevPos, TargetPos} -> attack;
+        {1,   _FoePos,      Pos, TargetPos} -> {move_and_attack, Pos};
+        {_TC, _FoePos,      Pos, TargetPos} -> {move, Pos};
+        {TC, FoePos, _PrevPos, Pos} ->
+          case gb_sets:is_element(Pos, Visited) orelse read(Game, Pos) of
+            $. ->
+              C = TC - min_cost(Pos, TargetPos) + 1,
+              NewHeads = lists:foldl( fun (NextPos, Acc) ->
+                                          gb_sets:add_element( { C + min_cost(NextPos, TargetPos)
+                                                               , FoePos
+                                                               , Pos
+                                                               , NextPos
+                                                               }
+                                                             , Acc)
+                                      end
+                                    , Rest
+                                    , neighbours(Pos)
+                                    ),
+              move(NewHeads, gb_sets:add_element(Pos, Visited), TargetPos, Game);
+            _ ->
+              move(Rest, Visited, TargetPos, Game)
+          end
+      end
+  end.
+
+neighbours({Y, X}) ->
+  [{Y - 1, X}, {Y, X - 1}, {Y, X + 1}, {Y + 1, X}].
+
+min_cost({Y1, X1}, {Y2, X2}) ->
+  abs(Y1 - Y2) + abs(X1 - X2).
+
+%%----------------------------------------------------------------------
+
+ex1() ->
+  ex1(?input).
+
+ex1(Board) ->
+  #{round := R, gnomes := Gs, elves := Es} = combat(game(Board)),
+  R * (lists:sum(gb_trees:values(Gs)) + lists:sum(gb_trees:values(Es))).
+
+ex1_test_() ->
+  [ ?_assertEqual(27730, ex1(<< "#######\n"
+                                "#.G...#\n"
+                                "#...EG#\n"
+                                "#.#.#G#\n"
+                                "#..G#E#\n"
+                                "#.....#\n"
+                                "#######\n"
+                             >>))
+  , ?_assertEqual(36334, ex1(<< "#######\n"
+                                "#G..#E#\n"
+                                "#E#E.E#\n"
+                                "#G.##.#\n"
+                                "#...#E#\n"
+                                "#...E.#\n"
+                                "#######\n"
+                             >>))
+  , ?_assertEqual(39514, ex1(<< "#######\n"
+                                "#E..EG#\n"
+                                "#.#G.E#\n"
+                                "#E.##E#\n"
+                                "#G..#.#\n"
+                                "#..E#.#\n"
+                                "#######\n"
+                             >>))
+  , ?_assertEqual(27755, ex1(<< "#######\n"
+                                "#E.G#.#\n"
+                                "#.#G..#\n"
+                                "#G.#.G#\n"
+                                "#G..#.#\n"
+                                "#...E.#\n"
+                                "#######\n"
+                             >>))
+  , ?_assertEqual(28944, ex1(<< "#######       \n"
+                                "#.E...#       \n"
+                                "#.#..G#       \n"
+                                "#.###.#  -->  \n"
+                                "#E#G#G#       \n"
+                                "#...#G#       \n"
+                                "#######       \n"
+                             >>))
+  , ?_assertEqual(18740, ex1(<< "#########\n"
+                                "#G......#\n"
+                                "#.E.#...#\n"
+                                "#..##..G#\n"
+                                "#...##..#\n"
+                                "#...#...#\n"
+                                "#.G...G.#\n"
+                                "#.....G.#\n"
+                                "#########\n"
+                             >>))
+  ].
+
+move_test() ->
+  Game = #{elves := Elves} = game(<< "#########\n"
+                                     "#G..G..G#\n"
+                                     "#.......#\n"
+                                     "#.......#\n"
+                                     "#G..E..G#\n"
+                                     "#.......#\n"
+                                     "#.......#\n"
+                                     "#G..G..G#\n"
+                                     "#########\n"
+                                  >>),
+  ?assertEqual({move, {1, 2}}, move({1, 1}, Game, Elves)),
+  ?assertEqual({move, {2, 4}}, move({1, 4}, Game, Elves)),
+  ?assertEqual({move, {1, 6}}, move({1, 7}, Game, Elves)),
+  ?assertEqual({move, {4, 2}}, move({4, 1}, Game, Elves)).
+
+%%----------------------------------------------------------------------
+
+ex2() ->
+  ex2(3, 200, game(?input)).
+
+ex2(Min, Max, Game) when Min >= Max ->
+  #{round := R, gnomes := Gs, elves := Es} = combat(Game#{elf_attack => Min}),
+  R * (lists:sum(gb_trees:values(Gs)) + lists:sum(gb_trees:values(Es)));
+ex2(Min, Max, Game = #{elves := Es0}) ->
+  Med = (Min + Max) div 2,
+  #{elves := Es1} = combat(Game#{elf_attack => Med}),
+  case gb_trees:size(Es0) =:= gb_trees:size(Es1) of
+    true  -> ex2(Min, Med, Game);
+    false -> ex2(Med + 1, Max, Game)
+  end.

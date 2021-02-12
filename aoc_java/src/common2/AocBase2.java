@@ -31,6 +31,7 @@ import com.google.gson.JsonObject;
 public class AocBase2 {
 
     private static boolean parallel = true;
+    private static int WORKERS = 24;
     private static final int MAX_REPEATS = 5000;
     private static final int MAX_REPEAT_NS = 1_000_000_000;
 
@@ -103,8 +104,64 @@ public class AocBase2 {
         printTable(runs);
         writeResultsToFile(runs);
 
+        System.out.println("\nPuzzle stats:");
+
         for (var p : puzzles) {
             p.dumpStats();
+        }
+
+        System.out.println("\nSummaries per year:");
+        var yearStats = runs.stream()
+                .mapToInt(run -> run.puzzle().getInfo().year())
+                .summaryStatistics();
+        var firstYear = yearStats.getMin();
+        var lastYear = yearStats.getMax();
+        for (int year = firstYear; year <= lastYear; year++) {
+            printYearStats(runs, year);
+        }
+    }
+
+    private void printYearStats(List<AocPuzzleRun<?, ?, ?>> runs, int year) {
+        List<AocPuzzleInfo> implemented = new ArrayList<>();
+        List<AocPuzzleInfo> partial = new ArrayList<>();
+        List<AocPuzzleInfo> complete = new ArrayList<>();
+
+        for (var run : runs) {
+            var puzzle = run.puzzle();
+            var info = puzzle.getInfo();
+            if (info.year() != year)
+                continue;
+
+            implemented.add(info);
+
+            var day = info.day();
+            var result = run.result();
+            var expected = puzzle.getExpected();
+
+            var p1_ok = expected.p1().get().equals(result.p1().get());
+            if (day == 25) {
+                if (p1_ok)
+                    complete.add(info);
+                else
+                    partial.add(info);
+            } else {
+                var p2_ok = expected.p2().get().equals(result.p2().get());
+                if (p1_ok && p2_ok) {
+                    complete.add(info);
+                } else {
+                    partial.add(info);
+                }
+            }
+        }
+
+        if (complete.size() == 25) {
+            System.out.println("All puzzle solutions for %d are complete!"
+                    .formatted(year));
+        } else {
+            System.out.println(
+                    "Puzzle solution status for %d: %d/%d/%d (implemented/partial/completed)"
+                            .formatted(year, implemented.size(), partial.size(),
+                                    complete.size()));
         }
     }
 
@@ -320,7 +377,7 @@ public class AocBase2 {
     private List<AocPuzzleRun<?, ?, ?>> runPuzzlesParallel(
             List<IAocPuzzle<?, ?, ?>> puzzles) throws IOException {
         final List<AocPuzzleRun<?, ?, ?>> runs = new ArrayList<>();
-        ExecutorService exec = Executors.newCachedThreadPool();
+        ExecutorService exec = Executors.newFixedThreadPool(WORKERS);
         for (final IAocPuzzle<?, ?, ?> puzzle : puzzles) {
             exec.execute(() -> {
                 try {
@@ -334,7 +391,7 @@ public class AocBase2 {
         }
         exec.shutdown();
         try {
-            if (!exec.awaitTermination(5, TimeUnit.MINUTES)) {
+            if (!exec.awaitTermination(60, TimeUnit.MINUTES)) {
                 throw new RuntimeException("timeout");
             }
         } catch (InterruptedException e) {
