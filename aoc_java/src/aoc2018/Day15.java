@@ -1,571 +1,62 @@
 package aoc2018;
 
+import static org.junit.Assert.assertTrue;
+
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Queue;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
+import com.google.common.collect.ComparisonChain;
+
+import aoc2018.day15.Cavern;
+import aoc2018.day15.Pos;
+import aoc2018.day15.Unit;
 import common2.AocBaseRunner;
 import common2.AocPuzzleInfo;
 import common2.AocResult;
-import common2.AocTrace;
 import common2.IAocIntPuzzle;
 import common2.InputUtils;
 
-/*
- * The dreaded Elf vs Goblins puzzle. This is in dire need of optimizing.
- */
-public class Day15 implements IAocIntPuzzle<List<String>> {
+public class Day15 implements IAocIntPuzzle<String> {
 
-    long numSearches = 0;
-    long accumulatedShortedPathTime = 0;
-
-    class ElfDeathException extends Exception {
-        private static final long serialVersionUID = 1L;
+    enum Outcome {
+        InProgress, NoEnemies, ElfDeath
     }
 
-    int ELF_ATTACK_POWER = 3;
-
-    @FunctionalInterface
-    interface PosCallback {
-        void call(char c, int x, int y);
+    record CombatResult(Outcome outcome, int result) {
     }
 
-    class Grid {
-        char[][] grid;
-
-        // The collection of elves and goblins still alive
-        List<Unit> units = new ArrayList<>();
-
-        Grid(List<String> lines) {
-            parseInput(lines);
-        }
-
-        // Return a stream of all positions adjacent to the given position.
-        // in reading order.
-        private Stream<Position> getAdjacent(Position pos) {
-            return Stream.of(new Position(pos.x, pos.y - 1),
-                    new Position(pos.x - 1, pos.y),
-                    new Position(pos.x + 1, pos.y),
-                    new Position(pos.x, pos.y + 1));
-        }
-
-        private void parseInput(List<String> lines) {
-            int height = lines.size();
-            int width = lines.get(0).length();
-
-            this.grid = new char[height][width];
-            for (int y = 0; y < height; y++) {
-                for (int x = 0; x < width; x++) {
-                    char c = lines.get(y).charAt(x);
-                    switch (c) {
-                    case 'G':
-                        units.add(new Goblin(this, x, y));
-                        grid[y][x] = '.';
-                        break;
-                    case 'E':
-                        units.add(new Elf(this, x, y));
-                        grid[y][x] = '.';
-                        break;
-                    case '.':
-                    case '#':
-                        grid[y][x] = c;
-                        break;
-                    }
-                }
-            }
-        }
-
-        // Returns a sorted copy of the list of units
-        public Stream<Unit> getSortedUnits() {
-            List<Unit> copy = new ArrayList<>();
-            copy.addAll(units);
-            Collections.sort(copy);
-            return copy.stream();
-        }
-
-        public boolean isOpen(Position p) {
-            if (grid[p.y][p.x] != '.')
-                return false;
-
-            for (Unit unit : units) {
-                if (unit.equals(p))
-                    return false;
-            }
-            return true;
-        }
-
-        @Override
-        public String toString() {
-            return toString(Collections.emptyList());
-        }
-
-        public String toString(List<PathElem> additional) {
-            StringBuilder buf = new StringBuilder();
-
-            int height = grid.length;
-            int width = grid[0].length;
-
-//            buf.append("   ");
-//            for (int x = 0; x < width; x++) {
-//                if (x >= 10)
-//                    break;
-//
-//                buf.append(String.format("%d", x));
-//            }
-//            buf.append("\n");
-
-            for (int y = 0; y < height; y++) {
-                int y0 = y;
-
-                buf.append(String.format("%2d ", y));
-
-                for (int x = 0; x < width; x++) {
-                    int x0 = x;
-                    // display the unit at position, or grid if no unit
-                    buf.append(Stream
-                            .concat(units.stream(), additional.stream())
-                            .filter(unit -> unit.x == x0 && unit.y == y0)
-                            .map(unit -> unit.getChar()).findFirst()
-                            .orElse(grid[y][x]));
-                }
-
-                buf.append(" ");
-                /*
-                 * We need to sort the units here, otherwise they might end up
-                 * in a different order here than when displayed.
-                 */
-                buf.append(units.stream().filter(unit -> unit.y == y0).sorted()
-                        .map(unit -> unit.toString())
-                        .collect(Collectors.joining(", ")));
-
-                buf.append("\n");
-            }
-
-            return buf.toString();
-        }
-
-        public Unit getUnitAt(Position other) {
-            for (Unit unit : units) {
-                if (unit.equals(other))
-                    return unit;
-            }
-            return null;
-        }
-
-        public void kill(Unit enemyUnit) {
-            units.remove(enemyUnit);
-        }
+    enum MoveResult {
+        NoRoute, Attack, Move, MoveAndAttack
     }
 
-    static class Position implements Comparable<Position> {
-        int x;
-        int y;
-
-        public Position(int x, int y) {
-            this.x = x;
-            this.y = y;
-        }
-
-        public int manhattanDist(Position other) {
-            return Math.abs(x - other.x) + Math.abs(y - other.y);
-        }
-
-        @Override
-        public String toString() {
-            return String.format("{%d,%d}", y, x);
-        }
-
-        @Override
-        public int hashCode() {
-            return Integer.hashCode(x ^ y);
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            Position other = (Position) obj;
-            return x == other.x && y == other.y;
-        }
-
-//        public boolean isAdjacentTo(Position other) {
-//            if ((other.x == x && Math.abs(other.y - y) == 1)
-//                    || (other.y == y && Math.abs(other.x - x) == 1))
-//                return true;
-//
-//            return false;
-//        }
-
-        @Override
-        public int compareTo(Position o) {
-            if (y == o.y) {
-                return Integer.compare(x, o.x);
-            } else {
-                return Integer.compare(y, o.y);
-            }
-        }
-
-        public char getChar() {
-            return '.';
-        }
-
-        public void move(Position newPos) {
-            x = newPos.x;
-            y = newPos.y;
-        }
+    record MoveData(MoveResult result, Pos pos) {
     }
 
-    abstract class Unit extends Position {
-        int hp = 200;
-        final Grid grid;
-
-        public Unit(Grid grid, int x, int y) {
-            super(x, y);
-            this.grid = grid;
-        }
-
+    record SearchNode(//
+            int cost, // heuristic + route cost
+            Pos enemyPos, // enemy position
+            Pos estimatedLastPos, //
+            Pos prevPos, // previous position on the route
+            Pos current) // current position
+            implements Comparable<SearchNode> {
         @Override
-        public String toString() {
-            return String.format("{%c,%s,%dhp}", getChar(), super.toString(),
-                    hp);
+        public int compareTo(SearchNode o) {
+            return ComparisonChain.start() //
+                    .compare(cost, o.cost) //
+                    .compare(enemyPos, o.enemyPos) //
+                    .compare(estimatedLastPos, o.estimatedLastPos) //
+                    .compare(prevPos, o.prevPos) //
+                    .compare(current, o.current) //
+                    .result();
         }
 
-        abstract boolean isEnemy(Position other);
-
-        abstract int attackPower();
-
-        // Attack enemy unit, return true if it dies.
-        public boolean attack(Unit enemyUnit) {
-            enemyUnit.hp -= attackPower();
-            return (enemyUnit.hp <= 0);
-        }
-
-    }
-
-    class Goblin extends Unit {
-
-        public Goblin(Grid grid, int x, int y) {
-            super(grid, x, y);
-        }
-
-        @Override
-        public char getChar() {
-            return 'G';
-        }
-
-        @Override
-        boolean isEnemy(Position other) {
-            Unit unit = grid.getUnitAt(other);
-            return unit != null && unit instanceof Elf;
-        }
-
-        @Override
-        int attackPower() {
-            return 3;
-        }
-    }
-
-    class Elf extends Unit {
-
-        public Elf(Grid grid, int x, int y) {
-            super(grid, x, y);
-        }
-
-        @Override
-        public char getChar() {
-            return 'E';
-        }
-
-        @Override
-        boolean isEnemy(Position other) {
-            Unit unit = grid.getUnitAt(other);
-            return unit != null && unit instanceof Goblin;
-        }
-
-        @Override
-        int attackPower() {
-            return ELF_ATTACK_POWER;
-        }
-    }
-
-    static class PathElem extends Position {
-        int dist; // distance from source
-        PathElem prev;
-
-        public PathElem(int x, int y, int dist, PathElem prev) {
-            super(x, y);
-            this.dist = dist;
-            this.prev = prev;
-        }
-
-        @Override
-        public char getChar() {
-            return '*';
-        }
-    }
-
-    static class Path implements Comparable<Path> {
-        Unit source;
-        Position target;
-
-        public int length;
-        public List<PathElem> positions = new ArrayList<>();
-
-        public Path(Unit source, Position target, int length) {
-            super();
-            this.source = source;
-            this.target = target;
-            this.length = length;
-        }
-
-        @Override
-        public String toString() {
-            return String.format("path from %s to %s (length %d) with steps %s",
-                    source, target, length, positions);
-        }
-
-        public Position startPos() {
-            if (positions.size() == 0)
-                return target;
-            else
-                return positions.get(0);
-        }
-
-        @Override
-        public int compareTo(Path o) {
-            if (length != o.length) {
-                return Integer.compare(length, o.length);
-            } else {
-                if (target.equals(o.target)) {
-                    // same target, break ties on start square
-                    return startPos().compareTo(o.startPos());
-                } else {
-                    // different target, break ties on target square
-                    return target.compareTo(o.target);
-                }
-            }
-        }
-    }
-
-    class GameEngine {
-        private Grid grid;
-        int currentRound = 0;
-        int roundsFinished = 0;
-        public boolean attackEnabled = true;
-        public boolean allowElfDeaths = true;
-
-        public GameEngine(Grid grid) {
-            this.grid = grid;
-        }
-
-        public int executeRounds() throws ElfDeathException {
-            currentRound = 1;
-
-            long t0 = System.nanoTime();
-            while (true) {
-                AocTrace.trace(Day15.this, "Round %d%n", currentRound);
-
-                if (!executeRound())
-                    break;
-
-                AocTrace.trace(Day15.this, grid.toString() + "\n---\n");
-                currentRound++;
-            }
-
-            long t1 = System.nanoTime();
-
-            System.out.println("%d rounds in %g seconds, %.3f ms/round"
-                    .formatted(currentRound, (t1 - t0) / 1_000_000_000.0,
-                            ((t1 - t0) / currentRound) / 1_000_000_000.0));
-
-            int sum = grid.getSortedUnits().map(u -> u.hp).mapToInt(n -> n)
-                    .sum();
-
-            AocTrace.trace(Day15.this, "Round finished, %d * %d = %d%n",
-                    roundsFinished, sum, roundsFinished * sum);
-
-            return sum * roundsFinished;
-        }
-
-        public boolean executeRound() throws ElfDeathException {
-
-            for (Unit unit : grid.getSortedUnits()
-                    .collect(Collectors.toList())) {
-
-                if (unit.hp <= 0) {
-                    continue;
-                }
-
-                if (!grid.getSortedUnits().filter(e -> unit.isEnemy(e))
-                        .findAny().isPresent()) {
-                    return false;
-                }
-
-                Optional<Path> pathToNearestEnemy = selectEnemyToAttack(unit);
-
-                if (!pathToNearestEnemy.isPresent()) {
-                    continue;
-                }
-
-                List<PathElem> positions = pathToNearestEnemy.get().positions;
-                if (positions.size() > 0) {
-                    AocTrace.trace(Day15.this, String.format(
-                            "%c unit at {%d,%d} moved to {%d,%d}%n",
-                            (unit instanceof Elf) ? 'E' : 'G', unit.y, unit.x,
-                            positions.get(0).y, positions.get(0).x));
-                    unit.move(positions.get(0));
-                }
-
-                if (attackEnabled) {
-                    // Adjacent to at least one enemy. Select the one
-                    // with lowest hp, break ties on reading order.
-                    Optional<Position> toAttack = grid.getAdjacent(unit)
-                            .filter(e -> unit.isEnemy(e)).min(attackComparator);
-
-                    if (toAttack.isPresent()) {
-                        Position pos = toAttack.get();
-                        Unit enemyUnit = grid.getUnitAt(pos);
-
-                        if (unit.attack(enemyUnit)) {
-                            if (enemyUnit instanceof Elf && !allowElfDeaths) {
-                                throw new ElfDeathException();
-                            }
-                            grid.kill(enemyUnit);
-                            traceKill(unit, enemyUnit);
-                        } else {
-                            traceAttack(unit, enemyUnit);
-                        }
-                    }
-                }
-            }
-
-            roundsFinished++;
-            return true;
-        }
-
-        void traceKill(Unit unit, Unit enemyUnit) {
-            AocTrace.trace(Day15.this,
-                    "%c unit at {%d,%d} killed %c unit at {%d,%d}%n".formatted(
-                            (unit instanceof Elf) ? 'E' : 'G', unit.y, unit.x,
-                            (enemyUnit instanceof Elf) ? 'E' : 'G', enemyUnit.y,
-                            enemyUnit.x));
-        }
-
-        void traceAttack(Unit unit, Unit enemyUnit) {
-            AocTrace.trace(Day15.this,
-                    "%c unit at {%d,%d} attacked %c unit at {%d,%d}%n"
-                            .formatted((unit instanceof Elf) ? 'E' : 'G',
-                                    unit.y, unit.x,
-                                    (enemyUnit instanceof Elf) ? 'E' : 'G',
-                                    enemyUnit.y, enemyUnit.x));
-        }
-
-        Comparator<Position> attackComparator = new Comparator<Position>() {
-            @Override
-            public int compare(Position o1, Position o2) {
-                Unit u1 = grid.getUnitAt(o1);
-                Unit u2 = grid.getUnitAt(o2);
-
-                if (u1.hp == u2.hp) {
-                    return u1.compareTo(u2); // reading order
-                } else {
-                    return Integer.compare(u1.hp, u2.hp);
-                }
-            }
-        };
-
-        Comparator<Path> pathComparator = new Comparator<Path>() {
-            @Override
-            public int compare(Path o1, Path o2) {
-                return o1.compareTo(o2);
-            }
-        };
-
-        public Optional<Path> selectEnemyToAttack(Unit unit) {
-            return grid.getSortedUnits().filter(other -> unit.isEnemy(other))
-                    .flatMap(enemy -> grid.getAdjacent(enemy))
-                    .map(adj -> time2(this::findShortestPath, unit, adj))
-                    .filter(opt -> opt.isPresent()).map(opt -> opt.get())
-                    .min(pathComparator);
-        }
-
-        <T, T1, T2> T time2(BiFunction<T1, T2, T> fun, T1 t1, T2 t2) {
-            numSearches++;
-            long start = System.nanoTime();
-            T result = fun.apply(t1, t2);
-            long end = System.nanoTime();
-            accumulatedShortedPathTime += (end - start);
-            return result;
-        }
-
-        // TODO replace this with an A* search
-        public Optional<Path> findShortestPath(Unit source, Position target) {
-
-            Set<Position> visited = new TreeSet<>(); // closed set
-            Queue<PathElem> queue = new LinkedList<>(); // open set
-
-            queue.add(new PathElem(source.x, source.y, 0, null));
-
-            while (!queue.isEmpty()) {
-                PathElem p = queue.poll();
-
-                if (p.equals(target)) {
-                    /*
-                     * We have reached our target. Construct a path by
-                     * traversing the path elements backwards.
-                     */
-                    Path shortestPath = new Path(source, target, p.dist);
-
-                    while (true) {
-                        if (p.prev == null) {
-                            break;
-                        } else {
-                            shortestPath.positions.add(p);
-                            p = p.prev;
-                        }
-                    }
-
-                    /*
-                     * shortestPath.positions contains the "moves" needed to get
-                     * from source to target. This excludes "source", but
-                     * includes "target".
-                     */
-                    Collections.reverse(shortestPath.positions);
-//                    System.out.println("%s --[ %s ]-> %s".formatted(source,
-//                            shortestPath, target));
-                    return Optional.of(shortestPath);
-                } else {
-                    PathElem p0 = p;
-
-                    visited.add(p);
-
-                    grid.getAdjacent(p0)
-                            .filter(a -> (grid.isOpen(a) && !queue.contains(a)
-                                    && !visited.contains(a)))
-                            .map(a -> new PathElem(a.x, a.y, p0.dist + 1, p0))
-                            .forEach(a -> queue.add(a));
-                }
-            }
-
-            return Optional.empty();
-        }
-    }
-
-    public int doCombat(List<String> lines, boolean allowElfDeaths)
-            throws ElfDeathException {
-        Grid grid = new Grid(lines);
-        GameEngine engine = new GameEngine(grid);
-        engine.allowElfDeaths = allowElfDeaths;
-        return engine.executeRounds();
     }
 
     @Override
@@ -579,51 +70,172 @@ public class Day15 implements IAocIntPuzzle<List<String>> {
     }
 
     @Override
-    public List<String> parse(Optional<File> file) throws IOException {
-        return InputUtils.asStringList(file.get());
+    public String parse(Optional<File> file) throws IOException {
+        return InputUtils.asString(file.get());
     }
 
     @Override
-    public Integer part1(List<String> input) {
-        try {
-            AocTrace.trace(this, "PART1%n");
-            return doCombat(input, true);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        } finally {
-            dump();
+    public Integer part1(String input) {
+        Cavern cavern = new Cavern(input);
+        cavern.allowElfDeath = true;
+        return doCombat(cavern).result;
+    }
+
+    @Override
+    public Integer part2(String input) {
+        for (int ap = 4;; ap++) {
+            Cavern cavern = new Cavern(input, ap);
+            cavern.allowElfDeath = false;
+
+            CombatResult result = doCombat(cavern);
+            if (result.outcome == Outcome.ElfDeath)
+                continue;
+            else
+                return result.result;
         }
     }
 
-    void dump() {
-        System.out.println();
-        System.out.println("Number of searches: " + numSearches);
-        System.out.println("Total time to search: %g msecs"
-                .formatted(accumulatedShortedPathTime / 1_000_000.0));
-        System.out.println("Average time to search: %g usecs".formatted(
-                (accumulatedShortedPathTime / numSearches) / 1000.0));
-
+    // Do combat rounds until one side wins.
+    CombatResult doCombat(Cavern cavern) {
+        int rounds = 0;
+        while (true) {
+            Outcome outcome = doRound(cavern);
+            switch (outcome) {
+            case InProgress:
+                rounds++;
+                continue;
+            case NoEnemies:
+                return new CombatResult(outcome, cavern.units.values().stream()
+                        .mapToInt(unit -> unit.hp).sum() * rounds);
+            case ElfDeath:
+                return new CombatResult(outcome, 0);
+            }
+        }
     }
 
-    @Override
-    public Integer part2(List<String> input) {
-        ELF_ATTACK_POWER = 4;
-        while (true) {
-            try {
-                AocTrace.trace(this, "PART2, elf attack power %d%n",
-                        ELF_ATTACK_POWER);
-                int result = doCombat(input, false);
-                AocTrace.trace(this, "PART2, success at elfAP %d%n",
-                        ELF_ATTACK_POWER);
-                return result;
-            } catch (ElfDeathException e) {
-                ELF_ATTACK_POWER++;
+    // Execute one round (every unit takes its turn)
+    Outcome doRound(Cavern cavern) {
+        Outcome result = Outcome.InProgress;
+
+        for (Unit unit : cavern.getSortedUnits()) {
+            if (unit.hp <= 0)
+                continue;
+
+            List<Unit> enemies = cavern.getEnemies(unit);
+            if (enemies.size() == 0) {
+                result = Outcome.NoEnemies;
+                break;
+            } else {
+                MoveData move = move(unit, enemies, cavern);
+                switch (move.result) {
+                case Move:
+                    cavern.move(unit, move.pos);
+                    break;
+                case Attack:
+                    attack(cavern, unit);
+                    break;
+                case MoveAndAttack:
+                    cavern.move(unit, move.pos);
+                    attack(cavern, unit);
+                    break;
+                case NoRoute:
+                    break;
+                default:
+                    throw new RuntimeException();
+                }
             }
+        }
+
+        List<Pos> deadUnits = cavern.units.entrySet().stream()
+                .filter(e -> e.getValue().hp <= 0).map(e -> e.getKey())
+                .collect(Collectors.toList());
+
+        for (Pos pos : deadUnits) {
+            Unit deadUnit = cavern.units.get(pos);
+            cavern.units.remove(pos);
+            if (deadUnit.isElf && !cavern.allowElfDeath) {
+                return Outcome.ElfDeath;
+            }
+        }
+
+        return result;
+    }
+
+    private void attack(Cavern cavern, Unit unit) {
+        List<Unit> enemies = cavern.getAdjacentEnemies(unit);
+        assertTrue(enemies.size() > 0);
+        Collections.sort(enemies);
+        int minHp = enemies.stream().mapToInt(e -> e.hp).min().getAsInt();
+        Unit enemyToAttack = enemies.stream().filter(e -> e.hp == minHp)
+                .findFirst().get();
+        enemyToAttack.hp -= unit.attackPower;
+    }
+
+    /**
+     * Do a reverse A*-search from all the enemies backwards to the unit which
+     * is about to move. The priorities of the puzzle is encoded in the way we
+     * compare nodes, see {@link SearchNode#compareTo(SearchNode)}.
+     * 
+     * This allows us to do only a single A* search per unit per move.
+     */
+    private MoveData move(Unit unit, List<Unit> enemies, Cavern cavern) {
+        TreeSet<SearchNode> nodes = new TreeSet<>();
+        Set<Pos> visited = new HashSet<>();
+
+        for (Unit enemy : enemies) {
+            for (Pos nbr : enemy.pos.getNeighbors()) {
+                nodes.add(new SearchNode(//
+                        minCost(nbr, unit.pos), // heuristic + route cost
+                        enemy.pos, // enemy position
+                        estimatedLastPos(enemy.pos, unit.pos), //
+                        enemy.pos, //
+                        nbr)); // current node
+            }
+        }
+
+        while (true) {
+            SearchNode node = nodes.pollFirst();
+
+            if (node == null)
+                return new MoveData(MoveResult.NoRoute, null);
+
+            if (node.cost == 0 && node.current.equals(unit.pos)) {
+                return new MoveData(MoveResult.Attack, null);
+            } else if (node.cost == 1 && node.current.equals(unit.pos)) {
+                return new MoveData(MoveResult.MoveAndAttack, node.prevPos);
+            } else if (node.current.equals(unit.pos)) {
+                return new MoveData(MoveResult.Move, node.prevPos);
+            } else if (!visited.contains(node.current)
+                    && cavern.isOpen(node.current)) {
+                visited.add(node.current);
+                int c = node.cost - minCost(node.current, unit.pos) + 1;
+                for (Pos nbr : node.current.getNeighbors()) {
+                    var n = new SearchNode(c + minCost(nbr, unit.pos),
+                            node.enemyPos, estimatedLastPos(nbr, unit.pos),
+                            node.current, nbr);
+                    nodes.add(n);
+                }
+            }
+        }
+    }
+
+    int minCost(Pos a, Pos b) {
+        return Math.abs(a.x() - b.x()) + Math.abs(a.y() - b.y());
+    }
+
+    Pos estimatedLastPos(Pos source, Pos target) {
+        if (source.y() < target.y()) {
+            return new Pos(target.x(), target.y() - 1);
+        } else if (source.x() < target.x()) {
+            return new Pos(target.x() - 1, target.y());
+        } else if (source.x() > target.x()) {
+            return new Pos(target.x() + 1, target.y());
+        } else {
+            return new Pos(target.x(), target.y() + 1);
         }
     }
 
     public static void main(String[] args) {
         AocBaseRunner.run(new Day15());
-
     }
 }
