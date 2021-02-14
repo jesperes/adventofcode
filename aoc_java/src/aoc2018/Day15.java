@@ -19,6 +19,10 @@ import common2.AocResult;
 import common2.IAocIntPuzzle;
 import common2.InputUtils;
 
+/**
+ * The dreaded Elf vs. Goblins puzzle. This uses a single A* search per round,
+ * searching backwards from all enemies towards the start square.
+ */
 public class Day15 implements IAocIntPuzzle<String> {
 
     enum Outcome {
@@ -251,13 +255,6 @@ public class Day15 implements IAocIntPuzzle<String> {
         enemyToAttack.hp -= unit.attackPower;
     }
 
-    /**
-     * Do a reverse A*-search from all the enemies backwards to the unit which
-     * is about to move. The priorities of the puzzle is encoded in the way we
-     * compare nodes, see {@link SearchNode#compareTo(SearchNode)}.
-     * 
-     * This allows us to do only a single A* search per unit per move.
-     */
     private MoveData move(Unit unit, List<Unit> enemies, Cavern cavern) {
         TreeSet<SearchNode> nodes = new TreeSet<>();
         Set<Pos> visited = new HashSet<>();
