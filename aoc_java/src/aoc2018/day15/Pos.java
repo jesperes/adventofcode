@@ -1,29 +1,12 @@
 package aoc2018.day15;
 
-import com.google.common.hash.HashCode;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * A single position, comparable in reading order.
  */
-public class Pos implements Comparable<Pos> {
-    public int x;
-    public int y;
-
-    public Pos(int x, int y) {
-        this.x = x;
-        this.y = y;
-    }
-
-    @Override
-    public int hashCode() {
-        return HashCode.fromInt(x ^ y).asInt();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        Pos pos = (Pos) obj;
-        return x == pos.x && y == pos.y;
-    }
+public record Pos(int x, int y) implements Comparable<Pos> {
 
     @Override
     public int compareTo(Pos o) {
@@ -39,4 +22,12 @@ public class Pos implements Comparable<Pos> {
         return "{%d,%d}".formatted(x, y);
     }
 
+    public Set<Pos> getNeighbors() {
+        Set<Pos> set = new HashSet<>();
+        set.add(new Pos(x, y - 1));
+        set.add(new Pos(x - 1, y));
+        set.add(new Pos(x + 1, y));
+        set.add(new Pos(x, y + 1));
+        return set;
+    }
 }

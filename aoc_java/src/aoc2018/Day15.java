@@ -1,7 +1,5 @@
 package aoc2018;
 
-import static org.junit.Assert.fail;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -20,6 +18,7 @@ import java.util.stream.Stream;
 import common2.AocBaseRunner;
 import common2.AocPuzzleInfo;
 import common2.AocResult;
+import common2.AocTrace;
 import common2.IAocIntPuzzle;
 import common2.InputUtils;
 
@@ -117,14 +116,14 @@ public class Day15 implements IAocIntPuzzle<List<String>> {
             int height = grid.length;
             int width = grid[0].length;
 
-            buf.append("   ");
-            for (int x = 0; x < width; x++) {
-                if (x >= 10)
-                    break;
-
-                buf.append(String.format("%d", x));
-            }
-            buf.append("\n");
+//            buf.append("   ");
+//            for (int x = 0; x < width; x++) {
+//                if (x >= 10)
+//                    break;
+//
+//                buf.append(String.format("%d", x));
+//            }
+//            buf.append("\n");
 
             for (int y = 0; y < height; y++) {
                 int y0 = y;
@@ -343,12 +342,6 @@ public class Day15 implements IAocIntPuzzle<List<String>> {
 
         @Override
         public int compareTo(Path o) {
-//            return ComparisonChain.start() //
-//                    .compare(length, o.length) //
-//                    .compare(target, o.target) //
-//                    .compare(startPos(), o.startPos()) //
-//                    .result();
-
             if (length != o.length) {
                 return Integer.compare(length, o.length);
             } else {
@@ -372,17 +365,20 @@ public class Day15 implements IAocIntPuzzle<List<String>> {
 
         public GameEngine(Grid grid) {
             this.grid = grid;
-
         }
 
         public int executeRounds() throws ElfDeathException {
             currentRound = 1;
 
             long t0 = System.nanoTime();
-            while (executeRound()) {
+            while (true) {
+                AocTrace.trace(Day15.this, "Round %d%n", currentRound);
+
+                if (!executeRound())
+                    break;
+
+                AocTrace.trace(Day15.this, grid.toString() + "\n---\n");
                 currentRound++;
-                if (numSearches > 100000)
-                    fail();
             }
 
             long t1 = System.nanoTime();
@@ -391,8 +387,13 @@ public class Day15 implements IAocIntPuzzle<List<String>> {
                     .formatted(currentRound, (t1 - t0) / 1_000_000_000.0,
                             ((t1 - t0) / currentRound) / 1_000_000_000.0));
 
-            return grid.getSortedUnits().map(u -> u.hp).mapToInt(n -> n).sum()
-                    * roundsFinished;
+            int sum = grid.getSortedUnits().map(u -> u.hp).mapToInt(n -> n)
+                    .sum();
+
+            AocTrace.trace(Day15.this, "Round finished, %d * %d = %d%n",
+                    roundsFinished, sum, roundsFinished * sum);
+
+            return sum * roundsFinished;
         }
 
         public boolean executeRound() throws ElfDeathException {
@@ -417,6 +418,10 @@ public class Day15 implements IAocIntPuzzle<List<String>> {
 
                 List<PathElem> positions = pathToNearestEnemy.get().positions;
                 if (positions.size() > 0) {
+                    AocTrace.trace(Day15.this, String.format(
+                            "%c unit at {%d,%d} moved to {%d,%d}%n",
+                            (unit instanceof Elf) ? 'E' : 'G', unit.y, unit.x,
+                            positions.get(0).y, positions.get(0).x));
                     unit.move(positions.get(0));
                 }
 
@@ -435,6 +440,9 @@ public class Day15 implements IAocIntPuzzle<List<String>> {
                                 throw new ElfDeathException();
                             }
                             grid.kill(enemyUnit);
+                            traceKill(unit, enemyUnit);
+                        } else {
+                            traceAttack(unit, enemyUnit);
                         }
                     }
                 }
@@ -442,6 +450,23 @@ public class Day15 implements IAocIntPuzzle<List<String>> {
 
             roundsFinished++;
             return true;
+        }
+
+        void traceKill(Unit unit, Unit enemyUnit) {
+            AocTrace.trace(Day15.this,
+                    "%c unit at {%d,%d} killed %c unit at {%d,%d}%n".formatted(
+                            (unit instanceof Elf) ? 'E' : 'G', unit.y, unit.x,
+                            (enemyUnit instanceof Elf) ? 'E' : 'G', enemyUnit.y,
+                            enemyUnit.x));
+        }
+
+        void traceAttack(Unit unit, Unit enemyUnit) {
+            AocTrace.trace(Day15.this,
+                    "%c unit at {%d,%d} attacked %c unit at {%d,%d}%n"
+                            .formatted((unit instanceof Elf) ? 'E' : 'G',
+                                    unit.y, unit.x,
+                                    (enemyUnit instanceof Elf) ? 'E' : 'G',
+                                    enemyUnit.y, enemyUnit.x));
         }
 
         Comparator<Position> attackComparator = new Comparator<Position>() {
@@ -561,6 +586,7 @@ public class Day15 implements IAocIntPuzzle<List<String>> {
     @Override
     public Integer part1(List<String> input) {
         try {
+            AocTrace.trace(this, "PART1%n");
             return doCombat(input, true);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -581,18 +607,23 @@ public class Day15 implements IAocIntPuzzle<List<String>> {
 
     @Override
     public Integer part2(List<String> input) {
-//        ELF_ATTACK_POWER = 4;
-//        while (true) {
-//            try {
-//                return doCombat(input, false);
-//            } catch (ElfDeathException e) {
-//                ELF_ATTACK_POWER++;
-//            }
-//        }
-        return 0;
+        ELF_ATTACK_POWER = 4;
+        while (true) {
+            try {
+                AocTrace.trace(this, "PART2, elf attack power %d%n",
+                        ELF_ATTACK_POWER);
+                int result = doCombat(input, false);
+                AocTrace.trace(this, "PART2, success at elfAP %d%n",
+                        ELF_ATTACK_POWER);
+                return result;
+            } catch (ElfDeathException e) {
+                ELF_ATTACK_POWER++;
+            }
+        }
     }
 
     public static void main(String[] args) {
         AocBaseRunner.run(new Day15());
+
     }
 }

@@ -16,4 +16,10 @@ public class Unit implements Comparable<Unit> {
     public int compareTo(Unit o) {
         return pos.compareTo(o.pos);
     }
+
+    @Override
+    public String toString() {
+        return String.format("{%c,{%d,%d},%dhp}", isElf ? 'E' : 'G', pos.y(),
+                pos.x(), hp);
+    }
 }

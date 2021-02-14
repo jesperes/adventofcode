@@ -1,12 +1,13 @@
 package aoc2018.day15;
 
+import static org.junit.Assert.assertNotNull;
+
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -17,6 +18,7 @@ public class Cavern {
     public Map<Pos, Unit> units = new HashMap<>();
     int width = 0;
     int height = 0;
+    public boolean allowElfDeath = true;
 
     public Cavern(String grid) {
         this(grid, 3);
@@ -28,7 +30,7 @@ public class Cavern {
         for (String line : grid.split("\n")) {
             int x = 0;
             width = line.length();
-            for (char c : line.toCharArray()) {
+            for (char c : line.trim().toCharArray()) {
                 Pos pos = new Pos(x, y);
                 // @formatter:off
                 switch (c) {
@@ -46,61 +48,68 @@ public class Cavern {
         }
     }
 
-    /**
-     * Return a list of all units, sorted in reading order.
-     */
-    public List<Unit> getSortedUnits() {
-        return units.entrySet().stream().map(e -> e.getValue()).sorted()
-                .collect(Collectors.toUnmodifiableList());
+    public boolean isWall(Pos pos) {
+        return map.containsKey(pos);
+    }
+
+    public boolean isUnit(Pos pos) {
+        return units.containsKey(pos) && units.get(pos).hp > 0;
+    }
+
+    public boolean isOpen(Pos pos) {
+        return !isWall(pos) && !isUnit(pos);
+    }
+
+    public void move(Unit unit, Pos newPos) {
+        assertNotNull(newPos);
+        units.remove(unit.pos);
+        unit.pos = newPos;
+        units.put(newPos, unit);
     }
 
     /**
-     * Return a list of all enemies to the given unit.
+     * Return a list of all (live) units, sorted in reading order.
+     */
+    public List<Unit> getSortedUnits() {
+        return units.entrySet().stream().filter(e -> e.getValue().hp > 0)
+                .map(e -> e.getValue()).sorted().collect(Collectors.toList());
+    }
+
+    /**
+     * Return a list of all (live) enemies to the given unit.
      */
     public List<Unit> getEnemies(Unit unit) {
         return units.entrySet().stream().map(e -> e.getValue())
-                .filter(u -> u.isElf != unit.isElf)
-                .collect(Collectors.toUnmodifiableList());
+                .filter(u -> u.hp > 0 && u.isElf != unit.isElf)
+                .collect(Collectors.toList());
     }
 
-    /**
-     * Return a list of all open positions adjacent to any of the given units.
-     */
-    public Set<Pos> getAdjacentTo(Collection<Unit> units) {
-        Set<Pos> set = new HashSet<>();
-        for (Unit unit : units) {
-            getAdjacentTo(set, unit.pos);
-        }
-        return set;
+    public List<Unit> getAdjacentEnemies(Unit unit) {
+        return units.entrySet().stream().map(e -> e.getValue())
+                .filter(u -> u.hp > 0 && u.isElf != unit.isElf
+                        && minCost(u.pos, unit.pos) == 1)
+                .collect(Collectors.toList());
     }
 
-    public void getAdjacentTo(Set<Pos> set, Pos pos) {
-        addIfOpen(set, new Pos(pos.x, pos.y - 1));
-        addIfOpen(set, new Pos(pos.x - 1, pos.y));
-        addIfOpen(set, new Pos(pos.x + 1, pos.y));
-        addIfOpen(set, new Pos(pos.x, pos.y + 1));
-    }
-
-    private void addIfOpen(Set<Pos> set, Pos pos) {
-        if (isOpen(pos))
-            set.add(pos);
-    }
-
-    private boolean isOpen(Pos pos) {
-        return !map.containsKey(pos) && !units.containsKey(pos);
+    int minCost(Pos a, Pos b) {
+        return Math.abs(a.x() - b.x()) + Math.abs(a.y() - b.y());
     }
 
     public String toString() {
-        return toString(Collections.emptyList(), (char) 0);
+        return toString(Collections.emptyList(), (char) 0, null);
     }
 
-    public String toString(Collection<Pos> coll, char c) {
+    public String toString(Collection<Pos> coll, char c, Pos mark) {
         StringBuilder sb = new StringBuilder();
         for (int y = 0; y < height; y++) {
+            sb.append(String.format("%2d ", y));
+
             for (int x = 0; x < width; x++) {
                 Pos pos = new Pos(x, y);
                 if (map.containsKey(pos)) {
                     sb.append("#");
+                } else if (mark != null && pos.equals(mark)) {
+                    sb.append('+');
                 } else if (coll.contains(pos)) {
                     sb.append(c);
                 } else if (units.containsKey(pos)) {
@@ -109,6 +118,20 @@ public class Cavern {
                     sb.append(".");
                 }
             }
+
+            int y0 = y;
+
+            sb.append(" ");
+
+            sb.append(units.values().stream().filter(unit -> unit.pos.y() == y0)
+                    .sorted(new Comparator<Unit>() {
+                        @Override
+                        public int compare(Unit o1, Unit o2) {
+                            return o1.pos.compareTo(o2.pos);
+                        }
+                    }).map(unit -> unit.toString())
+                    .collect(Collectors.joining(", ")));
+
             sb.append("\n");
         }
         return sb.toString();

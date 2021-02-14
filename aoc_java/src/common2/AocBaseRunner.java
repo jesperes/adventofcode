@@ -14,6 +14,7 @@ import java.util.Optional;
  */
 public class AocBaseRunner {
     public static void run(IAocPuzzle<?, ?, ?> puzzle) {
+        AocTrace.init(puzzle);
         Locale.setDefault(Locale.ROOT);
         try {
             AocPuzzleInfo info = puzzle.getInfo();
