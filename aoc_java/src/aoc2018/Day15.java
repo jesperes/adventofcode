@@ -1,12 +1,11 @@
 package aoc2018;
 
-import static org.junit.Assert.assertTrue;
-
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -14,9 +13,6 @@ import java.util.stream.Collectors;
 
 import com.google.common.collect.ComparisonChain;
 
-import aoc2018.day15.Cavern;
-import aoc2018.day15.Pos;
-import aoc2018.day15.Unit;
 import common2.AocBaseRunner;
 import common2.AocPuzzleInfo;
 import common2.AocResult;
@@ -39,24 +35,112 @@ public class Day15 implements IAocIntPuzzle<String> {
     record MoveData(MoveResult result, Pos pos) {
     }
 
-    record SearchNode(//
-            int cost, // heuristic + route cost
-            Pos enemyPos, // enemy position
-            Pos estimatedLastPos, //
-            Pos prevPos, // previous position on the route
-            Pos current) // current position
-            implements Comparable<SearchNode> {
+    record Pos(int x, int y) implements Comparable<Pos> {
         @Override
-        public int compareTo(SearchNode o) {
-            return ComparisonChain.start() //
-                    .compare(cost, o.cost) //
-                    .compare(enemyPos, o.enemyPos) //
-                    .compare(estimatedLastPos, o.estimatedLastPos) //
-                    .compare(prevPos, o.prevPos) //
-                    .compare(current, o.current) //
-                    .result();
+        public int compareTo(Pos o) {
+            return (y != o.y) ? Integer.compare(y, o.y)
+                    : Integer.compare(x, o.x);
         }
 
+        public Set<Pos> getNeighbors() {
+            Set<Pos> set = new HashSet<>();
+            set.add(new Pos(x, y - 1));
+            set.add(new Pos(x - 1, y));
+            set.add(new Pos(x + 1, y));
+            set.add(new Pos(x, y + 1));
+            return set;
+        }
+    }
+
+    class Unit implements Comparable<Unit> {
+        Pos pos;
+        boolean isElf;
+        int hp = 200;
+        int attackPower = 3;
+
+        public Unit(Pos pos, boolean isElf, int attackPower) {
+            this.pos = pos;
+            this.isElf = isElf;
+            this.attackPower = attackPower;
+        }
+
+        @Override
+        public int compareTo(Unit o) {
+            return pos.compareTo(o.pos);
+        }
+    }
+
+    public class Cavern {
+        public Map<Pos, Character> map = new HashMap<>();
+        public Map<Pos, Unit> units = new HashMap<>();
+        int width = 0;
+        int height = 0;
+        public boolean allowElfDeath = true;
+
+        public Cavern(String grid, int elfAP) {
+            int goblinAP = 3; // goblin attack power is always 3
+            int y = 0;
+            for (String line : grid.split("\n")) {
+                int x = 0;
+                width = line.length();
+                for (char c : line.trim().toCharArray()) {
+                    Pos pos = new Pos(x, y);
+                    // @formatter:off
+                    switch (c) {
+                    case '#': map.put(pos, c); break;
+                    case 'G': units.put(pos, new Unit(pos, false, goblinAP)); break;
+                    case 'E': units.put(pos, new Unit(pos, true, elfAP)); break;
+                    case '.': break;
+                    }
+                    // @formatter:on
+                    x++;
+                }
+                height++;
+                y++;
+            }
+        }
+
+        public boolean isOpen(Pos pos) {
+            return !map.containsKey(pos)
+                    && !(units.containsKey(pos) && units.get(pos).hp > 0);
+        }
+
+        public void move(Unit unit, Pos newPos) {
+            units.remove(unit.pos);
+            unit.pos = newPos;
+            units.put(newPos, unit);
+        }
+
+        public List<Unit> getSortedUnits() {
+            return units.entrySet().stream().filter(e -> e.getValue().hp > 0)
+                    .map(e -> e.getValue()).sorted()
+                    .collect(Collectors.toList());
+        }
+
+        public List<Unit> getEnemies(Unit unit) {
+            return units.entrySet().stream().map(e -> e.getValue())
+                    .filter(u -> u.hp > 0 && u.isElf != unit.isElf)
+                    .collect(Collectors.toList());
+        }
+
+        public List<Unit> getAdjacentEnemies(Unit unit) {
+            return units.entrySet().stream().map(e -> e.getValue())
+                    .filter(u -> u.hp > 0 && u.isElf != unit.isElf
+                            && minCost(u.pos, unit.pos) == 1)
+                    .sorted().collect(Collectors.toList());
+        }
+    }
+
+    record SearchNode(int cost, Pos enemyPos, Pos estimatedLastPos, Pos prevPos,
+            Pos current) implements Comparable<SearchNode> {
+        @Override
+        public int compareTo(SearchNode o) {
+            return ComparisonChain.start().compare(cost, o.cost)
+                    .compare(enemyPos, o.enemyPos)
+                    .compare(estimatedLastPos, o.estimatedLastPos)
+                    .compare(prevPos, o.prevPos).compare(current, o.current)
+                    .result();
+        }
     }
 
     @Override
@@ -76,7 +160,7 @@ public class Day15 implements IAocIntPuzzle<String> {
 
     @Override
     public Integer part1(String input) {
-        Cavern cavern = new Cavern(input);
+        Cavern cavern = new Cavern(input, 3);
         cavern.allowElfDeath = true;
         return doCombat(cavern).result;
     }
@@ -140,8 +224,6 @@ public class Day15 implements IAocIntPuzzle<String> {
                     break;
                 case NoRoute:
                     break;
-                default:
-                    throw new RuntimeException();
                 }
             }
         }
@@ -163,8 +245,6 @@ public class Day15 implements IAocIntPuzzle<String> {
 
     private void attack(Cavern cavern, Unit unit) {
         List<Unit> enemies = cavern.getAdjacentEnemies(unit);
-        assertTrue(enemies.size() > 0);
-        Collections.sort(enemies);
         int minHp = enemies.stream().mapToInt(e -> e.hp).min().getAsInt();
         Unit enemyToAttack = enemies.stream().filter(e -> e.hp == minHp)
                 .findFirst().get();
@@ -184,12 +264,8 @@ public class Day15 implements IAocIntPuzzle<String> {
 
         for (Unit enemy : enemies) {
             for (Pos nbr : enemy.pos.getNeighbors()) {
-                nodes.add(new SearchNode(//
-                        minCost(nbr, unit.pos), // heuristic + route cost
-                        enemy.pos, // enemy position
-                        estimatedLastPos(enemy.pos, unit.pos), //
-                        enemy.pos, //
-                        nbr)); // current node
+                nodes.add(new SearchNode(minCost(nbr, unit.pos), enemy.pos,
+                        estimatedLastPos(enemy.pos, unit.pos), enemy.pos, nbr));
             }
         }
 
