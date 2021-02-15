@@ -118,7 +118,7 @@ public class Day24 implements IAocIntPuzzle<Grid> {
     }
 
     int distance(Pos from, Pos to, Map<Pos, Character> map) {
-        return AStar.astar(List.of(from), to, node -> heuristic(node, to),
+        return AStar.astar(from, to, node -> heuristic(node, to),
                 node -> neighbors(node, map)).size();
     }
 

@@ -31,9 +31,9 @@ import com.google.gson.JsonObject;
 public class AocBase2 {
 
     private static boolean parallel = true;
-    private static int WORKERS = 24;
-    private static final int MAX_REPEATS = 5000;
-    private static final int MAX_REPEAT_NS = 1_000_000_000;
+    private static int WORKERS = 1;
+    private static final int MAX_REPEATS = 1000;
+    private static final int MAX_REPEAT_NS = 500_000_000;
 
     private List<IAocPuzzle<?, ?, ?>> puzzles;
 

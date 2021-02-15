@@ -41,23 +41,22 @@ public class Day17 implements IAocPuzzle<String, String, Integer> {
 
     @Override
     public String part1(String input) {
-        var list = AStar.astar(List.of(new Pos(0, 0, "")),
-                new IAStarCallbacks<Pos>() {
-                    @Override
-                    public int heuristic(Pos node) {
-                        return abs(node.x - 3) + abs(node.y - 3);
-                    }
+        var list = AStar.astar(new Pos(0, 0, ""), new IAStarCallbacks<Pos>() {
+            @Override
+            public int heuristic(Pos node) {
+                return abs(node.x - 3) + abs(node.y - 3);
+            }
 
-                    @Override
-                    public boolean isGoal(Pos node) {
-                        return node.x == 3 && node.y == 3;
-                    }
+            @Override
+            public boolean isGoal(Pos node) {
+                return node.x == 3 && node.y == 3;
+            }
 
-                    @Override
-                    public Collection<Pos> neighbors(Pos node) {
-                        return Day17.this.neighbors(node, input);
-                    }
-                });
+            @Override
+            public Collection<Pos> neighbors(Pos node) {
+                return Day17.this.neighbors(node, input);
+            }
+        });
         return list.get(list.size() - 1).str();
     }
 

@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -65,7 +64,7 @@ public class Day13 implements IAocIntPuzzle<Integer> {
     @Override
     public Integer part1(Integer input) {
         var goal = new Pos(31, 39);
-        return AStar.astar(List.of(new Pos(1, 1)), new Pos(31, 39),
+        return AStar.astar(new Pos(1, 1), new Pos(31, 39),
                 node -> heuristic(node, goal), this::neighbors).size();
     }
 
