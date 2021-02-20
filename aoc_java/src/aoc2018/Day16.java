@@ -9,6 +9,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.google.common.collect.Multimap;
+import com.google.common.collect.MultimapBuilder;
+import com.google.common.collect.Multimaps;
+
 import aoc2018.Day16.Input;
 import common2.AocBaseRunner;
 import common2.AocPuzzleInfo;
@@ -45,7 +49,7 @@ public class Day16 implements IAocIntPuzzle<Input> {
     }
 
     int toi(String s) {
-        return Integer.parseInt(s);
+        return Integer.parseInt(s.trim());
     }
 
     @Override
@@ -54,7 +58,8 @@ public class Day16 implements IAocIntPuzzle<Input> {
         List<Sample> samples = new ArrayList<>();
         List<Instr> instrs = new ArrayList<>();
 
-        String[] parts = InputUtils.asString(file.get()).split("\n\n\n");
+        String[] parts = InputUtils.asString(file.get())
+                .replaceAll("\r\n", "\n").split("\n\n\n");
 
         for (String line : parts[0].split("\n\n")) {
             String[] lines = line.split("\n");
@@ -108,29 +113,44 @@ public class Day16 implements IAocIntPuzzle<Input> {
     @Override
     public Integer part2(Input input) {
         /*
-         * This part is done by hand. Just print out which instructions each
-         * opcode can match, and do the rest by hand.
+         * Construct a multimap of opnr -> possible opcodes for that opnr.
+         */
+        Multimap<Integer, Op> map = MultimapBuilder.hashKeys().hashSetValues()
+                .build();
+        for (Sample sample : input.samples) {
+            for (Op op : Op.values()) {
+                Regs regs = new Regs(new int[4]);
+                System.arraycopy(sample.before.array, 0, regs.array, 0, 4);
+                execute(op, sample.instr, regs);
+                if (Arrays.equals(sample.after.array, regs.array)) {
+                    map.put(sample.instr.opnr, op);
+                }
+            }
+        }
+
+        /*
+         * Compute the opnr -> opcode mapping by simply picking an opnr which
+         * only maps to a single opcode, then filtering out that opnr -> opcode
+         * mapping, and repeating until all opcodes are mapped.
+         * 
+         * Weirdly enough, this mapping is not the same as the one I got for my
+         * Erlang solution, despite them using the same input.
          */
         Map<Integer, Op> opMap = new HashMap<>();
-        opMap.put(0, Op.eqri);
-        opMap.put(1, Op.seti);
-        opMap.put(2, Op.eqir);
-        opMap.put(3, Op.eqrr);
-        opMap.put(4, Op.addi);
-        opMap.put(5, Op.setr);
-        opMap.put(6, Op.gtrr);
-        opMap.put(7, Op.gtir);
-        opMap.put(8, Op.muli);
-        opMap.put(9, Op.bori);
-        opMap.put(10, Op.bani);
-        opMap.put(11, Op.borr);
-        opMap.put(12, Op.gtri);
-        opMap.put(13, Op.banr);
-        opMap.put(14, Op.addr);
-        opMap.put(15, Op.mulr);
+        while (opMap.size() < 16) {
+            var e = map.asMap().entrySet().stream()
+                    .filter(e0 -> e0.getValue().size() == 1).findFirst().get();
+            var op = e.getValue().iterator().next();
+            var opnr = e.getKey();
+            opMap.put(opnr, op);
+            map = Multimaps.filterEntries(map,
+                    e0 -> (e0.getKey() != opnr) && (!e0.getValue().equals(op)));
+        }
 
+        /*
+         * Run the program
+         */
         Regs regs = new Regs(new int[4]);
-
         for (Instr instr : input.instrs) {
             execute(opMap.get(instr.opnr), instr, regs);
         }
@@ -147,58 +167,27 @@ public class Day16 implements IAocIntPuzzle<Input> {
         int a = i.a;
         int b = i.b;
         int c = i.c;
+        // @formatter:off
         switch (op) {
-        case addi:
-            regs[c] = regs[a] + b;
-            break;
-        case addr:
-            regs[c] = regs[a] + regs[b];
-            break;
-        case bani:
-            regs[c] = regs[a] & b;
-            break;
-        case banr:
-            regs[c] = regs[a] & regs[b];
-            break;
-        case bori:
-            regs[c] = regs[a] | b;
-            break;
-        case borr:
-            regs[c] = regs[a] | regs[b];
-            break;
-        case eqir:
-            regs[c] = (a == regs[b]) ? 1 : 0;
-            break;
-        case eqri:
-            regs[c] = (regs[a] == b) ? 1 : 0;
-            break;
-        case eqrr:
-            regs[c] = (regs[a] == regs[b]) ? 1 : 0;
-            break;
-        case gtir:
-            regs[c] = (a > regs[b]) ? 1 : 0;
-            break;
-        case gtri:
-            regs[c] = (regs[a] > b) ? 1 : 0;
-            break;
-        case gtrr:
-            regs[c] = (regs[a] > regs[b]) ? 1 : 0;
-            break;
-        case muli:
-            regs[c] = regs[a] * b;
-            break;
-        case mulr:
-            regs[c] = regs[a] * regs[b];
-            break;
-        case seti:
-            regs[c] = a;
-            break;
-        case setr:
-            regs[c] = regs[a];
-            break;
-        default:
-            throw new RuntimeException();
+        case addi: regs[c] = regs[a] + b;                  break;
+        case addr: regs[c] = regs[a] + regs[b];            break;
+        case bani: regs[c] = regs[a] & b;                  break;
+        case banr: regs[c] = regs[a] & regs[b];            break;
+        case bori: regs[c] = regs[a] | b;                  break;
+        case borr: regs[c] = regs[a] | regs[b];            break;
+        case eqir: regs[c] = (a == regs[b]) ? 1 : 0;       break;
+        case eqri: regs[c] = (regs[a] == b) ? 1 : 0;       break;
+        case eqrr: regs[c] = (regs[a] == regs[b]) ? 1 : 0; break;
+        case gtir: regs[c] = (a > regs[b]) ? 1 : 0;        break;
+        case gtri: regs[c] = (regs[a] > b) ? 1 : 0;        break;
+        case gtrr: regs[c] = (regs[a] > regs[b]) ? 1 : 0;  break;
+        case muli: regs[c] = regs[a] * b;                  break;
+        case mulr: regs[c] = regs[a] * regs[b];            break;
+        case seti: regs[c] = a;                            break; 
+        case setr: regs[c] = regs[a];                      break;
+        default: throw new RuntimeException();
         }
+        // @formatter:on
     }
 
     public static void main(String[] args) {

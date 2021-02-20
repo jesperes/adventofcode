@@ -125,6 +125,9 @@ execute_instr_list([[OpNum, A, B, C]|Rest], RegVals) ->
 %% This is also one of those "cheating" cases where we do part of the
 %% solution by hand then just remember it.
 
+%% This mapping is weirdly not "correct"; the corresponding Java
+%% solution does not work with it and computes its own mapping instead
+%% which works and is different.
 opcode(0) -> eqri;
 opcode(1) -> seti;
 opcode(2) -> eqir;
