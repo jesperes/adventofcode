@@ -185,7 +185,6 @@ public class Day16 implements IAocIntPuzzle<Input> {
         case mulr: regs[c] = regs[a] * regs[b];            break;
         case seti: regs[c] = a;                            break; 
         case setr: regs[c] = regs[a];                      break;
-        default: throw new RuntimeException();
         }
         // @formatter:on
     }
