@@ -1,45 +1,63 @@
 -module(aoc2015_day03).
 
--include_lib("eunit/include/eunit.hrl").
+-behavior(aoc_puzzle).
 
--type pos() :: { integer(), integer() }.
+-export([parse/1, solve1/1, solve2/1, info/0]).
 
-main_test_() ->
-  List = inputs:get_as_string(2015, 3),
-  StartPos = {0, 0},
+-include("aoc_puzzle.hrl").
 
-  [ {"Part 1",
-     fun() ->
-         ?assertEqual(2572, part1(List, StartPos))
-     end}
-  , {"Part 2",
-     fun() ->
-         ?assertEqual(2631, part2(List, StartPos))
-     end}
-  ].
+-spec info() -> aoc_puzzle().
+info() ->
+    #aoc_puzzle{module = ?MODULE,
+                year = 2015,
+                day = 3,
+                name = "Perfectly Spherical Houses in a Vacuum",
+                expected = {2572, 2631},
+                has_input_file = true}.
 
-part1(List, StartPos) ->
-  {_, Presents} =
-    lists:foldl(fun(C, {Pos, Map}) ->
-                    NewPos = next_pos(C, Pos),
-                    {NewPos, incr_map_cntr(NewPos, Map)}
-                end, {StartPos, #{StartPos => 1}}, List),
-  maps:size(Presents).
+-type pos() :: {integer(), integer()}.
+-type input_type() :: {List :: list(), StartPos :: pos()}.
+-type result1_type() :: integer().
+-type result2_type() :: result1_type().
 
-part2(List, StartPos) ->
-  {{_, _}, Presents} =
-    lists:foldl(fun(C, {{Pos, PosOther}, Map}) ->
-                    NewPos = next_pos(C, Pos),
-                    {{PosOther, NewPos}, incr_map_cntr(NewPos, Map)}
-                end, {{StartPos, StartPos}, #{StartPos => 2}}, List),
-  maps:size(Presents).
+-spec parse(Input :: binary()) -> input_type().
+parse(Input) ->
+    List = binary_to_list(Input),
+    StartPos = {0, 0},
+    {List, StartPos}.
+
+-spec solve1(Input :: input_type()) -> result1_type().
+solve1({List, StartPos}) ->
+    {_, Presents} =
+        lists:foldl(fun(C, {Pos, Map}) ->
+                       NewPos = next_pos(C, Pos),
+                       {NewPos, incr_map_cntr(NewPos, Map)}
+                    end,
+                    {StartPos, #{StartPos => 1}},
+                    List),
+    maps:size(Presents).
+
+-spec solve2(Input :: input_type()) -> result2_type().
+solve2({List, StartPos}) ->
+    {{_, _}, Presents} =
+        lists:foldl(fun(C, {{Pos, PosOther}, Map}) ->
+                       NewPos = next_pos(C, Pos),
+                       {{PosOther, NewPos}, incr_map_cntr(NewPos, Map)}
+                    end,
+                    {{StartPos, StartPos}, #{StartPos => 2}},
+                    List),
+    maps:size(Presents).
 
 -spec incr_map_cntr(pos(), map()) -> map().
 incr_map_cntr(Key, Map) ->
-  maps:update_with(Key, fun(V) -> V + 1 end, 1, Map).
+    maps:update_with(Key, fun(V) -> V + 1 end, 1, Map).
 
 -spec next_pos(integer(), pos()) -> pos().
-next_pos($<, {X, Y}) -> {X-1, Y};
-next_pos($>, {X, Y}) -> {X+1, Y};
-next_pos($v, {X, Y}) -> {X, Y+1};
-next_pos($^, {X, Y}) -> {X, Y-1}.
+next_pos($<, {X, Y}) ->
+    {X - 1, Y};
+next_pos($>, {X, Y}) ->
+    {X + 1, Y};
+next_pos($v, {X, Y}) ->
+    {X, Y + 1};
+next_pos($^, {X, Y}) ->
+    {X, Y - 1}.

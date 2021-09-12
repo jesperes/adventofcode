@@ -3,22 +3,13 @@
 -type aoc_puzzle_status() :: {boolean() | unknown, boolean() | unknown}.
 
 -record(aoc_puzzle,
-        { module :: module(),
-          year :: integer(),
-          day :: integer(),
-          name = "" :: string(),
-          has_input_file = true :: boolean(),
-
-          parse :: integer() | undefined,
-          part1 :: integer() | undefined,
-          part2 :: integer() | undefined,
-
-          part1_result :: term(),
-          part2_result :: term(),
-
-          expected = {unknown, unknown} :: {term(), term()},
-          status = {unknown, unknown}   :: aoc_puzzle_status()
-        }).
+        {module :: module(),
+         year :: integer(),
+         day :: integer(),
+         name = "" :: string(),
+         has_input_file = true :: boolean(),
+         use_one_solver_fun = false :: boolean(),
+         expected = {unknown, unknown} :: {term(), term()}}).
 
 -type aoc_puzzle() :: #aoc_puzzle{}.
 -type aoc_puzzle_id() :: {integer(), integer()}.

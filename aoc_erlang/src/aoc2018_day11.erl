@@ -1,8 +1,6 @@
 -module(aoc2018_day11).
 -include_lib("eunit/include/eunit.hrl").
 
--define(GRID_SERIAL_NUMBER, 8).
-
 main_test_() ->
   [ {"Part 1", ?_assertEqual({235, 14}, find_max_power_grid(1133))}
   , {"Part 2", ?_assertEqual({237, 227, 14}, find_max_power_grid_anysize(1133))}

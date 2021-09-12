@@ -73,7 +73,7 @@ part2(Binary, Repeats) ->
             lists:foldl(fun game_of_life2/2,
                         Map, lists:seq(1, Repeats))).
 
-game_of_life2(_Gen, Map) ->
+game_of_life2(_, Map) ->
   %% At what depths do we have bugs?
   {Min, Max} = get_depth_range(Map),
 

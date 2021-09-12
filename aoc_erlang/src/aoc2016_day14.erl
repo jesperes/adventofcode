@@ -1,7 +1,6 @@
 -module(aoc2016_day14).
 -include_lib("eunit/include/eunit.hrl").
 
--define(KEY_STRETCH, 2016).
 -define(INPUT, "ahsbgdzn").
 
 -export([ profile/0
