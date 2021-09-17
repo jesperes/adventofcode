@@ -12,11 +12,9 @@ jobs:
 
     runs-on: ubuntu-latest
     name: OTP ${{ matrix.otp }}
-    matrix:
-      otp: ["23.1", "24.0"]
 
     container:
-      image: erlang:${{ matrix.otp }}
+      image: erlang:24.0
 
     steps:
     - uses: actions/checkout@v2
