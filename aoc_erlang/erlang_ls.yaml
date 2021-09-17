@@ -8,3 +8,8 @@ plt_path:  _build/default/rebar3_23.3.4.2_plt
 include_dirs:
   - "include"
   - "src"
+
+lenses:
+  disabled:
+    - function-references
+    - suggest-spec
