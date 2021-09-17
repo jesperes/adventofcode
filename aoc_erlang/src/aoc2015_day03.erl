@@ -16,18 +16,17 @@ info() ->
                 has_input_file = true}.
 
 -type pos() :: {integer(), integer()}.
--type input_type() :: {List :: list(), StartPos :: pos()}.
+-type input_type() :: [byte()].
 -type result1_type() :: integer().
 -type result2_type() :: result1_type().
 
 -spec parse(Input :: binary()) -> input_type().
 parse(Input) ->
-    List = binary_to_list(Input),
-    StartPos = {0, 0},
-    {List, StartPos}.
+    binary_to_list(Input).
 
 -spec solve1(Input :: input_type()) -> result1_type().
-solve1({List, StartPos}) ->
+solve1(List) ->
+    StartPos = {0, 0},
     {_, Presents} =
         lists:foldl(fun(C, {Pos, Map}) ->
                        NewPos = next_pos(C, Pos),
@@ -38,7 +37,8 @@ solve1({List, StartPos}) ->
     maps:size(Presents).
 
 -spec solve2(Input :: input_type()) -> result2_type().
-solve2({List, StartPos}) ->
+solve2(List) ->
+    StartPos = {0, 0},
     {{_, _}, Presents} =
         lists:foldl(fun(C, {{Pos, PosOther}, Map}) ->
                        NewPos = next_pos(C, Pos),

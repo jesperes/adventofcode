@@ -1,19 +1,35 @@
 -module(aoc2015_day05).
 
--include_lib("eunit/include/eunit.hrl").
+-behavior(aoc_puzzle).
 
-main_test_() ->
-  Bin = inputs:get_as_binary(2015, 5),
-  Words = string:tokens(binary_to_list(Bin), "\n"),
-  [ {"Part 1", fun() -> ?assertEqual(238, part1(Words)) end}
-  , {"Part 2", fun() -> ?assertEqual(69, part2(Words)) end}
-  ].
+-export([parse/1, solve1/1, solve2/1, info/0]).
 
-part1(Words) ->
-  length(lists:filter(fun is_nice_string/1, Words)).
+-include("aoc_puzzle.hrl").
 
-part2(Words) ->
-  length(lists:filter(fun is_really_nice_string/1, Words)).
+-spec info() -> aoc_puzzle().
+info() ->
+    #aoc_puzzle{module = ?MODULE,
+                year = 2015,
+                day = 5,
+                name = "Doesn't He Have Intern-Elves For This?",
+                expected = {238, 69},
+                has_input_file = true}.
+
+-type input_type() :: [nonempty_string()].
+-type result1_type() :: integer().
+-type result2_type() :: result1_type().
+
+-spec parse(Input :: binary()) -> input_type().
+parse(Input) ->
+    string:tokens(binary_to_list(Input), "\n").
+
+-spec solve1(Words :: input_type()) -> result1_type().
+solve1(Words) ->
+    length(lists:filter(fun is_nice_string/1, Words)).
+
+-spec solve2(Words :: input_type()) -> result2_type().
+solve2(Words) ->
+    length(lists:filter(fun is_really_nice_string/1, Words)).
 
 is_nice_string(S) ->
   at_least_three_vowels(S) andalso
