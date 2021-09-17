@@ -1,32 +1,37 @@
 -module(aoc2015_day25).
 
--include_lib("eunit/include/eunit.hrl").
+-include("aoc_puzzle.hrl").
+
+-export([parse/1, solve/1, info/0]).
+
+-behavior(aoc_puzzle).
+
+-spec info() -> aoc_puzzle().
+info() ->
+    #aoc_puzzle{module = ?MODULE,
+                year = 2015,
+                day = 25,
+                name = "Let It Snow",
+                expected = 8997277,
+                use_one_solver_fun = true,
+                has_input_file = false}.
+
+-type input_type() :: {X :: integer(), Y :: integer()}.
+-type result_type() :: integer().
+
+-spec parse(Input :: binary()) -> input_type().
+parse(_Input) ->
+    {3019, 3010}.
+
+-spec solve(Input :: input_type()) -> result_type().
+solve({X, Y}) ->
+    find_value(X, Y).
+
+%%% Implementation
 
 init_value() -> 20151125.
 next_value(Prev) -> (Prev * 252533) rem 33554393.
 
-main_test_() ->
-  {"Finale",
-   fun() ->
-       ?assertEqual(8997277, find_value(3019, 3010))
-   end}.
-
 find_value(1, 1) -> init_value();
 find_value(1, Y) -> next_value(find_value(Y - 1, 1));
 find_value(X, Y) -> next_value(find_value(X - 1, Y + 1)).
-
-%%% --- Tests ---
-unit_test_() ->
-  {"Unit tests",
-   [ {"Next value", fun next_value_t/0}
-   , {"Find value", fun find_value_t/0}
-   ]}.
-
-next_value_t() ->
-  X = init_value(),
-  ?assertEqual(31916031, next_value(X)).
-
-find_value_t() ->
-  ?assertEqual(21629792, find_value(2, 2)),
-  ?assertEqual(27995004, find_value(6, 6)),
-  ?assertEqual(8997277, find_value(3019, 3010)).

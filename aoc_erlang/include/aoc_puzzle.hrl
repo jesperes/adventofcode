@@ -9,7 +9,7 @@
          name = "" :: string(),
          has_input_file = true :: boolean(),
          use_one_solver_fun = false :: boolean(),
-         expected = {unknown, unknown} :: {term(), term()}}).
+         expected = undefined :: {term(), term()} | term()}).
 
 -type aoc_puzzle() :: #aoc_puzzle{}.
 -type aoc_puzzle_id() :: {integer(), integer()}.
