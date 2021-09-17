@@ -11,9 +11,12 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    name: OTP ${{ matrix.otp }}
+    matrix:
+      otp: ["23.1", "24.0"]
 
     container:
-      image: erlang:22.0.7
+      image: erlang:${{ matrix.otp }}
 
     steps:
     - uses: actions/checkout@v2
@@ -21,17 +24,9 @@ jobs:
       run: "cd aoc_erlang && rebar3 compile"
     - name: XRef
       run: "cd aoc_erlang && rebar3 xref"
-    #- name: Dialyzer
-    #  run: "cd aoc_erlang && rebar3 dialyzer"
-    - name: Run solutions (2015)
-      run: "cd aoc_erlang && rebar3 ct --suite aoc2015_SUITE -v"
-    - name: Run solutions (2016)
-      run: "cd aoc_erlang && rebar3 ct --suite aoc2016_SUITE -v"
-    - name: Run solutions (2017)
-      run: "cd aoc_erlang && rebar3 ct --suite aoc2017_SUITE -v"
-    - name: Run solutions (2018)
-      run: "cd aoc_erlang && rebar3 ct --suite aoc2018_SUITE -v"
-    - name: Run solutions (2019)
-      run: "cd aoc_erlang && rebar3 ct --suite aoc2019_SUITE -v"
-    - name: Run solutions (2020)
-      run: "cd aoc_erlang && rebar3 ct --suite aoc2020_SUITE -v"
+    - name: Dialyzer
+      run: "cd aoc_erlang && rebar3 dialyzer"
+    - name: Solve puzzles
+      run: "cd aoc_erlang && rebar3 eunit -m aoc_eunit"
+    - name: Find unused code
+      run: "cd aoc_erlang && rebar3 hank"
