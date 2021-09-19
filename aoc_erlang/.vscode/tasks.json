@@ -6,7 +6,7 @@
         {
             "label": "eunit",
             "type": "shell",
-            "command": "rebar3 eunit -m aoc_eunit",
+            "command": "rebar3 do xref,dialyzer,eunit -m aoc_eunit",
             "problemMatcher": [],
             "group": {
                 "kind": "build",

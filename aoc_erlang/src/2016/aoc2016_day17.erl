@@ -2,6 +2,38 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
+-behavior(aoc_puzzle).
+
+-export([parse/1, solve1/1, solve2/1, info/0]).
+
+-include("aoc_puzzle.hrl").
+
+-spec info() -> aoc_puzzle().
+info() ->
+    #aoc_puzzle{module = ?MODULE,
+                year = 2016,
+                day = 17,
+                name = "Two Steps Forward",
+                expected = {"DDRRUDLRRD", 488},
+                has_input_file = false}.
+
+-type input_type() :: string().
+-type result1_type() :: string().
+-type result2_type() :: integer().
+
+-spec parse(Input :: binary()) -> input_type().
+parse(_Input) ->
+    "pslxynzg".
+
+-spec solve1(Input :: input_type()) -> result1_type().
+solve1(Input) ->
+    {_, [{_, _, Solution} | _]} = start(Input),
+    Solution.
+
+-spec solve2(Input :: input_type()) -> result2_type().
+solve2(Input) ->
+    start_part2(Input).
+
 start(Passcode) ->
     astar2:astar({0, 0, ""},
                  fun is_end/1,
@@ -52,27 +84,3 @@ add_if_open(Char, {X, Y}, Dir, Path, List) ->
 
 md5(S) ->
     lists:flatten([io_lib:format("~2.16.0b", [N]) || <<N>> <= erlang:md5(S)]).
-
-%%% Tests
-
-neighbors_test() ->
-    Passcode = "hijkl",
-    ?assertEqual([{0, 1, "D"}], neighbors({0, 0, ""}, Passcode)),
-    ?assertEqual([{1, 1, "DR"}, {0, 0, "DU"}], neighbors({0, 1, "D"}, Passcode)),
-    ?assertEqual([], neighbors({1, 1, "DR"}, Passcode)),
-    ?assertEqual([{1, 0, "DUR"}], neighbors({0, 0, "DU"}, Passcode)),
-    ?assertEqual([], neighbors({1, 0, "DUR"}, Passcode)).
-
-%% part1_ex_test() ->
-%%   ?assertMatch({_, [{_, _, "DDRRRD"}|_]}, start("ihgpwlah")),
-%%   ?assertMatch({_, [{_, _, "DDUDRLRRUDRD"}|_]}, start("kglvqrro")),
-%%   ?assertMatch({_, [{_, _, "DRURDRUDDLLDLUURRDULRLDUUDDDRR"}|_]}, start("ulqzkmiv")).
-
-%% part2_ex_test() ->
-%%   ?assertEqual(370, start_part2("ihgpwlah")),
-%%   ?assertEqual(492, start_part2("kglvqrro")),
-%%   ?assertEqual(830, start_part2("ulqzkmiv")).
-
-main_test_() ->
-    [{"Part 1", ?_assertMatch({_, [{_, _, "DDRRUDLRRD"} | _]}, start("pslxynzg"))},
-     {"Part 2", ?_assertEqual(488, start_part2("pslxynzg"))}].

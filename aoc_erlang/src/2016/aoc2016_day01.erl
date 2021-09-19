@@ -1,7 +1,5 @@
 -module(aoc2016_day01).
 
--include_lib("eunit/include/eunit.hrl").
-
 -define(INPUT,
         <<"L1, R3, R1, L5, L2, L5, R4, L2, R2, R2, L2, R1, L5, R3, L4, "
           "L1, L2, R3, R5, L2, R5, L1, R2, L5, R4, R2, R2, L1, L1, R1, "
