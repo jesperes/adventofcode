@@ -1,7 +1,43 @@
 -module(aoc2016_day20).
--include_lib("eunit/include/eunit.hrl").
 
 -define(MAX_IP, 4294967295).
+
+-behavior(aoc_puzzle).
+
+-export([parse/1, solve1/1, solve2/1, info/0]).
+
+-include("aoc_puzzle.hrl").
+
+-spec info() -> aoc_puzzle().
+info() ->
+    #aoc_puzzle{module = ?MODULE,
+                year = 2016,
+                day = 20,
+                name = "Firewall Rules",
+                expected = {17348574, 104},
+                has_input_file = true}.
+
+-type input_type() :: [{integer(), integer()}].
+-type result1_type() :: any().
+-type result2_type() :: result1_type().
+
+-spec parse(Input :: binary()) -> input_type().
+parse(Input) ->
+    Lines = string:tokens(binary_to_list(Input), "\n\r"),
+    lists:sort(
+      lists:map(fun(Line) ->
+                    [L, U] = string:tokens(Line, " -"),
+                    {list_to_integer(L),
+                     list_to_integer(U)}
+                end, Lines)).
+
+-spec solve1(Input :: input_type()) -> result1_type().
+solve1(Input) ->
+    lowest_non_blocked_ip(Input).
+
+-spec solve2(Input :: input_type()) -> result2_type().
+solve2(Input) ->
+    num_non_blocked_ips(Input).
 
 lowest_non_blocked_ip(Ranges) ->
   lowest_non_blocked_ip(Ranges, 0).
@@ -40,31 +76,3 @@ num_non_blocked_ips(Ranges, Acc, N) when N =< ?MAX_IP ->
       %% Next non-blocked IP is not a valid IP, so we're done.
       Acc
   end.
-
-%%% Testdata
-
-testdata() ->
-  lists:sort([{5, 8},
-              {0, 2},
-              {4, 7}]).
-
-realdata() ->
-  Lines = inputs:get_as_lines(2016, 20),
-  lists:sort(
-    lists:map(fun(Line) ->
-                  [L, U] = string:tokens(Line, " -"),
-                  {list_to_integer(L),
-                   list_to_integer(U)}
-              end, Lines)).
-
-%%% Testcases
-
-ex1_test() ->
-  ?assertEqual({4, 7}, find_first_range(4, testdata())),
-  ?assertEqual({5, 8}, find_first_range(8, testdata())),
-  ?assertEqual(3, lowest_non_blocked_ip(testdata())).
-
-main_test_() ->
-  [ {"Part 1", ?_assertEqual(17348574, lowest_non_blocked_ip(realdata()))}
-  , {"Part 2", ?_assertEqual(104, num_non_blocked_ips(realdata()))}
-  ].
