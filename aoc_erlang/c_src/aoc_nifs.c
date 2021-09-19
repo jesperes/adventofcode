@@ -34,23 +34,7 @@ static ERL_NIF_TERM digest_to_hexstring(ErlNifEnv *env, int argc,
   return term;
 }
 
-/*
- unsigned char *MD5(const unsigned char *d, unsigned long n,
-                  unsigned char *md);
-
- int MD5_Init(MD5_CTX *c);
- int MD5_Update(MD5_CTX *c, const void *data,
-                  unsigned long len);
- int MD5_Final(unsigned char *md, MD5_CTX *c);
-*/
-
-static ERL_NIF_TERM string_int_md5(ErlNifEnv *env, int argc,
-                                   const ERL_NIF_TERM argv[]) {
-  return enif_make_badarg(env);
-}
-
 static ErlNifFunc nif_funcs[] = {
-    {"digest_to_hexstring", 1, digest_to_hexstring},
-    {"string_int_md5", 2, string_int_md5}};
+    {"digest_to_hexstring", 1, digest_to_hexstring}};
 
 ERL_NIF_INIT(aoc_nifs, nif_funcs, NULL, NULL, NULL, NULL);

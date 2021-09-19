@@ -4,7 +4,7 @@
 
 -include("aoc_puzzle.hrl").
 
--export([report/2, find_puzzles/2]).
+-export([find_puzzles/2, info/1, parse/2, solve/2, solve1/2, solve2/2]).
 
 -optional_callbacks([solve/1, solve1/1, solve2/1]).
 
@@ -19,9 +19,20 @@
 %% Callback to get info about a puzzle
 -callback info() -> aoc_puzzle().
 
--spec report(Part :: part1 | part2, Result :: term()) -> ok.
-report(_Part, _Result) ->
-    ok.
+info(M) ->
+    M:info().
+
+parse(M, Binary) ->
+    M:parse(Binary).
+
+solve(M, Input) ->
+    M:solve(Input).
+
+solve1(M, Input) ->
+    M:solve1(Input).
+
+solve2(M, Input) ->
+    M:solve2(Input).
 
 -spec find_puzzles(Year :: integer() | all, Day :: integer() | all) ->
                       [Puzzles :: aoc_puzzle()].

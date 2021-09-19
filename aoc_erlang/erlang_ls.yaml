@@ -2,6 +2,7 @@
 
 macros:
   - name: APPLICATION
+  - name: NIF_DIR
 
 plt_path:  _build/default/rebar3_23.3.4.2_plt
 

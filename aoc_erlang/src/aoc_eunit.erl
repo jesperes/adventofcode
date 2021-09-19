@@ -4,7 +4,7 @@
 
 -include("aoc_puzzle.hrl").
 
--define(TIMEOUT, 10).
+-define(TIMEOUT, 60).
 
 -spec mktest(#aoc_puzzle{}) -> {string(), {timeout, integer(), fun()}}.
 mktest(PI) ->
