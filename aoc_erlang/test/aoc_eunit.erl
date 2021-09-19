@@ -48,21 +48,24 @@ mktest(PI) ->
       end}}.
 
 find_changed_modules() ->
-    lists:filtermap(fun(Line) ->
-                       case re:run(Line,
-                                   " M .*/(aoc\\d+_day\\d+).erl$",
-                                   [{capture, all_but_first, list}])
-                       of
-                           nomatch -> false;
-                           {match, [ModStr]} -> {true, list_to_atom(ModStr)}
-                       end
-                    end,
-                    string:tokens(
-                        os:cmd("git status -u -s"), "\r\n")).
+    lists:sort(
+        lists:filtermap(fun(Line) ->
+                           case re:run(Line,
+                                       "(M|\\?\\?).*/(aoc\\d+_day\\d+)\\.erl$",
+                                       [{capture, all_but_first, list}])
+                           of
+                               nomatch -> false;
+                               {match, [_, ModStr]} -> {true, list_to_atom(ModStr)}
+                           end
+                        end,
+                        string:tokens(
+                            os:cmd("git status -u -s"), "\r\n"))).
 
 %% Generate a eunit test case for all the modules which implement the
 %% aoc_puzzle behavior.
 aoc_test_() ->
+    %% Automatically run all puzzles. Start running puzzles for the current
+    %% year starting on december 1st.
     FirstYear = 2015,
     {ThisYear, ThisMonth, _} = erlang:date(),
 

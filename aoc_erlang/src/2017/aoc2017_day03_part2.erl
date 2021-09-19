@@ -1,6 +1,8 @@
 -module(aoc2017_day03_part2).
 -include_lib("eunit/include/eunit.hrl").
 
+-export([spiral/1]).
+
 %% Y grows downwards (south)
 initial_direction() ->
   {0,-1}.

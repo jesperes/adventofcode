@@ -2,46 +2,47 @@
 %%% Created: 2019-12-09T08:44:23+00:00
 
 -module(aoc2017_day04).
+
 -include_lib("eunit/include/eunit.hrl").
 
-%% Part 1: count number of passphrases with duplicate words
+-behavior(aoc_puzzle).
+
+-export([parse/1, solve1/1, solve2/1, info/0]).
+
+-include("aoc_puzzle.hrl").
+
+-spec info() -> aoc_puzzle().
+info() ->
+    #aoc_puzzle{module = ?MODULE,
+                year = 2017,
+                day = 4,
+                name = "High-Entropy Passphrases",
+                expected = {466, 251},
+                has_input_file = true}.
+
+-type passphrase() :: [string()].
+-type input_type() :: [passphrase()].
+-type result1_type() :: integer().
+-type result2_type() :: result1_type().
+
+-spec parse(Input :: binary()) -> input_type().
+parse(Input) ->
+    lists:map(fun(Line) -> string:tokens(Line, " ") end,
+              string:tokens(binary_to_list(Input), "\n\r")).
+
+-spec solve1(Input :: input_type()) -> result1_type().
+solve1(Input) ->
+    count(fun has_no_dup/1, Input).
+
+-spec solve2(Input :: input_type()) -> result2_type().
+solve2(Input) ->
+    count(fun(Words) -> has_no_dup(Words) andalso has_no_anagram(Words) end, Input).
 
 has_no_dup(Words) ->
-  lists:sort(Words) =:= lists:usort(Words).
+    lists:sort(Words) =:= lists:usort(Words).
 
 has_no_anagram(Words) ->
-  [] =:= [W1 || W1 <- Words, W2 <- Words,
-                W1 =/= W2, lists:sort(W1) =:= lists:sort(W2)].
+    [] =:= [W1 || W1 <- Words, W2 <- Words, W1 =/= W2, lists:sort(W1) =:= lists:sort(W2)].
 
 count(Fun, List) ->
-  length(lists:filter(Fun, List)).
-
-part1(Lines) ->
-  count(fun has_no_dup/1, Lines).
-
-part2(Lines) ->
-  count(fun(Words) ->
-            has_no_dup(Words) andalso has_no_anagram(Words)
-        end, Lines).
-
-
-%% Input reader (place downloaded input file in
-%% priv/inputs/2017/input04.txt).
-get_input() ->
-  lists:map(fun(Line) ->
-                string:tokens(Line, " ")
-            end, inputs:get_as_lines(2017, 04)).
-
-%% Tests
-main_test_() ->
-  Input = get_input(),
-
-  [ {"Part 1", ?_assertEqual(466, part1(Input))}
-  , {"Part 2", ?_assertEqual(251, part2(Input))}
-  ].
-
-%%%_* Emacs ====================================================================
-%%% Local Variables:
-%%% allout-layout: t
-%%% erlang-indent-level: 2
-%%% End:
+    length(lists:filter(Fun, List)).
