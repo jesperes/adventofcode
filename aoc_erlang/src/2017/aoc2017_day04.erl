@@ -1,9 +1,4 @@
-%%% Advent of Code solution for 2017 day 04.
-%%% Created: 2019-12-09T08:44:23+00:00
-
 -module(aoc2017_day04).
-
--include_lib("eunit/include/eunit.hrl").
 
 -behavior(aoc_puzzle).
 
