@@ -6,10 +6,15 @@
 
 -define(TIMEOUT, 60).
 
--spec mktest(#aoc_puzzle{}) -> {string(), {timeout, integer(), fun()}}.
+-spec mktest(#aoc_puzzle{} | integer()) ->
+                {string(), {timeout, integer(), fun()}} | {string(), fun()}.
+mktest(Day) when is_integer(Day) ->
+    {lists:flatten(
+         io_lib:format("Day ~p: -- not implemented --", [Day])),
+     fun() -> ok end};
 mktest(PI) ->
     M = PI#aoc_puzzle.module,
-    Info = M:info(),
+    Info = aoc_puzzle:info(M),
     Year = Info#aoc_puzzle.year,
     Day = Info#aoc_puzzle.day,
 
@@ -26,18 +31,18 @@ mktest(PI) ->
         end,
 
     {lists:flatten(
-         io_lib:format("Day ~p: ~s", [Day, Info#aoc_puzzle.name])),
+         io_lib:format("Day ~2..0w: ~s", [Day, Info#aoc_puzzle.name])),
      {timeout,
       ?TIMEOUT,
       fun() ->
          ParsedInput = M:parse(Input),
          case Info#aoc_puzzle.use_one_solver_fun of
              true ->
-                 P = M:solve(ParsedInput),
+                 P = aoc_puzzle:solve(M, ParsedInput),
                  ?assertEqual(Info#aoc_puzzle.expected, P);
              false ->
-                 P1 = M:solve1(ParsedInput),
-                 P2 = M:solve2(ParsedInput),
+                 P1 = aoc_puzzle:solve1(M, ParsedInput),
+                 P2 = aoc_puzzle:solve2(M, ParsedInput),
                  ?assertEqual(Info#aoc_puzzle.expected, {P1, P2})
          end
       end}}.
@@ -58,14 +63,27 @@ find_changed_modules() ->
 %% Generate a eunit test case for all the modules which implement the
 %% aoc_puzzle behavior.
 aoc_test_() ->
+    FirstYear = 2015,
+    {ThisYear, ThisMonth, _} = erlang:date(),
+
     case find_changed_modules() of
         [] ->
-            %% No changed modules, run all puzzles.
-            [begin
-                 PuzzleInfos = aoc_puzzle:find_puzzles(Year, all),
-                 {integer_to_list(Year), lists:map(fun mktest/1, PuzzleInfos)}
-             end
-             || Year <- lists:seq(2015, 2020)];
+            [{integer_to_list(Year),
+              [begin
+                   Module =
+                       list_to_atom(lists:flatten(
+                                        io_lib:format("aoc~w_day~2..0w", [Year, Day]))),
+                   try
+                       mktest(aoc_puzzle:info(Module))
+                   catch
+                       error:undef ->
+                           mktest(Day)
+                   end
+               end
+               || Day <- lists:seq(1, 25)]}
+             || Year <- lists:seq(FirstYear, ThisYear),
+                %% Start enumerating this year's puzzles on dec 1st.
+                Year < ThisYear orelse ThisYear == Year andalso ThisMonth == 12];
         ChangedModules ->
             %% Some modules have local modifications, run them only.
             PuzzleInfos = [M:info() || M <- ChangedModules],
