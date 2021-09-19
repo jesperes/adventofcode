@@ -34,18 +34,18 @@ mktest(PI) ->
          case Info#aoc_puzzle.use_one_solver_fun of
              true ->
                  P = M:solve(ParsedInput),
-                 ?assertEqual(P, Info#aoc_puzzle.expected);
+                 ?assertEqual(Info#aoc_puzzle.expected, P);
              false ->
                  P1 = M:solve1(ParsedInput),
                  P2 = M:solve2(ParsedInput),
-                 ?assertEqual({P1, P2}, Info#aoc_puzzle.expected)
+                 ?assertEqual(Info#aoc_puzzle.expected, {P1, P2})
          end
       end}}.
 
 find_changed_modules() ->
     lists:filtermap(fun(Line) ->
                        case re:run(Line,
-                                   ".*/(aoc\\d+_day\\d+).erl$",
+                                   " M .*/(aoc\\d+_day\\d+).erl$",
                                    [{capture, all_but_first, list}])
                        of
                            nomatch -> false;
