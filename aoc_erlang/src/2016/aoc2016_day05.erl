@@ -9,7 +9,7 @@
 -spec info() -> aoc_puzzle().
 info() ->
     #aoc_puzzle{module = ?MODULE,
-                year = 2015,
+                year = 2016,
                 day = 5,
                 name = "How About a Nice Game of Chess?",
                 expected = {"4543c154", "1050cbbd"},
