@@ -31,7 +31,7 @@ mktest(PI) ->
         end,
 
     {lists:flatten(
-         io_lib:format("Day ~2..0w: ~s", [Day, Info#aoc_puzzle.name])),
+         io_lib:format("~w Day ~2..0w: ~s", [Year, Day, Info#aoc_puzzle.name])),
      {timeout,
       ?TIMEOUT,
       fun() ->

@@ -1,4 +1,4 @@
--file("/home/jespereskilson/dev/otp-install/OTP-23.3.4.2/lib/parsetools-2.2/include/leexinc.hrl", 0).
+-file("/home/jespereskilson/dev/otp-install/OTP-24.0.6/lib/parsetools-2.3/include/leexinc.hrl", 0).
 %% The source of this file is part of leex distribution, as such it
 %% has the same Copyright as the other files in the leex
 %% distribution. The Copyright is defined in the accompanying file
@@ -16,7 +16,7 @@
 
 %% @hidden
 
--file("/home/jespereskilson/dev/otp-install/OTP-23.3.4.2/lib/parsetools-2.2/include/leexinc.hrl", 14).
+-file("/home/jespereskilson/dev/otp-install/OTP-24.0.6/lib/parsetools-2.3/include/leexinc.hrl", 14).
 
 format_error({illegal,S}) -> ["illegal characters ",io_lib:write_string(S)];
 format_error({user,S}) -> S.
@@ -400,4 +400,4 @@ yyaction_4(TokenLine) ->
 yyaction_5(TokenChars) ->
      { token, { int, list_to_integer (TokenChars) } } .
 
--file("/home/jespereskilson/dev/otp-install/OTP-23.3.4.2/lib/parsetools-2.2/include/leexinc.hrl", 313).
+-file("/home/jespereskilson/dev/otp-install/OTP-24.0.6/lib/parsetools-2.3/include/leexinc.hrl", 313).
