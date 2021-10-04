@@ -11,25 +11,24 @@ info() ->
     #aoc_puzzle{module = ?MODULE,
                 year = 0,
                 day = 0,
-                name = "not_set",
-                expected = {not_set, not_set},
+                name = "TBD",
+                expected = {0, 0},
                 has_input_file = true}.
 
--type input_type() :: any().
--type result1_type() :: any().
--type result2_type() :: result1_type().
+-type input_type() :: [string()].
+-type result_type() :: integer().
 
 -spec parse(Input :: binary()) -> input_type().
 parse(Input) ->
-    Input.
+    string:tokens(binary_to_list(Input), "\n\r").
 
--spec solve1(Input :: input_type()) -> result1_type().
+-spec solve1(Input :: input_type()) -> result_type().
 solve1(_Input) ->
-    not_implemented.
+    0.
 
--spec solve2(Input :: input_type()) -> result2_type().
+-spec solve2(Input :: input_type()) -> result_type().
 solve2(_Input) ->
-    not_implemented.
+    0.
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:
