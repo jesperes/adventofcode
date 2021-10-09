@@ -86,4 +86,4 @@ mktest(Info) ->
 label(Info) ->
     Year = Info#aoc_puzzle.year,
     Day = Info#aoc_puzzle.day,
-    io_lib:format("~w Day ~2..0w: ~s", [Year, Day, Info#aoc_puzzle.name]).
+    lists:flatten(io_lib:format("~w Day ~2..0w: ~s", [Year, Day, Info#aoc_puzzle.name])).

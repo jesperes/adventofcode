@@ -32,10 +32,10 @@ aoc_test_() ->
                        list_to_atom(lists:flatten(
                                         io_lib:format("aoc~w_day~2..0w", [Year, Day]))),
                    try
-                       aoc_erlang:mktest(aoc_puzzle:info(Module))
+                       aoc_puzzle:mktest(aoc_puzzle:info(Module))
                    catch
                        error:undef ->
-                           aoc_erlang:mktest(Day)
+                           aoc_puzzle:mktest(Day)
                    end
                end
                || Day <- lists:seq(1, 25)]}
@@ -45,5 +45,5 @@ aoc_test_() ->
         ChangedModules ->
             %% Some modules have local modifications, run them only.
             PuzzleInfos = [M:info() || M <- ChangedModules],
-            {"Locally edited modules", lists:map(fun aoc_erlang:mktest/1, PuzzleInfos)}
+            {"Locally edited modules", lists:map(fun aoc_puzzle:mktest/1, PuzzleInfos)}
     end.

@@ -1,13 +1,37 @@
 -module(aoc2018_day09).
 -include_lib("eunit/include/eunit.hrl").
 
-%% 419 players; last marble is worth 72164 points
+-behavior(aoc_puzzle).
 
-main_test_() ->
-  [ {"Part 1", ?_assertEqual(423717, start(419, 72164))}
-  , {"Part 2", ?_assertEqual(3553108197, start(419, 72164 * 100))}
-  ].
+-export([parse/1, solve1/1, solve2/1, info/0]).
 
+-include("aoc_puzzle.hrl").
+
+-spec info() -> aoc_puzzle().
+info() ->
+    #aoc_puzzle{module = ?MODULE,
+                year = 2018,
+                day = 9,
+                name = "Marble Mania",
+                expected = {423717, 3553108197},
+                has_input_file = false}.
+
+-type input_type() :: {integer(), integer()}.
+-type result_type() :: integer().
+
+-spec parse(Input :: binary()) -> input_type().
+parse(_Input) ->
+  {419, 72164}.
+
+-spec solve1(Input :: input_type()) -> result_type().
+solve1({Players, LastMarble}) ->
+  start(Players, LastMarble).
+
+-spec solve2(Input :: input_type()) -> result_type().
+solve2({Players, LastMarble}) ->
+  start(Players, LastMarble * 100).
+
+-spec start(integer(), integer()) -> integer().
 start(NP, Last) ->
   {_, Scores} = marble_game(1, ring_insert(0, ring_new()),
                             NP, #{}, Last),
