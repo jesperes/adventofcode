@@ -9,19 +9,37 @@
 
 -define(UNIT_RE, <<"(\\d+) units each with (\\d+) hit points (\\((.*)\\) )?with an attack that does (\\d+) (\\w+) damage at initiative (\\d+)">>).
 
-main_test_() ->
-  Input = inputs:get_as_binary(2018, 24),
-  [ {"Part 1",
-     fun() ->
-         {infection_wins, {Part1, _}} = start(Input, 0),
-         ?assertEqual(25088, Part1)
-     end}
-  , {"Part 2", timeout, 60,
-     fun() ->
-         {{immunesystem_wins, {Part2, _}}, _} = start_with_boost(Input, 0),
-         ?assertEqual(2002, Part2)
-     end}
-  ].
+-behavior(aoc_puzzle).
+
+-export([parse/1, solve1/1, solve2/1, info/0]).
+
+-include("aoc_puzzle.hrl").
+
+-spec info() -> aoc_puzzle().
+info() ->
+    #aoc_puzzle{module = ?MODULE,
+                year = 2018,
+                day = 24,
+                name = "Immune System Simulator 20XX",
+                expected = {25088, 2002},
+                has_input_file = true}.
+
+-type input_type() :: binary().
+-type result_type() :: integer().
+
+-spec parse(Input :: binary()) -> input_type().
+parse(Input) ->
+    Input.
+
+-spec solve1(Input :: input_type()) -> result_type().
+solve1(Input) ->
+    {infection_wins, {Part1, _}} = start(Input, 0),
+    Part1.
+
+-spec solve2(Input :: input_type()) -> result_type().
+solve2(Input) ->
+    {{immunesystem_wins, {Part2, _}}, _} = start_with_boost(Input, 0),
+    Part2.
 
 start_with_boost(Binary, Boost) ->
   case start(Binary, Boost) of
