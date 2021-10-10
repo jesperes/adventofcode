@@ -1,14 +1,37 @@
 -module(aoc2018_day14).
 -include_lib("eunit/include/eunit.hrl").
+-behavior(aoc_puzzle).
+
+-export([parse/1, solve1/1, solve2/1, info/0]).
+
+-include("aoc_puzzle.hrl").
+
+-spec info() -> aoc_puzzle().
+info() ->
+    #aoc_puzzle{module = ?MODULE,
+                year = 2018,
+                day = 14,
+                name = "Chocolate Carts",
+                expected = {"5115114101", 20310465},
+                has_input_file = false}.
+
+-type input_type() :: integer().
+-type result1_type() :: string().
+-type result2_type() :: integer().
+
+-spec parse(Input :: binary()) -> input_type().
+parse(_Input) ->
+    633601.
+
+-spec solve1(Input :: input_type()) -> result1_type().
+solve1(Input) ->
+    start1(Input).
+
+-spec solve2(Input :: input_type()) -> result2_type().
+solve2(Input) ->
+    start2(integer_to_list(Input)).
 
 %% Chocolate Carts
-
-main_test_() ->
-  Input = 633601,
-  [ {"Part 1", ?_assertEqual("5115114101", start1(Input))}
-  , {"Part 2", timeout, 60,
-     ?_assertEqual(20310465, start2(integer_to_list(Input)))}
-  ].
 
 start1(Input) ->
   L = <<3, 7>>,
@@ -81,6 +104,5 @@ part1_test() ->
 
 part2_test() ->
   ?assertEqual(9, start2("51589")),
-  %% ?assertEqual(5, start2("01245")),
   ?assertEqual(18, start2("92510")),
   ?assertEqual(2018, start2("59414")).
