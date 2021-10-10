@@ -2,48 +2,69 @@
 -include_lib("eunit/include/eunit.hrl").
 
 %%
-%% Day 21: we are given a program (input.txt) in ElfCode (see days 16
+%% We are given a program (input.txt) in ElfCode (see days 16
 %% and 19), and we are to determine certain properties of it. I
 %% started out by "emulating" it only to discover that it was far to
 %% inefficient to get anything done. I then translated the program
 %% more or less directly to C and got the solution that
 %% way.
 %%
-%% The code below is roughly this C program translated to erlang.
+%% The code below (outer_loop/3) is roughly this C program translated to erlang.
 %%
 
-main_test_() ->
-  [ {"Part 1", timeout, 60, ?_assertEqual(4682012, part1())}
-  , {"Part 2", timeout, 60, ?_assertEqual(5363733, part2())}
-  ].
+-behavior(aoc_puzzle).
 
-part1() ->
-  %% For part 1, we are only interested in finding out the value of
-  %% R0 which causes the program to terminate in as few steps as
-  %% possible. This means finding the R1 value after running through
-  %% the program once (there is an "outer" outer loop in the
-  %% original program which is basically "do ... while (R1 != R0)".)
-  %%
-  %% So, for part 1, we simply need to know the value of R1 after
-  %% one pass through outer_loop. If R0 is set to this value, the
-  %% program will terminate after as few steps as possible.
-  {R1, _, _} = outer_loop(0, 0, 0),
-  R1.
+-export([parse/1, solve1/1, solve2/1, info/0]).
 
-part2() ->
-  %% For part 2, we are told that we want to figure out the smallest
-  %% value of R0 which causes the program to terminate in as many
-  %% steps as possible. I did not understand this part until a
-  %% colleague explained it to me, but basically we can observe that
-  %% as we set R0 to {1, 2, 3, ...}, the resulting R1 values will
-  %% eventually repeat, and we want to know the last of the R0 values
-  %% used before we observe a repetition in the R1 values. This is the
-  %% (smallest) R0 value which causes the program to run in as many
-  %% cycles as possible.
-  %%
-  %% We solve this by putting all the R1 values in a set, and
-  %% terminate once we get a R1 value we have already seen.
-  part2_loop(0, sets:new()).
+-include("aoc_puzzle.hrl").
+
+-spec info() -> aoc_puzzle().
+info() ->
+    #aoc_puzzle{module = ?MODULE,
+                year = 2018,
+                day = 21,
+                name = "Chronal Conversion",
+                expected = {4682012, 5363733},
+                has_input_file = false}.
+
+-type input_type() :: none.
+-type result_type() :: integer().
+
+-spec parse(Input :: binary()) -> input_type().
+parse(_Input) ->
+    %% The program was the input, and it has been hand-converted into
+    %% Erlang.
+    none.
+
+-spec solve1(Input :: input_type()) -> result_type().
+solve1(_) ->
+    %% For part 1, we are only interested in finding out the value of
+    %% R0 which causes the program to terminate in as few steps as
+    %% possible. This means finding the R1 value after running through
+    %% the program once (there is an "outer" outer loop in the
+    %% original program which is basically "do ... while (R1 != R0)".)
+    %%
+    %% So, for part 1, we simply need to know the value of R1 after
+    %% one pass through outer_loop. If R0 is set to this value, the
+    %% program will terminate after as few steps as possible.
+    {R1, _, _} = outer_loop(0, 0, 0),
+    R1.
+
+-spec solve2(Input :: input_type()) -> result_type().
+solve2(_) ->
+    %% For part 2, we are told that we want to figure out the smallest
+    %% value of R0 which causes the program to terminate in as many
+    %% steps as possible. I did not understand this part until a
+    %% colleague explained it to me, but basically we can observe that
+    %% as we set R0 to {1, 2, 3, ...}, the resulting R1 values will
+    %% eventually repeat, and we want to know the last of the R0 values
+    %% used before we observe a repetition in the R1 values. This is the
+    %% (smallest) R0 value which causes the program to run in as many
+    %% cycles as possible.
+    %%
+    %% We solve this by putting all the R1 values in a set, and
+    %% terminate once we get a R1 value we have already seen.
+    part2_loop(0, sets:new()).
 
 part2_loop(R1, Vals) ->
   {R1_new, _, _} = outer_loop(R1, 0, 0),
