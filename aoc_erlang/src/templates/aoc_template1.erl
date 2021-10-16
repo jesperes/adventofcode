@@ -12,20 +12,20 @@ info() ->
                 year = 0,
                 day = 0,
                 name = "TBD",
-                expected = {not_set, not_set},
+                expected = {0, 0},
                 use_one_solver_fun = true,
                 has_input_file = true}.
 
 -type input_type() :: any().
--type result_type() :: {any(), any()}.
+-type result_type() :: {integer(), integer()}.
 
--spec parse(Input :: binary()) -> input_type().
-parse(_Input) ->
-    not_implemented.
+-spec parse(Binary :: binary()) -> input_type().
+parse(_Binary) ->
+    ok.
 
 -spec solve(Input :: input_type()) -> result_type().
 solve(_Input) ->
-    {not_implemented, not_implemented}.
+    {0, 0}.
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:

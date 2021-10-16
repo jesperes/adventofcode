@@ -32,6 +32,8 @@
 -type intcode_output() ::
     fun((Output :: integer(), State :: integer()) -> NewState :: intcode_state()).
 
+-export_type([intcode_state/0, intcode_program/0, intcode_input/0, intcode_output/0]).
+
 execute_tty(Filename) ->
     {ok, Binary} = file:read_file(Filename),
     Prog = intcode:parse(Binary),
