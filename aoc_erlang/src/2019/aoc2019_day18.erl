@@ -20,7 +20,8 @@ info() ->
                 expected = {3856, 1660},
                 has_input_file = true}.
 
--type input_type() :: any().
+-type input_type() ::
+    {{Width :: integer(), Height :: integer()}, AllKeys :: binary(), Grid :: map()}.
 -type result_type() :: integer().
 
 -spec parse(Binary :: binary()) -> input_type().
@@ -57,7 +58,7 @@ solve2(Input) ->
     Grid0 = patch_center(Grid, Center),
     Bots = lists:sort(find_start_points(Grid0)),
     Quadrants = lists:zip([nw, sw, ne, se], Bots),
-g    lists:foldl(fun({Quadrant, BotPos}, Acc) ->
+    lists:foldl(fun({Quadrant, BotPos}, Acc) ->
                    {KeysToFind, Doors} = quadrant(Quadrant, Center, Grid0),
 
                    DoorsStr = binary_to_list(Doors),
