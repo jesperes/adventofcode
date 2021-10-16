@@ -30,8 +30,10 @@ solve1(_Input) ->
 solve2(_Input) ->
     0.
 
-%%%_* Emacs ====================================================================
-%%% Local Variables:
-%%% allout-layout: t
-%%% erlang-indent-level: 4
-%%% End:
+%% Tests
+-include_lib("eunit/include/eunit.hrl").
+-ifdef(TEST).
+
+%% ...
+
+-endif.
