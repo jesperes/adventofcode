@@ -62,20 +62,3 @@ seat_id(S) ->
 %% of occupied seats.
 find_seat([A, B|_]) when A == B + 2 -> B + 1;
 find_seat([_|Rest]) -> find_seat(Rest).
-
--ifdef(EUNIT).
--include_lib("eunit/include/eunit.hrl").
-
-seat_id_test_() ->
-  [?_assertEqual(357, seat_id("FBFBBFFRLR")),
-   ?_assertEqual(567, seat_id("BFFFBBFRRR")),
-   ?_assertEqual(119, seat_id("FFFBBBFRRR")),
-   ?_assertEqual(820, seat_id("BBFFBBFRLL"))].
-
--endif.
-
-%%%_* Emacs ====================================================================
-%%% Local Variables:
-%%% allout-layout: t
-%%% erlang-indent-level: 2
-%%% End:

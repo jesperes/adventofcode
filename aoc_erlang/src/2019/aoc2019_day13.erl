@@ -1,6 +1,5 @@
 -module(aoc2019_day13).
 
--include_lib("eunit/include/eunit.hrl").
 
 -behavior(aoc_puzzle).
 

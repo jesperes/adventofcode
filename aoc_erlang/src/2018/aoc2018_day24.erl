@@ -5,7 +5,6 @@
 %% Otherwise, attacker's effective power.
 
 -module(aoc2018_day24).
--include_lib("eunit/include/eunit.hrl").
 
 -define(UNIT_RE, <<"(\\d+) units each with (\\d+) hit points (\\((.*)\\) )?with an attack that does (\\d+) (\\w+) damage at initiative (\\d+)">>).
 
@@ -202,25 +201,6 @@ deal_damage(#{units := Units, hp := HP} = Defender, AD) ->
     end,
   Defender#{units => RemainingUnits}.
 
-test_attack(Attacking, Defending) ->
-  AD = attack_damage(Attacking, Defending),
-  DamagedDefender = deal_damage(Defending, AD),
-  maps:get(units, Defending) - maps:get(units, DamagedDefender).
-
-deal_damage_test_() ->
-  {Imm1, Imm2, Inf1, Inf2} = get_test_armies(),
-
-  [
-   %% Note that the numbers here are different from in the puzzle
-   %% examples, because we are not taking damages into account from
-   %% earlier attacks.
-   ?_assertMatch(#{units := 3}, deal_damage(#{units => 10, hp => 10}, 75)),
-   ?_assertEqual(84, test_attack(Inf2, Imm2)),
-   ?_assertEqual(5, test_attack(Imm2, Inf1)),
-   ?_assertEqual(51, test_attack(Imm1, Inf2)),
-   ?_assertEqual(9, test_attack(Inf2, Imm1))
-  ].
-
 %% This determines which group gets to choose target first, not which
 %% target the group selects.
 target_selection_order(G1, G2) ->
@@ -238,13 +218,6 @@ target_selection_order(G1, G2) ->
           throw(no_tie_break)
       end
   end.
-
-target_selection_order_test() ->
-  {Imm1, Imm2, Inf1, Inf2} = get_test_armies(),
-  List = [Imm1, Imm2, Inf1, Inf2],
-  Sorted = lists:reverse(lists:sort(fun target_selection_order/2, List)),
-  ?assertEqual([Inf1, Imm1, Inf2, Imm2], Sorted).
-
 
 is_immune(DefendGroup, AttackType) ->
   ImmuneTo = maps:get(immune_to, DefendGroup),
@@ -269,57 +242,6 @@ attack_damage(AttackGroup, DefendGroup) ->
           EP * 2
       end
   end.
-
-get_test_armies() ->
-  {
-   #{army => immunesystem,
-     damage => 4507,
-     damagetype => fire,
-     hp => 5390,
-     id => {immunesystem,1},
-     immune_to => [],
-     initiative => 2,
-     units => 17,
-     weak_to => [radiation,bludgeoning]},
-   #{army => immunesystem,
-     damage => 25,
-     damagetype => slashing,
-     hp => 1274,
-     id => {immunesystem,2},
-     immune_to => [fire],
-     initiative => 3,
-     units => 989,
-     weak_to => [bludgeoning,slashing]},
-   #{army => infection,
-     damage => 116,
-     damagetype => bludgeoning,
-     hp => 4706,
-     id => {infection,1},
-     immune_to => [],
-     initiative => 1,
-     units => 801,
-     weak_to => [radiation]},
-   #{army => infection,
-     damage => 12,
-     damagetype => slashing,
-     hp => 2961,
-     id => {infection,2},
-     immune_to => [radiation],
-     initiative => 4,
-     units => 4485,
-     weak_to => [fire,cold]}
-  }.
-
-attack_damage_test_() ->
-  {Imm1, Imm2, Inf1, Inf2} = get_test_armies(),
-  [
-   ?_assertEqual(185832, attack_damage(Inf1, Imm1)),
-   ?_assertEqual(185832, attack_damage(Inf1, Imm2)),
-   ?_assertEqual(107640, attack_damage(Inf2, Imm2)),
-   ?_assertEqual(76619, attack_damage(Imm1, Inf1)),
-   ?_assertEqual(153238, attack_damage(Imm1, Inf2)),
-   ?_assertEqual(24725, attack_damage(Imm2, Inf1))
-  ].
 
 %% Returns true iff G is an available target.
 is_available_target(G, AttackingArmy, TargetSelections) ->
@@ -403,28 +325,6 @@ select_group_target(Group, AvailableEnemyGroups) ->
     _ ->
       notarget
   end.
-
-select_group_target_test_() ->
-  {Imm1, Imm2, Inf1, Inf2} = get_test_armies(),
-  [
-   ?_assertEqual(53820, effective_power(Inf2)),
-   %% Inf2 -> [Imm1, Imm2]
-   %% Inf2 does 12 slashing damage with effective power 53820 (units * damage == 4485 * 12).
-   %% Imm1 is not weak nor immune to slashing, so attack damage is 53820.
-   %% Imm2 is weak to slashing, so attack damage is 53820 * 2 == 107640.
-   %%
-   %% Hence, Inf2 chooses Imm2 because it would make most damage.
-   ?_assertEqual(Imm2, select_group_target(Inf2, [Imm1, Imm2])),
-
-   %% Imm2 -> [Inf1, Inf2]
-   %% Imm2 does 25 slashing damage with effective power (989 * 25 == 24725)
-   %% Inf1 is not weak nor immune to slashing, so attack damage is 24725
-   %% Inf2 is not weak nor immune to slashing, so attack damage is 24725
-   %% 1st tie break is on defender's effective power. Inf1 EP is 801 * 116 == 92916, Inf2 EP is 53820.
-   %% ==> Imm2 chooses Inf1 because higher effective power.
-   ?_assertEqual(Inf1, select_group_target(Imm2, [Inf1, Inf2]))
-  ].
-
 
 %% Return groups in the order in which they perform their attacks.
 get_groups_in_attack_order(Groups) ->

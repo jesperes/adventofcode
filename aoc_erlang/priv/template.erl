@@ -72,7 +72,6 @@ solve2(_Input) ->
 %%==============================================================================
 
 -ifdef(EUNIT).
--include_lib("eunit/include/eunit.hrl").
 
 ex1_test_() ->
   ?_assert(remove_if_unused).

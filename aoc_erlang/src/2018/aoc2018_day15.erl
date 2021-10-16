@@ -1,6 +1,5 @@
 -module(aoc2018_day15).
 
--include_lib("eunit/include/eunit.hrl").
 
 -behavior(aoc_puzzle).
 
@@ -304,15 +303,6 @@ find_path(Search) ->
             end
     end.
 
-%%% Pretty-printing
-
-grid_to_string(Grid) ->
-    Width = Grid#grid.width,
-    Height = erlang:byte_size(Grid#grid.board) div Width,
-    lists:map(fun(Y) -> lists:map(fun(X) -> read(Grid, {Y, X}) end, lists:seq(0, Width - 1))
-              end,
-              lists:seq(0, Height - 1)).
-
 %%% Parser
 
 id() ->
@@ -367,81 +357,3 @@ unit_attack_power($E, ElfAttackPower) ->
     ElfAttackPower;
 unit_attack_power($G, _) ->
     ?GOBLIN_ATTACK_POWER.
-
-%%% Tests
-
-pretty_print_test() ->
-    Bin = <<"#######\n",
-            "#.G...#\n",
-            "#...EG#\n",
-            "#.#.#G#\n",
-            "#..G#E#\n",
-            "#.....#\n",
-            "#######\n">>,
-    io:format("~s~n", [grid_to_string(parse_grid(Bin, 3))]).
-
-ex_helper(Binary) ->
-    Grid = parse_grid(Binary, 3),
-    do_battle_until_death(Binary, 1, Grid, true).
-
-ex0_test() ->
-    Bin = <<"#######\n",
-            "#.G...#\n",
-            "#...EG#\n",
-            "#.#.#G#\n",
-            "#..G#E#\n",
-            "#.....#\n",
-            "#######\n">>,
-    ?assertEqual(27730, ex_helper(Bin)).
-
-ex1_test() ->
-    Bin = <<"#######\n",
-            "#G..#E#\n",
-            "#E#E.E#\n",
-            "#G.##.#\n",
-            "#...#E#\n",
-            "#...E.#\n",
-            "#######\n">>,
-    ?assertEqual(36334, ex_helper(Bin)).
-
-ex2_test() ->
-    Bin = <<"#######\n",
-            "#E..EG#\n",
-            "#.#G.E#\n",
-            "#E.##E#\n",
-            "#G..#.#\n",
-            "#..E#.#\n",
-            "#######\n">>,
-    ?assertEqual(39514, ex_helper(Bin)).
-
-ex3_test() ->
-    Bin = <<"#######\n",
-            "#E.G#.#\n",
-            "#.#G..#\n",
-            "#G.#.G#\n",
-            "#G..#.#\n",
-            "#...E.#\n",
-            "#######\n">>,
-    ?assertEqual(27755, ex_helper(Bin)).
-
-ex4_test() ->
-    Bin = <<"#######\n",
-            "#.E...#\n",
-            "#.#..G#\n",
-            "#.###.#\n",
-            "#E#G#G#\n",
-            "#...#G#\n",
-            "#######\n">>,
-    ?assertEqual(28944, ex_helper(Bin)).
-
-ex5_test() ->
-    Bin = <<"#########\n",
-            "#G......#\n",
-            "#.E.#...#\n",
-            "#..##..G#\n",
-            "#...##..#\n",
-            "#...#...#\n",
-            "#.G...G.#\n",
-            "#.....G.#\n",
-            "#########\n">>,
-    ?assertEqual(18740, ex_helper(Bin)).

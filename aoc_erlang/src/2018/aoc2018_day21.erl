@@ -1,5 +1,4 @@
 -module(aoc2018_day21).
--include_lib("eunit/include/eunit.hrl").
 
 %%
 %% We are given a program (input.txt) in ElfCode (see days 16

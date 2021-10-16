@@ -1,7 +1,5 @@
 -module(aoc2015_day23).
 
--include_lib("eunit/include/eunit.hrl").
-
 -behavior(aoc_puzzle).
 
 -export([parse/1, solve1/1, solve2/1, info/0]).

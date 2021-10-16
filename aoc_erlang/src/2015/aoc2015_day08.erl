@@ -6,8 +6,6 @@
 
 -include("aoc_puzzle.hrl").
 
--include_lib("eunit/include/eunit.hrl").
-
 -spec info() -> aoc_puzzle().
 info() ->
     #aoc_puzzle{module = ?MODULE,

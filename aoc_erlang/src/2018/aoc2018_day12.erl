@@ -1,7 +1,5 @@
 -module(aoc2018_day12).
 
--include_lib("eunit/include/eunit.hrl").
-
 -behavior(aoc_puzzle).
 
 -export([parse/1, solve1/1, solve2/1, info/0]).
@@ -135,8 +133,3 @@ get_neighborhood(PotNr, Pots) ->
        $.
    end
    || N <- lists:seq(PotNr - 2, PotNr + 2)].
-
-get_neighborhood_test() ->
-  S = sets:from_list([2, 3]),
-  ?assertEqual("...##", get_neighborhood(1, S)),
-  ?assertEqual("..##.", get_neighborhood(2, S)).

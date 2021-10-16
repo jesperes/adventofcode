@@ -1,5 +1,5 @@
 -module(aoc2018_day14).
--include_lib("eunit/include/eunit.hrl").
+
 -behavior(aoc_puzzle).
 
 -export([parse/1, solve1/1, solve2/1, info/0]).
@@ -93,16 +93,3 @@ progress(P, X, Input, I) when is_integer(P) ->
     _ ->
       NewP
   end.
-
-
-%%% Tests
-
-part1_test() ->
-  ?assertEqual("0124515891", start1(5)),
-  ?assertEqual("9251071085", start1(18)),
-  ?assertEqual("5941429882", start1(2018)).
-
-part2_test() ->
-  ?assertEqual(9, start2("51589")),
-  ?assertEqual(18, start2("92510")),
-  ?assertEqual(2018, start2("59414")).

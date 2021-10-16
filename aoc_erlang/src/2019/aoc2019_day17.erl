@@ -2,7 +2,6 @@
 %%% Created: 2019-12-17T16:31:23+00:00
 
 -module(aoc2019_day17).
--include_lib("eunit/include/eunit.hrl").
 
 -behavior(aoc_puzzle).
 

@@ -3,7 +3,7 @@
 
 -module(aoc2019_day10).
 
--include_lib("eunit/include/eunit.hrl").
+-include_lib("stdlib/include/assert.hrl").
 
 -include("aoc_puzzle.hrl").
 

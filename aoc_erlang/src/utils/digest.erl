@@ -3,7 +3,6 @@
 -export([digest_to_hexstring/1
         ]).
 
--include_lib("eunit/include/eunit.hrl").
 
 %% Convert a binary digest (i.e. output from erlang:md5/1) to a
 %% lower-case hexadecimal string binary.

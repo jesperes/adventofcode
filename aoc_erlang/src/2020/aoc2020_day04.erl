@@ -139,8 +139,7 @@ ltoa(S) -> list_to_atom(S).
 %% ============================================================
 
 -ifdef(no).
--include_lib("eunit/include/eunit.hrl").
-invalid_part2_test() ->
+ invalid_part2_test() ->
   Invalid =
     parse_passports(
       ["eyr:1972 cid:100",

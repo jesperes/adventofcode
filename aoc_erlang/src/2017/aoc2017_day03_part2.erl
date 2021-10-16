@@ -1,5 +1,4 @@
 -module(aoc2017_day03_part2).
--include_lib("eunit/include/eunit.hrl").
 
 -export([spiral/1]).
 
@@ -134,6 +133,3 @@ spiral(I, N, SpiralMemory, Delta) ->
      true ->
       spiral(I + 1, N, NewSpiralMemory, ActualNewDelta)
   end.
-
-main_test_() ->
-  {"Part 2", timeout, 60, ?_assertEqual(363010, spiral(361527))}.

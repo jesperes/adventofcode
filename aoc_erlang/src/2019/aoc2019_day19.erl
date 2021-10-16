@@ -1,8 +1,8 @@
 -module(aoc2019_day19).
 
--include_lib("eunit/include/eunit.hrl").
-
 -behavior(aoc_puzzle).
+
+-include_lib("stdlib/include/assert.hrl").
 
 -export([parse/1, solve1/1, solve2/1, info/0]).
 

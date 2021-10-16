@@ -1,6 +1,5 @@
 -module(aoc2018_day23).
 
--include_lib("eunit/include/eunit.hrl").
 
 -behavior(aoc_puzzle).
 
@@ -123,18 +122,6 @@ num_intersects(Box, Bots) ->
                 0,
                 Bots).
 
-num_intersects_test() ->
-    Bots =
-        [{2, 10, 12, 12},
-         {2, 12, 14, 12},
-         {4, 16, 12, 12},
-         {6, 14, 14, 14},
-         {200, 50, 50, 50},
-         {5, 10, 10, 10}],
-
-    Box = {{12, 12, 12}, {1, 1, 1}},
-    ?assert(intersects(Box, {2, 10, 12, 12})),
-    ?assertEqual(5, num_intersects({{12, 12, 12}, {1, 1, 1}}, Bots)).
 
 manhattan_comp(MinX, W, X) ->
     MaxX = MinX + W - 1,
@@ -146,12 +133,6 @@ manhattan_comp(MinX, W, X) ->
            MinX - X
     end.
 
-manhattan_comp_test() ->
-    ?assertEqual(0, manhattan_comp(0, 5, 2)),
-    ?assertEqual(0, manhattan_comp(0, 5, 0)),
-    ?assertEqual(1, manhattan_comp(0, 5, 5)),
-    ?assertEqual(2, manhattan_comp(0, 5, -2)),
-    ?assertEqual(2, manhattan_comp(0, 5, 6)).
 
 %%
 intersects(Box, Bot) ->
@@ -162,11 +143,6 @@ intersects(Box, Bot) ->
 
     %% erlang:display({manhattan_dist, Box, Bot, Dist}),
     Dist =< R.
-
-intersects_test() ->
-    ?assertNot(intersects({{0, 0, 0}, {2, 2, 2}}, {0, 3, 3, 3})),
-    ?assert(intersects({{0, 0, 0}, {2, 2, 2}}, {6, 3, 3, 3})),
-    ?assert(intersects({{0, 0, 0}, {2, 2, 2}}, {9, -3, -3, -3})).
 
 %% Split the box in two along the longest axis.
 split_box({{Xb, Yb, Zb}, {W, H, D}}) ->
@@ -204,20 +180,6 @@ find_bounding_box(NanoBots) ->
                                 [2, 3, 4])),
     {{MinX, MinY, MinZ}, {MaxX - MinX, MaxY - MinY, MaxZ - MinZ}}.
 
-%% in({Min, Max}, X) ->
-%%     (X >= Min) and (X =< Max).
-
-%% inside_box({XRange, YRange, ZRange}, {_, X, Y, Z}) ->
-%%     in(XRange, X) and
-%%         in(YRange, Y) and
-%%         in(ZRange, Z).
-
-%% nanobots_in_box(Box, NanoBots) ->
-%%     Inside =
-%%         lists:filter(fun(Bot) ->
-%%                              inside_box(Box, Bot)
-%%                      end, NanoBots),
-%%     length(Inside).
 
 manhattan_dist({X1, Y1, Z1}, {X2, Y2, Z2}) ->
     abs(X1 - X2) + abs(Y1 - Y2) + abs(Z1 - Z2).
@@ -231,11 +193,3 @@ inrange_bot(Bot1, Bot2) ->
 %% Return the list of nanobots which are in range of the given bot
 inrange_of(Bot, NanoBots) ->
     lists:filter(fun(X) -> inrange_bot(Bot, X) end, NanoBots).
-
-%% Return the bots which are in range of the given point
-%% bots_inrange_of_point({X, Y, Z}, NanoBots) ->
-%%   lists:filter(fun({R, Xb, Yb, Zb}) ->
-%%                    manhattan_dist({X, Y, Z}, {Xb, Yb, Zb}) =< R
-%%                end, NanoBots).
-
-%%% Parser
