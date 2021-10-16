@@ -4,27 +4,52 @@
 -module(aoc2019_day17).
 -include_lib("eunit/include/eunit.hrl").
 
-part1(Prog) ->
-  {_, List} = intcode:execute(Prog),
-  L = lists:reverse(List),
-  Bin = list_to_binary(L),
-  [{Width, _}|_] = binary:matches(Bin, <<"\n">>),
-  Scaffolds = make_grid(Bin, Width + 1),
-  count_intersections(Scaffolds).
+-behavior(aoc_puzzle).
 
-part2(Prog) ->
-  %% Split the necessary instructions into functions < 20 chars/line.
-  A = "L,12,L,12,L,6,L,6",
-  B = "R,8,R,4,L,12",
-  C = "L,12,L,6,R,12,R,8",
-  M = "A,B,A,C,B,A,C,B,A,C",
+-export([parse/1, solve1/1, solve2/1, info/0]).
 
-  Input = io_lib:format("~s~n~s~n~s~n~s~nn~n", [M, A, B, C]),
-  Prog0 = maps:merge(Prog, #{0 => 2}),
-  %% Score is the last integer output by the program, but this
-  %% implementation returns the output in reverse order.
-  {_, [Score|_]} = intcode:execute(Prog0, Input),
-  Score.
+-include("aoc_puzzle.hrl").
+
+-spec info() -> aoc_puzzle().
+info() ->
+    #aoc_puzzle{module = ?MODULE,
+                year = 2019,
+                day = 17,
+                name = "Set and Forget",
+                expected = {4800, 982279},
+                has_input_file = true}.
+
+-type input_type() :: intcode:intcode_program().
+-type result_type() :: integer().
+
+-spec parse(Binary :: binary()) -> input_type().
+parse(Binary) ->
+    intcode:parse(Binary).
+
+-spec solve1(Input :: input_type()) -> result_type().
+solve1(Prog) ->
+    {_, List} = intcode:execute(Prog),
+    L = lists:reverse(List),
+    Bin = list_to_binary(L),
+    [{Width, _}|_] = binary:matches(Bin, <<"\n">>),
+    Scaffolds = make_grid(Bin, Width + 1),
+    count_intersections(Scaffolds).
+
+-spec solve2(Input :: input_type()) -> result_type().
+solve2(Prog) ->
+    %% Split the necessary instructions into functions < 20 chars/line.
+    %% This part was done by hand.
+    A = "L,12,L,12,L,6,L,6",
+    B = "R,8,R,4,L,12",
+    C = "L,12,L,6,R,12,R,8",
+    M = "A,B,A,C,B,A,C,B,A,C",
+
+    Input = io_lib:format("~s~n~s~n~s~n~s~nn~n", [M, A, B, C]),
+    Prog0 = maps:merge(Prog, #{0 => 2}),
+    %% Score is the last integer output by the program, but this
+    %% implementation returns the output in reverse order.
+    {_, [Score|_]} = intcode:execute(Prog0, Input),
+    Score.
 
 count_intersections(Scaffolds) ->
   maps:fold(
@@ -49,20 +74,6 @@ make_grid(Bin, Width) ->
   maps:from_list(
     [{{Start rem Width, Start div Width}, $*}
      || {Start, _} <- binary:matches(Bin, ScaffoldingChars)]).
-
-
-%% Input reader (place downloaded input file in
-%% priv/inputs/2019/input17.txt).
-get_input() ->
-  inputs:get_as_binary(2019, 17).
-
-%% Tests
-main_test_() ->
-  Input = intcode:parse(get_input()),
-
-  [ {"Part 1", ?_assertEqual(4800, part1(Input))}
-  , {"Part 2", ?_assertEqual(982279, part2(Input))}
-  ].
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:
