@@ -1,49 +1,42 @@
-%%% Advent of Code solution for 2019 day 21.
-%%% Created: 2019-12-21T06:44:20+00:00
-
 -module(aoc2019_day21).
+
 -include_lib("eunit/include/eunit.hrl").
 
-part1(Prog) ->
-  Springcode =
-    "OR A J\n"
-    "AND B J\n"
-    "AND C J\n"
-    "NOT J J\n"
-    "AND D J\n"
-    "WALK\n",
+-behavior(aoc_puzzle).
 
-  {_, [Damage|_]} = intcode:execute(Prog, Springcode),
-  Damage.
+-export([parse/1, solve1/1, solve2/1, info/0]).
 
-part2(Prog) ->
-  Springcode =
-    "OR A J\n"
-    "AND B J\n"
-    "AND C J\n"
-    "NOT J J\n"
-    "AND D J\n"
-    "OR E T\n"
-    "OR H T\n"
-    "AND T J\n"
-    "RUN\n",
+-include("aoc_puzzle.hrl").
 
-  {_, [Damage|_]} = intcode:execute(Prog, Springcode),
-  Damage.
+-spec info() -> aoc_puzzle().
+info() ->
+    #aoc_puzzle{module = ?MODULE,
+                year = 2019,
+                day = 21,
+                name = "Springdroid Adventure",
+                expected = {19354437, 1145373084},
+                has_input_file = true}.
 
-get_input() ->
-  intcode:parse(inputs:get_as_binary(2019, 21)).
+-type input_type() :: intcode:intcode_program().
+-type result_type() :: integer().
 
-%% Tests
-main_test_() ->
-  Input = get_input(),
+-spec parse(Binary :: binary()) -> input_type().
+parse(Binary) ->
+    intcode:parse(Binary).
 
-  [ {"Part 1", ?_assertEqual(19354437, part1(Input))}
-  , {"Part 2", ?_assertEqual(1145373084, part2(Input))}
-  ].
+%% I don't remember where I got the Springcode input from. Maybe I cheated and
+%% stole the output from somewhere?
 
-%%%_* Emacs ====================================================================
-%%% Local Variables:
-%%% allout-layout: t
-%%% erlang-indent-level: 2
-%%% End:
+-spec solve1(Input :: input_type()) -> result_type().
+solve1(Prog) ->
+    Springcode = "OR A J\nAND B J\nAND C J\nNOT J J\nAND D J\nWALK\n",
+    {_, [Damage | _]} = intcode:execute(Prog, Springcode),
+    Damage.
+
+-spec solve2(Input :: input_type()) -> result_type().
+solve2(Prog) ->
+    Springcode =
+        "OR A J\nAND B J\nAND C J\nNOT J J\nAND D J\nOR E T\nOR H T\nAND "
+        "T J\nRUN\n",
+    {_, [Damage | _]} = intcode:execute(Prog, Springcode),
+    Damage.
