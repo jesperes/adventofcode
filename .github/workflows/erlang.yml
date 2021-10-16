@@ -24,7 +24,5 @@ jobs:
       run: "cd aoc_erlang && rebar3 dialyzer"
     - name: Solve puzzles
       run: "cd aoc_erlang && rebar3 eunit -m aoc_eunit"
-
-# Don't run this until the code is actually hank-clean
-#- name: Find unused code
-#  run: "cd aoc_erlang && rebar3 hank"
+    - name: Find unused code
+      run: "cd aoc_erlang && rebar3 hank"
