@@ -16,7 +16,10 @@ info() ->
                 has_input_file = false,
                 use_one_solver_fun = true}.
 
--type memory_banks() :: #{integer() := integer()}.
+%% A set of memory banks is represented as a map of 0-based positions to the amount of
+%% blocks present in that memory bank.
+-type memory_banks() :: #{Pos :: non_neg_integer() := NumBlocks :: non_neg_integer()}.
+
 -type input_type() :: memory_banks().
 -type result_type() :: {integer(), integer()}.
 
