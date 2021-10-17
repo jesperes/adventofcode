@@ -46,7 +46,7 @@ solve1(_) ->
     %% So, for part 1, we simply need to know the value of R1 after
     %% one pass through outer_loop. If R0 is set to this value, the
     %% program will terminate after as few steps as possible.
-    {R1, _, _} = outer_loop(0, 0, 0),
+    {R1, _, _} = outer_loop(0),
     R1.
 
 -spec solve2(Input :: input_type()) -> result_type().
@@ -66,7 +66,7 @@ solve2(_) ->
     part2_loop(0, sets:new()).
 
 part2_loop(R1, Vals) ->
-  {R1_new, _, _} = outer_loop(R1, 0, 0),
+  {R1_new, _, _} = outer_loop(R1),
   case sets:is_element(R1_new, Vals) of
     true ->
       R1;
@@ -80,16 +80,16 @@ part2_loop(R1, Vals) ->
 %%
 %% In the original program, there is an additional loop outside this
 %% one which terminates once R1 == R0.
-outer_loop(R1, _R2, R5) ->
-  inner_loop1(8725355, R1 bor 65536, R5).
+outer_loop(R1) ->
+  inner_loop1(8725355, R1 bor 65536).
 
-inner_loop1(R1, R2, _) ->
+inner_loop1(R1, R2) ->
   R5 = R2 band 255,
   R1_1 = ((R1 + R5) * 65899) band 16#ffffff,
   inner_loop2(R1_1, R2, R5).
 inner_loop2(R1, R2, _) when R2 >= 256 ->
   R5 = inner_loop3(R2, 0),
-  inner_loop1(R1, R5, R5);
+  inner_loop1(R1, R5);
 inner_loop2(R1, R2, R5) ->
   {R1, R2, R5}.
 

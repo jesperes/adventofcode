@@ -14,6 +14,10 @@
 
 -include("aoc_puzzle.hrl").
 
+%% This function is used in a call to lists:foldl/2, but does not
+%% need its first argument.
+-hank([{unnecessary_function_arguments, [{do_one_iter, 2, 1}]}]).
+
 %%------------------------------------------------------------------------------
 %% @doc info/0
 %% Returns info about this puzzle.

@@ -3,8 +3,9 @@
 
 -module(aoc2019_day24).
 
-
 -behavior(aoc_puzzle).
+
+-hank([{unnecessary_function_arguments, [{game_of_life2, 2, 1}]}]).
 
 -export([parse/1, solve1/1, solve2/1, info/0]).
 

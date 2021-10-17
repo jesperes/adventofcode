@@ -64,9 +64,9 @@ metadata_sum2({Id, ChildNodes, Metadata}) ->
 sum_child_nodes(_, [], _ChildNodes) ->
   0;
 sum_child_nodes(Id, [M | Metadata], ChildNodes) ->
-  child_index_sum(Id, M, ChildNodes) + sum_child_nodes(Id, Metadata, ChildNodes).
+  child_index_sum(M, ChildNodes) + sum_child_nodes(Id, Metadata, ChildNodes).
 
-child_index_sum(_Id, M, ChildNodes) ->
+child_index_sum(M, ChildNodes) ->
   try
     metadata_sum2(lists:nth(M, ChildNodes))
   catch

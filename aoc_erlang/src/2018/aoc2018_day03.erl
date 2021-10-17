@@ -56,11 +56,11 @@ count_overlaps0(It0, N) ->
 %% square inch.
 count_claims([], Map) ->
     Map;
-count_claims([{Id, L, T, W, H} | Areas], Map) ->
-    NewMap = claim_area(Id, L, T, W, H, Map),
+count_claims([{_Id, L, T, W, H} | Areas], Map) ->
+    NewMap = claim_area(L, T, W, H, Map),
     count_claims(Areas, NewMap).
 
-claim_area(_, L, T, W, H, Map) ->
+claim_area(L, T, W, H, Map) ->
     Coords = [{X, Y} || X <- lists:seq(L, L + W - 1), Y <- lists:seq(T, T + H - 1)],
     lists:foldl(fun(K, AccIn) -> maps:update_with(K, fun(V) -> V + 1 end, 1, AccIn) end,
                 Map,

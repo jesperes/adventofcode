@@ -2,6 +2,9 @@
 
 -behavior(aoc_puzzle).
 
+%% dist/2 is used as a search callback, but doesn't use its arguments.
+-hank([{unnecessary_function_arguments, [{dist, 2}]}]).
+
 -export([parse/1, solve1/1, solve2/1, info/0]).
 
 -include("aoc_puzzle.hrl").
